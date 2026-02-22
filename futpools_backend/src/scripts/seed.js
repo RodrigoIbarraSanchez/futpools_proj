@@ -22,6 +22,7 @@ const seed = async () => {
     const demoUser = await User.create({
       email: 'demo@futpools.app',
       password: 'Password123',
+      username: 'demo_user',
       displayName: 'Demo User',
     });
 

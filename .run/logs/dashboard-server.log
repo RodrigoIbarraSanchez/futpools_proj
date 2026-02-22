@@ -1,0 +1,6 @@
+
+> futpools-dashboard-server@1.0.0 dev
+> node src/server.js
+
+MongoDB connected (dashboard)
+Dashboard server running on port 4000

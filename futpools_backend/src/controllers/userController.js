@@ -6,6 +6,7 @@ exports.getMe = async (req, res) => {
     res.json({
       id: req.user._id,
       email: req.user.email,
+      username: req.user.username,
       displayName: req.user.displayName,
       isAdmin,
     });
@@ -24,6 +25,7 @@ exports.updateMe = async (req, res) => {
     res.json({
       id: req.user._id,
       email: req.user.email,
+      username: req.user.username,
       displayName: req.user.displayName,
     });
   } catch (err) {

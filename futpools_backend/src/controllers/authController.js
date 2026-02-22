@@ -16,13 +16,29 @@ exports.register = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { email, password, displayName } = req.body;
+    const { email, password, displayName, username } = req.body;
     const normalizedEmail = String(email || '').trim().toLowerCase();
-    let user = await User.findOne({ email: normalizedEmail });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists with this email' });
+    const normalizedUsername = String(username || '').trim().toLowerCase();
+
+    let existing = await User.findOne({
+      $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
+    }).select('email username');
+
+    if (existing) {
+      if (existing.email === normalizedEmail) {
+        return res.status(400).json({ message: 'User already exists with this email' });
+      }
+      if (existing.username === normalizedUsername) {
+        return res.status(400).json({ message: 'Username is already taken' });
+      }
     }
-    user = new User({ email: normalizedEmail, password, displayName: displayName || '' });
+
+    let user = new User({
+      email: normalizedEmail,
+      password,
+      username: normalizedUsername,
+      displayName: String(displayName || '').trim(),
+    });
     await user.save();
     const token = generateToken(user._id);
     res.status(201).json({
@@ -30,11 +46,16 @@ exports.register = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        username: user.username,
         displayName: user.displayName,
       },
     });
   } catch (err) {
     console.error(err);
+    if (err?.code === 11000) {
+      if (err?.keyPattern?.email) return res.status(400).json({ message: 'User already exists with this email' });
+      if (err?.keyPattern?.username) return res.status(400).json({ message: 'Username is already taken' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -61,6 +82,7 @@ exports.login = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        username: user.username,
         displayName: user.displayName,
       },
     });

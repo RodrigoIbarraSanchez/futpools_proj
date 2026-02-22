@@ -10,6 +10,27 @@ App de quinielas con backend Node.js + MongoDB y app iOS (SwiftUI) con estética
 
 Si la app elimina una quiniela vía el backend 3000, esa quiniela desaparece de la base. Si el dashboard (4000) usa la misma base, al intentar borrar ese mismo id ya no existe y antes devolvía 404; ahora el DELETE es idempotente (204 aunque ya no exista) y el frontend trata 404 como éxito para no bloquear al usuario.
 
+## Arranque en un comando (todo el stack)
+
+Desde la raíz del repo:
+
+```bash
+./run-all.sh
+```
+
+Esto hace automáticamente:
+- crea `.env` faltantes desde `.env.example` (backend + dashboard server + dashboard web),
+- instala dependencias si no existe `node_modules`,
+- levanta los 3 servicios:
+  - Backend: `http://localhost:3000`
+  - Dashboard server: `http://localhost:4000`
+  - Dashboard web: `http://localhost:5173`
+
+Para apagar todo, presiona `Ctrl + C` en la terminal donde corre el script.
+Los logs quedan en `.run/logs/`.
+
+> Nota: `http://localhost:3000` y `http://localhost:4000` son APIs; ver `Cannot GET /` en la raíz es normal. Usa rutas como `/health` o `/api/...`.
+
 ## Backend (`futpools_backend`)
 
 1. Copia `.env.example` a `.env` y configura:

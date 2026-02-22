@@ -107,8 +107,8 @@ function Login({ onLogin }) {
 
 function Dashboard({ token, adminEmail, onLogout }) {
   const [query, setQuery] = useState("");
-  const [teamResults, setTeamResults] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedSource, setSelectedSource] = useState(null);
   const [fixtures, setFixtures] = useState([]);
   const [selectedFixtures, setSelectedFixtures] = useState([]);
   const [name, setName] = useState("");
@@ -116,7 +116,7 @@ function Dashboard({ token, adminEmail, onLogout }) {
   const [prize, setPrize] = useState("");
   const [cost, setCost] = useState("");
   const [message, setMessage] = useState("");
-  const [loadingTeams, setLoadingTeams] = useState(false);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -143,26 +143,55 @@ function Dashboard({ token, adminEmail, onLogout }) {
     return dates[0] || null;
   }, [selectedFixtures]);
 
-  const searchTeams = async () => {
-    if (!query.trim()) return;
-    setLoadingTeams(true);
+  const searchSources = async (rawQuery = query) => {
+    const q = String(rawQuery || "").trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+    setLoadingSearch(true);
     setMessage("");
     try {
-      const data = await apiFetch(`/api/football/teams/search?query=${encodeURIComponent(query)}`, {}, token);
-      setTeamResults(data);
+      const [leagues, teams] = await Promise.all([
+        apiFetch(`/api/football/leagues/search?query=${encodeURIComponent(q)}`, {}, token),
+        apiFetch(`/api/football/teams/search?query=${encodeURIComponent(q)}`, {}, token),
+      ]);
+
+      const leagueItems = (Array.isArray(leagues) ? leagues : []).map((l) => ({
+        kind: "league",
+        id: l.id,
+        name: l.name,
+        logo: l.logo,
+        country: l.country,
+        season: l.season,
+      }));
+
+      const teamItems = (Array.isArray(teams) ? teams : []).map((t) => ({
+        kind: "team",
+        id: t.id,
+        name: t.name,
+        logo: t.logo,
+        country: t.country,
+      }));
+
+      setSearchResults([...leagueItems, ...teamItems]);
     } catch (err) {
       setMessage(err.message);
     } finally {
-      setLoadingTeams(false);
+      setLoadingSearch(false);
     }
   };
 
-  const loadFixtures = async (team) => {
-    setSelectedTeam(team);
+  const loadFixtures = async (source) => {
+    setSelectedSource(source);
     setLoadingFixtures(true);
     setMessage("");
     try {
-      const data = await apiFetch(`/api/football/fixtures?teamId=${team.id}`, {}, token);
+      const seasonQuery = source?.season ? `&season=${source.season}` : "";
+      const path = source?.kind === "team"
+        ? `/api/football/fixtures?teamId=${source.id}`
+        : `/api/football/fixtures?leagueId=${source.id}${seasonQuery}`;
+      const data = await apiFetch(path, {}, token);
       setFixtures(data);
     } catch (err) {
       setMessage(err.message);
@@ -318,6 +347,19 @@ function Dashboard({ token, adminEmail, onLogout }) {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (!token) return;
+    const q = query.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      searchSources(q);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, token]);
+
   return (
     <div className="dashboard">
       <header className="topbar">
@@ -375,35 +417,37 @@ function Dashboard({ token, adminEmail, onLogout }) {
           )}
         </section>
         <section className="panel">
-          <h3>Team Search</h3>
+          <h3>League + Team Search</h3>
           <div className="search-row">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search a team (e.g. América)"
+              placeholder="Search leagues or teams (e.g. Liga MX, América)"
             />
-            <button className="btn" onClick={searchTeams} disabled={loadingTeams}>
-              {loadingTeams ? "Searching..." : "Search"}
-            </button>
           </div>
           <div className="results">
-            {teamResults.map((t) => (
-              <button key={t.id} className={`result ${selectedTeam?.id === t.id ? "active" : ""}`} onClick={() => loadFixtures(t)}>
-                <img src={t.logo} alt={t.name} />
+            {searchResults.map((item) => (
+              <button key={`${item.kind}-${item.id}`} className={`result ${selectedSource?.kind === item.kind && selectedSource?.id === item.id ? "active" : ""}`} onClick={() => loadFixtures(item)}>
+                <img src={item.logo} alt={item.name} />
                 <div>
-                  <div className="result-name">{t.name}</div>
-                  <div className="result-meta">{t.country || "—"}</div>
+                  <div className="result-name">{item.name}</div>
+                  <div className="result-meta">
+                    {item.kind === "league" ? "League" : "Team"}
+                    {item.country ? ` · ${item.country}` : ""}
+                    {item.season ? ` · ${item.season}` : ""}
+                  </div>
                 </div>
               </button>
             ))}
-            {!teamResults.length && <div className="empty">Search to load teams.</div>}
+            {loadingSearch && <div className="empty">Searching...</div>}
+            {!loadingSearch && !searchResults.length && <div className="empty">Type to search leagues and teams.</div>}
           </div>
         </section>
 
         <section className="panel">
           <h3>Live & Upcoming Fixtures</h3>
-          {selectedTeam && (
-            <div className="subtitle">Showing fixtures for {selectedTeam.name}</div>
+          {selectedSource && (
+            <div className="subtitle">Showing fixtures for {selectedSource.name}</div>
           )}
           <div className="fixtures">
             {loadingFixtures && <div className="empty">Loading fixtures...</div>}
@@ -423,7 +467,7 @@ function Dashboard({ token, adminEmail, onLogout }) {
                 <button className="btn small" onClick={() => addFixture(f)}>Add</button>
               </div>
             ))}
-            {!loadingFixtures && selectedTeam && fixtures.length === 0 && (
+            {!loadingFixtures && selectedSource && fixtures.length === 0 && (
               <div className="empty">No live or upcoming fixtures found.</div>
             )}
           </div>

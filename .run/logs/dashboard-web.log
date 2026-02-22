@@ -1,0 +1,10 @@
+
+> futpools-dashboard-web@1.0.0 dev
+> vite --host --strictPort
+
+
+  VITE v5.4.21  ready in 115 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.100.22:5173/
+  ➜  Network: http://169.254.203.152:5173/

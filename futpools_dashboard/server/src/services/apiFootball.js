@@ -30,6 +30,38 @@ export const searchTeams = async (query) => {
   }));
 };
 
+export const searchLeagues = async (query) => {
+  const byId = new Map();
+
+  const collect = async (q) => {
+    const data = await apiFetch("/leagues", { search: q });
+    for (const row of data?.response || []) {
+      const league = row?.league;
+      const country = row?.country;
+      if (!league?.id || byId.has(league.id)) continue;
+      byId.set(league.id, {
+        id: league.id,
+        name: league.name,
+        type: league.type,
+        logo: league.logo,
+        country: country?.name || "",
+        countryCode: country?.code || "",
+        season: row?.seasons?.find((s) => s?.current)?.year || null,
+      });
+    }
+  };
+
+  await collect(query);
+
+  // Fallback for inputs like "LigaMX" -> "Liga MX"
+  if (byId.size === 0 && query && !query.includes(" ")) {
+    const spaced = query.replace(/([a-z])([A-Z])/g, "$1 $2");
+    if (spaced !== query) await collect(spaced);
+  }
+
+  return Array.from(byId.values());
+};
+
 const mapFixture = (f) => ({
   fixtureId: f?.fixture?.id,
   date: f?.fixture?.date,
@@ -74,6 +106,31 @@ export const getTeamFixtures = async (teamId) => {
   const liveRaw = (liveData?.response || []).filter(
     (f) => f?.teams?.home?.id === teamId || f?.teams?.away?.id === teamId
   );
+  const nextRaw = nextData?.response || [];
+
+  const byId = new Map();
+  for (const f of liveRaw) {
+    const id = f?.fixture?.id;
+    if (id != null) byId.set(id, mapFixture(f));
+  }
+  for (const f of nextRaw) {
+    const id = f?.fixture?.id;
+    if (id != null && !byId.has(id)) byId.set(id, mapFixture(f));
+  }
+
+  return Array.from(byId.values()).sort(fixtureSortOrder);
+};
+
+export const getLeagueFixtures = async (leagueId, season) => {
+  const currentYear = new Date().getFullYear();
+  const resolvedSeason = Number(season) || Number(process.env.API_FOOTBALL_SEASON) || currentYear;
+
+  const [liveData, nextData] = await Promise.all([
+    apiFetch("/fixtures", { live: "all" }),
+    apiFetch("/fixtures", { league: leagueId, season: resolvedSeason, next: 20 }),
+  ]);
+
+  const liveRaw = (liveData?.response || []).filter((f) => f?.league?.id === leagueId);
   const nextRaw = nextData?.response || [];
 
   const byId = new Map();

@@ -15,10 +15,19 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false,
   },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    minlength: 3,
+  },
   displayName: {
     type: String,
+    required: true,
     trim: true,
-    default: '',
+    minlength: 2,
   },
   createdAt: {
     type: Date,

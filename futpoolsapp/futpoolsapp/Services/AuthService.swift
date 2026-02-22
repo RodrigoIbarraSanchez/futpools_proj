@@ -26,18 +26,19 @@ final class AuthService: ObservableObject {
         KeychainHelper.getToken()
     }
 
-    func register(email: String, password: String, displayName: String?) async {
+    func register(email: String, password: String, username: String, displayName: String) async {
         errorMessage = nil
         struct Body: Encodable {
             let email: String
             let password: String
-            let displayName: String?
+            let username: String
+            let displayName: String
         }
         do {
             let res: AuthResponse = try await client.request(
                 method: "POST",
                 path: "/auth/register",
-                body: Body(email: email, password: password, displayName: displayName ?? "")
+                body: Body(email: email, password: password, username: username, displayName: displayName)
             )
             KeychainHelper.saveToken(res.token)
             currentUser = res.user
