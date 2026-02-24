@@ -2,6 +2,33 @@ import express from "express";
 import Quiniela from "../models/Quiniela.js";
 import { auth } from "../middleware/auth.js";
 
+const FINISHED_STATUSES = new Set(["FT", "AET", "PEN"]);
+
+function computePoolStatus(fixtures) {
+  if (!fixtures || fixtures.length === 0) return "scheduled";
+  const now = new Date();
+  let allFinished = true;
+  let anyStarted = false;
+  for (const f of fixtures) {
+    const short = String(f.status || "").trim().toUpperCase();
+    if (FINISHED_STATUSES.has(short)) {
+      anyStarted = true;
+    } else {
+      allFinished = false;
+      if (short && short !== "NS") anyStarted = true;
+      else if (new Date(f.kickoff) <= now) anyStarted = true;
+    }
+  }
+  if (allFinished) return "completed";
+  if (anyStarted) return "live";
+  return "scheduled";
+}
+
+function addPoolStatus(doc) {
+  const obj = doc.toObject ? doc.toObject() : { ...doc };
+  return { ...obj, status: computePoolStatus(obj.fixtures || []) };
+}
+
 const router = express.Router();
 
 router.post("/", auth, async (req, res) => {
@@ -39,8 +66,8 @@ router.post("/", auth, async (req, res) => {
 
 router.get("/", auth, async (_req, res) => {
   try {
-    const list = await Quiniela.find().sort({ createdAt: -1 }).limit(50);
-    res.json(list);
+    const list = await Quiniela.find().sort({ createdAt: -1 }).limit(50).lean();
+    res.json(list.map(addPoolStatus));
   } catch (err) {
     res.status(500).json({ message: err.message || "Server error" });
   }
@@ -50,7 +77,7 @@ router.get("/:id", auth, async (req, res) => {
   try {
     const doc = await Quiniela.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Quiniela not found" });
-    res.json(doc);
+    res.json(addPoolStatus(doc));
   } catch (err) {
     res.status(500).json({ message: err.message || "Server error" });
   }

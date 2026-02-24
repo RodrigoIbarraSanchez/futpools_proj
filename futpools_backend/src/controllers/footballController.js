@@ -59,6 +59,7 @@ exports.getFixturesByIds = async (req, res) => {
     const fixtures = await fetchFixturesByIds(ids);
     res.json(fixtures);
   } catch (err) {
-    res.status(500).json({ message: err.message || 'Server error' });
+    console.warn('[Football] getFixturesByIds failed (API may be down or invalid key):', err.message);
+    res.json([]);
   }
 };

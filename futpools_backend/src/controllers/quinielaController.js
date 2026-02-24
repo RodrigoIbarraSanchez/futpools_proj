@@ -1,6 +1,34 @@
 const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
+const User = require('../models/User');
 const { fetchFixturesByIds } = require('../services/apiFootball');
+
+const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN']);
+
+/** Compute pool status from fixtures: scheduled | live | completed */
+function computePoolStatus(fixtures) {
+  if (!fixtures || fixtures.length === 0) return 'scheduled';
+  const now = new Date();
+  let allFinished = true;
+  let anyStarted = false;
+  for (const f of fixtures) {
+    const short = String(f.status || '').trim().toUpperCase();
+    if (FINISHED_STATUSES.has(short)) {
+      anyStarted = true;
+    } else {
+      allFinished = false;
+      if (short && short !== 'NS') anyStarted = true;
+      else if (new Date(f.kickoff) <= now) anyStarted = true;
+    }
+  }
+  if (allFinished) return 'completed';
+  if (anyStarted) return 'live';
+  return 'scheduled';
+}
+
+function addPoolStatus(quiniela) {
+  return { ...quiniela, status: computePoolStatus(quiniela.fixtures || []) };
+}
 
 exports.getQuinielas = async (_req, res) => {
   try {
@@ -11,7 +39,7 @@ exports.getQuinielas = async (_req, res) => {
       { $group: { _id: '$quiniela', count: { $sum: 1 } } },
     ]);
     const countMap = new Map(counts.map((c) => [String(c._id), c.count]));
-    const withCounts = list.map((q) => ({
+    const withCounts = list.map((q) => addPoolStatus({
       ...q,
       entriesCount: countMap.get(String(q._id)) ?? 0,
     }));
@@ -26,7 +54,7 @@ exports.getQuinielaById = async (req, res) => {
     const doc = await Quiniela.findById(req.params.id).lean();
     if (!doc) return res.status(404).json({ message: 'Quiniela not found' });
     const entriesCount = await QuinielaEntry.countDocuments({ quiniela: req.params.id });
-    res.json({ ...doc, entriesCount });
+    res.json(addPoolStatus({ ...doc, entriesCount }));
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -42,6 +70,25 @@ exports.submitEntry = async (req, res) => {
     }
     const quiniela = await Quiniela.findById(quinielaId);
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
+
+    const entryCost = parseFloat(String(quiniela.cost).replace(/[^0-9.-]/g, '')) || 0;
+    if (entryCost > 0) {
+      const updated = await User.findOneAndUpdate(
+        { _id: req.user._id, balance: { $gte: entryCost } },
+        { $inc: { balance: -entryCost } },
+        { new: true }
+      );
+      if (!updated) {
+        const u = await User.findById(req.user._id).select('balance').lean();
+        const currentBalance = u?.balance ?? 0;
+        return res.status(400).json({
+          message: 'Insufficient balance',
+          code: 'INSUFFICIENT_BALANCE',
+          entryCost,
+          currentBalance,
+        });
+      }
+    }
 
     const entryCount = await QuinielaEntry.countDocuments({ quiniela: quinielaId, user: req.user._id });
     const entry = await QuinielaEntry.create({
@@ -60,14 +107,81 @@ exports.submitEntry = async (req, res) => {
   }
 };
 
+const resultFromScore = (home, away) => {
+  if (home == null || away == null) return null;
+  const h = Number(home);
+  const a = Number(away);
+  if (Number.isNaN(h) || Number.isNaN(a)) return null;
+  if (h > a) return '1';
+  if (h < a) return '2';
+  return 'X';
+};
+
+function scoreForEntry(entry, resultsByFixtureId) {
+  let score = 0;
+  const norm = (p) => (p || '').toString().trim().toUpperCase();
+  for (const pick of entry.picks || []) {
+    const result = resultsByFixtureId.get(pick.fixtureId);
+    if (result != null && norm(result) === norm(pick.pick)) score += 1;
+  }
+  return score;
+}
+
+/** Build map quinielaId -> (fixtureId -> result '1'|'X'|'2') from live fixtures list */
+function buildResultsByQuiniela(entries, liveFixtures) {
+  const fixtureIdToResult = new Map();
+  for (const f of liveFixtures) {
+    const short = (f?.status?.short || '').toUpperCase();
+    if (!FINISHED_STATUSES.has(short)) continue;
+    const result = resultFromScore(f?.score?.home, f?.score?.away);
+    if (result != null) fixtureIdToResult.set(f.fixtureId, result);
+  }
+  const byQuiniela = new Map();
+  for (const entry of entries) {
+    const qid = entry.quiniela?._id ?? entry.quiniela;
+    if (!qid) continue;
+    if (!byQuiniela.has(String(qid))) {
+      const fixtureIds = (entry.quiniela?.fixtures || []).map((f) => f.fixtureId).filter(Boolean);
+      const map = new Map();
+      for (const fid of fixtureIds) {
+        const r = fixtureIdToResult.get(fid);
+        if (r != null) map.set(fid, r);
+      }
+      byQuiniela.set(String(qid), map);
+    }
+  }
+  return byQuiniela;
+}
+
 exports.getMyEntriesForQuiniela = async (req, res) => {
   try {
     const quinielaId = req.params.id;
     const entries = await QuinielaEntry.find({ quiniela: quinielaId, user: req.user._id })
       .sort({ createdAt: -1 })
       .populate('quiniela');
-    res.json(entries);
+    const quiniela = entries[0]?.quiniela;
+    const fixtureIds = (quiniela?.fixtures || []).map((f) => f.fixtureId).filter(Boolean);
+    let liveFixtures = [];
+    try {
+      liveFixtures = fixtureIds.length > 0 ? await fetchFixturesByIds(fixtureIds) : [];
+    } catch (e) {
+      console.warn('[Quiniela] getMyEntriesForQuiniela: fetch fixtures failed', e.message);
+    }
+    const resultsMap = new Map();
+    for (const f of liveFixtures) {
+      const short = (f?.status?.short || '').toUpperCase();
+      if (!FINISHED_STATUSES.has(short)) continue;
+      const result = resultFromScore(f?.score?.home, f?.score?.away);
+      if (result != null) resultsMap.set(f.fixtureId, result);
+    }
+    const totalPossible = resultsMap.size;
+    const payload = entries.map((entry) => {
+      const o = entry.toObject ? entry.toObject() : entry;
+      return { ...o, score: scoreForEntry(entry, resultsMap), totalPossible };
+    });
+    res.json(payload);
   } catch (err) {
+    console.error('[Quiniela] getMyEntriesForQuiniela error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -77,21 +191,28 @@ exports.getMyEntries = async (req, res) => {
     const entries = await QuinielaEntry.find({ user: req.user._id })
       .sort({ createdAt: -1 })
       .populate('quiniela');
-    res.json(entries);
+    const allFixtureIds = [...new Set(entries.flatMap((e) => (e.quiniela?.fixtures || []).map((f) => f.fixtureId).filter(Boolean)))];
+    let liveFixtures = [];
+    try {
+      liveFixtures = allFixtureIds.length > 0 ? await fetchFixturesByIds(allFixtureIds) : [];
+    } catch (e) {
+      console.warn('[Quiniela] getMyEntries: fetch fixtures failed', e.message);
+    }
+    const resultsByQuiniela = buildResultsByQuiniela(entries, liveFixtures);
+
+    const payload = entries.map((entry) => {
+      const q = entry.toObject ? entry.toObject() : entry;
+      const qid = q.quiniela?._id ?? q.quiniela;
+      const resultsMap = resultsByQuiniela.get(String(qid)) || new Map();
+      const totalPossible = resultsMap.size;
+      const score = scoreForEntry(entry, resultsMap);
+      return { ...q, score, totalPossible };
+    });
+    res.json(payload);
   } catch (err) {
+    console.error('[Quiniela] getMyEntries error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
-};
-
-const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN']);
-const resultFromScore = (home, away) => {
-  if (home == null || away == null) return null;
-  const h = Number(home);
-  const a = Number(away);
-  if (Number.isNaN(h) || Number.isNaN(a)) return null;
-  if (h > a) return '1';
-  if (h < a) return '2';
-  return 'X';
 };
 
 exports.updateQuiniela = async (req, res) => {
@@ -159,7 +280,12 @@ exports.getLeaderboard = async (req, res) => {
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
 
     const fixtureIds = (quiniela.fixtures || []).map((f) => f.fixtureId).filter(Boolean);
-    const liveFixtures = fixtureIds.length > 0 ? await fetchFixturesByIds(fixtureIds) : [];
+    let liveFixtures = [];
+    try {
+      liveFixtures = fixtureIds.length > 0 ? await fetchFixturesByIds(fixtureIds) : [];
+    } catch (e) {
+      console.warn('[Quiniela] getLeaderboard: fetch fixtures failed', e.message);
+    }
     const resultsByFixtureId = new Map();
     for (const f of liveFixtures) {
       const short = (f?.status?.short || '').toUpperCase();

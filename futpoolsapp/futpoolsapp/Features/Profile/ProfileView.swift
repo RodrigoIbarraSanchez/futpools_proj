@@ -8,11 +8,21 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject var auth: AuthService
     @State private var showEditName = false
+    @State private var showSettings = false
+    @State private var showRechargeSheet = false
 
     private var displayNameText: String {
         let name = auth.currentUser?.displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
         if let n = name, !n.isEmpty { return n }
         return auth.currentUser?.email ?? "User"
+    }
+
+    private func formatBalance(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        return (formatter.string(from: NSNumber(value: value)) ?? "\(value)")
     }
 
     var body: some View {
@@ -59,17 +69,25 @@ struct ProfileView: View {
                         }
                         .padding(.horizontal)
 
-                        CardView {
-                            HStack {
-                                Text("Balance (coming soon)")
-                                    .font(AppFont.body())
-                                    .foregroundColor(.appTextSecondary)
-                                Spacer()
-                                Text("$0.00")
-                                    .font(AppFont.headline())
-                                    .foregroundColor(.appGreen)
+                        Button {
+                            showRechargeSheet = true
+                        } label: {
+                            CardView {
+                                HStack {
+                                    Text("Balance")
+                                        .font(AppFont.body())
+                                        .foregroundColor(.appTextSecondary)
+                                    Spacer()
+                                    Text(formatBalance(auth.currentUser?.balanceValue ?? 0))
+                                        .font(AppFont.headline())
+                                        .foregroundColor(.appGreen)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundColor(.appTextMuted)
+                                }
                             }
                         }
+                        .buttonStyle(.plain)
                         .padding(.horizontal)
 
                         PrimaryButton("Sign out", style: .purple) {
@@ -84,6 +102,16 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(.appPrimary)
+                    }
+                }
+            }
             .sheet(isPresented: $showEditName) {
                 EditDisplayNameSheet(
                     currentName: auth.currentUser?.displayName ?? "",
@@ -94,6 +122,13 @@ struct ProfileView: View {
                     onDismiss: { showEditName = false }
                 )
                 .environmentObject(auth)
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
+            .sheet(isPresented: $showRechargeSheet) {
+                RechargeView()
+                    .environmentObject(auth)
             }
         }
     }

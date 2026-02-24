@@ -2,11 +2,12 @@
 
 App de quinielas con backend Node.js + MongoDB y app iOS (SwiftUI) con estética tipo Draftea.
 
-## Por qué hay 3 procesos/servidores
+## Por qué hay 4 procesos/servidores
 
-1. **Backend principal** (`futpools_backend`, puerto **3000**): API usada por la **app iOS** (quinielas, auth, fixtures, leaderboard). Es la fuente de verdad para la app.
+1. **Backend principal** (`futpools_backend`, puerto **3000**): API usada por la **app iOS** y por la **app web** (quinielas, auth, fixtures, leaderboard). Es la fuente de verdad.
 2. **Servidor del dashboard** (`futpools_dashboard/server`, puerto **4000**): API para el **panel web** (crear/editar/eliminar quinielas, auth de admin). Puede usar la misma MongoDB que el backend o una propia.
 3. **Frontend del dashboard** (`futpools_dashboard/web`, puerto **5173**): Vite/React para el Quiniela Builder (lista de quinielas, formularios, etc.). Llama al servidor del dashboard (4000).
+4. **Futpools Web** (`futpools_web`, puerto **5174**): App web móvil (Vite/React) que replica la app iOS: login, quinielas, mis entradas, perfil. Usa el backend 3000 (proxy `/api`).
 
 Si la app elimina una quiniela vía el backend 3000, esa quiniela desaparece de la base. Si el dashboard (4000) usa la misma base, al intentar borrar ese mismo id ya no existe y antes devolvía 404; ahora el DELETE es idempotente (204 aunque ya no exista) y el frontend trata 404 como éxito para no bloquear al usuario.
 
@@ -21,10 +22,11 @@ Desde la raíz del repo:
 Esto hace automáticamente:
 - crea `.env` faltantes desde `.env.example` (backend + dashboard server + dashboard web),
 - instala dependencias si no existe `node_modules`,
-- levanta los 3 servicios:
+- levanta los 4 servicios:
   - Backend: `http://localhost:3000`
   - Dashboard server: `http://localhost:4000`
   - Dashboard web: `http://localhost:5173`
+  - Futpools Web (app móvil): `http://localhost:5174`
 
 Para apagar todo, presiona `Ctrl + C` en la terminal donde corre el script.
 Los logs quedan en `.run/logs/`.
@@ -81,3 +83,13 @@ Para que el dashboard pueda guardar la URL del banner, el backend principal debe
 1. Abre `futpoolsapp.xcodeproj` en Xcode.
 2. Por defecto la app usa `http://localhost:3000`. En simulador suele funcionar. Si usas dispositivo físico, cambia la base URL en `Services/APIClient.swift` por la IP de tu Mac (y en el backend asegura CORS y que escuche en `0.0.0.0`).
 3. Ejecuta el backend y `npm run seed`, luego corre la app: Login/Registro, listado de jornadas, hacer quiniela (1-X-2), Mis entradas y Perfil.
+
+## App Web (`futpools_web`)
+
+La app web (React/Vite, mobile-first) replica la funcionalidad de la app iOS. Se inicia con `./run-all.sh` junto al resto del stack, o solo la web:
+
+```bash
+cd futpools_web && npm install && npm run dev
+```
+
+Abre `http://localhost:5174`. Las peticiones a `/api/*` se redirigen al backend (3000). El backend debe estar en marcha para login, quinielas, etc.

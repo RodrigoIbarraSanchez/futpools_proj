@@ -1,6 +1,10 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
+
+const ADMIN_EMAILS = new Set(['demo@futpools.app', 'admin@futpools.app']);
+const RESET_CODE_EXPIRY_MINUTES = 15;
 
 const generateToken = (userId) => {
   return jwt.sign(
@@ -41,6 +45,7 @@ exports.register = async (req, res) => {
     });
     await user.save();
     const token = generateToken(user._id);
+    const isAdmin = ADMIN_EMAILS.has(user.email.toLowerCase());
     res.status(201).json({
       token,
       user: {
@@ -48,6 +53,8 @@ exports.register = async (req, res) => {
         email: user.email,
         username: user.username,
         displayName: user.displayName,
+        isAdmin,
+        balance: user.balance ?? 0,
       },
     });
   } catch (err) {
@@ -77,6 +84,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     const token = generateToken(user._id);
+    const isAdmin = ADMIN_EMAILS.has(user.email.toLowerCase());
     res.json({
       token,
       user: {
@@ -84,6 +92,88 @@ exports.login = async (req, res) => {
         email: user.email,
         username: user.username,
         displayName: user.displayName,
+        isAdmin,
+        balance: user.balance ?? 0,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/** Generate 6-digit numeric code */
+function generateResetCode() {
+  return String(crypto.randomInt(100000, 999999));
+}
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { email } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select('+passwordResetCode +passwordResetExpiresAt');
+    if (user) {
+      const code = generateResetCode();
+      const expiresAt = new Date(Date.now() + RESET_CODE_EXPIRY_MINUTES * 60 * 1000);
+      user.passwordResetCode = code;
+      user.passwordResetExpiresAt = expiresAt;
+      await user.save({ validateBeforeSave: false });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[Auth] Password reset code for ${normalizedEmail}: ${code} (expires in ${RESET_CODE_EXPIRY_MINUTES} min)`);
+      }
+      // Production: connect an email provider (e.g. nodemailer + SMTP, Resend, SendGrid)
+      // and send the code to user.email. Then set isPasswordRecoveryEnabled = true in the app.
+    }
+    res.json({
+      message: 'If an account exists with this email, you will receive a recovery code shortly.',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { email, code, newPassword } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select('+password +passwordResetCode +passwordResetExpiresAt');
+    if (!user || !user.passwordResetCode || !user.passwordResetExpiresAt) {
+      return res.status(400).json({ message: 'Invalid or expired code. Request a new one.' });
+    }
+    if (user.passwordResetCode !== String(code).trim()) {
+      return res.status(400).json({ message: 'Invalid or expired code. Request a new one.' });
+    }
+    if (new Date() > user.passwordResetExpiresAt) {
+      user.passwordResetCode = undefined;
+      user.passwordResetExpiresAt = undefined;
+      await user.save({ validateBeforeSave: false });
+      return res.status(400).json({ message: 'Code has expired. Request a new one.' });
+    }
+    user.password = newPassword;
+    user.passwordResetCode = undefined;
+    user.passwordResetExpiresAt = undefined;
+    await user.save();
+    const token = generateToken(user._id);
+    const isAdmin = ADMIN_EMAILS.has(user.email.toLowerCase());
+    res.json({
+      message: 'Password updated. You are now signed in.',
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+        isAdmin,
+        balance: user.balance ?? 0,
       },
     });
   } catch (err) {

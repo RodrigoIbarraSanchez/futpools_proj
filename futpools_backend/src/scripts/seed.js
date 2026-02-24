@@ -24,6 +24,15 @@ const seed = async () => {
       password: 'Password123',
       username: 'demo_user',
       displayName: 'Demo User',
+      balance: 100,
+    });
+
+    const adminUser = await User.create({
+      email: 'admin@futpools.app',
+      password: process.env.ADMIN_PASSWORD || 'Password123',
+      username: 'admin',
+      displayName: 'Admin',
+      balance: 100,
     });
 
     const startDate = new Date();
@@ -52,10 +61,13 @@ const seed = async () => {
     ]);
 
     console.log(
-      'Seed completed: 1 user, 1 league, 1 matchday, 3 matches'
+      'Seed completed: 2 users, 1 league, 1 matchday, 3 matches'
     );
     console.log(
       `Demo user: ${demoUser.email} / Password123`
+    );
+    console.log(
+      `Admin user: ${adminUser.email} / ${process.env.ADMIN_PASSWORD || 'Password123'}`
     );
     process.exit(0);
   } catch (err) {

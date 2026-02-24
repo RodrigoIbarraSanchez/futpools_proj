@@ -29,6 +29,9 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minlength: 2,
   },
+  balance: { type: Number, default: 0 },
+  passwordResetCode: { type: String, select: false },
+  passwordResetExpiresAt: { type: Date, select: false },
   createdAt: {
     type: Date,
     default: Date.now,

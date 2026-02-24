@@ -18,9 +18,14 @@ struct LeaderboardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             HStack {
-                Text("Leaderboard")
-                    .font(AppFont.headline())
-                    .foregroundColor(.appTextPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Leaderboard")
+                        .font(AppFont.headline())
+                        .foregroundColor(.appTextPrimary)
+                    Text(NSLocalizedString("Score: correct predictions per finished match", comment: "Leaderboard subtitle"))
+                        .font(.system(size: 11))
+                        .foregroundColor(.appTextSecondary)
+                }
                 Spacer()
                 if let lb = leaderboard, lb.totalCount > 0 {
                     Text("\(lb.totalCount) participant\(lb.totalCount == 1 ? "" : "s")")
@@ -155,9 +160,14 @@ private struct LeaderboardRowView: View {
                 .foregroundColor(.appTextPrimary)
                 .lineLimit(1)
             Spacer(minLength: 0)
-            Text("\(entry.score)/\(entry.totalPossible)")
-                .font(AppFont.caption().weight(.semibold))
-                .foregroundColor(entry.rank <= 3 ? (medalColor ?? .appPrimary) : .appPrimary)
+            VStack(alignment: .trailing, spacing: 0) {
+                Text(NSLocalizedString("Aciertos", comment: "Correct predictions count label"))
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.appTextSecondary)
+                Text("\(entry.score)/\(entry.totalPossible)")
+                    .font(AppFont.caption().weight(.semibold))
+                    .foregroundColor(entry.rank <= 3 ? (medalColor ?? .appPrimary) : .appPrimary)
+            }
         }
         .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.xs)

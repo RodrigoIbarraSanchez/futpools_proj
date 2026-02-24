@@ -8,7 +8,6 @@ import SwiftUI
 private enum PoolDetailTab: String, CaseIterable {
     case overview = "Overview"
     case fixtures = "Fixtures"
-    case leaderboard = "Leaderboard"
 }
 
 struct QuinielaDetailView: View {
@@ -31,7 +30,14 @@ struct QuinielaDetailView: View {
     @State private var liveTimer: Timer?
     @State private var leaderboard: LeaderboardResponse?
     @State private var leaderboardLoading = false
+    @State private var showInsufficientBalanceSheet = false
+    @State private var showRechargeSheet = false
+    @State private var pendingRechargeAfterDismiss = false
     private let client = APIClient.shared
+
+    private var userBalance: Double { auth.currentUser?.balanceValue ?? 0 }
+    private var entryCost: Double { quiniela.entryCostValue }
+    private var hasEnoughBalance: Bool { userBalance >= entryCost }
 
     private var isAdmin: Bool { auth.currentUser?.isAdmin == true }
 
@@ -68,7 +74,11 @@ struct QuinielaDetailView: View {
                     .foregroundColor(.appTextSecondary)
             }
             PrimaryButton(joinButtonLabel, style: .green) {
-                showPickView = true
+                if canJoin && !hasEnoughBalance {
+                    showInsufficientBalanceSheet = true
+                } else if canJoin {
+                    showPickView = true
+                }
             }
             .disabled(!canJoin)
             .padding(.top, AppSpacing.sm)
@@ -149,11 +159,12 @@ struct QuinielaDetailView: View {
                     Group {
                         switch selectedTab {
                         case .overview:
-                            overviewContent
+                            VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                                overviewContent
+                                leaderboardContent
+                            }
                         case .fixtures:
                             fixturesContent
-                        case .leaderboard:
-                            leaderboardContent
                         }
                     }
                     .animation(.none, value: selectedTab)
@@ -197,6 +208,29 @@ struct QuinielaDetailView: View {
                     onDismiss: { showEditSheet = false }
                 )
             }
+            .sheet(isPresented: $showInsufficientBalanceSheet) {
+                InsufficientBalanceSheet(
+                    entryCost: entryCost,
+                    currentBalance: userBalance,
+                    onRecharge: {
+                        pendingRechargeAfterDismiss = true
+                        showInsufficientBalanceSheet = false
+                    },
+                    onDismiss: { showInsufficientBalanceSheet = false }
+                )
+            }
+            .onChange(of: showInsufficientBalanceSheet) { _, newValue in
+                if !newValue && pendingRechargeAfterDismiss {
+                    pendingRechargeAfterDismiss = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        showRechargeSheet = true
+                    }
+                }
+            }
+            .sheet(isPresented: $showRechargeSheet) {
+                RechargeView()
+                    .environmentObject(auth)
+            }
             .confirmationDialog("Delete pool?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
                 Button("Delete", role: .destructive) {
                     performDelete()
@@ -218,6 +252,7 @@ struct QuinielaDetailView: View {
                 if newValue == false {
                     loadEntryCount()
                     loadLeaderboard()
+                    Task { await auth.fetchUser() }
                 }
             }
         }
@@ -496,148 +531,55 @@ private struct Pill: View {
     }
 }
 
-private struct FixtureCard: View {
-    let fixture: QuinielaFixture
-    let live: LiveFixture?
+// MARK: - Insufficient balance sheet (Recharge flow will be added in next step)
+private struct InsufficientBalanceSheet: View {
+    let entryCost: Double
+    let currentBalance: Double
+    var onRecharge: () -> Void
+    var onDismiss: () -> Void
 
-    private var kickoffText: String {
-        if let live, let d = live.scheduledDate {
-            return formatDate(d)
-        }
-        guard let d = fixture.kickoffDate else { return fixture.kickoff }
-        return formatDate(d)
+    private func format(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
-    private var scoreText: String? {
-        guard let live else { return nil }
-        if live.score.home == nil && live.score.away == nil { return nil }
-        return "\(live.score.home ?? 0) : \(live.score.away ?? 0)"
-    }
-
-    private var statusText: String? {
-        let short = live?.status.short ?? fixture.status
-        return short?.uppercased()
+    private var messageText: String {
+        String(format: String(localized: "You need %@ to join this pool. Your balance: %@."), format(entryCost), format(currentBalance))
     }
 
     var body: some View {
-        MatchCard {
+        NavigationStack {
             ZStack {
-                VStack(spacing: 0) {
-                    HStack {
-                        Text(fixture.leagueName ?? "League")
-                            .font(AppFont.overline())
-                            .foregroundColor(.appTextSecondary)
-                        Spacer()
-                        if let status = statusText, !status.isEmpty {
-                            Text(status)
-                                .font(AppFont.overline())
-                                .foregroundColor(.appTextSecondary)
-                                .padding(.horizontal, AppSpacing.sm)
-                                .padding(.vertical, AppSpacing.xs)
-                                .background(Capsule().fill(Color.appSurfaceAlt))
-                        }
-                    }
-                    Spacer(minLength: AppSpacing.md)
-                    HStack {
-                        Text(kickoffText)
-                            .font(AppFont.caption())
-                            .foregroundColor(.appTextSecondary)
-                        Spacer()
-                        if let score = scoreText {
-                            Text(score)
-                                .font(AppFont.caption().weight(.semibold))
-                                .foregroundColor(.appTextPrimary)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                ZStack {
-                    HStack(spacing: AppSpacing.md) {
-                        TeamColumn(
-                            name: fixture.homeTeam,
-                            logo: live?.logos?.home ?? fixture.homeLogo,
-                            alignment: .leading
-                        )
-                        Spacer(minLength: 36)
-                        TeamColumn(
-                            name: fixture.awayTeam,
-                            logo: live?.logos?.away ?? fixture.awayLogo,
-                            alignment: .trailing
-                        )
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    Text("VS")
-                        .font(AppFont.overline())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, AppSpacing.md)
-                        .padding(.vertical, AppSpacing.sm)
-                        .background(
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.appPrimary, Color.appAccent],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                        )
-                }
-            }
-            .frame(minHeight: 120)
-        }
-    }
-
-    private func formatDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .short
-        f.locale = Locale(identifier: "en_US")
-        return f.string(from: date)
-    }
-}
-
-private struct TeamColumn: View {
-    let name: String
-    let logo: String?
-    let alignment: HorizontalAlignment
-
-    var body: some View {
-        VStack(alignment: alignment, spacing: AppSpacing.xs) {
-            TeamLogo(name: name, logo: logo)
-            Text(name)
-                .font(AppFont.caption())
-                .foregroundColor(.appTextPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
-        }
-        .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
-    }
-}
-
-private struct TeamLogo: View {
-    let name: String
-    let logo: String?
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.appSurfaceAlt)
-                .frame(width: 22, height: 22)
-            if let logo, let url = URL(string: logo) {
-                AsyncImage(url: url) { image in
-                    image.resizable().scaledToFit()
-                } placeholder: {
-                    Text(String(name.prefix(1)))
-                        .font(.system(size: 10, weight: .bold))
+                Color.appBackground.ignoresSafeArea()
+                VStack(spacing: AppSpacing.lg) {
+                    Text("Insufficient balance")
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
                         .foregroundColor(.appTextPrimary)
+                    Text(messageText)
+                        .font(AppFont.body())
+                        .foregroundColor(.appTextSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    VStack(spacing: AppSpacing.sm) {
+                        PrimaryButton("Recharge", style: .green, action: onRecharge)
+                        Button("Close", action: onDismiss)
+                            .font(AppFont.body())
+                            .foregroundColor(.appTextSecondary)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, AppSpacing.sm)
                 }
-                .frame(width: 14, height: 14)
-            } else {
-                Text(String(name.prefix(1)))
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.appTextPrimary)
+                .padding(AppSpacing.xl)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close", action: onDismiss)
+                        .foregroundColor(.appTextSecondary)
+                }
             }
         }
     }
@@ -654,7 +596,8 @@ private struct TeamLogo: View {
         startDate: "2026-02-07T18:00:00Z",
         endDate: "2026-02-09T18:00:00Z",
         fixtures: [],
-        entriesCount: 0
+        entriesCount: 0,
+        status: "scheduled"
     ))
     .environmentObject(AuthService())
     .preferredColorScheme(.dark)

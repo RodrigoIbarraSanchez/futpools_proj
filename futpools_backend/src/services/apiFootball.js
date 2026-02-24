@@ -496,7 +496,10 @@ const fetchFixturesByIds = async (fixtureIds = []) => {
   const fixtures = data?.response || [];
   return fixtures.map((f) => {
     const status = f?.fixture?.status || {};
-    const score = f?.goals || {};
+    const goals = f?.goals || {};
+    const fullTime = goals.fullTime || {};
+    const home = goals.home ?? fullTime.home ?? null;
+    const away = goals.away ?? fullTime.away ?? null;
     return {
       fixtureId: f?.fixture?.id || null,
       scheduledAt: f?.fixture?.date || null,
@@ -507,8 +510,8 @@ const fetchFixturesByIds = async (fixtureIds = []) => {
         isLive: status.short ? isLiveStatus(status.short) : false,
       },
       score: {
-        home: score.home ?? null,
-        away: score.away ?? null,
+        home,
+        away,
       },
       logos: {
         home: f?.teams?.home?.logo || null,

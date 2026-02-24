@@ -156,30 +156,27 @@ struct QuinielaCard: View {
     }
 
     private var statusLabel: String {
-        if isLive {
-            return "LIVE"
+        if let s = quiniela.status {
+            switch s {
+            case "live": return "LIVE"
+            case "completed": return "Completed"
+            case "scheduled": break
+            default: break
+            }
         }
+        if isLive { return "LIVE" }
         let now = Date()
-        if let end = quiniela.endDateValue, end < now {
-            return "Closed"
-        }
-        if let start = quiniela.startDateValue, start > now {
-            return "Upcoming"
-        }
+        if let end = quiniela.endDateValue, end < now { return "Closed" }
+        if let start = quiniela.startDateValue, start > now { return "Upcoming" }
         return "Open"
     }
 
     private var statusColor: Color {
-        switch statusLabel {
-        case "LIVE":
-            return Color.appLiveRed
-        case "Closed":
-            return Color.appSurfaceAlt
-        case "Upcoming":
-            return Color.appAccent
-        default:
-            return Color.appPrimary
-        }
+        if quiniela.status == "completed" { return Color.appSurfaceAlt }
+        if quiniela.status == "live" || statusLabel == "LIVE" { return Color.appLiveRed }
+        if statusLabel == "Closed" { return Color.appSurfaceAlt }
+        if statusLabel == "Upcoming" { return Color.appAccent }
+        return Color.appPrimary
     }
 
     private var previewFixtures: [QuinielaFixture] {
@@ -248,9 +245,9 @@ struct QuinielaCard: View {
                 if !previewFixtures.isEmpty {
                     Divider()
                         .background(Color.white.opacity(0.08))
-                    VStack(spacing: AppSpacing.xs) {
+                    VStack(spacing: AppSpacing.sm) {
                         ForEach(previewFixtures) { fixture in
-                            FixturePreviewRow(fixture: fixture, live: liveFixtures[fixture.fixtureId])
+                            FixtureCard(fixture: fixture, live: liveFixtures[fixture.fixtureId], compact: true)
                         }
                         if quiniela.fixtures.count > previewFixtures.count {
                             Text("+ \(quiniela.fixtures.count - previewFixtures.count) more fixtures")
@@ -272,121 +269,6 @@ struct QuinielaCard: View {
                 }
                 .padding(.trailing, AppSpacing.sm)
             )
-        }
-    }
-}
-
-private struct FixturePreviewRow: View {
-    let fixture: QuinielaFixture
-    let live: LiveFixture?
-
-    private var scoreText: String? {
-        guard let live else { return nil }
-        if live.score.home == nil && live.score.away == nil { return nil }
-        return "\(live.score.home ?? 0) : \(live.score.away ?? 0)"
-    }
-
-    private var statusMeta: (text: String, isLive: Bool, isFinal: Bool)? {
-        let short = (live?.status.short ?? fixture.status)?.uppercased()
-        guard let short, !short.isEmpty else { return nil }
-        let isLive = live?.status.isLive == true
-        let isFinal = ["FT", "AET", "PEN"].contains(short)
-        let text = isLive ? "LIVE" : (isFinal ? "FINAL" : short)
-        return (text, isLive, isFinal)
-    }
-
-    var body: some View {
-        HStack(spacing: AppSpacing.sm) {
-            TeamMiniPreview(name: fixture.homeTeam, logoURL: fixture.homeLogo)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .layoutPriority(1)
-
-            VStack(spacing: 4) {
-                if let meta = statusMeta {
-                    MatchStatusBadge(text: meta.text, isLive: meta.isLive, isFinal: meta.isFinal)
-                }
-                Text("VS")
-                    .font(AppFont.overline())
-                    .foregroundColor(.appTextSecondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(Color.appSurface.opacity(0.9))
-                    )
-                if let score = scoreText {
-                    Text(score)
-                        .font(AppFont.caption().weight(.semibold))
-                        .foregroundColor(.appTextPrimary)
-                }
-            }
-            .frame(minWidth: 56)
-            .layoutPriority(2)
-
-            TeamMiniPreview(name: fixture.awayTeam, logoURL: fixture.awayLogo, alignRight: true)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .layoutPriority(1)
-        }
-        .padding(.horizontal, AppSpacing.sm)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.appSurfaceAlt.opacity(0.7))
-        )
-    }
-}
-
-private struct TeamMiniPreview: View {
-    let name: String
-    let logoURL: String?
-    var alignRight: Bool = false
-
-    var body: some View {
-        HStack(spacing: AppSpacing.xs) {
-            if alignRight {
-                Spacer(minLength: 0)
-                Text(name)
-                    .font(AppFont.caption())
-                    .foregroundColor(.appTextPrimary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                TeamMiniLogo(name: name, logoURL: logoURL)
-            } else {
-                TeamMiniLogo(name: name, logoURL: logoURL)
-                Text(name)
-                    .font(AppFont.caption())
-                    .foregroundColor(.appTextPrimary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Spacer(minLength: 0)
-            }
-        }
-    }
-}
-
-private struct TeamMiniLogo: View {
-    let name: String
-    let logoURL: String?
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.appSurface)
-                .frame(width: 18, height: 18)
-            if let logoURL, let url = URL(string: logoURL) {
-                AsyncImage(url: url) { image in
-                    image.resizable().scaledToFit()
-                } placeholder: {
-                    Text(String(name.prefix(1)))
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.appTextPrimary)
-                }
-                .frame(width: 12, height: 12)
-            } else {
-                Text(String(name.prefix(1)))
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(.appTextPrimary)
-            }
         }
     }
 }

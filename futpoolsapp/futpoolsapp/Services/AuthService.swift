@@ -63,6 +63,7 @@ final class AuthService: ObservableObject {
             KeychainHelper.saveToken(res.token)
             currentUser = res.user
             isAuthenticated = true
+            await fetchUser()
         } catch {
             handleError(error)
         }
@@ -100,6 +101,60 @@ final class AuthService: ObservableObject {
         KeychainHelper.deleteToken()
         currentUser = nil
         isAuthenticated = false
+    }
+
+    func clearError() {
+        errorMessage = nil
+    }
+
+    /// Submit IAP signed transaction to backend; on success refreshes user (balance updated).
+    func rechargeBalance(signedTransaction: String) async throws {
+        struct Body: Encodable { let signedTransaction: String }
+        struct Response: Decodable { let balance: Double? }
+        let _: Response = try await client.request(
+            method: "POST",
+            path: "/users/me/balance/recharge",
+            body: Body(signedTransaction: signedTransaction),
+            token: token
+        )
+        await fetchUser()
+    }
+
+    /// Request a password reset code for the given email. Returns true if the request succeeded (we always return success for privacy).
+    func forgotPassword(email: String) async -> Bool {
+        errorMessage = nil
+        struct Body: Encodable { let email: String }
+        struct Response: Decodable { let message: String? }
+        do {
+            let _: Response = try await client.request(method: "POST", path: "/auth/forgot-password", body: Body(email: email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()))
+            return true
+        } catch {
+            handleError(error)
+            return false
+        }
+    }
+
+    /// Reset password with email + code from email. On success, signs the user in.
+    func resetPassword(email: String, code: String, newPassword: String) async {
+        errorMessage = nil
+        struct Body: Encodable {
+            let email: String
+            let code: String
+            let newPassword: String
+        }
+        do {
+            let res: AuthResponse = try await client.request(
+                method: "POST",
+                path: "/auth/reset-password",
+                body: Body(email: email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(), code: code.trimmingCharacters(in: .whitespacesAndNewlines), newPassword: newPassword)
+            )
+            KeychainHelper.saveToken(res.token)
+            currentUser = res.user
+            isAuthenticated = true
+            await fetchUser()
+        } catch {
+            handleError(error)
+        }
     }
 
     private func handleError(_ error: Error) {

@@ -16,6 +16,8 @@ struct Quiniela: Decodable, Identifiable {
     let endDate: String?
     let fixtures: [QuinielaFixture]
     let entriesCount: Int?
+    /// Pool lifecycle: `scheduled` (not started), `live` (in progress), `completed` (finished).
+    let status: String?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -28,6 +30,7 @@ struct Quiniela: Decodable, Identifiable {
         case endDate
         case fixtures
         case entriesCount
+        case status
     }
 
     var startDateValue: Date? {
@@ -37,6 +40,17 @@ struct Quiniela: Decodable, Identifiable {
     var endDateValue: Date? {
         guard let endDate else { return nil }
         return DateParser.parse(endDate)
+    }
+
+    var isScheduled: Bool { status == "scheduled" }
+    var isLive: Bool { status == "live" }
+    var isCompleted: Bool { status == "completed" }
+
+    /// Parsed entry cost for balance checks (e.g. 35 from "35" or "$35").
+    var entryCostValue: Double {
+        let trimmed = cost.trimmingCharacters(in: .whitespaces)
+        let digits = trimmed.filter { $0.isNumber || $0 == "." || $0 == "-" }
+        return Double(digits) ?? 0
     }
 }
 
@@ -85,6 +99,10 @@ struct QuinielaEntry: Decodable, Identifiable {
     let picks: [QuinielaPickResponse]
     let createdAt: String?
     let updatedAt: String?
+    /// Points for this entry (1 per correct forecast). From backend when available.
+    let score: Int?
+    /// Total fixtures with a final result in this quiniela (max possible points).
+    let totalPossible: Int?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -94,6 +112,8 @@ struct QuinielaEntry: Decodable, Identifiable {
         case picks
         case createdAt
         case updatedAt
+        case score
+        case totalPossible
     }
 
     var createdAtValue: Date? {

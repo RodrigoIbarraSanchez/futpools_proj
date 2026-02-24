@@ -154,11 +154,13 @@ struct QuinielaEntryCard: View {
                 ForEach(entry.quiniela.fixtures) { fixture in
                     let pick = entry.picks.first { $0.fixtureId == fixture.fixtureId }?.pick ?? ""
                     MatchPickLine(
+                        fixture: fixture,
                         homeName: fixture.homeTeam,
                         awayName: fixture.awayTeam,
                         homeLogo: fixture.homeLogo,
                         awayLogo: fixture.awayLogo,
-                        pick: pick
+                        pick: pick,
+                        live: nil
                     )
                 }
             }
@@ -233,6 +235,13 @@ private struct PoolEntriesCard: View {
                     .foregroundColor(.appTextSecondary)
                 HStack(spacing: AppSpacing.sm) {
                     EntryPill(label: "Entries: \(group.entries.count)")
+                    if let best = group.entries.map({ e -> (Int, Int) in
+                        let s = e.score ?? 0
+                        let t = (e.totalPossible ?? 0) > 0 ? (e.totalPossible ?? 0) : e.quiniela.fixtures.count
+                        return (s, t)
+                    }).max(by: { $0.0 < $1.0 }), best.1 > 0 {
+                        EntryPill(label: "Points: \(best.0)/\(best.1)")
+                    }
                     EntryPill(label: "Prize: \(group.quiniela.prize)")
                     EntryPill(label: "Entry: \(group.quiniela.cost)")
                 }
@@ -306,8 +315,17 @@ private struct EntryDetailCard: View {
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .short
-        f.locale = Locale(identifier: "en_US")
+        f.locale = Locale.current
         return f.string(from: date)
+    }
+
+    private var pointsText: String? {
+        let score = entry.score ?? 0
+        let total = entry.totalPossible ?? 0
+        let totalFixtures = entry.quiniela.fixtures.count
+        if total > 0 { return "\(score)/\(total) pts" }
+        if totalFixtures > 0 { return "0/\(totalFixtures) pts" }
+        return nil
     }
 
     var body: some View {
@@ -316,6 +334,14 @@ private struct EntryDetailCard: View {
                 Text(entryLabel)
                     .font(AppFont.caption().weight(.semibold))
                     .foregroundColor(.appTextPrimary)
+                if let pts = pointsText {
+                    Text(pts)
+                        .font(AppFont.overline())
+                        .foregroundColor(.appPrimary)
+                        .padding(.horizontal, AppSpacing.xs)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.appPrimary.opacity(0.2)))
+                }
                 Spacer()
                 if !entryDate.isEmpty {
                     Text(entryDate)
@@ -326,6 +352,7 @@ private struct EntryDetailCard: View {
             ForEach(entry.quiniela.fixtures, id: \.fixtureId) { fixture in
                 let pick = entry.picks.first { $0.fixtureId == fixture.fixtureId }?.pick ?? ""
                 MatchPickLine(
+                    fixture: fixture,
                     homeName: fixture.homeTeam,
                     awayName: fixture.awayTeam,
                     homeLogo: fixture.homeLogo,
@@ -352,6 +379,7 @@ private struct EntryPill: View {
 }
 
 private struct MatchPickLine: View {
+    let fixture: QuinielaFixture
     let homeName: String
     let awayName: String
     let homeLogo: String?
@@ -360,6 +388,7 @@ private struct MatchPickLine: View {
     let live: LiveFixture?
 
     init(
+        fixture: QuinielaFixture,
         homeName: String,
         awayName: String,
         homeLogo: String?,
@@ -367,6 +396,7 @@ private struct MatchPickLine: View {
         pick: String,
         live: LiveFixture? = nil
     ) {
+        self.fixture = fixture
         self.homeName = homeName
         self.awayName = awayName
         self.homeLogo = homeLogo
@@ -393,45 +423,224 @@ private struct MatchPickLine: View {
         return "\(live.score.home ?? 0) : \(live.score.away ?? 0)"
     }
 
+    private var isLiveMatch: Bool { live?.status.isLive == true }
+    private var isFinalMatch: Bool {
+        ["FT", "AET", "PEN"].contains(live?.status.short?.uppercased() ?? "")
+    }
+    private var hasScore: Bool { live?.score.home != nil || live?.score.away != nil }
+
+    /// Kickoff already passed but we have no result (e.g. API error).
+    private var kickoffIsPast: Bool {
+        guard let date = fixture.kickoffDate else { return false }
+        return date < Date()
+    }
+    private var treatAsFinishedWithoutScore: Bool { kickoffIsPast && !hasScore }
+
+    private var metaText: String {
+        if isLiveMatch {
+            let min = live?.status.elapsed.map { "\($0)'" } ?? ""
+            let short = live?.status.short?.uppercased() ?? ""
+            return ["LIVE", min, short == "LIVE" ? "" : short].filter { !$0.isEmpty }.joined(separator: " · ")
+        }
+        if isFinalMatch || treatAsFinishedWithoutScore { return NSLocalizedString("Final", comment: "") }
+        return ""
+    }
+
+    /// Result "1", "X", "2" from final score; nil if not finished or no score.
+    private var matchResult: String? {
+        guard isFinalMatch, let live else { return nil }
+        let h = live.score.home ?? 0
+        let a = live.score.away ?? 0
+        if h > a { return "1" }
+        if h < a { return "2" }
+        return "X"
+    }
+
+    private var pickIsCorrect: Bool? {
+        guard let result = matchResult else { return nil }
+        return result == pickNormalized
+    }
+
     var body: some View {
-        VStack(spacing: AppSpacing.xs) {
-            HStack(spacing: AppSpacing.sm) {
-                TeamMiniRow(name: homeName, logoURL: homeLogo)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                PickBadge(label: "1", selected: pickNormalized == "1")
-                PickBadge(label: "X", selected: pickNormalized == "X")
-                PickBadge(label: "2", selected: pickNormalized == "2")
-                TeamMiniRow(name: awayName, logoURL: awayLogo)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            HStack {
-                if let meta = statusMeta {
-                    MatchStatusBadge(text: meta.text, isLive: meta.isLive, isFinal: meta.isFinal)
-                }
-                Spacer()
-                if let score = scoreText {
-                    Text(score)
-                        .font(AppFont.caption().weight(.semibold))
+        VStack(spacing: 10) {
+            HStack(spacing: 0) {
+                VStack(spacing: 6) {
+                    EntryCrest(name: homeName, logoURL: homeLogo)
+                    Text(homeName)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundColor(.appTextPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.78)
                 }
+                .frame(maxWidth: .infinity)
+
+                VStack(spacing: 5) {
+                    if !metaText.isEmpty {
+                        HStack(spacing: 4) {
+                            if isLiveMatch {
+                                Circle().fill(Color.appLiveRed).frame(width: 5, height: 5)
+                            }
+                            Text(metaText)
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundColor(isLiveMatch ? .appLiveRed : .appTextSecondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    if hasScore {
+                        HStack(spacing: 6) {
+                            Text("\(live?.score.home ?? 0)")
+                                .font(.system(size: 26, weight: .heavy, design: .rounded))
+                                .foregroundColor(.appTextPrimary).monospacedDigit()
+                            Text("–")
+                                .font(.system(size: 18, weight: .regular))
+                                .foregroundColor(.appTextSecondary)
+                            Text("\(live?.score.away ?? 0)")
+                                .font(.system(size: 26, weight: .heavy, design: .rounded))
+                                .foregroundColor(.appTextPrimary).monospacedDigit()
+                        }
+                    } else if treatAsFinishedWithoutScore {
+                        Text("—")
+                            .font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .foregroundColor(.appTextSecondary)
+                    } else {
+                        Text("vs")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.appTextMuted)
+                            .padding(.vertical, 4)
+                    }
+                }
+                .frame(minWidth: 88)
+
+                VStack(spacing: 6) {
+                    EntryCrest(name: awayName, logoURL: awayLogo)
+                    Text(awayName)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(.appTextPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.78)
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            HStack(spacing: 8) {
+                Spacer()
+                PickBadge(
+                    label: "1",
+                    selected: pickNormalized == "1",
+                    matchFinished: isFinalMatch,
+                    isCorrect: pickNormalized == "1" ? pickIsCorrect : nil
+                )
+                PickBadge(
+                    label: "X",
+                    selected: pickNormalized == "X",
+                    matchFinished: isFinalMatch,
+                    isCorrect: pickNormalized == "X" ? pickIsCorrect : nil
+                )
+                PickBadge(
+                    label: "2",
+                    selected: pickNormalized == "2",
+                    matchFinished: isFinalMatch,
+                    isCorrect: pickNormalized == "2" ? pickIsCorrect : nil
+                )
+                Spacer()
+            }
+
+            if isFinalMatch, let correct = pickIsCorrect {
+                Text(correct ? NSLocalizedString("Acierto", comment: "") : NSLocalizedString("Falló", comment: ""))
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(correct ? Color.appPrimary : Color.appLiveRed)
+                    )
+            } else if treatAsFinishedWithoutScore {
+                Text(NSLocalizedString("Resultado no disponible", comment: ""))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.appTextSecondary)
             }
         }
+        .padding(.vertical, AppSpacing.xs)
     }
 }
 
 private struct PickBadge: View {
     let label: String
     let selected: Bool
+    var matchFinished: Bool = false
+    var isCorrect: Bool? = nil
+
+    /// Partido en vivo o sin resultado: solo pronóstico marcado en oscuro.
+    private var isPendingOrLive: Bool { selected && !matchFinished }
+
+    private var fillColor: Color {
+        if !selected { return Color.appSurfaceAlt }
+        if !matchFinished {
+            return Color.white.opacity(0.18)
+        }
+        return (isCorrect == true) ? Color.appPrimary : Color.appLiveRed
+    }
+
+    private var textColor: Color {
+        if !selected { return .appTextSecondary }
+        if !matchFinished { return .appTextSecondary }
+        return (isCorrect == true) ? .black : .white
+    }
+
+    private var borderColor: Color {
+        if isPendingOrLive { return Color.white.opacity(0.25) }
+        return .clear
+    }
 
     var body: some View {
         Text(label)
             .font(AppFont.caption().weight(.semibold))
-            .foregroundColor(selected ? .black : .appTextSecondary)
+            .foregroundColor(textColor)
             .frame(width: 24, height: 24)
-            .background(
-                Circle()
-                    .fill(selected ? Color.appPrimary : Color.appSurfaceAlt)
-            )
+            .background(Circle().fill(fillColor))
+            .overlay(Circle().strokeBorder(borderColor, lineWidth: 1.5))
+    }
+}
+
+private struct EntryCrest: View {
+    let name: String
+    let logoURL: String?
+
+    private func initials(_ n: String) -> String {
+        let parts = n.split(separator: " ")
+        return ((parts.first?.prefix(1) ?? "") + (parts.dropFirst().first?.prefix(1) ?? "")).uppercased()
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(LinearGradient(
+                    colors: [Color.appSurfaceAlt, Color.appSurface],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                ))
+                .frame(width: 50, height: 50)
+                .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .shadow(color: Color.black.opacity(0.3), radius: 6, x: 0, y: 3)
+
+            if let logoURL, let url = URL(string: logoURL) {
+                AsyncImage(url: url) { phase in
+                    if let img = phase.image { img.resizable().scaledToFit() }
+                    else {
+                        Text(initials(name))
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(.appTextPrimary)
+                    }
+                }
+                .frame(width: 32, height: 32)
+            } else {
+                Text(initials(name))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.appTextPrimary)
+            }
+        }
     }
 }
 

@@ -37,10 +37,12 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
-/** Requires req.user; returns 403 if user is not admin (demo@futpools.app). */
+const ADMIN_EMAILS = new Set(['demo@futpools.app', 'admin@futpools.app']);
+
+/** Requires req.user; returns 403 if user is not admin. */
 const requireAdmin = (req, res, next) => {
-  const adminEmail = 'demo@futpools.app';
-  if (!req.user || (req.user.email || '').toLowerCase() !== adminEmail) {
+  const email = (req.user?.email || '').toLowerCase();
+  if (!req.user || !ADMIN_EMAILS.has(email)) {
     return res.status(403).json({ message: 'Admin only' });
   }
   next();

@@ -1,0 +1,62 @@
+/* Match iOS AppTheme - Draftea-inspired palette */
+:root {
+  --app-background: #0B0F14;
+  --app-surface: #141A21;
+  --app-surface-alt: #1B2430;
+  --app-stroke: #263244;
+  --app-primary: #21E28C;
+  --app-primary-soft: #2AF5A2;
+  --app-accent: #36E9FF;
+  --app-live-red: #FF5D5D;
+  --app-text-primary: #ffffff;
+  --app-text-secondary: rgba(255, 255, 255, 0.7);
+  --app-text-muted: rgba(255, 255, 255, 0.5);
+  --app-gold: #FFD700;
+  --app-radius-card: 18px;
+  --app-radius-button: 14px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--app-background);
+  color: var(--app-text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Mobile-first: cap width on large screens so it looks like a phone */
+@media (min-width: 430px) {
+  #root {
+    max-width: 430px;
+    margin: 0 auto;
+    box-shadow: 0 0 0 1px var(--app-stroke);
+  }
+}
+
+a {
+  color: var(--app-primary);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, button {
+  font-size: 16px; /* avoids zoom on focus on iOS */
+}
