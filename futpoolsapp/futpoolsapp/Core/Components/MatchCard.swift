@@ -113,11 +113,28 @@ struct FixtureCard: View {
         kickoffIsPast && !hasScore
     }
 
+    private var periodLabel: String {
+        switch shortStatus {
+        case "1H": return NSLocalizedString("1st half", comment: "")
+        case "2H": return NSLocalizedString("2nd half", comment: "")
+        case "HT": return NSLocalizedString("Half time", comment: "")
+        case "ET": return NSLocalizedString("Extra time", comment: "")
+        case "P": return NSLocalizedString("Penalties", comment: "")
+        case "PEN": return NSLocalizedString("Penalties", comment: "")
+        default: return shortStatus
+        }
+    }
+
     private var liveClockText: String? {
         guard isLiveMatch else { return nil }
         let min = live?.status.elapsed.map { "\($0)'" } ?? ""
-        let period = shortStatus.isEmpty ? "LIVE" : shortStatus
+        let period = shortStatus.isEmpty ? "LIVE" : periodLabel
         return ["LIVE", min, period].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
+    private var hasPenaltyScore: Bool {
+        guard let live else { return false }
+        return live.penalty?.home != nil || live.penalty?.away != nil
     }
 
     private var kickoffText: String {
@@ -192,6 +209,11 @@ struct FixtureCard: View {
                                     .font(.system(size: compact ? 18 : 32, weight: .heavy, design: .rounded))
                                     .foregroundColor(.appTextPrimary)
                                     .monospacedDigit()
+                            }
+                            if hasPenaltyScore, let p = live?.penalty {
+                                Text("Penalties \(p.home ?? 0)–\(p.away ?? 0)")
+                                    .font(.system(size: compact ? 9 : 10, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.appTextSecondary)
                             }
                         } else if let placeholder = centerScoreOrPlaceholder {
                             Text(placeholder)

@@ -8,14 +8,217 @@
 [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
 [32m[nodemon] starting `node src/server.js`[39m
 Server running on port 3000
+Stripe: configured (recharge enabled)
 MongoDB connected
-[Football] getFixturesByIds failed (API may be down or invalid key): API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[API-Football] Poll error API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[Football] getFixturesByIds failed (API may be down or invalid key): API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[Quiniela] getLeaderboard: fetch fixtures failed API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[Quiniela] getLeaderboard: fetch fixtures failed API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[API-Football] Poll error API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[Quiniela] getLeaderboard: fetch fixtures failed API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[Quiniela] getLeaderboard: fetch fixtures failed API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[Football] getFixturesByIds failed (API may be down or invalid key): API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
-[API-Football] Poll error API-Football error 403: {"get": "","parameters": [],"errors": {"token": "Method not supported, please check your request and credentials.","error": "4xSe"},"results": 0,"paging": {"current": 1,"total": 1},"response": []}
+[API-Football] leagueId=262 season=2025
+[API-Football] teams loaded leagueId=262 count=26
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT
+[API-Football] team lookup leagueId=262 name="América" logo=yes
+[API-Football] team lookup leagueId=262 name="Cruz Azul" logo=yes
+[API-Football] team lookup leagueId=262 name="Monterrey" logo=yes
+[API-Football] team lookup leagueId=262 name="Chivas" logo=yes
+[API-Football] team lookup leagueId=262 name="Pumas" logo=yes
+[API-Football] team lookup leagueId=262 name="Tigres" logo=yes
+[API-Football] matchday=699ddc145a171c335a637bd1 leagueId=262 fixtures=13
+[API-Football] match=América vs Chivas logoHome=yes logoAway=yes status=FT
+[API-Football] match=Cruz Azul vs Pumas logoHome=yes logoAway=yes status=n/a
+[API-Football] match=Monterrey vs Tigres logoHome=yes logoAway=yes status=FT

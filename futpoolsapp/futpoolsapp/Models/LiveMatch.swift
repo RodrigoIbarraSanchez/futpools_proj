@@ -52,6 +52,7 @@ struct LiveFixture: Decodable, Identifiable {
     let scheduledAt: String?
     let status: LiveStatus
     let score: LiveScore
+    let penalty: LiveScore?
     let logos: LiveLogos?
     let league: LiveLeague?
 

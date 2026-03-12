@@ -5,6 +5,27 @@ const { fetchFixturesByIds } = require('../services/apiFootball');
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN']);
 
+/**
+ * Escalera de premios por aciertos (por ahora global).
+ * 12 → $3,000 | 11 → $1,500 | 10 → $700 | 9 → $300 | 8 → $100 | 1-7 → $0 | 0 → $100
+ */
+const DEFAULT_PRIZE_LADDER = [
+  { hits: 12, amount: 3000 },
+  { hits: 11, amount: 1500 },
+  { hits: 10, amount: 700 },
+  { hits: 9, amount: 300 },
+  { hits: 8, amount: 100 },
+  { hits: 0, amount: 100 },
+  // 1-7 aciertos → $0 (no entry needed, fallback is 0)
+];
+
+function getPrizeForScore(score, ladder = DEFAULT_PRIZE_LADDER) {
+  const exact = ladder.find((r) => r.hits === score);
+  if (exact) return exact.amount;
+  if (score >= 1 && score <= 7) return 0;
+  return 0;
+}
+
 /** Compute pool status from fixtures: scheduled | live | completed */
 function computePoolStatus(fixtures) {
   if (!fixtures || fixtures.length === 0) return 'scheduled';
@@ -322,6 +343,7 @@ exports.getLeaderboard = async (req, res) => {
     const fullLeaderboard = rows.map((row, index) => ({
       ...row,
       rank: index + 1,
+      prizeAmount: getPrizeForScore(row.score),
     }));
     const totalCount = fullLeaderboard.length;
 
@@ -339,11 +361,18 @@ exports.getLeaderboard = async (req, res) => {
           score: userRow.score,
           totalPossible: userRow.totalPossible,
           displayName: userRow.displayName,
+          prizeAmount: userRow.prizeAmount,
         };
       }
     }
 
-    res.json({ leaderboard, totalCount, totalPossible, userEntry });
+    res.json({
+      leaderboard,
+      totalCount,
+      totalPossible,
+      userEntry,
+      prizeLadder: DEFAULT_PRIZE_LADDER,
+    });
   } catch (err) {
     console.error('[Quiniela] getLeaderboard error:', err.message);
     res.status(500).json({ message: 'Server error' });

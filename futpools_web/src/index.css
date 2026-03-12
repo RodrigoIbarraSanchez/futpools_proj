@@ -12,8 +12,11 @@
   --app-text-secondary: rgba(255, 255, 255, 0.7);
   --app-text-muted: rgba(255, 255, 255, 0.5);
   --app-gold: #FFD700;
+  --app-pitch: #0C2322;
+  --app-pitch-deep: #091716;
   --app-radius-card: 18px;
   --app-radius-button: 14px;
+  --app-radius-pill: 999px;
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -37,6 +40,13 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+
+/* Rounded typography for headings (match iOS AppFont) */
+.app-font-title { font-size: 22px; font-weight: 700; }
+.app-font-headline { font-size: 17px; font-weight: 600; }
+.app-font-body { font-size: 15px; font-weight: 400; }
+.app-font-caption { font-size: 13px; font-weight: 400; }
+.app-font-overline { font-size: 11px; font-weight: 600; }
 
 /* Mobile-first: cap width on large screens so it looks like a phone */
 @media (min-width: 430px) {

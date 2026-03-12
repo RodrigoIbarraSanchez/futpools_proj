@@ -498,8 +498,11 @@ const fetchFixturesByIds = async (fixtureIds = []) => {
     const status = f?.fixture?.status || {};
     const goals = f?.goals || {};
     const fullTime = goals.fullTime || {};
+    const penalty = goals.penalty || {};
     const home = goals.home ?? fullTime.home ?? null;
     const away = goals.away ?? fullTime.away ?? null;
+    const penaltyHome = penalty.home ?? null;
+    const penaltyAway = penalty.away ?? null;
     return {
       fixtureId: f?.fixture?.id || null,
       scheduledAt: f?.fixture?.date || null,
@@ -513,6 +516,9 @@ const fetchFixturesByIds = async (fixtureIds = []) => {
         home,
         away,
       },
+      penalty: (penaltyHome != null || penaltyAway != null)
+        ? { home: penaltyHome, away: penaltyAway }
+        : null,
       logos: {
         home: f?.teams?.home?.logo || null,
         away: f?.teams?.away?.logo || null,

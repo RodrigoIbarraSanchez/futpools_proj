@@ -11,11 +11,19 @@ const predictionRoutes = require('./routes/predictions');
 const footballRoutes = require('./routes/football');
 const quinielaRoutes = require('./routes/quinielas');
 const settingsRoutes = require('./routes/settings');
+const stripeRoutes = require('./routes/stripe');
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+
+// Stripe webhook must receive raw body for signature verification (before express.json)
+app.use(
+  '/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  stripeRoutes.webhookHandler
+);
+app.use(express.json({ limit: '10mb' }));
 
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
@@ -26,6 +34,7 @@ app.use('/predictions', predictionRoutes);
 app.use('/football', footballRoutes);
 app.use('/quinielas', quinielaRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/stripe', stripeRoutes.router);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });
