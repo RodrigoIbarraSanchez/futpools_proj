@@ -68,6 +68,9 @@ export const translations = {
     'Closed': 'Closed',
     'Completed': 'Completed',
     'LIVE': 'LIVE',
+    'Home': 'Home',
+    'Draw': 'Draw',
+    'Away': 'Away',
   },
   es: {
     'Sign in to play': 'Inicia sesión para jugar',
@@ -138,6 +141,9 @@ export const translations = {
     'Closed': 'Cerrada',
     'Completed': 'Finalizada',
     'LIVE': 'EN VIVO',
+    'Home': 'Local',
+    'Draw': 'Empate',
+    'Away': 'Visitante',
   },
 };
 

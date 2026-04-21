@@ -5,7 +5,6 @@
 
 import SwiftUI
 
-/// Set to true when email provider is configured in production to enable forgot-password flow.
 private let isPasswordRecoveryEnabled = false
 
 struct LoginView: View {
@@ -18,115 +17,206 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            AppBackground()
+            ArenaBackground(showGridFloor: true, scanlineIntensity: 0.25)
+
             ScrollView {
-                VStack(spacing: AppSpacing.xl) {
-                    VStack(spacing: AppSpacing.sm) {
-                        Text("Quinielas")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundColor(.appTextPrimary)
-                        Text("Inicia sesión para jugar")
-                            .font(AppFont.body())
-                            .foregroundColor(.appTextSecondary)
-                    }
-                    .padding(.top, AppSpacing.xl * 2)
-
-                    VStack(spacing: AppSpacing.md) {
-                        TextField("Email", text: $email)
-                            .textContentType(.emailAddress)
-                            .keyboardType(.emailAddress)
-                            .focused($focused, equals: true)
-                            .appTextFieldStyle()
-
-                        SecureField("Contraseña", text: $password)
-                            .textContentType(.password)
-                            .focused($focused, equals: false)
-                            .appTextFieldStyle()
-                    }
-                    .padding(.horizontal)
-
-                    if let msg = auth.errorMessage {
-                        Text(msg)
-                            .font(AppFont.caption())
-                            .foregroundColor(.appLiveRed)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-
-                    PrimaryButton("Entrar", style: .purple) {
-                        focused = nil
-                        print("[Auth] Iniciando sesión — email: \(email)")
-                        Task {
-                            isLoading = true
-                            await auth.login(email: email, password: password)
-                            isLoading = false
-                            if auth.isAuthenticated { print("[Auth] Login OK") }
+                VStack(spacing: 26) {
+                    // Logo lockup
+                    VStack(spacing: 6) {
+                        HStack(spacing: 0) {
+                            Text("FUT")
+                                .font(ArenaFont.display(size: 44, weight: .heavy))
+                                .tracking(6)
+                                .foregroundColor(.arenaText)
+                            Text("POOLS")
+                                .font(ArenaFont.display(size: 44, weight: .heavy))
+                                .tracking(6)
+                                .foregroundColor(.arenaPrimary)
+                                .shadow(color: .arenaPrimary.opacity(0.85), radius: 14)
                         }
+                        Text("· ARENA v2.0 ·")
+                            .font(ArenaFont.mono(size: 11))
+                            .tracking(4)
+                            .foregroundColor(.arenaTextDim)
                     }
-                    .disabled(isLoading || email.isEmpty || password.isEmpty)
-                    .padding(.horizontal)
-                    .padding(.top, AppSpacing.sm)
+                    .padding(.top, 80)
 
-                    Group {
-                        if isPasswordRecoveryEnabled {
+                    // Form card
+                    HudFrame(
+                        cut: 18,
+                        glow: .arenaPrimary,
+                        brackets: true
+                    ) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("▶ INSERT COIN TO CONTINUE")
+                                .font(ArenaFont.display(size: 13, weight: .heavy))
+                                .tracking(3)
+                                .foregroundColor(.arenaPrimary)
+
+                            ArenaField(
+                                label: "EMAIL",
+                                text: $email,
+                                isSecure: false,
+                                isFocused: focused == true,
+                                onFocus: { focused = true }
+                            )
+                            ArenaField(
+                                label: "PASSWORD",
+                                text: $password,
+                                isSecure: true,
+                                isFocused: focused == false,
+                                onFocus: { focused = false }
+                            )
+
+                            if let msg = auth.errorMessage {
+                                Text(msg)
+                                    .font(ArenaFont.mono(size: 11))
+                                    .foregroundColor(.arenaDanger)
+                                    .multilineTextAlignment(.leading)
+                                    .padding(.top, 2)
+                            }
+
+                            ArcadeButton(
+                                title: isLoading ? "LOADING…" : "▶ START MATCH",
+                                size: .lg,
+                                fullWidth: true,
+                                disabled: isLoading || email.isEmpty || password.isEmpty
+                            ) {
+                                focused = nil
+                                Task {
+                                    isLoading = true
+                                    await auth.login(email: email, password: password)
+                                    isLoading = false
+                                }
+                            }
+                            .padding(.top, 4)
+                        }
+                        .padding(22)
+                    }
+                    .padding(.horizontal, 20)
+
+                    // Secondary links
+                    VStack(spacing: 10) {
+                        HStack(spacing: 6) {
+                            Text("NEW PLAYER?")
+                                .font(ArenaFont.mono(size: 11))
+                                .tracking(1)
+                                .foregroundColor(.arenaTextMuted)
                             NavigationLink {
-                                ForgotPasswordView()
+                                RegisterView()
                             } label: {
-                                Text("Forgot password?")
-                                    .font(AppFont.body())
-                                    .foregroundColor(.appTextSecondary)
+                                Text("CREATE ACCOUNT →")
+                                    .font(ArenaFont.display(size: 12, weight: .bold))
+                                    .tracking(2)
+                                    .foregroundColor(.arenaPrimary)
                             }
-                        } else {
-                            Button {
-                                showComingSoon = true
-                            } label: {
-                                Text("Forgot password?")
-                                    .font(AppFont.body())
-                                    .foregroundColor(.appTextSecondary)
+                        }
+
+                        Group {
+                            if isPasswordRecoveryEnabled {
+                                NavigationLink {
+                                    ForgotPasswordView()
+                                } label: {
+                                    Text("FORGOT PASSWORD?")
+                                        .font(ArenaFont.mono(size: 10))
+                                        .tracking(1)
+                                        .foregroundColor(.arenaTextDim)
+                                }
+                            } else {
+                                Button {
+                                    showComingSoon = true
+                                } label: {
+                                    Text("FORGOT PASSWORD?")
+                                        .font(ArenaFont.mono(size: 10))
+                                        .tracking(1)
+                                        .foregroundColor(.arenaTextDim)
+                                }
                             }
                         }
                     }
-                    .padding(.top, AppSpacing.xs)
+                    .padding(.top, 6)
 
-                    NavigationLink {
-                        RegisterView()
-                    } label: {
-                        Text("¿No tienes cuenta? Regístrate")
-                            .font(AppFont.body())
-                            .foregroundColor(.appPrimary)
-                    }
-                    .padding(.top)
+                    Spacer(minLength: 40)
+
+                    Text("© 2026 FUTPOOLS · PRESS START")
+                        .font(ArenaFont.mono(size: 9))
+                        .tracking(3)
+                        .foregroundColor(.arenaTextFaint)
+                        .padding(.bottom, 20)
                 }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .sheet(isPresented: $showComingSoon) {
             ComingSoonPasswordRecoverySheet(onDismiss: { showComingSoon = false })
         }
     }
 }
 
-// MARK: - Coming soon modal (hide when isPasswordRecoveryEnabled = true and email provider is connected)
+// MARK: - Field
+
+private struct ArenaField: View {
+    let label: String
+    @Binding var text: String
+    var isSecure: Bool
+    var isFocused: Bool
+    var onFocus: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(ArenaFont.mono(size: 10))
+                .tracking(2)
+                .foregroundColor(.arenaTextMuted)
+            Group {
+                if isSecure {
+                    SecureField("", text: $text)
+                } else {
+                    TextField("", text: $text)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                }
+            }
+            .font(ArenaFont.mono(size: 14))
+            .foregroundColor(.arenaText)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.arenaBg)
+            .overlay(
+                Rectangle()
+                    .stroke(isFocused ? Color.arenaPrimary.opacity(0.5) : Color.arenaStroke, lineWidth: 1)
+            )
+            .onTapGesture { onFocus() }
+        }
+    }
+}
+
+// MARK: - Coming soon sheet
+
 private struct ComingSoonPasswordRecoverySheet: View {
     var onDismiss: () -> Void
 
     var body: some View {
         ZStack {
-            Color.appBackground.ignoresSafeArea()
-            VStack(spacing: AppSpacing.lg) {
-                Text("Coming soon")
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .foregroundColor(.appTextPrimary)
-                Text("Password recovery will be available soon. We'll notify you when it's ready.")
-                    .font(AppFont.body())
-                    .foregroundColor(.appTextSecondary)
+            Color.arenaBg.ignoresSafeArea()
+            VStack(spacing: 20) {
+                Text("COMING SOON")
+                    .font(ArenaFont.display(size: 22, weight: .heavy))
+                    .tracking(3)
+                    .foregroundColor(.arenaText)
+                Text("Password recovery will be available soon.")
+                    .font(ArenaFont.body(size: 14))
+                    .foregroundColor(.arenaTextDim)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                PrimaryButton("Done", style: .purple, action: onDismiss)
-                    .padding(.horizontal)
-                    .padding(.top, AppSpacing.sm)
+                ArcadeButton(title: "DONE", size: .md, fullWidth: true) {
+                    onDismiss()
+                }
+                .padding(.horizontal)
             }
-            .padding(AppSpacing.xl)
+            .padding(32)
         }
         .presentationDetents([.medium])
     }

@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+let _onUnauthorized = null;
+
 const apiFetch = async (path, options = {}, token) => {
   const res = await fetch(`${API_URL}${path}`, {
     headers: {
@@ -15,6 +17,10 @@ const apiFetch = async (path, options = {}, token) => {
   try {
     if (text) data = JSON.parse(text);
   } catch (_) {}
+  if (res.status === 401) {
+    _onUnauthorized?.();
+    throw new Error("Session expired. Please sign in again.");
+  }
   if (!res.ok) {
     throw new Error(data?.message || "Request failed");
   }
@@ -43,6 +49,11 @@ export default function App() {
     setToken("");
     setAdminEmail("");
   };
+
+  useEffect(() => {
+    _onUnauthorized = onLogout;
+    return () => { _onUnauthorized = null; };
+  }, []);
 
   return (
     <div className="app">

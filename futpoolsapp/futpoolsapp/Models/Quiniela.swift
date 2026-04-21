@@ -18,6 +18,9 @@ struct Quiniela: Decodable, Identifiable {
     let entriesCount: Int?
     /// Pool lifecycle: `scheduled` (not started), `live` (in progress), `completed` (finished).
     let status: String?
+    /// Admin-controlled "featured" flag. When true the pool is pinned to the Home
+    /// QUICK PLAY hero (or the featured carousel when multiple are marked).
+    let featured: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -31,6 +34,7 @@ struct Quiniela: Decodable, Identifiable {
         case fixtures
         case entriesCount
         case status
+        case featured
     }
 
     var startDateValue: Date? {
@@ -80,6 +84,13 @@ struct QuinielaUpdateRequest: Encodable {
     let prize: String
     let cost: String
     let currency: String?
+    let featured: Bool?
+}
+
+/// Partial update for admin quick-actions (e.g. toggle the featured flag) without
+/// having to resend every editable field.
+struct QuinielaFeaturedRequest: Encodable {
+    let featured: Bool
 }
 
 struct QuinielaEntryRequest: Encodable {

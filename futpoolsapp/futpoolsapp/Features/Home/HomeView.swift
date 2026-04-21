@@ -8,66 +8,82 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var auth: AuthService
     @StateObject private var vm = HomeViewModel()
+    @State private var activeFilter: String = "all"
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                AppBackground()
+            ZStack(alignment: .top) {
+                ArenaBackground()
+
                 ScrollView {
-                    VStack(alignment: .leading, spacing: AppSpacing.md) {
-                        if let urlString = vm.bannerImageURL, let url = URL(string: urlString) {
-                            BannerImageView(url: url)
+                    VStack(alignment: .leading, spacing: 14) {
+                        ArenaHeader(coins: auth.currentUser?.balanceValue ?? 0)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 6)
+
+                        if let urlString = vm.bannerImageURL,
+                           let url = URL(string: urlString) {
+                            ArenaBanner(url: url)
+                                .padding(.horizontal, 16)
                         }
+
+                        if quickPlayPools.count > 1 {
+                            FeaturedCarousel(pools: quickPlayPools, liveFixtures: vm.liveFixtures)
+                        } else if let only = quickPlayPools.first {
+                            QuickPlaySection(quiniela: only, liveFixtures: vm.liveFixtures)
+                                .padding(.horizontal, 16)
+                        }
+
+                        ArenaFilterStrip(
+                            active: $activeFilter,
+                            allCount: vm.quinielas.count,
+                            openCount: openQuinielas.count,
+                            liveCount: liveQuinielas.count,
+                            closedCount: closedQuinielas.count
+                        )
+                        .padding(.horizontal, 16)
+
                         if vm.isLoading && vm.quinielas.isEmpty {
-                            LoadingStateView(
-                                title: "Loading pools…",
-                                subtitle: "Fetching fixtures and entry counts"
-                            )
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, AppSpacing.xl)
+                            ArenaLoadingState(title: "LOADING POOLS…", subtitle: "Fetching fixtures and entry counts")
+                                .padding(.top, 24)
                         } else if let err = vm.errorMessage {
                             Text(err)
-                                .font(AppFont.body())
-                                .foregroundColor(.appTextSecondary)
+                                .font(ArenaFont.body(size: 13))
+                                .foregroundColor(.arenaTextDim)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                         } else if vm.quinielas.isEmpty {
-                            EmptyQuinielasView(onRefresh: { vm.loadQuinielas() })
-                                .frame(maxWidth: .infinity)
-                                .padding(.top, AppSpacing.xl)
-                        } else {
-                            LazyVStack(spacing: AppSpacing.sm) {
-                                ForEach(vm.quinielas) { q in
+                            EmptyArenaState(onRefresh: { vm.loadQuinielas() })
+                                .padding(.horizontal, 16)
+                                .padding(.top, 24)
+                        } else if !morePoolsList.isEmpty {
+                            Text("◆ ACTIVE POOLS")
+                                .font(ArenaFont.display(size: 10, weight: .bold))
+                                .tracking(3)
+                                .foregroundColor(.arenaTextMuted)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 4)
+
+                            LazyVStack(spacing: 10) {
+                                ForEach(morePoolsList) { q in
                                     NavigationLink {
                                         QuinielaDetailView(quiniela: q, onDeleted: { vm.loadQuinielas() })
                                             .environmentObject(auth)
                                     } label: {
-                                        QuinielaCard(quiniela: q, liveFixtures: vm.liveFixtures)
+                                        ArenaPoolCard(quiniela: q, liveFixtures: vm.liveFixtures)
                                     }
                                     .buttonStyle(.plain)
                                 }
                             }
-                            .padding(.horizontal)
+                            .padding(.horizontal, 16)
                         }
                     }
-                    .padding(.vertical)
+                    .padding(.vertical, 14)
+                    .padding(.bottom, 100)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    VStack(spacing: 2) {
-                        Text("Pools")
-                            .font(AppFont.headline())
-                            .foregroundColor(.appTextPrimary)
-                        Text("Play")
-                            .font(AppFont.overline())
-                            .foregroundColor(.appTextMuted)
-                    }
-                }
-            }
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .onAppear {
                 vm.loadQuinielas()
                 vm.startLiveUpdates()
@@ -80,249 +96,483 @@ struct HomeView: View {
             }
         }
     }
+
+    // ── Disjoint pool buckets (LIVE + OPEN + CLOSED = ALL) ────────────────
+
+    private func hasLiveFixture(_ q: Quiniela) -> Bool {
+        q.fixtures.contains { vm.liveFixtures[$0.fixtureId]?.status.isLive == true }
+    }
+
+    private func isClosed(_ q: Quiniela) -> Bool {
+        if q.status == "completed" { return true }
+        if let end = q.endDateValue, end < Date() { return true }
+        return false
+    }
+
+    private var liveQuinielas: [Quiniela] {
+        vm.quinielas.filter { hasLiveFixture($0) }
+    }
+
+    private var closedQuinielas: [Quiniela] {
+        vm.quinielas.filter { !hasLiveFixture($0) && isClosed($0) }
+    }
+
+    private var openQuinielas: [Quiniela] {
+        vm.quinielas.filter { !hasLiveFixture($0) && !isClosed($0) }
+    }
+
+    private var filteredQuinielas: [Quiniela] {
+        switch activeFilter {
+        case "live":   return liveQuinielas
+        case "open":   return openQuinielas
+        case "closed": return closedQuinielas
+        default:       return vm.quinielas
+        }
+    }
+
+    /// Pools the admin pinned via "Mark as featured". Takes precedence over auto.
+    private var adminFeaturedPools: [Quiniela] {
+        vm.quinielas.filter { $0.featured == true }
+    }
+
+    /// Fallback when no pool is admin-featured:
+    ///   1. a pool with a live fixture (most urgent)
+    ///   2. otherwise the open pool closest to starting
+    ///   3. otherwise `nil` — hero section is hidden
+    private var autoFeatured: Quiniela? {
+        if let live = liveQuinielas.first { return live }
+        return openQuinielas
+            .sorted { ($0.startDateValue ?? .distantFuture) < ($1.startDateValue ?? .distantFuture) }
+            .first
+    }
+
+    /// What the QUICK PLAY section renders (single hero if 1, carousel if >1, hidden if empty).
+    private var quickPlayPools: [Quiniela] {
+        if !adminFeaturedPools.isEmpty { return adminFeaturedPools }
+        return [autoFeatured].compactMap { $0 }
+    }
+
+    /// "Active pools" list with anything already shown in QUICK PLAY removed.
+    private var morePoolsList: [Quiniela] {
+        let shownIds = Set(quickPlayPools.map { $0.id })
+        return filteredQuinielas.filter { !shownIds.contains($0.id) }
+    }
 }
 
-private struct BannerImageView: View {
+// MARK: - Header (title + real coin balance)
+
+private struct ArenaHeader: View {
+    let coins: Double
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text("POOLS")
+                .font(ArenaFont.display(size: 24, weight: .heavy))
+                .tracking(3)
+                .foregroundColor(.arenaText)
+            Spacer()
+            CoinBadge(value: coins)
+        }
+    }
+}
+
+private struct CoinBadge: View {
+    let value: Double
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [.arenaGold, Color(hex: "B88A1F")],
+                        center: UnitPoint(x: 0.35, y: 0.35),
+                        startRadius: 0,
+                        endRadius: 8
+                    )
+                )
+                .frame(width: 14, height: 14)
+                .shadow(color: .arenaGold.opacity(0.5), radius: 3)
+            Text(formatted(value))
+                .font(ArenaFont.mono(size: 13, weight: .bold))
+                .foregroundColor(.arenaGold)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(HudCornerCutShape(cut: 6).fill(Color.arenaGold.opacity(0.13)))
+        .clipShape(HudCornerCutShape(cut: 6))
+    }
+
+    private func formatted(_ v: Double) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: v)) ?? "\(Int(v))"
+    }
+}
+
+// MARK: - Featured Carousel (admin-marked pools, paged horizontal swipe)
+
+private struct FeaturedCarousel: View {
+    let pools: [Quiniela]
+    let liveFixtures: [Int: LiveFixture]
+    @State private var index = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("◆ FEATURED")
+                    .font(ArenaFont.display(size: 10, weight: .bold))
+                    .tracking(3)
+                    .foregroundColor(.arenaPrimary)
+                Spacer()
+                Text("\(index + 1) / \(pools.count)")
+                    .font(ArenaFont.mono(size: 10))
+                    .foregroundColor(.arenaTextMuted)
+            }
+            .padding(.horizontal, 16)
+
+            TabView(selection: $index) {
+                ForEach(Array(pools.enumerated()), id: \.element.id) { i, pool in
+                    QuickPlaySection(quiniela: pool, liveFixtures: liveFixtures)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 30) // room for the page-dots
+                        .tag(i)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .always))
+            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .frame(minHeight: 320)
+        }
+    }
+}
+
+// MARK: - Banner (optional)
+
+private struct ArenaBanner: View {
     let url: URL
 
     var body: some View {
         AsyncImage(url: url) { phase in
             switch phase {
             case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            case .failure:
-                Color.appSurfaceAlt
-            case .empty:
-                Color.appSurfaceAlt
-            @unknown default:
-                Color.appSurfaceAlt
+                image.resizable().scaledToFill()
+            default:
+                Color.arenaSurfaceAlt
             }
         }
         .frame(maxWidth: .infinity)
         .aspectRatio(3, contentMode: .fill)
-        .clipped()
+        .clipShape(HudCornerCutShape(cut: 14))
     }
 }
 
-private struct EmptyQuinielasView: View {
-    var onRefresh: () -> Void
+// MARK: - Quick play
 
-    var body: some View {
-        VStack(spacing: AppSpacing.lg) {
-            Image(systemName: "trophy.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.appGold.opacity(0.9), Color.appGoldSoft.opacity(0.7)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            Text("No pools right now")
-                .font(AppFont.headline())
-                .foregroundColor(.appTextPrimary)
-            Text("Check back soon or we’ll notify you when new pools are available to play.")
-                .font(AppFont.body())
-                .foregroundColor(.appTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, AppSpacing.xl)
-            Button(action: onRefresh) {
-                Label("Refresh", systemImage: "arrow.clockwise")
-                    .font(AppFont.caption().weight(.semibold))
-                    .foregroundColor(.appPrimary)
-            }
-            .padding(.top, AppSpacing.sm)
-        }
-        .padding(AppSpacing.xl)
-    }
-}
-
-struct QuinielaCard: View {
+private struct QuickPlaySection: View {
     let quiniela: Quiniela
     let liveFixtures: [Int: LiveFixture]
 
-    private var dateRange: String {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("◆ QUICK PLAY")
+                .font(ArenaFont.display(size: 10, weight: .bold))
+                .tracking(3)
+                .foregroundColor(.arenaPrimary)
+
+            HudFrame(
+                cut: 22,
+                fill: AnyShapeStyle(
+                    LinearGradient(
+                        colors: [Color.arenaSurface, Color.arenaSurfaceAlt, Color.arenaPrimary.opacity(0.13)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                ),
+                glow: .arenaPrimary
+            ) {
+                ZStack(alignment: .trailing) {
+                    Rectangle()
+                        .fill(Color.arenaPrimary)
+                        .frame(width: 3)
+                        .shadow(color: .arenaPrimary, radius: 8)
+                        .frame(maxHeight: .infinity)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 8) {
+                            if derivedStatus.showDot {
+                                LiveDot(color: derivedStatus.color, size: 6)
+                            }
+                            Text(derivedStatus.label)
+                                .font(ArenaFont.display(size: 10, weight: .heavy))
+                                .tracking(2)
+                                .foregroundColor(derivedStatus.color)
+                            Spacer()
+                            if let entries = quiniela.entriesCount {
+                                Text("\(entries) JUGADORES")
+                                    .font(ArenaFont.mono(size: 10))
+                                    .foregroundColor(.arenaTextMuted)
+                            }
+                        }
+
+                        Text(quiniela.name.uppercased())
+                            .font(ArenaFont.display(size: 22, weight: .heavy))
+                            .tracking(1)
+                            .foregroundColor(.arenaText)
+                            .lineLimit(2)
+
+                        HStack(spacing: 18) {
+                            ArenaStatInline(label: "PRIZE POOL", value: quiniela.prize, color: .arenaPrimary)
+                            ArenaStatInline(label: "ENTRY",      value: quiniela.cost,  color: .arenaAccent)
+                            ArenaStatInline(label: "FIXTURES",   value: "\(quiniela.fixtures.count)", color: .arenaGold)
+                        }
+
+                        NavigationLink {
+                            QuinielaDetailView(quiniela: quiniela)
+                        } label: {
+                            HStack {
+                                Text("▶ \(isLive ? "RESUME" : "OPEN")")
+                                    .font(ArenaFont.display(size: 13, weight: .heavy))
+                                    .tracking(2)
+                                    .foregroundColor(.arenaOnPrimary)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 18)
+                                    .background(HudCornerCutShape(cut: 8).fill(Color.arenaPrimary))
+                                    .clipShape(HudCornerCutShape(cut: 8))
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(16)
+                }
+            }
+        }
+    }
+
+    private var isLive: Bool {
+        quiniela.fixtures.contains { fx in liveFixtures[fx.fixtureId]?.status.isLive == true }
+    }
+
+    /// Derived live/upcoming/finished state — "LIVE NOW" only when a fixture is
+    /// actually in progress; "UP NEXT" when an upcoming fixture exists; otherwise
+    /// the pool is treated as finished and the red dot is suppressed.
+    private var derivedStatus: (label: String, color: Color, showDot: Bool) {
+        if isLive { return ("LIVE NOW", .arenaDanger, true) }
+        let hasUpcoming = quiniela.fixtures.contains { fx in
+            fx.kickoffDate.map { $0 > Date() } ?? false
+        }
+        if hasUpcoming { return ("UP NEXT", .arenaAccent, false) }
+        return ("FINISHED", .arenaTextMuted, false)
+    }
+}
+
+// MARK: - Filter strip
+
+/// Four disjoint buckets: ALL = LIVE ⊔ OPEN ⊔ CLOSED (so counts are unambiguous).
+private struct ArenaFilterStrip: View {
+    @Binding var active: String
+    let allCount: Int
+    let openCount: Int
+    let liveCount: Int
+    let closedCount: Int
+
+    private var items: [(String, String, Color?)] {
+        [
+            ("all",    "ALL \(allCount)",       nil),
+            ("open",   "OPEN \(openCount)",     Color.arenaPrimary),
+            ("live",   "LIVE \(liveCount)",     Color.arenaDanger),
+            ("closed", "CLOSED \(closedCount)", Color.arenaTextMuted),
+        ]
+    }
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(items, id: \.0) { id, label, color in
+                    let isActive = active == id
+                    Button {
+                        active = id
+                    } label: {
+                        Text(label)
+                            .font(ArenaFont.display(size: 11, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(isActive ? .arenaOnPrimary : .arenaTextDim)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                HudCornerCutShape(cut: 6)
+                                    .fill(isActive ? (color ?? .arenaPrimary) : Color.arenaSurfaceAlt)
+                            )
+                            .clipShape(HudCornerCutShape(cut: 6))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Pool card (POOL HEAT meter removed — invented metric)
+
+struct ArenaPoolCard: View {
+    let quiniela: Quiniela
+    let liveFixtures: [Int: LiveFixture]
+
+    private var status: (label: String, color: Color) {
+        switch quiniela.status {
+        case "live":      return ("LIVE", .arenaDanger)
+        case "completed": return ("CLOSED", .arenaTextMuted)
+        default:
+            if hasLive { return ("LIVE", .arenaDanger) }
+            if let end = quiniela.endDateValue, end < Date() { return ("CLOSED", .arenaTextMuted) }
+            if let start = quiniela.startDateValue, start > Date() { return ("UPCOMING", .arenaAccent) }
+            return ("OPEN", .arenaPrimary)
+        }
+    }
+
+    private var hasLive: Bool {
+        quiniela.fixtures.contains { fx in
+            liveFixtures[fx.fixtureId]?.status.isLive == true
+        }
+    }
+
+    private var subtitle: String {
+        if hasLive { return "LIVE · EN JUEGO" }
         guard let start = quiniela.startDateValue else { return "—" }
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .short
-        f.locale = Locale(identifier: "en_US")
-        if let end = quiniela.endDateValue {
-            return "\(f.string(from: start)) - \(f.string(from: end))"
-        }
+        f.locale = Locale.current
         return f.string(from: start)
     }
 
-    private var statusLabel: String {
-        if let s = quiniela.status {
-            switch s {
-            case "live": return "LIVE"
-            case "completed": return "Completed"
-            case "scheduled": break
-            default: break
-            }
-        }
-        if isLive { return "LIVE" }
-        let now = Date()
-        if let end = quiniela.endDateValue, end < now { return "Closed" }
-        if let start = quiniela.startDateValue, start > now { return "Upcoming" }
-        return "Open"
-    }
-
-    private var statusColor: Color {
-        if quiniela.status == "completed" { return Color.appSurfaceAlt }
-        if quiniela.status == "live" || statusLabel == "LIVE" { return Color.appLiveRed }
-        if statusLabel == "Closed" { return Color.appSurfaceAlt }
-        if statusLabel == "Upcoming" { return Color.appAccent }
-        return Color.appPrimary
-    }
-
-    private var previewFixtures: [QuinielaFixture] {
-        Array(quiniela.fixtures.prefix(2))
-    }
-
-    private var isLive: Bool {
-        let liveCodes: Set<String> = ["LIVE", "1H", "2H", "HT", "ET", "BT", "P", "INT", "SUSP"]
-        return quiniela.fixtures.contains { fixture in
-            let status = liveFixtures[fixture.fixtureId]?.status.short ?? fixture.status
-            guard let short = status?.uppercased(), !short.isEmpty else { return false }
-            return liveCodes.contains(short)
-        }
-    }
-
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: AppRadius.card)
-                .fill(
-                    LinearGradient(
-                        colors: [Color.appSurface, Color.appSurfaceAlt],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.card)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.14), Color.white.opacity(0.04)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(color: Color.appPrimary.opacity(0.1), radius: 16, x: 0, y: 0)
-                .shadow(color: Color.black.opacity(0.4), radius: 18, x: 0, y: 12)
-
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(quiniela.name)
-                        .font(AppFont.headline())
-                        .foregroundColor(.appTextPrimary)
+        HudFrame(cut: 14, glow: status.color == .arenaDanger ? .arenaDanger : nil) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text(quiniela.name.uppercased())
+                        .font(ArenaFont.display(size: 15, weight: .heavy))
+                        .tracking(1.2)
+                        .foregroundColor(.arenaText)
+                        .lineLimit(1)
                     Spacer()
-                    Text(statusLabel)
-                        .font(AppFont.overline())
-                        .foregroundColor(statusLabel == "Closed" ? .appTextSecondary : .black)
-                        .padding(.horizontal, AppSpacing.sm)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(statusColor))
+                    HudChip(
+                        text: status.label,
+                        color: status.color,
+                        showLiveDot: status.label == "LIVE"
+                    )
                 }
 
-                Text(dateRange)
-                    .font(AppFont.caption())
-                    .foregroundColor(.appTextSecondary)
+                Text(subtitle.uppercased())
+                    .font(ArenaFont.mono(size: 10))
+                    .tracking(0.5)
+                    .foregroundColor(.arenaTextDim)
 
-                let columns = [GridItem(.flexible(), spacing: AppSpacing.sm), GridItem(.flexible(), spacing: AppSpacing.sm)]
-                LazyVGrid(columns: columns, spacing: AppSpacing.sm) {
-                    PoolStatTile(label: "Prize", value: quiniela.prize, icon: "trophy.fill", accent: .appGold)
-                    PoolStatTile(label: "Entry", value: quiniela.cost, icon: "ticket.fill")
-                    PoolStatTile(label: "Fixtures", value: "\(quiniela.fixtures.count)", icon: "sportscourt.fill")
-                    PoolStatTile(label: "Entries", value: "\(quiniela.entriesCount ?? 0)", icon: "person.3.fill")
+                HStack(spacing: 8) {
+                    ArenaStatTile(label: "POT",     value: quiniela.prize, color: .arenaGold)
+                    ArenaStatTile(label: "ENTRY",   value: quiniela.cost,  color: .arenaText)
+                    ArenaStatTile(label: "PLAYERS", value: "\(quiniela.entriesCount ?? 0)", color: .arenaAccent)
                 }
 
-                if !previewFixtures.isEmpty {
-                    Divider()
-                        .background(Color.white.opacity(0.08))
-                    VStack(spacing: AppSpacing.sm) {
-                        ForEach(previewFixtures) { fixture in
-                            FixtureCard(fixture: fixture, live: liveFixtures[fixture.fixtureId], compact: true)
-                        }
-                        if quiniela.fixtures.count > previewFixtures.count {
-                            Text("+ \(quiniela.fixtures.count - previewFixtures.count) more fixtures")
-                                .font(AppFont.caption())
-                                .foregroundColor(.appTextSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                if !quiniela.fixtures.isEmpty {
+                    VStack(spacing: 2) {
+                        ForEach(quiniela.fixtures.prefix(2)) { fx in
+                            fixtureMiniRow(fx)
                         }
                     }
+                    .padding(8)
+                    .background(HudCornerCutShape(cut: 8).fill(Color.arenaBg2))
+                    .clipShape(HudCornerCutShape(cut: 8))
                 }
             }
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.vertical, AppSpacing.md)
-            .overlay(
-                HStack {
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.appTextSecondary)
-                }
-                .padding(.trailing, AppSpacing.sm)
+            .padding(14)
+        }
+    }
+
+    @ViewBuilder
+    private func fixtureMiniRow(_ fx: QuinielaFixture) -> some View {
+        let live = liveFixtures[fx.fixtureId]
+        HStack(spacing: 8) {
+            TeamCrestArena(
+                name: fx.homeTeam,
+                color: ArenaTeamColor.color(for: fx.homeTeam),
+                size: 22,
+                logoURL: fx.homeLogo
             )
+            Text("\(shortName(fx.homeTeam)) vs \(shortName(fx.awayTeam))")
+                .font(ArenaFont.mono(size: 10))
+                .foregroundColor(.arenaTextDim)
+            Spacer()
+            TeamCrestArena(
+                name: fx.awayTeam,
+                color: ArenaTeamColor.color(for: fx.awayTeam),
+                size: 22,
+                logoURL: fx.awayLogo
+            )
+            if let live, live.status.isLive == true {
+                Text("\(live.score.home ?? 0)-\(live.score.away ?? 0) \(live.status.elapsed.map { "\($0)'" } ?? "")")
+                    .font(ArenaFont.mono(size: 10, weight: .bold))
+                    .foregroundColor(.arenaDanger)
+            } else if let date = fx.kickoffDate {
+                Text(shortTime(date))
+                    .font(ArenaFont.mono(size: 10))
+                    .foregroundColor(.arenaTextMuted)
+            }
         }
+    }
+
+    private func shortName(_ n: String) -> String { String(n.prefix(3)).uppercased() }
+
+    private func shortTime(_ d: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f.string(from: d)
     }
 }
 
-private struct PoolStatTile: View {
-    let label: String
-    let value: String
-    let icon: String
-    var accent: Color? = nil
+// MARK: - Helpers
 
-    var body: some View {
-        HStack(spacing: AppSpacing.sm) {
-            ZStack {
-                Circle()
-                    .fill(Color.appSurfaceAlt)
-                    .frame(width: 24, height: 24)
-                Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(accent ?? .appTextSecondary)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(AppFont.overline())
-                    .foregroundColor(.appTextMuted)
-                Text(value)
-                    .font(AppFont.caption().weight(.semibold))
-                    .foregroundColor(accent ?? .appTextPrimary)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, AppSpacing.sm)
-        .padding(.vertical, AppSpacing.sm)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.appSurfaceAlt.opacity(0.7))
-        )
-    }
-}
-
-private struct LoadingStateView: View {
+private struct ArenaLoadingState: View {
     let title: String
     let subtitle: String
 
     var body: some View {
-        VStack(spacing: AppSpacing.sm) {
-            ProgressView()
-                .tint(.appPrimary)
-                .scaleEffect(1.1)
+        VStack(spacing: 10) {
+            ProgressView().tint(.arenaPrimary).scaleEffect(1.1)
             Text(title)
-                .font(AppFont.headline())
-                .foregroundColor(.appTextPrimary)
+                .font(ArenaFont.display(size: 13, weight: .bold))
+                .tracking(2)
+                .foregroundColor(.arenaText)
             Text(subtitle)
-                .font(AppFont.caption())
-                .foregroundColor(.appTextSecondary)
+                .font(ArenaFont.mono(size: 11))
+                .foregroundColor(.arenaTextDim)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct EmptyArenaState: View {
+    var onRefresh: () -> Void
+
+    var body: some View {
+        HudFrame {
+            VStack(spacing: 14) {
+                Text("🏆")
+                    .font(.system(size: 44))
+                    .shadow(color: .arenaGold.opacity(0.8), radius: 12)
+                Text("NO POOLS RIGHT NOW")
+                    .font(ArenaFont.display(size: 14, weight: .heavy))
+                    .tracking(2)
+                    .foregroundColor(.arenaText)
+                Text("Check back soon or we'll notify you when new pools are available.")
+                    .font(ArenaFont.body(size: 12))
+                    .foregroundColor(.arenaTextDim)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                ArcadeButton(title: "REFRESH", size: .sm, action: onRefresh)
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity)
         }
     }
 }

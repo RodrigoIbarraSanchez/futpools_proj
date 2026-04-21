@@ -11,6 +11,7 @@ import { MyEntries } from './pages/MyEntries';
 import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
 import { Recharge } from './pages/Recharge';
+import ArenaApp from './arena/ArenaApp';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -30,19 +31,22 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/arena" element={<ArenaApp />} />
+
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
             <Route path="/" element={<PrivateRoute><MainTabs /></PrivateRoute>}>
               <Route index element={<Home />} />
               <Route path="entries" element={<MyEntries />} />
+              <Route path="shop" element={<Recharge />} />
               <Route path="account" element={<Account />} />
             </Route>
 
             <Route path="/pool/:id" element={<PrivateRoute><PoolDetail /></PrivateRoute>} />
             <Route path="/pool/:id/pick" element={<PrivateRoute><QuinielaPick /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-            <Route path="/recharge" element={<PrivateRoute><Recharge /></PrivateRoute>} />
+            <Route path="/recharge" element={<Navigate to="/shop" replace />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

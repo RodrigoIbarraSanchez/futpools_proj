@@ -23,6 +23,10 @@ const quinielaSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   endDate: { type: Date },
   fixtures: { type: [fixtureSchema], default: [] },
+  // Admin-controlled flag. When true the pool is pinned to the client's
+  // QUICK PLAY hero / featured carousel. Controlled via PUT /quinielas/:id
+  // by an admin from the iOS app or future admin dashboard.
+  featured: { type: Boolean, default: false, index: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

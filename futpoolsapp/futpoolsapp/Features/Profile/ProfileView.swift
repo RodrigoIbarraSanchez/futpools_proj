@@ -11,110 +11,49 @@ struct ProfileView: View {
     @State private var showSettings = false
     @State private var showRechargeSheet = false
 
-    private var displayNameText: String {
-        let name = auth.currentUser?.displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let n = name, !n.isEmpty { return n }
-        return auth.currentUser?.email ?? "User"
+    private var displayName: String {
+        if let n = auth.currentUser?.displayName?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !n.isEmpty { return n }
+        return auth.currentUser?.email ?? "Player"
     }
 
-    private func formatBalance(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 2
-        return (formatter.string(from: NSNumber(value: value)) ?? "\(value)")
+    private var username: String {
+        if let u = auth.currentUser?.username, !u.isEmpty { return u }
+        if let local = auth.currentUser?.email.components(separatedBy: "@").first { return local }
+        return "player"
     }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                AppBackground()
+                ArenaBackground()
+
                 ScrollView {
-                    VStack(spacing: AppSpacing.lg) {
-                        VStack(spacing: AppSpacing.sm) {
-                            Image(systemName: "person.circle.fill")
-                                .font(.system(size: 64))
-                                .foregroundColor(.appPrimary)
-                            Text(displayNameText)
-                                .font(AppFont.title())
-                                .foregroundColor(.appTextPrimary)
-                            if let email = auth.currentUser?.email {
-                                Text(email)
-                                    .font(AppFont.body())
-                                    .foregroundColor(.appTextSecondary)
-                            }
-                        }
-                        .padding(.top, AppSpacing.xl)
-
-                        CardView {
-                            HStack {
-                                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                                    Text("Display name")
-                                        .font(AppFont.caption())
-                                        .foregroundColor(.appTextSecondary)
-                                    Text(displayNameText)
-                                        .font(AppFont.headline())
-                                        .foregroundColor(.appTextPrimary)
-                                }
-                                Spacer()
-                                Button {
-                                    showEditName = true
-                                } label: {
-                                    Image(systemName: "pencil.circle.fill")
-                                        .font(.system(size: 28))
-                                        .foregroundColor(.appPrimary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal)
-
-                        Button {
-                            showRechargeSheet = true
-                        } label: {
-                            CardView {
-                                HStack {
-                                    Text("Balance")
-                                        .font(AppFont.body())
-                                        .foregroundColor(.appTextSecondary)
-                                    Spacer()
-                                    Text(formatBalance(auth.currentUser?.balanceValue ?? 0))
-                                        .font(AppFont.headline())
-                                        .foregroundColor(.appGreen)
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundColor(.appTextMuted)
-                                }
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal)
-
-                        PrimaryButton("Sign out", style: .purple) {
-                            auth.logout()
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, AppSpacing.md)
+                    VStack(spacing: 16) {
+                        hero
+                        balanceCard
+                        signOutSection
                     }
+                    .padding(.top, 18)
+                    .padding(.bottom, 120)
                 }
             }
-            .navigationTitle("My Account")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
                     } label: {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundColor(.appPrimary)
+                        Text("⚙")
+                            .font(ArenaFont.display(size: 16, weight: .bold))
+                            .foregroundColor(.arenaPrimary)
                     }
                 }
             }
             .sheet(isPresented: $showEditName) {
-                EditDisplayNameSheet(
-                    currentName: auth.currentUser?.displayName ?? "",
+                ArenaEditNameSheet(
+                    current: auth.currentUser?.displayName ?? "",
                     onSave: { newName in
                         Task { await auth.updateDisplayName(newName) }
                         showEditName = false
@@ -127,24 +66,133 @@ struct ProfileView: View {
                 SettingsView()
             }
             .sheet(isPresented: $showRechargeSheet) {
-                RechargeView()
-                    .environmentObject(auth)
+                RechargeView().environmentObject(auth)
             }
         }
     }
+
+    private var hero: some View {
+        VStack(spacing: 12) {
+            // Simple neutral avatar with initials — no magenta mock
+            HudCornerCutShape(cut: 14)
+                .fill(Color.arenaSurfaceAlt)
+                .overlay(
+                    HudCornerCutShape(cut: 14)
+                        .stroke(Color.arenaStrokeStrong, lineWidth: 1)
+                )
+                .frame(width: 76, height: 76)
+                .overlay(
+                    Text(initials(displayName))
+                        .font(ArenaFont.display(size: 30, weight: .heavy))
+                        .foregroundColor(.arenaText)
+                )
+                .clipShape(HudCornerCutShape(cut: 14))
+
+            VStack(spacing: 2) {
+                Text(displayName)
+                    .font(ArenaFont.display(size: 20, weight: .heavy))
+                    .foregroundColor(.arenaText)
+                HStack(spacing: 4) {
+                    Text("@\(username)")
+                        .font(ArenaFont.mono(size: 11))
+                        .foregroundColor(.arenaTextMuted)
+                    Button {
+                        showEditName = true
+                    } label: {
+                        Text("✎")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.arenaPrimary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                if let email = auth.currentUser?.email {
+                    Text(email)
+                        .font(ArenaFont.mono(size: 11))
+                        .foregroundColor(.arenaTextDim)
+                        .padding(.top, 4)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private var balanceCard: some View {
+        Button {
+            showRechargeSheet = true
+        } label: {
+            HudFrame(
+                cut: 14,
+                fill: AnyShapeStyle(
+                    LinearGradient(
+                        colors: [Color.arenaGold.opacity(0.18), Color.arenaSurface],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            ) {
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [.arenaGold, Color(hex: "B88A1F")],
+                                center: UnitPoint(x: 0.35, y: 0.35),
+                                startRadius: 0,
+                                endRadius: 20
+                            )
+                        )
+                        .frame(width: 36, height: 36)
+                        .shadow(color: .arenaGold.opacity(0.6), radius: 8)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("BALANCE")
+                            .font(ArenaFont.mono(size: 9))
+                            .tracking(1.5)
+                            .foregroundColor(.arenaTextMuted)
+                        Text(formatted(auth.currentUser?.balanceValue ?? 0) + " COINS")
+                            .font(ArenaFont.display(size: 22, weight: .heavy))
+                            .tracking(0.5)
+                            .foregroundColor(.arenaGold)
+                    }
+                    Spacer()
+                    ArcadeButton(title: "+ TOP UP", variant: .accent, size: .sm) {
+                        showRechargeSheet = true
+                    }
+                }
+                .padding(14)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+    }
+
+    private var signOutSection: some View {
+        ArcadeButton(title: "SIGN OUT", variant: .surface, fullWidth: true) {
+            auth.logout()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+    }
+
+    private func initials(_ n: String) -> String {
+        n.split(separator: " ").prefix(2).map { String($0.prefix(1)) }.joined().uppercased()
+    }
+
+    private func formatted(_ value: Double) -> String {
+        let f = NumberFormatter(); f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+    }
 }
 
-// MARK: - Edit Display Name Sheet
-private struct EditDisplayNameSheet: View {
+private struct ArenaEditNameSheet: View {
     @EnvironmentObject var auth: AuthService
-    @State private var displayName: String
-    @FocusState private var isFieldFocused: Bool
+    @State private var name: String
+    @FocusState private var focused: Bool
 
     let onSave: (String) -> Void
     let onDismiss: () -> Void
 
-    init(currentName: String, onSave: @escaping (String) -> Void, onDismiss: @escaping () -> Void) {
-        _displayName = State(initialValue: currentName)
+    init(current: String, onSave: @escaping (String) -> Void, onDismiss: @escaping () -> Void) {
+        _name = State(initialValue: current)
         self.onSave = onSave
         self.onDismiss = onDismiss
     }
@@ -152,36 +200,39 @@ private struct EditDisplayNameSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.appBackground.ignoresSafeArea()
-                VStack(spacing: AppSpacing.lg) {
-                    TextField("Your name", text: $displayName)
-                        .font(AppFont.body())
-                        .appTextFieldStyle()
-                        .focused($isFieldFocused)
-                        .padding(.horizontal)
-
+                Color.arenaBg.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("DISPLAY NAME")
+                        .font(ArenaFont.mono(size: 10))
+                        .tracking(2)
+                        .foregroundColor(.arenaTextMuted)
+                    TextField("", text: $name)
+                        .font(ArenaFont.mono(size: 14))
+                        .foregroundColor(.arenaText)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(Color.arenaBg2)
+                        .overlay(Rectangle().stroke(Color.arenaStroke, lineWidth: 1))
+                        .focused($focused)
                     Spacer()
                 }
-                .padding(.top, AppSpacing.xl)
+                .padding(20)
+                .padding(.top, 20)
             }
-            .navigationTitle("Edit name")
+            .navigationTitle("EDIT NAME")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { onDismiss() }
-                        .foregroundColor(.appTextSecondary)
+                        .foregroundColor(.arenaTextDim)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        onSave(displayName)
-                    }
-                    .fontWeight(.semibold)
-                    .foregroundColor(.appPrimary)
+                    Button("Save") { onSave(name) }
+                        .fontWeight(.semibold)
+                        .foregroundColor(.arenaPrimary)
                 }
             }
-            .onAppear { isFieldFocused = true }
+            .onAppear { focused = true }
         }
     }
 }

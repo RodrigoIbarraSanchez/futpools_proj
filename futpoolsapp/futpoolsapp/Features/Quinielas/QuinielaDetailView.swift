@@ -5,9 +5,10 @@
 
 import SwiftUI
 
-private enum PoolDetailTab: String, CaseIterable {
-    case overview = "Overview"
-    case fixtures = "Fixtures"
+private enum ArenaPoolTab: String, CaseIterable {
+    case fixtures = "FIXTURES"
+    case ranking  = "RANKING"
+    case rules    = "RULES"
 }
 
 struct QuinielaDetailView: View {
@@ -15,252 +16,341 @@ struct QuinielaDetailView: View {
     var onDeleted: (() -> Void)?
     @EnvironmentObject var auth: AuthService
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedTab: PoolDetailTab = .overview
+
+    @State private var selectedTab: ArenaPoolTab = .fixtures
     @State private var showPickView = false
     @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
-    @State private var isDeleting = false
     @State private var entryCount = 0
     @State private var latestEntryNumber: Int?
     @State private var latestEntryDate: String?
-    @State private var isEntryLoading = false
-    @State private var entryError: String?
     @State private var liveFixtures: [Int: LiveFixture] = [:]
-    @State private var liveLoading = false
-    @State private var liveTimer: Timer?
     @State private var leaderboard: LeaderboardResponse?
     @State private var leaderboardLoading = false
     @State private var showInsufficientBalanceSheet = false
     @State private var showRechargeSheet = false
     @State private var pendingRechargeAfterDismiss = false
+    @State private var liveTimer: Timer?
+    @State private var adminErrorMessage: String?
+    @State private var isTogglingFeatured = false
+
     private let client = APIClient.shared
 
     private var userBalance: Double { auth.currentUser?.balanceValue ?? 0 }
     private var entryCost: Double { quiniela.entryCostValue }
     private var hasEnoughBalance: Bool { userBalance >= entryCost }
-
     private var isAdmin: Bool { auth.currentUser?.isAdmin == true }
 
-    private var dateRange: String {
-        guard let start = quiniela.startDateValue else { return "—" }
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .short
-        f.locale = Locale(identifier: "en_US")
-        if let end = quiniela.endDateValue {
-            return "\(f.string(from: start)) - \(f.string(from: end))"
-        }
-        return f.string(from: start)
-    }
-
-    private var overviewContent: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            if let desc = quiniela.description, !desc.isEmpty {
-                Text(desc)
-                    .font(AppFont.body())
-                    .foregroundColor(.appTextSecondary)
-            }
-            HStack(spacing: AppSpacing.sm) {
-                Pill(label: "Prize: \(quiniela.prize)")
-                Pill(label: "Entry: \(quiniela.cost)")
-                Pill(label: "Fixtures: \(quiniela.fixtures.count)")
-                if let latestEntryNumber {
-                    Pill(label: "Entry #\(latestEntryNumber)")
-                }
-            }
-            if let latestEntryDate {
-                Text("Last entry: \(latestEntryDate)")
-                    .font(AppFont.caption())
-                    .foregroundColor(.appTextSecondary)
-            }
-            PrimaryButton(joinButtonLabel, style: .green) {
-                if canJoin && !hasEnoughBalance {
-                    showInsufficientBalanceSheet = true
-                } else if canJoin {
-                    showPickView = true
-                }
-            }
-            .disabled(!canJoin)
-            .padding(.top, AppSpacing.sm)
-            if !canJoin {
-                Text("This pool has already started. New entries are locked.")
-                    .font(AppFont.caption())
-                    .foregroundColor(.appLiveRed)
-            }
-            if entryCount > 0 {
-                Text("You already have \(entryCount) entr\(entryCount == 1 ? "y" : "ies") in this pool.")
-                    .font(AppFont.caption())
-                    .foregroundColor(.appTextSecondary)
-            }
-            if let entryError {
-                Text(entryError)
-                    .font(AppFont.caption())
-                    .foregroundColor(.appLiveRed)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
-    }
-
-    private var fixturesContent: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            HStack {
-                Text("Fixtures")
-                    .font(AppFont.headline())
-                    .foregroundColor(.appTextPrimary)
-                Spacer()
-                if liveLoading {
-                    Text("Updating live scores…")
-                        .font(AppFont.caption())
-                        .foregroundColor(.appTextSecondary)
-                }
-            }
-            .padding(.horizontal)
-
-            ForEach(quiniela.fixtures) { f in
-                FixtureCard(fixture: f, live: liveFixtures[f.fixtureId])
-                    .padding(.horizontal)
-            }
-        }
-    }
-
-    private var leaderboardContent: some View {
-        LeaderboardView(
-            leaderboard: leaderboard,
-            isLoading: leaderboardLoading,
-            quinielaId: quiniela.id,
-            token: KeychainHelper.getToken()
-        )
-    }
-
     var body: some View {
-        ZStack {
-            AppBackground()
+        ZStack(alignment: .bottom) {
+            ArenaBackground()
+
             ScrollView {
-                VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                        Text(quiniela.name)
-                            .font(AppFont.title())
-                            .foregroundColor(.appTextPrimary)
-                        Text(dateRange)
-                            .font(AppFont.caption())
-                            .foregroundColor(.appTextSecondary)
-                    }
-                    .padding(.horizontal)
-
-                    Picker("Section", selection: $selectedTab) {
-                        ForEach(PoolDetailTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-
-                    Group {
-                        switch selectedTab {
-                        case .overview:
-                            VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                                overviewContent
-                                leaderboardContent
-                            }
-                        case .fixtures:
-                            fixturesContent
-                        }
-                    }
-                    .animation(.none, value: selectedTab)
+                VStack(alignment: .leading, spacing: 14) {
+                    header
+                    prizeHero
+                    tabStrip
+                    tabContent
                 }
-                .padding(.vertical)
+                .padding(.bottom, 140)
             }
-            .navigationTitle("Pool")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                if isAdmin {
-                    ToolbarItem(placement: .primaryAction) {
-                        Menu {
-                            Button {
-                                showEditSheet = true
-                            } label: {
-                                Label("Edit pool", systemImage: "pencil")
-                            }
-                            Button(role: .destructive) {
-                                showDeleteConfirm = true
-                            } label: {
-                                Label("Delete pool", systemImage: "trash")
-                            }
+
+            // Sticky CTA
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.clear, Color.arenaBg], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 40)
+                ArcadeButton(
+                    title: canJoin ? "▶ MAKE PICKS · \(quiniela.cost)" : "POOL LOCKED",
+                    size: .lg,
+                    fullWidth: true,
+                    disabled: !canJoin
+                ) {
+                    if canJoin && !hasEnoughBalance {
+                        showInsufficientBalanceSheet = true
+                    } else if canJoin {
+                        showPickView = true
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 28)
+                .background(Color.arenaBg)
+            }
+        }
+        .arenaTabBarHidden()
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            if isAdmin {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button {
+                            showEditSheet = true
                         } label: {
-                            Image(systemName: "ellipsis.circle")
+                            Label("Edit pool", systemImage: "pencil")
                         }
+                        Button {
+                            toggleFeatured()
+                        } label: {
+                            Label(
+                                quiniela.featured == true ? "Remove from featured" : "Mark as featured",
+                                systemImage: quiniela.featured == true ? "star.slash.fill" : "star.fill"
+                            )
+                        }
+                        .disabled(isTogglingFeatured)
+                        Button(role: .destructive) { showDeleteConfirm = true } label: { Label("Delete pool", systemImage: "trash") }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundColor(.arenaText)
                     }
                 }
             }
-            .navigationDestination(isPresented: $showPickView) {
-                QuinielaPickView(quiniela: quiniela)
-            }
-            .sheet(isPresented: $showEditSheet) {
-                EditQuinielaSheet(
-                    quiniela: quiniela,
-                    onSave: { updated in
-                        quiniela = updated
-                        showEditSheet = false
-                    },
-                    onDismiss: { showEditSheet = false }
-                )
-            }
-            .sheet(isPresented: $showInsufficientBalanceSheet) {
-                InsufficientBalanceSheet(
-                    entryCost: entryCost,
-                    currentBalance: userBalance,
-                    onRecharge: {
-                        pendingRechargeAfterDismiss = true
-                        showInsufficientBalanceSheet = false
-                    },
-                    onDismiss: { showInsufficientBalanceSheet = false }
-                )
-            }
-            .onChange(of: showInsufficientBalanceSheet) { _, newValue in
-                if !newValue && pendingRechargeAfterDismiss {
-                    pendingRechargeAfterDismiss = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        showRechargeSheet = true
-                    }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            EditQuinielaSheet(
+                quiniela: quiniela,
+                onSave: { updated in
+                    quiniela = updated
+                    showEditSheet = false
+                    onDeleted?()
+                },
+                onDismiss: { showEditSheet = false },
+                onError: { msg in adminErrorMessage = msg }
+            )
+        }
+        .alert(
+            "Update failed",
+            isPresented: Binding(
+                get: { adminErrorMessage != nil },
+                set: { if !$0 { adminErrorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { adminErrorMessage = nil }
+        } message: {
+            Text(adminErrorMessage ?? "")
+        }
+        .navigationDestination(isPresented: $showPickView) {
+            QuinielaPickView(quiniela: quiniela)
+        }
+        .sheet(isPresented: $showInsufficientBalanceSheet) {
+            ArenaInsufficientBalanceSheet(
+                entryCost: entryCost,
+                currentBalance: userBalance,
+                onRecharge: {
+                    pendingRechargeAfterDismiss = true
+                    showInsufficientBalanceSheet = false
+                },
+                onDismiss: { showInsufficientBalanceSheet = false }
+            )
+        }
+        .onChange(of: showInsufficientBalanceSheet) { _, newValue in
+            if !newValue && pendingRechargeAfterDismiss {
+                pendingRechargeAfterDismiss = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    showRechargeSheet = true
                 }
             }
-            .sheet(isPresented: $showRechargeSheet) {
-                RechargeView()
-                    .environmentObject(auth)
-            }
-            .confirmationDialog("Delete pool?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
-                    performDelete()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will permanently delete \"\(quiniela.name)\" and all its entries. This cannot be undone.")
-            }
-            .onAppear {
+        }
+        .sheet(isPresented: $showRechargeSheet) {
+            RechargeView().environmentObject(auth)
+        }
+        .confirmationDialog("Delete pool?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { performDelete() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete \"\(quiniela.name)\" and all its entries.")
+        }
+        .onAppear {
+            loadEntryCount()
+            loadLiveFixtures()
+            loadLeaderboard()
+            startLivePolling()
+        }
+        .onDisappear { stopLivePolling() }
+        .onChange(of: showPickView) { _, newValue in
+            if newValue == false {
                 loadEntryCount()
-                loadLiveFixtures()
                 loadLeaderboard()
-                startLivePolling()
-            }
-            .onDisappear {
-                stopLivePolling()
-            }
-            .onChange(of: showPickView) { _, newValue in
-                if newValue == false {
-                    loadEntryCount()
-                    loadLeaderboard()
-                    Task { await auth.fetchUser() }
-                }
+                Task { await auth.fetchUser() }
             }
         }
     }
 
-    private var joinButtonLabel: String {
-        entryCount > 0 ? "Create Another Entry" : "Join & Pick"
+    // MARK: Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Spacer()
+                Text("[ POOL · \(quiniela.id.prefix(6).uppercased()) ]")
+                    .font(ArenaFont.mono(size: 10))
+                    .tracking(2)
+                    .foregroundColor(.arenaTextMuted)
+                Spacer()
+            }
+
+            Text(quiniela.name.uppercased())
+                .font(ArenaFont.display(size: 24, weight: .heavy))
+                .tracking(1)
+                .foregroundColor(.arenaText)
+
+            HStack(spacing: 8) {
+                if derivedStatus.showDot {
+                    LiveDot(color: derivedStatus.color, size: 6)
+                }
+                Text(derivedStatus.label)
+                    .font(ArenaFont.mono(size: 11, weight: .bold))
+                    .tracking(1)
+                    .foregroundColor(derivedStatus.color)
+                Spacer()
+                if let n = quiniela.entriesCount {
+                    Text("\(n) JUGADORES")
+                        .font(ArenaFont.mono(size: 10))
+                        .foregroundColor(.arenaTextMuted)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
     }
+
+    /// Derives a live/upcoming/finished status from the actual fixture states, not
+    /// just the pool's `status` field. Prevents "LIVE NOW" being shown when every
+    /// match has already ended.
+    private var derivedStatus: (label: String, color: Color, showDot: Bool) {
+        let now = Date()
+
+        let hasActualLive = quiniela.fixtures.contains { fx in
+            liveFixtures[fx.fixtureId]?.status.isLive == true
+        }
+        if hasActualLive {
+            return ("LIVE NOW", .arenaDanger, true)
+        }
+
+        let upcomingDates = quiniela.fixtures.compactMap { fx -> Date? in
+            if let live = liveFixtures[fx.fixtureId],
+               let short = live.status.short?.uppercased(),
+               ["FT", "AET", "PEN"].contains(short) {
+                return nil // finished
+            }
+            if let date = fx.kickoffDate, date > now { return date }
+            return nil
+        }
+        if let next = upcomingDates.min() {
+            let f = DateFormatter(); f.dateStyle = .medium; f.timeStyle = .short
+            return ("OPENS · \(f.string(from: next).uppercased())", .arenaAccent, false)
+        }
+
+        return ("POOL FINISHED", .arenaTextMuted, false)
+    }
+
+    // MARK: Prize hero
+
+    private var prizeHero: some View {
+        HudFrame(
+            cut: 14,
+            fill: AnyShapeStyle(
+                LinearGradient(
+                    colors: [Color.arenaGold.opacity(0.2), Color.arenaBg2],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            ),
+            glow: .arenaGold
+        ) {
+            HStack(spacing: 16) {
+                Text("🏆")
+                    .font(.system(size: 34))
+                    .shadow(color: .arenaGold, radius: 10)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("PRIZE POOL")
+                        .font(ArenaFont.mono(size: 9))
+                        .tracking(2)
+                        .foregroundColor(.arenaTextMuted)
+                    Text(quiniela.prize)
+                        .font(ArenaFont.display(size: 26, weight: .heavy))
+                        .tracking(1)
+                        .foregroundColor(.arenaGold)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("ENTRY")
+                        .font(ArenaFont.mono(size: 9))
+                        .tracking(2)
+                        .foregroundColor(.arenaTextMuted)
+                    Text(quiniela.cost)
+                        .font(ArenaFont.mono(size: 18, weight: .bold))
+                        .foregroundColor(.arenaText)
+                }
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+        }
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: Tabs
+
+    private var tabStrip: some View {
+        HStack(spacing: 4) {
+            ForEach(ArenaPoolTab.allCases, id: \.self) { tab in
+                Button { selectedTab = tab } label: {
+                    Text(tab.rawValue)
+                        .font(ArenaFont.display(size: 11, weight: .bold))
+                        .tracking(2)
+                        .foregroundColor(selectedTab == tab ? .arenaOnPrimary : .arenaTextDim)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .background(
+                            HudCornerCutShape(cut: 8)
+                                .fill(selectedTab == tab ? Color.arenaPrimary : Color.arenaSurfaceAlt)
+                        )
+                        .clipShape(HudCornerCutShape(cut: 8))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    @ViewBuilder
+    private var tabContent: some View {
+        switch selectedTab {
+        case .fixtures:
+            VStack(spacing: 8) {
+                ForEach(quiniela.fixtures) { fx in
+                    ArenaFixtureRow(fixture: fx, live: liveFixtures[fx.fixtureId])
+                        .padding(.horizontal, 16)
+                }
+                if latestEntryNumber != nil {
+                    HStack {
+                        Text(entryStatusLine)
+                            .font(ArenaFont.mono(size: 10))
+                            .foregroundColor(.arenaTextDim)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                }
+            }
+
+        case .ranking:
+            ArenaLeaderboardPanel(leaderboard: leaderboard, isLoading: leaderboardLoading)
+                .padding(.horizontal, 16)
+
+        case .rules:
+            ArenaRulesPanel()
+                .padding(.horizontal, 16)
+        }
+    }
+
+    private var entryStatusLine: String {
+        let n = entryCount
+        let latest = latestEntryNumber.map { "#\($0)" } ?? ""
+        let date = latestEntryDate ?? ""
+        let entries = n == 1 ? "entry" : "entries"
+        return "You have \(n) \(entries) \(latest) · \(date)".trimmingCharacters(in: .whitespaces)
+    }
+
+    // MARK: Logic
 
     private var canJoin: Bool {
         guard !quiniela.fixtures.isEmpty else { return false }
@@ -269,16 +359,12 @@ struct QuinielaDetailView: View {
             if let live = liveFixtures[fixture.fixtureId] {
                 if live.status.isLive == true { return false }
                 if let short = live.status.short?.uppercased(),
-                   short != "NS",
-                   short != "TBD",
-                   short != "PST" {
+                   !["NS", "TBD", "PST"].contains(short) {
                     return false
                 }
-                if let date = live.scheduledDate, date <= now {
-                    return false
-                }
-            } else if let date = fixture.kickoffDate {
-                if date <= now { return false }
+                if let date = live.scheduledDate, date <= now { return false }
+            } else if let date = fixture.kickoffDate, date <= now {
+                return false
             }
         }
         return true
@@ -286,12 +372,7 @@ struct QuinielaDetailView: View {
 
     private func loadEntryCount() {
         Task {
-            isEntryLoading = true
-            entryError = nil
-            guard let token = KeychainHelper.getToken() else {
-                isEntryLoading = false
-                return
-            }
+            guard let token = KeychainHelper.getToken() else { return }
             do {
                 let entries: [QuinielaEntry] = try await client.request(
                     method: "GET",
@@ -301,65 +382,38 @@ struct QuinielaDetailView: View {
                 entryCount = entries.count
                 if let first = entries.first {
                     latestEntryNumber = first.entryNumber ?? entries.count
-                    latestEntryDate = formatEntryDate(first.createdAtValue)
-                } else {
-                    latestEntryNumber = nil
-                    latestEntryDate = nil
+                    let f = DateFormatter(); f.dateStyle = .medium; f.timeStyle = .short
+                    latestEntryDate = first.createdAtValue.map(f.string(from:))
                 }
-            } catch {
-                entryError = "Could not load entry history."
-            }
-            isEntryLoading = false
+            } catch {}
         }
-    }
-
-    private func formatEntryDate(_ date: Date?) -> String? {
-        guard let date else { return nil }
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .short
-        f.locale = Locale(identifier: "en_US")
-        return f.string(from: date)
     }
 
     private func loadLeaderboard() {
         Task {
             leaderboardLoading = true
-            do {
-                let data: LeaderboardResponse = try await client.request(
-                    method: "GET",
-                    path: "/quinielas/\(quiniela.id)/leaderboard",
-                    token: KeychainHelper.getToken()
-                )
-                leaderboard = data
-            } catch {
-                leaderboard = nil
-            }
+            leaderboard = try? await client.request(
+                method: "GET",
+                path: "/quinielas/\(quiniela.id)/leaderboard",
+                token: KeychainHelper.getToken()
+            )
             leaderboardLoading = false
         }
     }
 
     private func loadLiveFixtures() {
         Task {
-            let ids = quiniela.fixtures.compactMap { $0.fixtureId }
+            let ids = quiniela.fixtures.map { $0.fixtureId }
             guard !ids.isEmpty else { return }
-            liveLoading = true
             do {
                 let data: [LiveFixture] = try await client.request(
                     method: "GET",
                     path: "/football/fixtures?ids=\(ids.map(String.init).joined(separator: ","))"
                 )
                 var map: [Int: LiveFixture] = [:]
-                data.forEach { f in
-                    if let id = f.fixtureId {
-                        map[id] = f
-                    }
-                }
+                for f in data { if let id = f.fixtureId { map[id] = f } }
                 liveFixtures = map
-            } catch {
-                // ignore for now
-            }
-            liveLoading = false
+            } catch {}
         }
     }
 
@@ -377,114 +431,166 @@ struct QuinielaDetailView: View {
 
     private func performDelete() {
         guard let token = KeychainHelper.getToken() else { return }
-        isDeleting = true
+        Task {
+            try? await client.requestVoid(method: "DELETE", path: "/quinielas/\(quiniela.id)", token: token)
+            await MainActor.run {
+                onDeleted?()
+                dismiss()
+            }
+        }
+    }
+
+    private func toggleFeatured() {
+        guard let token = KeychainHelper.getToken() else {
+            adminErrorMessage = "You're not signed in."
+            return
+        }
+        let newValue = !(quiniela.featured == true)
+        isTogglingFeatured = true
         Task {
             do {
-                try await client.requestVoid(method: "DELETE", path: "/quinielas/\(quiniela.id)", token: token)
+                let updated: Quiniela = try await client.request(
+                    method: "PUT",
+                    path: "/quinielas/\(quiniela.id)",
+                    body: QuinielaFeaturedRequest(featured: newValue),
+                    token: token
+                )
                 await MainActor.run {
-                    onDeleted?()
-                    dismiss()
+                    quiniela = updated
+                    isTogglingFeatured = false
+                    if (updated.featured ?? false) != newValue {
+                        // Backend accepted the call but didn't store/return `featured`.
+                        adminErrorMessage = "Server saved the pool but did not persist the 'featured' field. Make sure the backend's Quiniela schema and PUT /quinielas/:id handler accept & return `featured`."
+                    } else {
+                        onDeleted?() // tell Home to refetch the list
+                    }
                 }
             } catch {
-                // could set error state
+                print("[QuinielaDetail] toggleFeatured error: \(error)")
+                await MainActor.run {
+                    isTogglingFeatured = false
+                    adminErrorMessage = "Could not toggle featured: \(error.localizedDescription)"
+                }
             }
-            await MainActor.run { isDeleting = false }
         }
     }
 }
 
-// MARK: - Edit Quiniela Sheet (Admin)
+// MARK: - Edit Quiniela sheet (admin)
+
 private struct EditQuinielaSheet: View {
     let quiniela: Quiniela
+    let onSave: (Quiniela) -> Void
+    let onDismiss: () -> Void
+    let onError: (String) -> Void
+
     @State private var name: String
     @State private var description: String
     @State private var prize: String
     @State private var cost: String
+    @State private var featured: Bool
     @State private var saving = false
     @State private var errorMessage: String?
-    let onSave: (Quiniela) -> Void
-    let onDismiss: () -> Void
+
     private let client = APIClient.shared
 
-    init(quiniela: Quiniela, onSave: @escaping (Quiniela) -> Void, onDismiss: @escaping () -> Void) {
+    init(
+        quiniela: Quiniela,
+        onSave: @escaping (Quiniela) -> Void,
+        onDismiss: @escaping () -> Void,
+        onError: @escaping (String) -> Void
+    ) {
         self.quiniela = quiniela
+        self.onSave = onSave
+        self.onDismiss = onDismiss
+        self.onError = onError
         _name = State(initialValue: quiniela.name)
         _description = State(initialValue: quiniela.description ?? "")
         _prize = State(initialValue: quiniela.prize)
         _cost = State(initialValue: quiniela.cost)
-        self.onSave = onSave
-        self.onDismiss = onDismiss
+        _featured = State(initialValue: quiniela.featured ?? false)
     }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.appBackground.ignoresSafeArea()
-                VStack(spacing: AppSpacing.lg) {
-                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                        Text("Name")
-                            .font(AppFont.caption())
-                            .foregroundColor(.appTextSecondary)
-                        TextField("Pool name", text: $name)
-                            .font(AppFont.body())
-                            .appTextFieldStyle()
-                        Text("Description")
-                            .font(AppFont.caption())
-                            .foregroundColor(.appTextSecondary)
-                        TextField("Description", text: $description, axis: .vertical)
-                            .font(AppFont.body())
-                            .appTextFieldStyle()
-                            .lineLimit(3...6)
-                        HStack(spacing: AppSpacing.md) {
-                            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                                Text("Prize")
-                                    .font(AppFont.caption())
-                                    .foregroundColor(.appTextSecondary)
-                                TextField("e.g. $5,000", text: $prize)
-                                    .font(AppFont.body())
-                                    .appTextFieldStyle()
+                Color.arenaBg.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        field(label: "NAME") {
+                            TextField("", text: $name).arenaFieldStyle()
+                        }
+                        field(label: "DESCRIPTION") {
+                            TextField("", text: $description, axis: .vertical)
+                                .lineLimit(3...6)
+                                .arenaFieldStyle()
+                        }
+                        HStack(spacing: 12) {
+                            field(label: "PRIZE") {
+                                TextField("", text: $prize).arenaFieldStyle()
                             }
-                            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                                Text("Cost")
-                                    .font(AppFont.caption())
-                                    .foregroundColor(.appTextSecondary)
-                                TextField("e.g. $5", text: $cost)
-                                    .font(AppFont.body())
-                                    .appTextFieldStyle()
+                            field(label: "ENTRY COST") {
+                                TextField("", text: $cost).arenaFieldStyle()
                             }
                         }
+
+                        // Featured toggle
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("FEATURED")
+                                    .font(ArenaFont.mono(size: 10))
+                                    .tracking(2)
+                                    .foregroundColor(.arenaTextMuted)
+                                Text("Pin to QUICK PLAY hero/carousel")
+                                    .font(ArenaFont.body(size: 12))
+                                    .foregroundColor(.arenaTextDim)
+                            }
+                            Spacer()
+                            Toggle("", isOn: $featured)
+                                .labelsHidden()
+                                .tint(.arenaPrimary)
+                        }
+                        .padding(.vertical, 6)
+
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(ArenaFont.mono(size: 11))
+                                .foregroundColor(.arenaDanger)
+                        }
                     }
-                    .padding(.horizontal)
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .font(AppFont.caption())
-                            .foregroundColor(.appLiveRed)
-                            .padding(.horizontal)
-                    }
-                    Spacer()
+                    .padding(20)
                 }
-                .padding(.top, AppSpacing.lg)
             }
-            .navigationTitle("Edit pool")
+            .navigationTitle("EDIT POOL")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { onDismiss() }
-                        .foregroundColor(.appTextSecondary)
+                        .foregroundColor(.arenaTextDim)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { performSave() }
+                    Button(saving ? "Saving…" : "Save") { save() }
                         .fontWeight(.semibold)
-                        .foregroundColor(.appPrimary)
+                        .foregroundColor(.arenaPrimary)
                         .disabled(saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || prize.isEmpty || cost.isEmpty)
                 }
             }
         }
     }
 
-    private func performSave() {
+    @ViewBuilder
+    private func field(label: String, @ViewBuilder _ content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(ArenaFont.mono(size: 10))
+                .tracking(2)
+                .foregroundColor(.arenaTextMuted)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func save() {
         guard let token = KeychainHelper.getToken() else { return }
         saving = true
         errorMessage = nil
@@ -495,7 +601,8 @@ private struct EditQuinielaSheet: View {
                     description: description.isEmpty ? nil : description,
                     prize: prize.trimmingCharacters(in: .whitespacesAndNewlines),
                     cost: cost.trimmingCharacters(in: .whitespacesAndNewlines),
-                    currency: quiniela.currency
+                    currency: quiniela.currency,
+                    featured: featured
                 )
                 let updated: Quiniela = try await client.request(
                     method: "PUT",
@@ -504,101 +611,316 @@ private struct EditQuinielaSheet: View {
                     token: token
                 )
                 await MainActor.run {
+                    saving = false
                     onSave(updated)
                 }
             } catch {
+                print("[EditQuiniela] save error: \(error)")
                 await MainActor.run {
-                    errorMessage = "Could not save. Try again."
+                    saving = false
+                    errorMessage = "Could not save: \(error.localizedDescription)"
+                    onError("Could not save pool edits. See logs for details.")
                 }
             }
-            await MainActor.run { saving = false }
         }
     }
 }
 
-private struct Pill: View {
-    let label: String
-
-    var body: some View {
-        Text(label)
-            .font(AppFont.caption())
-            .foregroundColor(.appTextSecondary)
-            .padding(.horizontal, AppSpacing.sm)
-            .padding(.vertical, AppSpacing.xs)
-            .background(
-                Capsule().fill(Color.appSurfaceAlt)
-            )
+private extension View {
+    /// Minimal Arena-styled text input look reused inside the edit sheet.
+    func arenaFieldStyle() -> some View {
+        self
+            .font(ArenaFont.mono(size: 14))
+            .foregroundColor(.arenaText)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.arenaBg2)
+            .overlay(Rectangle().stroke(Color.arenaStroke, lineWidth: 1))
     }
 }
 
-// MARK: - Insufficient balance sheet (Recharge flow will be added in next step)
-private struct InsufficientBalanceSheet: View {
+// MARK: - Small components
+
+struct ArenaFixtureRow: View {
+    let fixture: QuinielaFixture
+    let live: LiveFixture?
+
+    private var isLive: Bool { live?.status.isLive == true }
+    private var scoreString: String? {
+        guard let live, live.score.home != nil || live.score.away != nil else { return nil }
+        return "\(live.score.home ?? 0)–\(live.score.away ?? 0)"
+    }
+
+    var body: some View {
+        HudFrame(cut: 14, glow: isLive ? .arenaDanger : nil) {
+            VStack(spacing: 10) {
+                HStack {
+                    Text(kickoffShort)
+                        .font(ArenaFont.mono(size: 9))
+                        .tracking(1.5)
+                        .foregroundColor(.arenaTextMuted)
+                    Spacer()
+                    if isLive, let elapsed = live?.status.elapsed {
+                        HStack(spacing: 4) {
+                            LiveDot(color: .arenaDanger, size: 5)
+                            Text("\(elapsed)'")
+                                .font(ArenaFont.mono(size: 10, weight: .bold))
+                                .tracking(1)
+                                .foregroundColor(.arenaDanger)
+                        }
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    HStack(spacing: 8) {
+                        TeamCrestArena(
+                            name: fixture.homeTeam,
+                            color: ArenaTeamColor.color(for: fixture.homeTeam),
+                            size: 32,
+                            logoURL: fixture.homeLogo
+                        )
+                        Text(String(fixture.homeTeam.prefix(3)).uppercased())
+                            .font(ArenaFont.display(size: 13, weight: .bold))
+                            .tracking(0.5)
+                            .foregroundColor(.arenaText)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if let scoreString {
+                        Text(scoreString)
+                            .font(ArenaFont.mono(size: 22, weight: .bold))
+                            .foregroundColor(.arenaText)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(HudCornerCutShape(cut: 8).fill(Color.arenaBg2))
+                            .clipShape(HudCornerCutShape(cut: 8))
+                            .shadow(color: .arenaDanger.opacity(isLive ? 0.7 : 0), radius: 6)
+                    } else {
+                        Text("VS")
+                            .font(ArenaFont.display(size: 10, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.arenaTextMuted)
+                    }
+
+                    HStack(spacing: 8) {
+                        Text(String(fixture.awayTeam.prefix(3)).uppercased())
+                            .font(ArenaFont.display(size: 13, weight: .bold))
+                            .tracking(0.5)
+                            .foregroundColor(.arenaText)
+                        TeamCrestArena(
+                            name: fixture.awayTeam,
+                            color: ArenaTeamColor.color(for: fixture.awayTeam),
+                            size: 32,
+                            logoURL: fixture.awayLogo
+                        )
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
+            .padding(12)
+        }
+    }
+
+    private var kickoffShort: String {
+        guard let d = fixture.kickoffDate else { return "" }
+        let f = DateFormatter(); f.dateFormat = "EEE HH:mm"
+        return f.string(from: d).uppercased()
+    }
+}
+
+struct ArenaLeaderboardPanel: View {
+    let leaderboard: LeaderboardResponse?
+    let isLoading: Bool
+
+    var body: some View {
+        HudFrame {
+            VStack(spacing: 14) {
+                Text("◆ LEADERBOARD")
+                    .font(ArenaFont.display(size: 11, weight: .bold))
+                    .tracking(2)
+                    .foregroundColor(.arenaPrimary)
+
+                if isLoading {
+                    ProgressView().tint(.arenaPrimary)
+                } else if let lb = leaderboard, let entries = leaderboardEntries(lb), !entries.isEmpty {
+                    VStack(spacing: 14) {
+                        // Podium (top 3)
+                        if entries.count >= 3 {
+                            HStack(alignment: .bottom, spacing: 8) {
+                                PodiumColumn(rank: 2, name: entries[1].name, score: entries[1].score, total: entries[1].total, height: 70, tint: .arenaSilver)
+                                PodiumColumn(rank: 1, name: entries[0].name, score: entries[0].score, total: entries[0].total, height: 100, tint: .arenaGold)
+                                PodiumColumn(rank: 3, name: entries[2].name, score: entries[2].score, total: entries[2].total, height: 55, tint: .arenaBronze)
+                            }
+                            .frame(height: 130)
+                            Divider().background(Color.arenaStroke)
+                        }
+
+                        // Rest of the table
+                        VStack(spacing: 0) {
+                            ForEach(Array(entries.dropFirst(3).enumerated()), id: \.offset) { idx, row in
+                                HStack(spacing: 10) {
+                                    Text("\(idx + 4)")
+                                        .font(ArenaFont.mono(size: 12, weight: .bold))
+                                        .foregroundColor(.arenaTextDim)
+                                        .frame(width: 24)
+                                    Text(row.name)
+                                        .font(ArenaFont.mono(size: 12))
+                                        .foregroundColor(.arenaText)
+                                    Spacer()
+                                    Text("\(row.score)/\(row.total)")
+                                        .font(ArenaFont.mono(size: 13, weight: .bold))
+                                        .foregroundColor(.arenaPrimary)
+                                }
+                                .padding(.vertical, 6)
+                                if idx < entries.count - 4 {
+                                    Rectangle().fill(Color.arenaStroke).frame(height: 1)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Text("No entries yet. Be the first to join!")
+                        .font(ArenaFont.body(size: 12))
+                        .foregroundColor(.arenaTextDim)
+                }
+            }
+            .padding(14)
+        }
+    }
+
+    private struct LBRow {
+        let name: String
+        let score: Int
+        let total: Int
+    }
+
+    private func leaderboardEntries(_ lb: LeaderboardResponse) -> [LBRow]? {
+        let rows = lb.leaderboard
+        guard !rows.isEmpty else { return nil }
+        return rows.map { r in
+            LBRow(name: r.displayName, score: r.score, total: r.totalPossible)
+        }
+    }
+}
+
+private struct PodiumColumn: View {
+    let rank: Int
+    let name: String
+    let score: Int
+    let total: Int
+    let height: CGFloat
+    let tint: Color
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 6).fill(tint.opacity(0.3))
+                Text(String(name.prefix(1)).uppercased())
+                    .font(ArenaFont.display(size: 18, weight: .heavy))
+                    .foregroundColor(.arenaOnPrimary)
+            }
+            .frame(width: 40, height: 40)
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(tint, lineWidth: 2))
+            .shadow(color: tint.opacity(0.8), radius: 8)
+
+            Text(name)
+                .font(ArenaFont.mono(size: 10, weight: .semibold))
+                .foregroundColor(.arenaText)
+                .lineLimit(1)
+            Text("\(score)/\(total)")
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .foregroundColor(tint)
+
+            PodiumBlockShape(cut: 8)
+                .fill(
+                    LinearGradient(
+                        colors: [tint, tint.opacity(0.4)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
+                .overlay(
+                    Text("\(rank)")
+                        .font(ArenaFont.display(size: 22, weight: .black))
+                        .foregroundColor(.arenaOnPrimary)
+                        .padding(.top, 8),
+                    alignment: .top
+                )
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct ArenaRulesPanel: View {
+    var body: some View {
+        HudFrame {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("◆ GAME RULES")
+                    .font(ArenaFont.display(size: 12, weight: .bold))
+                    .tracking(2)
+                    .foregroundColor(.arenaPrimary)
+
+                let rules: [(String, String)] = [
+                    ("01", "Predice 1 (local), X (empate) o 2 (visitante) para cada partido."),
+                    ("02", "+1 pt por cada acierto. Multiplicadores x2 en partidos 🔥 HOT."),
+                    ("03", "Los picks se cierran al iniciar el primer partido."),
+                    ("04", "El premio se reparte 60/30/10 entre top 3."),
+                    ("05", "Ganar sube tu XP y tu división. ¡Llega a LEGEND!"),
+                ]
+
+                ForEach(rules, id: \.0) { n, text in
+                    HStack(alignment: .top, spacing: 10) {
+                        Text(n)
+                            .font(ArenaFont.mono(size: 12, weight: .bold))
+                            .foregroundColor(.arenaPrimary)
+                        Text(text)
+                            .font(ArenaFont.body(size: 12))
+                            .foregroundColor(.arenaTextDim)
+                    }
+                }
+            }
+            .padding(14)
+        }
+    }
+}
+
+private struct ArenaInsufficientBalanceSheet: View {
     let entryCost: Double
     let currentBalance: Double
     var onRecharge: () -> Void
     var onDismiss: () -> Void
 
-    private func format(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-    }
-
-    private var messageText: String {
-        String(format: String(localized: "You need %@ to join this pool. Your balance: %@."), format(entryCost), format(currentBalance))
-    }
-
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.appBackground.ignoresSafeArea()
-                VStack(spacing: AppSpacing.lg) {
-                    Text("Insufficient balance")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(.appTextPrimary)
-                    Text(messageText)
-                        .font(AppFont.body())
-                        .foregroundColor(.appTextSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    VStack(spacing: AppSpacing.sm) {
-                        PrimaryButton("Recharge", style: .green, action: onRecharge)
-                        Button("Close", action: onDismiss)
-                            .font(AppFont.body())
-                            .foregroundColor(.appTextSecondary)
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, AppSpacing.sm)
-                }
-                .padding(AppSpacing.xl)
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close", action: onDismiss)
-                        .foregroundColor(.appTextSecondary)
-                }
-            }
-        }
-    }
-}
+        ZStack {
+            Color.arenaBg.ignoresSafeArea()
+            VStack(spacing: 20) {
+                Text("INSUFFICIENT BALANCE")
+                    .font(ArenaFont.display(size: 20, weight: .heavy))
+                    .tracking(2)
+                    .foregroundColor(.arenaText)
 
-#Preview {
-    QuinielaDetailView(quiniela: Quiniela(
-        id: "1",
-        name: "Week 1 Special",
-        description: "Premier League opening set.",
-        prize: "$5,000",
-        cost: "$5",
-        currency: "USD",
-        startDate: "2026-02-07T18:00:00Z",
-        endDate: "2026-02-09T18:00:00Z",
-        fixtures: [],
-        entriesCount: 0,
-        status: "scheduled"
-    ))
-    .environmentObject(AuthService())
-    .preferredColorScheme(.dark)
+                Text("You need \(formatted(entryCost)) to join. Your balance: \(formatted(currentBalance)).")
+                    .font(ArenaFont.body(size: 13))
+                    .foregroundColor(.arenaTextDim)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                ArcadeButton(title: "▶ RECHARGE", size: .lg, fullWidth: true, action: onRecharge)
+                Button("CLOSE", action: onDismiss)
+                    .font(ArenaFont.mono(size: 11))
+                    .tracking(1.5)
+                    .foregroundColor(.arenaTextMuted)
+            }
+            .padding(28)
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func formatted(_ v: Double) -> String {
+        let f = NumberFormatter(); f.numberStyle = .decimal
+        f.maximumFractionDigits = 2
+        return f.string(from: NSNumber(value: v)) ?? "\(v)"
+    }
 }

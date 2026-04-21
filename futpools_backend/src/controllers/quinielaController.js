@@ -219,12 +219,13 @@ exports.updateQuiniela = async (req, res) => {
   try {
     const quiniela = await Quiniela.findById(req.params.id);
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
-    const { name, description, prize, cost, currency, fixtures } = req.body || {};
+    const { name, description, prize, cost, currency, fixtures, featured } = req.body || {};
     if (name !== undefined) quiniela.name = String(name).trim();
     if (description !== undefined) quiniela.description = String(description || '').trim();
     if (prize !== undefined) quiniela.prize = String(prize).trim();
     if (cost !== undefined) quiniela.cost = String(cost).trim();
     if (currency !== undefined) quiniela.currency = String(currency || 'MXN').trim();
+    if (featured !== undefined) quiniela.featured = Boolean(featured);
     if (Array.isArray(fixtures) && fixtures.length > 0) {
       quiniela.fixtures = fixtures.map((f) => ({
         fixtureId: f.fixtureId,
