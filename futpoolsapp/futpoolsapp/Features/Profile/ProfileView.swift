@@ -10,6 +10,9 @@ struct ProfileView: View {
     @State private var showEditName = false
     @State private var showSettings = false
     @State private var showRechargeSheet = false
+    @State private var myPools: [Quiniela] = []
+    @State private var loadingMyPools = false
+    private let client = APIClient.shared
 
     private var displayName: String {
         if let n = auth.currentUser?.displayName?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -32,6 +35,7 @@ struct ProfileView: View {
                     VStack(spacing: 16) {
                         hero
                         balanceCard
+                        myCreatedPoolsSection
                         signOutSection
                     }
                     .padding(.top, 18)
@@ -68,6 +72,58 @@ struct ProfileView: View {
             .sheet(isPresented: $showRechargeSheet) {
                 RechargeView().environmentObject(auth)
             }
+            .task { await loadMyPools() }
+        }
+    }
+
+    // MARK: - My created pools
+
+    @ViewBuilder
+    private var myCreatedPoolsSection: some View {
+        if loadingMyPools {
+            HStack(spacing: 10) {
+                ProgressView().tint(.arenaPrimary)
+                Text("LOADING MY POOLS…")
+                    .font(ArenaFont.mono(size: 10))
+                    .tracking(1.5)
+                    .foregroundColor(.arenaTextDim)
+            }
+            .padding(.horizontal, 16)
+        } else if !myPools.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("◆ MY CREATED POOLS")
+                    .font(ArenaFont.display(size: 10, weight: .bold))
+                    .tracking(3)
+                    .foregroundColor(.arenaTextMuted)
+                VStack(spacing: 8) {
+                    ForEach(myPools) { pool in
+                        NavigationLink {
+                            QuinielaDetailView(quiniela: pool)
+                                .environmentObject(auth)
+                        } label: {
+                            MyPoolRow(pool: pool)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    private func loadMyPools() async {
+        guard let token = KeychainHelper.getToken() else { return }
+        loadingMyPools = true
+        defer { loadingMyPools = false }
+        do {
+            myPools = try await client.request(
+                method: "GET",
+                path: "/quinielas/mine/created",
+                token: token
+            )
+        } catch {
+            // Keep the section hidden on failure.
+            myPools = []
         }
     }
 
@@ -180,6 +236,47 @@ struct ProfileView: View {
         let f = NumberFormatter(); f.numberStyle = .decimal
         f.maximumFractionDigits = 0
         return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+    }
+}
+
+private struct MyPoolRow: View {
+    let pool: Quiniela
+
+    var body: some View {
+        HudFrame {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(pool.name.uppercased())
+                        .font(ArenaFont.display(size: 13, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundColor(.arenaText)
+                        .lineLimit(1)
+                    HStack(spacing: 6) {
+                        if let code = pool.inviteCode {
+                            Text(code)
+                                .font(ArenaFont.mono(size: 10, weight: .bold))
+                                .tracking(1.5)
+                                .foregroundColor(.arenaPrimary)
+                        }
+                        if let vis = pool.visibility {
+                            Text("· \(vis.uppercased())")
+                                .font(ArenaFont.mono(size: 9))
+                                .foregroundColor(.arenaTextMuted)
+                        }
+                        if let count = pool.entriesCount {
+                            Text("· \(count) PLAYERS")
+                                .font(ArenaFont.mono(size: 9))
+                                .foregroundColor(.arenaTextMuted)
+                        }
+                    }
+                }
+                Spacer()
+                Text("›")
+                    .font(ArenaFont.display(size: 18, weight: .bold))
+                    .foregroundColor(.arenaTextMuted)
+            }
+            .padding(12)
+        }
     }
 }
 

@@ -76,9 +76,16 @@ const LEAGUE_ALIASES = {
 const cache = {
   fixturesByMatchday: new Map(), // matchdayId -> { updatedAt, fixtures }
   leagueIdByName: new Map(),
+  fixturesById: new Map(),       // fixtureId -> { updatedAt, payload }
+  searchLeagues: new Map(),      // query -> { updatedAt, payload }
+  searchTeams: new Map(),        // query -> { updatedAt, payload }
+  teamFixtures: new Map(),       // teamId -> { updatedAt, payload }
+  leagueFixtures: new Map(),     // leagueId:season -> { updatedAt, payload }
 };
 
 const cacheTTLms = 25 * 1000; // 25s to allow 30s polling
+const searchCacheTTLms = 10 * 60 * 1000; // 10 min — leagues/teams don't change
+const fixturePreviewTTLms = 60 * 1000;   // 1 min for "next 10/20 fixtures"
 
 const isLiveStatus = (short) => {
   const live = new Set(['1H', '2H', 'ET', 'P', 'LIVE', 'HT', 'BT']);
@@ -490,11 +497,22 @@ const fetchFixturesForMatchday = async (matchdayId) => {
 const fetchFixturesByIds = async (fixtureIds = []) => {
   const ids = (fixtureIds || []).filter(Boolean).map((id) => String(id));
   if (!ids.length) return [];
+
+  const now = Date.now();
+  const fresh = [];
+  const stale = [];
+  for (const id of ids) {
+    const hit = cache.fixturesById.get(id);
+    if (hit && now - hit.updatedAt < cacheTTLms) fresh.push(hit.payload);
+    else stale.push(id);
+  }
+  if (!stale.length) return fresh;
+
   const data = await apiFetch('/fixtures', {
-    ids: ids.join('-'),
+    ids: stale.join('-'),
   });
   const fixtures = data?.response || [];
-  return fixtures.map((f) => {
+  const mapped = fixtures.map((f) => {
     const status = f?.fixture?.status || {};
     const goals = f?.goals || {};
     const fullTime = goals.fullTime || {};
@@ -526,6 +544,12 @@ const fetchFixturesByIds = async (fixtureIds = []) => {
         : null,
     };
   });
+  for (const m of mapped) {
+    if (m.fixtureId != null) {
+      cache.fixturesById.set(String(m.fixtureId), { updatedAt: now, payload: m });
+    }
+  }
+  return [...fresh, ...mapped];
 };
 
 const startLivePolling = () => {
@@ -550,8 +574,145 @@ const startLivePolling = () => {
   }, intervalMs);
 };
 
+const searchLeagues = async (rawQuery) => {
+  const query = String(rawQuery || '').trim();
+  if (!query) return [];
+  const key = query.toLowerCase();
+  const hit = cache.searchLeagues.get(key);
+  if (hit && Date.now() - hit.updatedAt < searchCacheTTLms) return hit.payload;
+
+  const byId = new Map();
+  const collect = async (q) => {
+    const data = await apiFetch('/leagues', { search: q });
+    for (const row of data?.response || []) {
+      const league = row?.league;
+      const country = row?.country;
+      if (!league?.id || byId.has(league.id)) continue;
+      byId.set(league.id, {
+        id: league.id,
+        name: league.name,
+        type: league.type,
+        logo: league.logo,
+        country: country?.name || '',
+        countryCode: country?.code || '',
+        season: row?.seasons?.find((s) => s?.current)?.year || null,
+      });
+    }
+  };
+  await collect(query);
+  if (byId.size === 0 && !query.includes(' ')) {
+    const spaced = query.replace(/([a-z])([A-Z])/g, '$1 $2');
+    if (spaced !== query) await collect(spaced);
+  }
+  const out = Array.from(byId.values());
+  cache.searchLeagues.set(key, { updatedAt: Date.now(), payload: out });
+  return out;
+};
+
+const searchTeamsApi = async (rawQuery) => {
+  const query = String(rawQuery || '').trim();
+  if (!query) return [];
+  const key = query.toLowerCase();
+  const hit = cache.searchTeams.get(key);
+  if (hit && Date.now() - hit.updatedAt < searchCacheTTLms) return hit.payload;
+
+  const data = await apiFetch('/teams', { search: query });
+  const out = (data?.response || []).map((r) => ({
+    id: r?.team?.id,
+    name: r?.team?.name,
+    logo: r?.team?.logo,
+    country: r?.team?.country,
+  })).filter((t) => t.id);
+  cache.searchTeams.set(key, { updatedAt: Date.now(), payload: out });
+  return out;
+};
+
+const mapFixturePreview = (f) => ({
+  fixtureId: f?.fixture?.id,
+  date: f?.fixture?.date,
+  status: f?.fixture?.status?.short,
+  league: {
+    id: f?.league?.id,
+    name: f?.league?.name,
+    logo: f?.league?.logo,
+  },
+  teams: {
+    home: {
+      id: f?.teams?.home?.id,
+      name: f?.teams?.home?.name,
+      logo: f?.teams?.home?.logo,
+    },
+    away: {
+      id: f?.teams?.away?.id,
+      name: f?.teams?.away?.name,
+      logo: f?.teams?.away?.logo,
+    },
+  },
+});
+
+const fixturePreviewSort = (a, b) => {
+  const aLive = isLiveStatus(String(a?.status || '').toUpperCase());
+  const bLive = isLiveStatus(String(b?.status || '').toUpperCase());
+  if (aLive && !bLive) return -1;
+  if (!aLive && bLive) return 1;
+  return new Date(a?.date || 0).getTime() - new Date(b?.date || 0).getTime();
+};
+
+const getTeamFixtures = async (teamId) => {
+  const key = String(teamId);
+  const hit = cache.teamFixtures.get(key);
+  if (hit && Date.now() - hit.updatedAt < fixturePreviewTTLms) return hit.payload;
+
+  // Merge live + next fixtures so users can pick an ongoing match for a demo
+  // pool. We fetch both in parallel and dedupe by fixture id.
+  const [liveData, nextData] = await Promise.all([
+    apiFetch('/fixtures', { live: 'all' }).catch(() => null),
+    apiFetch('/fixtures', { team: teamId, next: 10 }),
+  ]);
+  const byId = new Map();
+  for (const f of (liveData?.response || [])) {
+    if (f?.teams?.home?.id === Number(teamId) || f?.teams?.away?.id === Number(teamId)) {
+      byId.set(f.fixture?.id, mapFixturePreview(f));
+    }
+  }
+  for (const f of (nextData?.response || [])) {
+    if (!byId.has(f?.fixture?.id)) byId.set(f.fixture?.id, mapFixturePreview(f));
+  }
+  const out = Array.from(byId.values()).sort(fixturePreviewSort);
+  cache.teamFixtures.set(key, { updatedAt: Date.now(), payload: out });
+  return out;
+};
+
+const getLeagueFixtures = async (leagueId, season) => {
+  const resolvedSeason = Number(season) || Number(DEFAULT_SEASON) || new Date().getFullYear();
+  const key = `${leagueId}:${resolvedSeason}`;
+  const hit = cache.leagueFixtures.get(key);
+  if (hit && Date.now() - hit.updatedAt < fixturePreviewTTLms) return hit.payload;
+
+  const [liveData, nextData] = await Promise.all([
+    apiFetch('/fixtures', { live: 'all' }).catch(() => null),
+    apiFetch('/fixtures', { league: leagueId, season: resolvedSeason, next: 20 }),
+  ]);
+  const byId = new Map();
+  for (const f of (liveData?.response || [])) {
+    if (f?.league?.id === Number(leagueId)) {
+      byId.set(f.fixture?.id, mapFixturePreview(f));
+    }
+  }
+  for (const f of (nextData?.response || [])) {
+    if (!byId.has(f?.fixture?.id)) byId.set(f.fixture?.id, mapFixturePreview(f));
+  }
+  const out = Array.from(byId.values()).sort(fixturePreviewSort);
+  cache.leagueFixtures.set(key, { updatedAt: Date.now(), payload: out });
+  return out;
+};
+
 module.exports = {
   fetchFixturesForMatchday,
   fetchFixturesByIds,
+  searchLeagues,
+  searchTeamsApi,
+  getTeamFixtures,
+  getLeagueFixtures,
   startLivePolling,
 };

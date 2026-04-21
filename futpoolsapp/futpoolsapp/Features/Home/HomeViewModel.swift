@@ -28,7 +28,10 @@ final class HomeViewModel: ObservableObject {
         Task {
             await loadSettings()
             do {
-                quinielas = try await client.request(path: "/quinielas") as [Quiniela]
+                // Optional token: backend filters private pools to the caller's
+                // own when a token is present, so MINE/ALL include user-created.
+                let token = KeychainHelper.getToken()
+                quinielas = try await client.request(path: "/quinielas", token: token) as [Quiniela]
                 print("[Home] Quinielas loaded: \(quinielas.count)")
                 await refreshLiveFixtures()
                 isLoading = false
@@ -73,9 +76,25 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
+    /// Skip the poll when nothing relevant is happening — no live match and no
+    /// kickoff within the last 3h or next 60min. Keeps the client quiet most of
+    /// the day instead of hammering the backend every 30s.
+    private func shouldSkipPoll() -> Bool {
+        let anyLive = liveFixtures.values.contains { $0.status.isLive == true }
+        if anyLive { return false }
+        let now = Date()
+        let windowStart = now.addingTimeInterval(-3 * 3600)
+        let windowEnd = now.addingTimeInterval(60 * 60)
+        let inWindow = quinielas.flatMap { $0.fixtures }
+            .compactMap { $0.kickoffDate }
+            .contains { $0 >= windowStart && $0 <= windowEnd }
+        return !inWindow
+    }
+
     private func refreshLiveFixtures() async {
         let ids = fixtureIds()
         guard !ids.isEmpty else { return }
+        if shouldSkipPoll() { return }
         var map: [Int: LiveFixture] = [:]
         do {
             for part in chunks(ids, size: 50) {

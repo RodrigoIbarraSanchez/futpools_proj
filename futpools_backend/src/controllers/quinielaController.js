@@ -2,8 +2,30 @@ const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const User = require('../models/User');
 const { fetchFixturesByIds } = require('../services/apiFootball');
+const { isAdminUser } = require('../middleware/auth');
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN']);
+
+// Invite-code alphabet: uppercase alphanumeric minus confusable chars (0/O/1/I).
+const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function generateInviteCode(length = 8) {
+  let out = '';
+  for (let i = 0; i < length; i++) {
+    out += INVITE_ALPHABET[Math.floor(Math.random() * INVITE_ALPHABET.length)];
+  }
+  return out;
+}
+
+/** Try up to 5 times to find a non-colliding invite code. */
+async function mintUniqueInviteCode() {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = generateInviteCode();
+    const existing = await Quiniela.findOne({ inviteCode: code }).select('_id').lean();
+    if (!existing) return code;
+  }
+  throw new Error('Could not mint a unique invite code after 5 attempts');
+}
 
 /** Compute pool status from fixtures: scheduled | live | completed */
 function computePoolStatus(fixtures) {
@@ -30,9 +52,153 @@ function addPoolStatus(quiniela) {
   return { ...quiniela, status: computePoolStatus(quiniela.fixtures || []) };
 }
 
-exports.getQuinielas = async (_req, res) => {
+/**
+ * Create a user-owned pool. MVP: free pools only (no entry fee / prize pool).
+ * Any authenticated user can call this. Fixtures must be non-empty and all
+ * kickoffs must be in the future.
+ */
+exports.createQuiniela = async (req, res) => {
   try {
-    const list = await Quiniela.find().sort({ startDate: 1 }).lean();
+    const { name, description, prizeLabel, visibility, fixtures } = req.body || {};
+
+    const trimmedName = String(name || '').trim();
+    if (!trimmedName) return res.status(400).json({ message: 'Name is required' });
+
+    if (!Array.isArray(fixtures) || fixtures.length === 0) {
+      return res.status(400).json({ message: 'At least one fixture is required' });
+    }
+
+    // Live statuses from API-Football — kickoff is in the past but the match
+    // hasn't finished, so it's still fair game for a pool (useful for demos).
+    const LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
+
+    const now = new Date();
+    const normalizedFixtures = [];
+    for (const f of fixtures) {
+      const kickoff = f.kickoff ? new Date(f.kickoff) : null;
+      if (!kickoff || isNaN(kickoff.getTime())) {
+        return res.status(400).json({ message: 'All fixtures need a valid kickoff' });
+      }
+      const status = String(f.status || '').toUpperCase();
+      const isLive = LIVE_STATUSES.has(status);
+      if (kickoff <= now && !isLive) {
+        return res.status(400).json({ message: 'All fixture kickoffs must be in the future or live' });
+      }
+      if (!f.homeTeam || !f.awayTeam) {
+        return res.status(400).json({ message: 'Each fixture needs homeTeam and awayTeam' });
+      }
+      normalizedFixtures.push({
+        fixtureId: f.fixtureId,
+        leagueId: f.leagueId,
+        leagueName: f.leagueName || '',
+        homeTeamId: f.homeTeamId,
+        awayTeamId: f.awayTeamId,
+        homeTeam: String(f.homeTeam),
+        awayTeam: String(f.awayTeam),
+        homeLogo: f.homeLogo || '',
+        awayLogo: f.awayLogo || '',
+        kickoff,
+        status: f.status || '',
+      });
+    }
+
+    const dates = normalizedFixtures.map((f) => f.kickoff).sort((a, b) => a - b);
+    // Only admins can create public pools. Everyone else is forced to private,
+    // regardless of what the client sends — keeps the "public" surface curated.
+    const vis = visibility === 'public' && isAdminUser(req.user) ? 'public' : 'private';
+    const inviteCode = await mintUniqueInviteCode();
+
+    const doc = await Quiniela.create({
+      name: trimmedName,
+      description: String(description || '').trim(),
+      prize: '',           // legacy field unused in MVP free pools
+      prizeLabel: String(prizeLabel || '').trim(),
+      cost: '0',           // MVP = free, no entry fee
+      currency: 'MXN',
+      startDate: dates[0],
+      endDate: dates[dates.length - 1],
+      fixtures: normalizedFixtures,
+      featured: false,
+      createdBy: req.user._id,
+      visibility: vis,
+      inviteCode,
+    });
+
+    console.log(`[Quiniela] create user=${req.user._id} code=${inviteCode} fixtures=${normalizedFixtures.length}`);
+    const out = addPoolStatus({
+      ...doc.toObject(),
+      entriesCount: 0,
+      createdBy: req.user._id,
+      createdByUsername: req.user.username,
+      createdByDisplayName: req.user.displayName,
+    });
+    res.status(201).json(out);
+  } catch (err) {
+    console.error('[Quiniela] create error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/** Resolve a share link like `futpools://p/ABC23456` → full pool doc. Public. */
+exports.getQuinielaByInvite = async (req, res) => {
+  try {
+    const code = String(req.params.code || '').toUpperCase().trim();
+    if (!code) return res.status(400).json({ message: 'Missing code' });
+    const doc = await Quiniela.findOne({ inviteCode: code })
+      .populate('createdBy', 'username displayName')
+      .lean();
+    if (!doc) return res.status(404).json({ message: 'Invite not found' });
+    const entriesCount = await QuinielaEntry.countDocuments({ quiniela: doc._id });
+    res.json(addPoolStatus({
+      ...doc,
+      entriesCount,
+      createdByUsername: doc.createdBy?.username || null,
+      createdByDisplayName: doc.createdBy?.displayName || null,
+      createdBy: doc.createdBy?._id || null,
+    }));
+  } catch (err) {
+    console.error('[Quiniela] byInvite error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/** Pools created by the authenticated user (for "MY CREATED POOLS" surface). */
+exports.getMyCreatedQuinielas = async (req, res) => {
+  try {
+    const list = await Quiniela.find({ createdBy: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+    const ids = list.map((q) => q._id);
+    const counts = await QuinielaEntry.aggregate([
+      { $match: { quiniela: { $in: ids } } },
+      { $group: { _id: '$quiniela', count: { $sum: 1 } } },
+    ]);
+    const countMap = new Map(counts.map((c) => [String(c._id), c.count]));
+    res.json(list.map((q) => addPoolStatus({
+      ...q,
+      entriesCount: countMap.get(String(q._id)) ?? 0,
+      createdByUsername: req.user.username,
+      createdByDisplayName: req.user.displayName,
+    })));
+  } catch (err) {
+    console.error('[Quiniela] getMine error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getQuinielas = async (req, res) => {
+  try {
+    // Discovery list: public pools + legacy pools without visibility + the
+    // caller's own private pools (so they show up in MINE/ALL filters). Other
+    // people's private pools stay reachable only by invite code.
+    const visibilityClauses = [{ visibility: 'public' }, { visibility: { $exists: false } }];
+    if (req.user?._id) {
+      visibilityClauses.push({ visibility: 'private', createdBy: req.user._id });
+    }
+    const list = await Quiniela.find({ $or: visibilityClauses })
+      .populate('createdBy', 'username displayName')
+      .sort({ startDate: 1 })
+      .lean();
     const ids = list.map((q) => q._id);
     const counts = await QuinielaEntry.aggregate([
       { $match: { quiniela: { $in: ids } } },
@@ -42,20 +208,33 @@ exports.getQuinielas = async (_req, res) => {
     const withCounts = list.map((q) => addPoolStatus({
       ...q,
       entriesCount: countMap.get(String(q._id)) ?? 0,
+      createdByUsername: q.createdBy?.username || null,
+      createdByDisplayName: q.createdBy?.displayName || null,
+      createdBy: q.createdBy?._id || null,
     }));
     res.json(withCounts);
   } catch (err) {
+    console.error('[Quiniela] list error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 exports.getQuinielaById = async (req, res) => {
   try {
-    const doc = await Quiniela.findById(req.params.id).lean();
+    const doc = await Quiniela.findById(req.params.id)
+      .populate('createdBy', 'username displayName')
+      .lean();
     if (!doc) return res.status(404).json({ message: 'Quiniela not found' });
     const entriesCount = await QuinielaEntry.countDocuments({ quiniela: req.params.id });
-    res.json(addPoolStatus({ ...doc, entriesCount }));
+    res.json(addPoolStatus({
+      ...doc,
+      entriesCount,
+      createdByUsername: doc.createdBy?.username || null,
+      createdByDisplayName: doc.createdBy?.displayName || null,
+      createdBy: doc.createdBy?._id || null,
+    }));
   } catch (err) {
+    console.error('[Quiniela] byId error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -217,15 +396,31 @@ exports.getMyEntries = async (req, res) => {
 
 exports.updateQuiniela = async (req, res) => {
   try {
-    const quiniela = await Quiniela.findById(req.params.id);
+    // Prefer the doc already loaded by requireOwnerOrAdmin when present.
+    const quiniela = req.resource || await Quiniela.findById(req.params.id);
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
-    const { name, description, prize, cost, currency, fixtures, featured } = req.body || {};
+    const { name, description, prize, prizeLabel, cost, currency, fixtures, featured, visibility } = req.body || {};
+
+    // Field-level guard: `featured` is admin-only regardless of ownership.
+    if (featured !== undefined && !isAdminUser(req.user)) {
+      return res.status(403).json({ message: 'Only admins can change the featured flag' });
+    }
+
     if (name !== undefined) quiniela.name = String(name).trim();
     if (description !== undefined) quiniela.description = String(description || '').trim();
     if (prize !== undefined) quiniela.prize = String(prize).trim();
+    if (prizeLabel !== undefined) quiniela.prizeLabel = String(prizeLabel || '').trim();
     if (cost !== undefined) quiniela.cost = String(cost).trim();
     if (currency !== undefined) quiniela.currency = String(currency || 'MXN').trim();
     if (featured !== undefined) quiniela.featured = Boolean(featured);
+    if (visibility !== undefined && ['public', 'private'].includes(visibility)) {
+      // Only admins can switch a pool to public. Owners can still flip their
+      // own pool back to private, but public requires admin blessing.
+      if (visibility === 'public' && !isAdminUser(req.user)) {
+        return res.status(403).json({ message: 'Only admins can make a pool public' });
+      }
+      quiniela.visibility = visibility;
+    }
     if (Array.isArray(fixtures) && fixtures.length > 0) {
       quiniela.fixtures = fixtures.map((f) => ({
         fixtureId: f.fixtureId,

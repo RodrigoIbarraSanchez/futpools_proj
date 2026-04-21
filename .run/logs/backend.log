@@ -17,3 +17,13 @@ MongoDB connected
 [32m[nodemon] starting `node src/server.js`[39m
 Server running on port 3000
 MongoDB connected
+[Quiniela] submit entry — quiniela=69e7ac9473fea1c2c1b791a5 user=699ddc145a171c335a637bcd picks=2
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+Server running on port 3000
+MongoDB connected
+[Quiniela] create user=699deeec22cb6d42b9f399d2 code=GJS3TLUE fixtures=1

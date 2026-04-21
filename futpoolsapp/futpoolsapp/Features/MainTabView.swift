@@ -33,6 +33,7 @@ enum ArenaTab: String, CaseIterable, Identifiable {
 struct MainTabView: View {
     @State private var selected: ArenaTab = .pools
     @State private var tabBarHidden: Bool = false
+    @State private var showCreate = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -46,7 +47,7 @@ struct MainTabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            ArenaTabBar(selected: $selected)
+            ArenaTabBar(selected: $selected, onCreate: { showCreate = true })
                 .padding(.horizontal, 12)
                 .padding(.bottom, 10)
                 .opacity(tabBarHidden ? 0 : 1)
@@ -55,38 +56,76 @@ struct MainTabView: View {
         }
         .background(Color.arenaBg.ignoresSafeArea())
         .onPreferenceChange(ArenaTabBarHiddenKey.self) { tabBarHidden = $0 }
+        .fullScreenCover(isPresented: $showCreate) {
+            CreatePoolView()
+        }
     }
 }
 
 struct ArenaTabBar: View {
     @Binding var selected: ArenaTab
+    var onCreate: () -> Void
+
+    /// Tabs are split around a center "create" action so the FAB lives inside
+    /// the bar itself (common pattern — Strava, Instagram, Twitter).
+    private var leftTabs:  [ArenaTab] { [.pools,   .entries] }
+    private var rightTabs: [ArenaTab] { [.shop,    .profile] }
 
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(ArenaTab.allCases) { tab in
-                ArenaTabButton(
-                    tab: tab,
-                    isActive: selected == tab
-                ) {
-                    if selected != tab {
-                        withAnimation(.easeOut(duration: 0.15)) {
-                            selected = tab
-                        }
-                    }
+        ZStack {
+            HStack(spacing: 4) {
+                ForEach(leftTabs) { tab in
+                    tabButton(tab)
+                }
+                // Placeholder keeps spacing balanced — the real "+" sits on top
+                // as an overlay so we can lift it above the bar.
+                Color.clear.frame(maxWidth: .infinity).frame(height: 44)
+                ForEach(rightTabs) { tab in
+                    tabButton(tab)
                 }
             }
+            .padding(6)
+            .background(
+                HudCornerCutShape(cut: 14)
+                    .fill(Color.arenaSurface)
+                    .overlay(
+                        HudCornerCutShape(cut: 14)
+                            .stroke(Color.arenaStroke, lineWidth: 1)
+                    )
+            )
+            .clipShape(HudCornerCutShape(cut: 14))
+            .shadow(color: .black.opacity(0.5), radius: 12, y: 4)
+
+            // Elevated center create button. Lives in the same ZStack so its
+            // hit area stays aligned even as the bar width changes.
+            Button(action: onCreate) {
+                Image(systemName: "plus")
+                    .font(.system(size: 22, weight: .black))
+                    .foregroundColor(.arenaOnPrimary)
+                    .frame(width: 56, height: 56)
+                    .background(
+                        HudCornerCutShape(cut: 14)
+                            .fill(Color.arenaPrimary)
+                    )
+                    .overlay(
+                        HudCornerCutShape(cut: 14)
+                            .stroke(Color.arenaBg, lineWidth: 3)
+                    )
+                    .clipShape(HudCornerCutShape(cut: 14))
+                    .shadow(color: .arenaPrimary.opacity(0.55), radius: 12, y: 2)
+            }
+            .buttonStyle(.plain)
+            .offset(y: -22) // lift above the bar
+            .accessibilityLabel("Create pool")
         }
-        .padding(6)
-        .background(
-            HudCornerCutShape(cut: 14)
-                .fill(Color.arenaSurface)
-                .overlay(
-                    HudCornerCutShape(cut: 14)
-                        .stroke(Color.arenaStroke, lineWidth: 1)
-                )
-        )
-        .clipShape(HudCornerCutShape(cut: 14))
-        .shadow(color: .black.opacity(0.5), radius: 12, y: 4)
+    }
+
+    private func tabButton(_ tab: ArenaTab) -> some View {
+        ArenaTabButton(tab: tab, isActive: selected == tab) {
+            if selected != tab {
+                withAnimation(.easeOut(duration: 0.15)) { selected = tab }
+            }
+        }
     }
 }
 

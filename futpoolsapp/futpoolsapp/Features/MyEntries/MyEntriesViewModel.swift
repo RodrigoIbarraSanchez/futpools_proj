@@ -65,9 +65,22 @@ final class MyEntriesViewModel: ObservableObject {
         }
     }
 
+    private func shouldSkipPoll() -> Bool {
+        let anyLive = liveFixtures.values.contains { $0.status.isLive == true }
+        if anyLive { return false }
+        let now = Date()
+        let windowStart = now.addingTimeInterval(-3 * 3600)
+        let windowEnd = now.addingTimeInterval(60 * 60)
+        let inWindow = entries.flatMap { $0.quiniela.fixtures }
+            .compactMap { $0.kickoffDate }
+            .contains { $0 >= windowStart && $0 <= windowEnd }
+        return !inWindow
+    }
+
     private func refreshLiveFixtures() async {
         let ids = fixtureIds()
         guard !ids.isEmpty else { return }
+        if shouldSkipPoll() { return }
         var map: [Int: LiveFixture] = [:]
         do {
             for part in chunks(ids, size: 50) {

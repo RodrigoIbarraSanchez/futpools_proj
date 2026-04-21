@@ -32,20 +32,20 @@ function resolveStatus(q, locale, liveFixtures) {
 
 /// Derives the hero block's status with "LIVE NOW" only when at least one fixture
 /// is actually running per the polled data — not just `q.status`.
-function heroState(q, liveFixtures) {
+function heroState(q, liveFixtures, locale) {
   const fixtures = q?.fixtures || [];
   const hasLive = fixtures.some(f => isFixtureLive(f, liveFixtures));
-  if (hasLive) return { label: 'LIVE NOW', color: 'var(--fp-danger)', showDot: true, live: true };
+  if (hasLive) return { label: t(locale, 'LIVE NOW'), color: 'var(--fp-danger)', showDot: true, live: true };
 
   const now = new Date();
   const endedByStatus = q?.status === 'completed';
   const endedByDate = q?.endDate && new Date(q.endDate) < now;
   if (endedByStatus || endedByDate) {
-    return { label: 'FINISHED', color: 'var(--fp-text-muted)', showDot: false, live: false };
+    return { label: t(locale, 'POOL FINISHED'), color: 'var(--fp-text-muted)', showDot: false, live: false };
   }
   const anyUpcoming = fixtures.some(f => f.kickoff && new Date(f.kickoff) > now);
-  if (anyUpcoming) return { label: 'UP NEXT', color: 'var(--fp-accent)', showDot: false, live: false };
-  return { label: 'FINISHED', color: 'var(--fp-text-muted)', showDot: false, live: false };
+  if (anyUpcoming) return { label: t(locale, 'Upcoming').toUpperCase(), color: 'var(--fp-accent)', showDot: false, live: false };
+  return { label: t(locale, 'POOL FINISHED'), color: 'var(--fp-text-muted)', showDot: false, live: false };
 }
 
 function formatDate(d) {
@@ -124,7 +124,7 @@ function ArenaBanner({ url }) {
 // Quick Play hero
 // ──────────────────────────────────────────────────────────────
 function QuickPlayHero({ quiniela, liveFixtures, locale, embedded = false }) {
-  const hs = heroState(quiniela, liveFixtures);
+  const hs = heroState(quiniela, liveFixtures, locale);
 
   return (
     <div style={{ padding: embedded ? '4px 0 0' : '8px 16px 12px' }}>
@@ -153,7 +153,7 @@ function QuickPlayHero({ quiniela, liveFixtures, locale, embedded = false }) {
               fontFamily: 'var(--fp-mono)', fontSize: 10,
               color: 'var(--fp-text-muted)',
             }}>
-              {quiniela.entriesCount ?? 0} JUGADORES
+              {quiniela.entriesCount ?? 0} {t(locale, 'PLAYERS')}
             </span>
           </div>
           <div style={{
@@ -245,12 +245,13 @@ function FeaturedCarousel({ pools, liveFixtures, locale }) {
 // ──────────────────────────────────────────────────────────────
 // Filter strip — ALL / OPEN / LIVE / CLOSED (disjoint buckets)
 // ──────────────────────────────────────────────────────────────
-function FilterStrip({ active, onChange, allCount, openCount, liveCount, closedCount }) {
+function FilterStrip({ active, onChange, allCount, openCount, liveCount, closedCount, mineCount, locale }) {
   const items = [
-    { id: 'all',    label: `ALL ${allCount}`,       color: null },
-    { id: 'open',   label: `OPEN ${openCount}`,     color: 'var(--fp-primary)' },
-    { id: 'live',   label: `LIVE ${liveCount}`,     color: 'var(--fp-danger)' },
-    { id: 'closed', label: `CLOSED ${closedCount}`, color: 'var(--fp-text-muted)' },
+    { id: 'all',    label: `${t(locale, 'ALL')} ${allCount}`,       color: null },
+    { id: 'mine',   label: `${t(locale, 'MINE')} ${mineCount}`,     color: 'var(--fp-hot)' },
+    { id: 'open',   label: `${t(locale, 'OPEN')} ${openCount}`,     color: 'var(--fp-primary)' },
+    { id: 'live',   label: `${t(locale, 'LIVE')} ${liveCount}`,     color: 'var(--fp-danger)' },
+    { id: 'closed', label: `${t(locale, 'CLOSED')} ${closedCount}`, color: 'var(--fp-text-muted)' },
   ];
   return (
     <div style={{
@@ -312,9 +313,9 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: preview.length ? 10 : 0 }}>
-            <StatTile label="POT"     value={quiniela.prize}             color="var(--fp-gold)" />
-            <StatTile label="ENTRY"   value={quiniela.cost}              color="var(--fp-text)" />
-            <StatTile label="PLAYERS" value={quiniela.entriesCount ?? 0} color="var(--fp-accent)" />
+            <StatTile label={t(locale, 'POT')}     value={quiniela.prize}             color="var(--fp-gold)" />
+            <StatTile label={t(locale, 'ENTRY')}   value={quiniela.cost}              color="var(--fp-text)" />
+            <StatTile label={t(locale, 'PLAYERS')} value={quiniela.entriesCount ?? 0} color="var(--fp-accent)" />
           </div>
 
           {preview.length > 0 && (
@@ -364,7 +365,7 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
 
 // ──────────────────────────────────────────────────────────────
 export function Home() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { locale } = useLocale();
   const [quinielas, setQuinielas] = useState([]);
   const [liveFixtures, setLiveFixtures] = useState({});
@@ -378,7 +379,8 @@ export function Home() {
     setLoading(true);
     setError(null);
     try {
-      const list = await api.get('/quinielas');
+      // Optional token: backend includes the caller's own private pools when authed.
+      const list = await api.get('/quinielas', token);
       setQuinielas(list);
     } catch (e) {
       setError(e.message);
@@ -442,23 +444,34 @@ export function Home() {
   const openQs   = quinielas.filter(q => !hasLiveFixture(q) && !isClosed(q));
 
   // QUICK PLAY selection — admin-featured wins; otherwise fallback rule.
-  const adminFeatured = quinielas.filter(q => q.featured === true);
-  const autoFeatured = liveQs[0]
-    ?? [...openQs].sort((a, b) => {
-      const da = a.startDate ? new Date(a.startDate).getTime() : Infinity;
-      const db = b.startDate ? new Date(b.startDate).getTime() : Infinity;
-      return da - db;
-    })[0]
+  // Private user-created pools never qualify for the hero; they'd leak private
+  // pools into another user's Home if we ever relax the list filter.
+  const publicPools = quinielas.filter(q => (q.visibility ?? 'public') !== 'private');
+  const publicIds   = new Set(publicPools.map(q => q._id));
+  const adminFeatured = publicPools.filter(q => q.featured === true);
+  const autoFeatured = liveQs.find(q => publicIds.has(q._id))
+    ?? [...openQs]
+        .filter(q => publicIds.has(q._id))
+        .sort((a, b) => {
+          const da = a.startDate ? new Date(a.startDate).getTime() : Infinity;
+          const db = b.startDate ? new Date(b.startDate).getTime() : Infinity;
+          return da - db;
+        })[0]
     ?? null;
   const quickPlayPools = adminFeatured.length > 0
     ? adminFeatured
     : (autoFeatured ? [autoFeatured] : []);
+
+  const myQs = user?._id
+    ? quinielas.filter(q => q.createdBy === user._id)
+    : [];
 
   const filtered = (() => {
     switch (activeFilter) {
       case 'live':   return liveQs;
       case 'open':   return openQs;
       case 'closed': return closedQs;
+      case 'mine':   return myQs;
       default:       return quinielas;
     }
   })();
@@ -486,6 +499,8 @@ export function Home() {
         openCount={openQs.length}
         liveCount={liveQs.length}
         closedCount={closedQs.length}
+        mineCount={myQs.length}
+        locale={locale}
       />
 
       <div style={{ padding: '0 16px 24px' }}>
@@ -521,7 +536,7 @@ export function Home() {
         {morePools.length > 0 && (
           <>
             <div style={{ margin: '14px 0 10px' }}>
-              <SectionLabel>ACTIVE POOLS</SectionLabel>
+              <SectionLabel>{t(locale, 'ACTIVE POOLS')}</SectionLabel>
             </div>
             {morePools.map((q, i) => (
               <div key={q._id} className="fp-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
@@ -531,6 +546,7 @@ export function Home() {
           </>
         )}
       </div>
+
     </>
   );
 }

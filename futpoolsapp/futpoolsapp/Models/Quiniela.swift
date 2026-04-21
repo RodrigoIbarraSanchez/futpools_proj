@@ -21,6 +21,17 @@ struct Quiniela: Decodable, Identifiable {
     /// Admin-controlled "featured" flag. When true the pool is pinned to the Home
     /// QUICK PLAY hero (or the featured carousel when multiple are marked).
     let featured: Bool?
+    /// User id of the creator (null for legacy admin-seeded pools).
+    let createdBy: String?
+    /// Resolved username of the creator (from backend populate), used for "Created by @x" badge.
+    let createdByUsername: String?
+    let createdByDisplayName: String?
+    /// `public` → discoverable in Home. `private` → only reachable via inviteCode.
+    let visibility: String?
+    /// Short alphanum code used in share links (e.g. `futpools://p/ABC23456`).
+    let inviteCode: String?
+    /// Free-text label for MVP user-pools ("the loser buys pizza"). Not money.
+    let prizeLabel: String?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -35,6 +46,12 @@ struct Quiniela: Decodable, Identifiable {
         case entriesCount
         case status
         case featured
+        case createdBy
+        case createdByUsername
+        case createdByDisplayName
+        case visibility
+        case inviteCode
+        case prizeLabel
     }
 
     var startDateValue: Date? {
@@ -91,6 +108,30 @@ struct QuinielaUpdateRequest: Encodable {
 /// having to resend every editable field.
 struct QuinielaFeaturedRequest: Encodable {
     let featured: Bool
+}
+
+/// Body for `POST /quinielas` — any authenticated user can create a pool.
+/// MVP: no `entryCostCoins` / `rakePercent` yet — those arrive in Phase 2.
+struct QuinielaCreateRequest: Encodable {
+    let name: String
+    let description: String?
+    let prizeLabel: String?
+    let visibility: String // "public" | "private"
+    let fixtures: [QuinielaCreateFixture]
+}
+
+struct QuinielaCreateFixture: Encodable {
+    let fixtureId: Int
+    let leagueId: Int?
+    let leagueName: String?
+    let homeTeamId: Int?
+    let awayTeamId: Int?
+    let homeTeam: String
+    let awayTeam: String
+    let homeLogo: String?
+    let awayLogo: String?
+    /// ISO-8601 UTC kickoff.
+    let kickoff: String
 }
 
 struct QuinielaEntryRequest: Encodable {

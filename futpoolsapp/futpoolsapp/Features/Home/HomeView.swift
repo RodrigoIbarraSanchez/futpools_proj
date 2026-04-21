@@ -12,7 +12,7 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
+            ZStack(alignment: .bottomTrailing) {
                 ArenaBackground()
 
                 ScrollView {
@@ -39,7 +39,8 @@ struct HomeView: View {
                             allCount: vm.quinielas.count,
                             openCount: openQuinielas.count,
                             liveCount: liveQuinielas.count,
-                            closedCount: closedQuinielas.count
+                            closedCount: closedQuinielas.count,
+                            mineCount: myPoolsCount
                         )
                         .padding(.horizontal, 16)
 
@@ -121,18 +122,33 @@ struct HomeView: View {
         vm.quinielas.filter { !hasLiveFixture($0) && !isClosed($0) }
     }
 
+    /// Pools created by the logged-in user (independent of LIVE/OPEN/CLOSED bucket).
+    private var myQuinielas: [Quiniela] {
+        guard let uid = auth.currentUser?.id else { return [] }
+        return vm.quinielas.filter { ($0.createdBy ?? "") == uid }
+    }
+    private var myPoolsCount: Int { myQuinielas.count }
+
     private var filteredQuinielas: [Quiniela] {
         switch activeFilter {
         case "live":   return liveQuinielas
         case "open":   return openQuinielas
         case "closed": return closedQuinielas
+        case "mine":   return myQuinielas
         default:       return vm.quinielas
         }
     }
 
+    /// Pools eligible for the QUICK PLAY hero. Private user-created pools are
+    /// excluded — the hero is for admin-curated or public pools only. This also
+    /// prevents your own "Test" private pool from showing up as featured.
+    private var publicPools: [Quiniela] {
+        vm.quinielas.filter { ($0.visibility ?? "public") != "private" }
+    }
+
     /// Pools the admin pinned via "Mark as featured". Takes precedence over auto.
     private var adminFeaturedPools: [Quiniela] {
-        vm.quinielas.filter { $0.featured == true }
+        publicPools.filter { $0.featured == true }
     }
 
     /// Fallback when no pool is admin-featured:
@@ -140,8 +156,10 @@ struct HomeView: View {
     ///   2. otherwise the open pool closest to starting
     ///   3. otherwise `nil` — hero section is hidden
     private var autoFeatured: Quiniela? {
-        if let live = liveQuinielas.first { return live }
+        let publicIds = Set(publicPools.map { $0.id })
+        if let live = liveQuinielas.first(where: { publicIds.contains($0.id) }) { return live }
         return openQuinielas
+            .filter { publicIds.contains($0.id) }
             .sorted { ($0.startDateValue ?? .distantFuture) < ($1.startDateValue ?? .distantFuture) }
             .first
     }
@@ -368,17 +386,20 @@ private struct QuickPlaySection: View {
 
 // MARK: - Filter strip
 
-/// Four disjoint buckets: ALL = LIVE ⊔ OPEN ⊔ CLOSED (so counts are unambiguous).
+/// Four disjoint status buckets (ALL = LIVE ⊔ OPEN ⊔ CLOSED) plus a MINE
+/// view that filters pools created by the logged-in user.
 private struct ArenaFilterStrip: View {
     @Binding var active: String
     let allCount: Int
     let openCount: Int
     let liveCount: Int
     let closedCount: Int
+    let mineCount: Int
 
     private var items: [(String, String, Color?)] {
         [
             ("all",    "ALL \(allCount)",       nil),
+            ("mine",   "MINE \(mineCount)",     Color.arenaHot),
             ("open",   "OPEN \(openCount)",     Color.arenaPrimary),
             ("live",   "LIVE \(liveCount)",     Color.arenaDanger),
             ("closed", "CLOSED \(closedCount)", Color.arenaTextMuted),

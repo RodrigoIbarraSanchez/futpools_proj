@@ -40,6 +40,11 @@ struct QuinielaDetailView: View {
     private var entryCost: Double { quiniela.entryCostValue }
     private var hasEnoughBalance: Bool { userBalance >= entryCost }
     private var isAdmin: Bool { auth.currentUser?.isAdmin == true }
+    private var isOwner: Bool {
+        guard let uid = auth.currentUser?.id, let by = quiniela.createdBy else { return false }
+        return uid == by
+    }
+    private var canManage: Bool { isAdmin || isOwner }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -60,7 +65,9 @@ struct QuinielaDetailView: View {
                 LinearGradient(colors: [.clear, Color.arenaBg], startPoint: .top, endPoint: .bottom)
                     .frame(height: 40)
                 ArcadeButton(
-                    title: canJoin ? "▶ MAKE PICKS · \(quiniela.cost)" : "POOL LOCKED",
+                    title: canJoin
+                        ? String(format: NSLocalizedString("▶ MAKE PICKS · %@", comment: ""), quiniela.cost)
+                        : NSLocalizedString("POOL LOCKED", comment: ""),
                     size: .lg,
                     fullWidth: true,
                     disabled: !canJoin
@@ -80,7 +87,16 @@ struct QuinielaDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
-            if isAdmin {
+            // Share button is visible to anyone who can see the pool (needs an inviteCode).
+            if let code = quiniela.inviteCode, let url = URL(string: "futpools://p/\(code)") {
+                ToolbarItem(placement: .primaryAction) {
+                    ShareLink(item: url) {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundColor(.arenaText)
+                    }
+                }
+            }
+            if canManage {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button {
@@ -88,15 +104,17 @@ struct QuinielaDetailView: View {
                         } label: {
                             Label("Edit pool", systemImage: "pencil")
                         }
-                        Button {
-                            toggleFeatured()
-                        } label: {
-                            Label(
-                                quiniela.featured == true ? "Remove from featured" : "Mark as featured",
-                                systemImage: quiniela.featured == true ? "star.slash.fill" : "star.fill"
-                            )
+                        if isAdmin {
+                            Button {
+                                toggleFeatured()
+                            } label: {
+                                Label(
+                                    quiniela.featured == true ? "Remove from featured" : "Mark as featured",
+                                    systemImage: quiniela.featured == true ? "star.slash.fill" : "star.fill"
+                                )
+                            }
+                            .disabled(isTogglingFeatured)
                         }
-                        .disabled(isTogglingFeatured)
                         Button(role: .destructive) { showDeleteConfirm = true } label: { Label("Delete pool", systemImage: "trash") }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -161,7 +179,7 @@ struct QuinielaDetailView: View {
         }
         .onAppear {
             loadEntryCount()
-            loadLiveFixtures()
+            loadLiveFixtures(force: true)
             loadLeaderboard()
             startLivePolling()
         }
@@ -193,6 +211,20 @@ struct QuinielaDetailView: View {
                 .tracking(1)
                 .foregroundColor(.arenaText)
 
+            if let by = quiniela.createdByUsername {
+                Text(String(format: NSLocalizedString("CREATED BY @%@", comment: "pool creator"), by.uppercased()))
+                    .font(ArenaFont.mono(size: 10))
+                    .tracking(1.5)
+                    .foregroundColor(.arenaTextDim)
+            }
+
+            if let label = quiniela.prizeLabel, !label.isEmpty {
+                Text("🏆 \(label)")
+                    .font(ArenaFont.body(size: 12))
+                    .foregroundColor(.arenaGold)
+                    .padding(.top, 2)
+            }
+
             HStack(spacing: 8) {
                 if derivedStatus.showDot {
                     LiveDot(color: derivedStatus.color, size: 6)
@@ -203,7 +235,7 @@ struct QuinielaDetailView: View {
                     .foregroundColor(derivedStatus.color)
                 Spacer()
                 if let n = quiniela.entriesCount {
-                    Text("\(n) JUGADORES")
+                    Text(String(format: NSLocalizedString("%lld PLAYERS", comment: "player count"), n))
                         .font(ArenaFont.mono(size: 10))
                         .foregroundColor(.arenaTextMuted)
                 }
@@ -223,7 +255,7 @@ struct QuinielaDetailView: View {
             liveFixtures[fx.fixtureId]?.status.isLive == true
         }
         if hasActualLive {
-            return ("LIVE NOW", .arenaDanger, true)
+            return (NSLocalizedString("LIVE NOW", comment: ""), .arenaDanger, true)
         }
 
         let upcomingDates = quiniela.fixtures.compactMap { fx -> Date? in
@@ -237,10 +269,13 @@ struct QuinielaDetailView: View {
         }
         if let next = upcomingDates.min() {
             let f = DateFormatter(); f.dateStyle = .medium; f.timeStyle = .short
-            return ("OPENS · \(f.string(from: next).uppercased())", .arenaAccent, false)
+            f.locale = Locale.current
+            let label = String(format: NSLocalizedString("OPENS · %@", comment: "next kickoff"),
+                               f.string(from: next).uppercased())
+            return (label, .arenaAccent, false)
         }
 
-        return ("POOL FINISHED", .arenaTextMuted, false)
+        return (NSLocalizedString("POOL FINISHED", comment: ""), .arenaTextMuted, false)
     }
 
     // MARK: Prize hero
@@ -401,10 +436,26 @@ struct QuinielaDetailView: View {
         }
     }
 
-    private func loadLiveFixtures() {
+    /// Skip polls when this pool has no live match and no kickoff inside the
+    /// ±3h window — keeps the detail screen quiet when the pool is "settled"
+    /// or days away from kickoff.
+    private func shouldSkipLivePoll() -> Bool {
+        let anyLive = liveFixtures.values.contains { $0.status.isLive == true }
+        if anyLive { return false }
+        let now = Date()
+        let windowStart = now.addingTimeInterval(-3 * 3600)
+        let windowEnd = now.addingTimeInterval(60 * 60)
+        let inWindow = quiniela.fixtures
+            .compactMap { $0.kickoffDate }
+            .contains { $0 >= windowStart && $0 <= windowEnd }
+        return !inWindow
+    }
+
+    private func loadLiveFixtures(force: Bool = false) {
         Task {
             let ids = quiniela.fixtures.map { $0.fixtureId }
             guard !ids.isEmpty else { return }
+            if !force && shouldSkipLivePoll() { return }
             do {
                 let data: [LiveFixture] = try await client.request(
                     method: "GET",
@@ -732,20 +783,39 @@ struct ArenaLeaderboardPanel: View {
     let leaderboard: LeaderboardResponse?
     let isLoading: Bool
 
+    /// `totalPossible` is 0 until at least one fixture has a final result. We
+    /// still show the participants (ordered by join number) so the leaderboard
+    /// doesn't look broken; a small note explains why scores are blank.
+    private var awaitingFirstResult: Bool {
+        (leaderboard?.leaderboard.first?.totalPossible ?? 0) == 0
+    }
+
     var body: some View {
         HudFrame {
             VStack(spacing: 14) {
-                Text("◆ LEADERBOARD")
-                    .font(ArenaFont.display(size: 11, weight: .bold))
-                    .tracking(2)
-                    .foregroundColor(.arenaPrimary)
+                HStack(spacing: 0) {
+                    Text("◆ LEADERBOARD")
+                        .font(ArenaFont.display(size: 11, weight: .bold))
+                        .tracking(2)
+                        .foregroundColor(.arenaPrimary)
+                    Spacer(minLength: 0)
+                }
 
                 if isLoading {
                     ProgressView().tint(.arenaPrimary)
                 } else if let lb = leaderboard, let entries = leaderboardEntries(lb), !entries.isEmpty {
+                    if awaitingFirstResult {
+                        Text(NSLocalizedString("RANKED BY JOIN ORDER · RESULTS PENDING", comment: ""))
+                            .font(ArenaFont.mono(size: 9, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundColor(.arenaAccent)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     VStack(spacing: 14) {
-                        // Podium (top 3)
-                        if entries.count >= 3 {
+                        // Podium (top 3). Skipped while results are pending so
+                        // we don't imply a "winner" that's really just whoever
+                        // joined first.
+                        if entries.count >= 3 && !awaitingFirstResult {
                             HStack(alignment: .bottom, spacing: 8) {
                                 PodiumColumn(rank: 2, name: entries[1].name, score: entries[1].score, total: entries[1].total, height: 70, tint: .arenaSilver)
                                 PodiumColumn(rank: 1, name: entries[0].name, score: entries[0].score, total: entries[0].total, height: 100, tint: .arenaGold)
@@ -755,11 +825,14 @@ struct ArenaLeaderboardPanel: View {
                             Divider().background(Color.arenaStroke)
                         }
 
-                        // Rest of the table
+                        // Table. When results are pending show every row from rank 1;
+                        // otherwise the top-3 are already on the podium, so skip them.
+                        let tableRows = awaitingFirstResult ? Array(entries.enumerated()) : Array(entries.dropFirst(3).enumerated())
+                        let baseRank  = awaitingFirstResult ? 1 : 4
                         VStack(spacing: 0) {
-                            ForEach(Array(entries.dropFirst(3).enumerated()), id: \.offset) { idx, row in
+                            ForEach(tableRows, id: \.offset) { idx, row in
                                 HStack(spacing: 10) {
-                                    Text("\(idx + 4)")
+                                    Text("\(idx + baseRank)")
                                         .font(ArenaFont.mono(size: 12, weight: .bold))
                                         .foregroundColor(.arenaTextDim)
                                         .frame(width: 24)
@@ -767,23 +840,41 @@ struct ArenaLeaderboardPanel: View {
                                         .font(ArenaFont.mono(size: 12))
                                         .foregroundColor(.arenaText)
                                     Spacer()
-                                    Text("\(row.score)/\(row.total)")
-                                        .font(ArenaFont.mono(size: 13, weight: .bold))
-                                        .foregroundColor(.arenaPrimary)
+                                    if awaitingFirstResult {
+                                        Text("—")
+                                            .font(ArenaFont.mono(size: 13, weight: .bold))
+                                            .foregroundColor(.arenaTextDim)
+                                    } else {
+                                        Text("\(row.score)/\(row.total)")
+                                            .font(ArenaFont.mono(size: 13, weight: .bold))
+                                            .foregroundColor(.arenaPrimary)
+                                    }
                                 }
                                 .padding(.vertical, 6)
-                                if idx < entries.count - 4 {
+                                if idx < tableRows.count - 1 {
                                     Rectangle().fill(Color.arenaStroke).frame(height: 1)
                                 }
                             }
                         }
                     }
                 } else {
-                    Text("No entries yet. Be the first to join!")
-                        .font(ArenaFont.body(size: 12))
-                        .foregroundColor(.arenaTextDim)
+                    VStack(spacing: 8) {
+                        Image(systemName: "person.3.sequence.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.arenaTextDim)
+                        Text("No entries yet")
+                            .font(ArenaFont.display(size: 13, weight: .heavy))
+                            .tracking(2)
+                            .foregroundColor(.arenaTextMuted)
+                        Text("Be the first to join!")
+                            .font(ArenaFont.mono(size: 10))
+                            .foregroundColor(.arenaTextDim)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
                 }
             }
+            .frame(maxWidth: .infinity)
             .padding(14)
         }
     }

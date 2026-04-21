@@ -1,4 +1,11 @@
-const { fetchFixturesForMatchday, fetchFixturesByIds } = require('../services/apiFootball');
+const {
+  fetchFixturesForMatchday,
+  fetchFixturesByIds,
+  searchLeagues,
+  searchTeamsApi,
+  getTeamFixtures,
+  getLeagueFixtures,
+} = require('../services/apiFootball');
 const League = require('../models/League');
 const Team = require('../models/Team');
 
@@ -53,13 +60,46 @@ exports.getTeamsByLeague = async (req, res) => {
 
 exports.getFixturesByIds = async (req, res) => {
   try {
-    const idsParam = String(req.query.ids || '').trim();
+    const { teamId, leagueId, season, ids } = req.query;
+    if (leagueId) {
+      const list = await getLeagueFixtures(Number(leagueId), season ? Number(season) : undefined);
+      return res.json(list);
+    }
+    if (teamId) {
+      const list = await getTeamFixtures(Number(teamId));
+      return res.json(list);
+    }
+    const idsParam = String(ids || '').trim();
     if (!idsParam) return res.json([]);
-    const ids = idsParam.split(',').map((id) => id.trim()).filter(Boolean);
-    const fixtures = await fetchFixturesByIds(ids);
+    const idList = idsParam.split(',').map((id) => id.trim()).filter(Boolean);
+    const fixtures = await fetchFixturesByIds(idList);
     res.json(fixtures);
   } catch (err) {
-    console.warn('[Football] getFixturesByIds failed (API may be down or invalid key):', err.message);
+    console.warn('[Football] getFixturesByIds failed:', err.message);
+    res.json([]);
+  }
+};
+
+exports.searchLeagues = async (req, res) => {
+  try {
+    const q = String(req.query.query || '').trim();
+    if (!q) return res.json([]);
+    const list = await searchLeagues(q);
+    res.json(list);
+  } catch (err) {
+    console.warn('[Football] searchLeagues failed:', err.message);
+    res.json([]);
+  }
+};
+
+exports.searchTeamsApi = async (req, res) => {
+  try {
+    const q = String(req.query.query || '').trim();
+    if (!q) return res.json([]);
+    const list = await searchTeamsApi(q);
+    res.json(list);
+  } catch (err) {
+    console.warn('[Football] searchTeamsApi failed:', err.message);
     res.json([]);
   }
 };

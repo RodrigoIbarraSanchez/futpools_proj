@@ -11,6 +11,7 @@ import { MyEntries } from './pages/MyEntries';
 import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
 import { Recharge } from './pages/Recharge';
+import { CreatePool, InviteResolver } from './pages/CreatePool';
 import ArenaApp from './arena/ArenaApp';
 
 function PrivateRoute({ children }) {
@@ -47,6 +48,9 @@ export default function App() {
             <Route path="/pool/:id/pick" element={<PrivateRoute><QuinielaPick /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="/recharge" element={<Navigate to="/shop" replace />} />
+
+            <Route path="/create" element={<PrivateRoute><CreatePool /></PrivateRoute>} />
+            <Route path="/p/:code" element={<InviteResolver />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

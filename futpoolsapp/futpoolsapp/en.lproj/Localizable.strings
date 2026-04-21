@@ -121,3 +121,75 @@
 "Purchase could not be verified." = "Purchase could not be verified.";
 "Buy" = "Buy";
 "Matchday 1" = "Matchday 1";
+
+// Pool detail
+"%lld PLAYERS" = "%lld PLAYERS";
+"CREATED BY @%@" = "CREATED BY @%@";
+"LIVE NOW" = "LIVE NOW";
+"OPENS · %@" = "OPENS · %@";
+"POOL FINISHED" = "POOL FINISHED";
+"▶ MAKE PICKS · %@" = "▶ MAKE PICKS · %@";
+"POOL LOCKED" = "POOL LOCKED";
+"No entries yet" = "No entries yet";
+"Be the first to join!" = "Be the first to join!";
+"RANKED BY JOIN ORDER · RESULTS PENDING" = "RANKED BY JOIN ORDER · RESULTS PENDING";
+
+// Create pool
+"CREATE POOL" = "CREATE POOL";
+"BASICS" = "BASICS";
+"NAME" = "NAME";
+"PRIZE LABEL (optional)" = "PRIZE LABEL (optional)";
+"VISIBILITY" = "VISIBILITY";
+"PRIVATE" = "PRIVATE";
+"PUBLIC" = "PUBLIC";
+"Only people with the code" = "Only people with the code";
+"Show in everyone's Home" = "Show in everyone's Home";
+"PRIVATE POOL — share by invite code" = "PRIVATE POOL — share by invite code";
+"FIXTURES" = "FIXTURES";
+"%lld SELECTED" = "%lld SELECTED";
+"ADD FIXTURES" = "ADD FIXTURES";
+"Search any league or team — add games one by one" = "Search any league or team — add games one by one";
+"ADD MORE FIXTURES" = "ADD MORE FIXTURES";
+"▶ CREATE POOL" = "▶ CREATE POOL";
+"CREATING…" = "CREATING…";
+"Pick at least one fixture" = "Pick at least one fixture";
+"Add at least one upcoming fixture" = "Add at least one upcoming fixture";
+"Could not create pool: %@" = "Could not create pool: %@";
+
+// Fixture picker
+"PICK FIXTURES" = "PICK FIXTURES";
+"Back" = "Back";
+"Search a league or team…" = "Search a league or team…";
+"POPULAR" = "POPULAR";
+"Or type any team or league name above — we'll pull upcoming games from API-Football." = "Or type any team or league name above — we'll pull upcoming games from API-Football.";
+"No matches" = "No matches";
+"Try another spelling or shorter query." = "Try another spelling or shorter query.";
+"LEAGUE" = "LEAGUE";
+"TEAM" = "TEAM";
+"LOADING FIXTURES…" = "LOADING FIXTURES…";
+"No upcoming matches" = "No upcoming matches";
+"The season may be off or this team has no scheduled games." = "The season may be off or this team has no scheduled games.";
+"ALREADY PLAYED" = "ALREADY PLAYED";
+"PAST" = "PAST";
+"%lld IN BASKET" = "%lld IN BASKET";
+"FIRST · %@" = "FIRST · %@";
+"DONE" = "DONE";
+
+// Share pool
+"POOL CREATED!" = "POOL CREATED!";
+"INVITE CODE" = "INVITE CODE";
+"Tap to copy" = "Tap to copy";
+"Share link" = "Share link";
+"Copied!" = "Copied!";
+
+// Home
+"POOLS" = "POOLS";
+"ACTIVE POOLS" = "ACTIVE POOLS";
+"MINE" = "MINE";
+"ALL" = "ALL";
+"OPEN" = "OPEN";
+"LIVE" = "LIVE";
+"CLOSED" = "CLOSED";
+
+// Profile
+"MY CREATED POOLS" = "MY CREATED POOLS";

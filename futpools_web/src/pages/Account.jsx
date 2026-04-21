@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
 import {
-  HudFrame, ArcadeButton, ArenaLabel, arenaInputStyle, IconButton,
+  HudFrame, ArcadeButton, ArenaLabel, arenaInputStyle, IconButton, SectionLabel,
 } from '../arena-ui/primitives';
 
 function initials(name) {
@@ -12,14 +13,24 @@ function initials(name) {
 }
 
 export function Account() {
-  const { user, logout, updateDisplayName } = useAuth();
+  const { user, token, logout, updateDisplayName } = useAuth();
   const { locale } = useLocale();
   const [showEditName, setShowEditName] = useState(false);
   const [editName, setEditName] = useState(user?.displayName || '');
+  const [myPools, setMyPools] = useState([]);
 
   const displayName = (user?.displayName || '').trim() || user?.email || 'Player';
   const username = user?.username || (user?.email?.split('@')[0] ?? 'player');
   const balance = user?.balance ?? 0;
+
+  useEffect(() => {
+    if (!token) return;
+    let cancel = false;
+    api.get('/quinielas/mine/created', token)
+      .then((list) => { if (!cancel) setMyPools(list); })
+      .catch(() => { if (!cancel) setMyPools([]); });
+    return () => { cancel = true; };
+  }, [token]);
 
   const handleSave = async () => {
     await updateDisplayName(editName);
@@ -109,6 +120,44 @@ export function Account() {
           </HudFrame>
         </Link>
       </div>
+
+      {/* My created pools */}
+      {myPools.length > 0 && (
+        <div style={{ padding: '0 16px 14px' }}>
+          <div style={{ marginBottom: 8 }}><SectionLabel>{t(locale, 'MY CREATED POOLS')}</SectionLabel></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {myPools.map((p) => (
+              <Link key={p._id} to={`/pool/${p._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <HudFrame>
+                  <div style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
+                        letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--fp-text)',
+                      }}>{p.name}</div>
+                      <div style={{
+                        display: 'flex', gap: 6, marginTop: 4,
+                        fontFamily: 'var(--fp-mono)', fontSize: 10,
+                      }}>
+                        {p.inviteCode && (
+                          <span style={{ color: 'var(--fp-primary)', fontWeight: 700, letterSpacing: 1.5 }}>{p.inviteCode}</span>
+                        )}
+                        {p.visibility && (
+                          <span style={{ color: 'var(--fp-text-muted)' }}>· {p.visibility.toUpperCase()}</span>
+                        )}
+                        {typeof p.entriesCount === 'number' && (
+                          <span style={{ color: 'var(--fp-text-muted)' }}>· {p.entriesCount} {t(locale, 'PLAYERS')}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span style={{ color: 'var(--fp-text-muted)', fontSize: 18, fontFamily: 'var(--fp-display)' }}>›</span>
+                  </div>
+                </HudFrame>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Sign out */}
       <div style={{ padding: '0 16px 20px' }}>

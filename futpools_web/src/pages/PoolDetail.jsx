@@ -10,6 +10,34 @@ import {
 } from '../arena-ui/primitives';
 import { InsufficientBalanceModal } from '../components/InsufficientBalanceModal';
 
+function ShareButton({ pool }) {
+  const [copied, setCopied] = useState(false);
+  const url = typeof window !== 'undefined'
+    ? `${window.location.origin}/p/${pool.inviteCode}`
+    : '';
+
+  const handleClick = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Join my pool', text: `Join my FutPools: ${pool.name}`, url }); return; }
+      catch { /* fall through to copy */ }
+    }
+    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {}
+  };
+
+  return (
+    <button type="button" onClick={handleClick} title="Share invite link"
+      style={{
+        width: 32, height: 32,
+        background: 'var(--fp-surface)',
+        border: '1px solid var(--fp-stroke)',
+        color: copied ? 'var(--fp-primary)' : 'var(--fp-text)',
+        fontFamily: 'var(--fp-display)', fontWeight: 800, fontSize: 14,
+        clipPath: 'var(--fp-clip-sm)',
+        cursor: 'pointer',
+      }}>{copied ? '✓' : '↗'}</button>
+  );
+}
+
 function parseEntryCost(cost) {
   if (typeof cost === 'number') return cost;
   const s = String(cost || '').replace(/[^0-9.-]/g, '');
@@ -26,27 +54,27 @@ function formatDateRange(start, end) {
 
 /// Derives live/upcoming/finished from actual fixture kickoffs. Prevents showing
 /// "LIVE NOW" on pools whose matches are all already finished.
-function statusMeta(q) {
+function statusMeta(q, locale) {
   const now = new Date();
   const fixtures = q?.fixtures || [];
   const endedByStatus = q?.status === 'completed';
   const endedByDate = q?.endDate && new Date(q.endDate) < now;
   if (endedByStatus || endedByDate) {
-    return { label: 'POOL FINISHED', color: 'var(--fp-text-muted)', showDot: false };
+    return { label: t(locale, 'POOL FINISHED'), color: 'var(--fp-text-muted)', showDot: false };
   }
   const anyStarted = fixtures.some(f => f.kickoff && new Date(f.kickoff) <= now);
   if (q?.status === 'live' && anyStarted) {
-    return { label: 'LIVE NOW', color: 'var(--fp-danger)', showDot: true };
+    return { label: t(locale, 'LIVE NOW'), color: 'var(--fp-danger)', showDot: true };
   }
   const upcoming = fixtures
     .map(f => f.kickoff && new Date(f.kickoff))
     .filter(d => d && d > now)
     .sort((a, b) => a - b);
   if (upcoming.length) {
-    const label = `OPENS · ${upcoming[0].toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }).toUpperCase()}`;
-    return { label, color: 'var(--fp-accent)', showDot: false };
+    const when = upcoming[0].toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }).toUpperCase();
+    return { label: `${t(locale, 'OPENS')} · ${when}`, color: 'var(--fp-accent)', showDot: false };
   }
-  return { label: 'POOL FINISHED', color: 'var(--fp-text-muted)', showDot: false };
+  return { label: t(locale, 'POOL FINISHED'), color: 'var(--fp-text-muted)', showDot: false };
 }
 
 export function PoolDetail() {
@@ -111,7 +139,7 @@ export function PoolDetail() {
     );
   }
 
-  const status = statusMeta(quiniela);
+  const status = statusMeta(quiniela, locale);
 
   return (
     <>
@@ -128,24 +156,43 @@ export function PoolDetail() {
           }}>
             [ POOL · {String(id).slice(-6).toUpperCase()} ]
           </div>
-          {/* spacer to keep title centered (share button removed — no handler) */}
-          <div style={{ width: 32 }} />
+          {quiniela.inviteCode ? (
+            <ShareButton pool={quiniela} />
+          ) : (
+            <div style={{ width: 32 }} />
+          )}
         </div>
 
         <div style={{
           fontFamily: 'var(--fp-display)', fontSize: 24, fontWeight: 800,
-          letterSpacing: 1, lineHeight: 1.1, marginBottom: 8,
+          letterSpacing: 1, lineHeight: 1.1, marginBottom: 4,
           textTransform: 'uppercase',
         }}>{quiniela.name}</div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        {quiniela.createdByUsername && (
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 1.5,
+            color: 'var(--fp-text-dim)', marginBottom: 6,
+          }}>
+            {t(locale, 'CREATED BY')} @{quiniela.createdByUsername.toUpperCase()}
+          </div>
+        )}
+
+        {quiniela.prizeLabel && (
+          <div style={{
+            fontFamily: 'var(--fp-body)', fontSize: 12,
+            color: 'var(--fp-gold)', marginBottom: 6,
+          }}>🏆 {quiniela.prizeLabel}</div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: 8 }}>
           {status.showDot && <LiveDot color={status.color} />}
           <span style={{
             fontFamily: 'var(--fp-mono)', fontSize: 11, letterSpacing: 1, fontWeight: 700,
             color: status.color,
           }}>{status.label}</span>
           <span style={{ marginLeft: 'auto', fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-muted)' }}>
-            {(quiniela.entriesCount ?? 0)} JUGADORES
+            {(quiniela.entriesCount ?? 0)} {t(locale, 'PLAYERS')}
           </span>
         </div>
 
@@ -236,45 +283,69 @@ export function PoolDetail() {
           </HudFrame>
         ))}
 
-        {tab === 'ranking' && (
-          <HudFrame>
-            <div style={{ padding: 14 }}>
-              <SectionLabel color="var(--fp-primary)">LEADERBOARD</SectionLabel>
-              <div style={{ height: 12 }} />
-              {!leaderboard?.entries?.length && !leaderboard?.leaderboard?.length ? (
-                <div style={{ color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-body)', fontSize: 13 }}>
-                  {t(locale, 'No participants yet. Be the first to join.')}
-                </div>
-              ) : (
-                <div>
-                  {(leaderboard.entries || leaderboard.leaderboard || []).slice(0, 12).map((e) => (
-                    <div key={e.entryId || e.userId || e.rank} style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '8px 4px',
-                      background: e.isSelf ? 'color-mix(in srgb, var(--fp-primary) 15%, transparent)' : 'transparent',
-                      clipPath: e.isSelf ? 'var(--fp-clip-sm)' : 'none',
-                    }}>
-                      <div style={{
-                        width: 24, textAlign: 'center',
-                        fontFamily: 'var(--fp-mono)', fontSize: 12, fontWeight: 700,
-                        color: 'var(--fp-text-dim)',
-                      }}>{e.rank}</div>
-                      <div style={{
-                        flex: 1,
-                        fontFamily: 'var(--fp-mono)', fontSize: 12,
-                        color: 'var(--fp-text)',
-                      }}>{e.displayName || e.userId || 'player'}</div>
-                      <div style={{
-                        fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
-                        color: 'var(--fp-primary)',
-                      }}>{e.score}/{e.totalPossible}</div>
+        {tab === 'ranking' && (() => {
+          const rows = leaderboard?.entries || leaderboard?.leaderboard || [];
+          // Before the first fixture finishes, totalPossible = 0 for every row;
+          // we still render the list so participants know they're in, sorted
+          // server-side by entry number (join order).
+          const awaitingFirstResult = rows.length > 0 && (rows[0]?.totalPossible ?? 0) === 0;
+          return (
+            <HudFrame>
+              <div style={{ padding: 14 }}>
+                <SectionLabel color="var(--fp-primary)">{t(locale, 'LEADERBOARD')}</SectionLabel>
+                <div style={{ height: 12 }} />
+                {rows.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--fp-text-dim)' }}>
+                    <div style={{ fontSize: 28, marginBottom: 6 }}>👥</div>
+                    <div style={{
+                      fontFamily: 'var(--fp-display)', fontWeight: 800, letterSpacing: 2, fontSize: 13,
+                      color: 'var(--fp-text-muted)',
+                    }}>{t(locale, 'No entries yet')}</div>
+                    <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 10, marginTop: 4 }}>
+                      {t(locale, 'Be the first to join!')}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </HudFrame>
-        )}
+                  </div>
+                ) : (
+                  <>
+                    {awaitingFirstResult && (
+                      <div style={{
+                        fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                        color: 'var(--fp-accent)', marginBottom: 10,
+                      }}>
+                        {t(locale, 'RANKED BY JOIN ORDER · RESULTS PENDING')}
+                      </div>
+                    )}
+                    {rows.slice(0, 12).map((e) => (
+                      <div key={e.entryId || e.userId || e.rank} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 4px',
+                        background: e.isSelf ? 'color-mix(in srgb, var(--fp-primary) 15%, transparent)' : 'transparent',
+                        clipPath: e.isSelf ? 'var(--fp-clip-sm)' : 'none',
+                      }}>
+                        <div style={{
+                          width: 24, textAlign: 'center',
+                          fontFamily: 'var(--fp-mono)', fontSize: 12, fontWeight: 700,
+                          color: 'var(--fp-text-dim)',
+                        }}>{e.rank}</div>
+                        <div style={{
+                          flex: 1,
+                          fontFamily: 'var(--fp-mono)', fontSize: 12,
+                          color: 'var(--fp-text)',
+                        }}>{e.displayName || e.userId || 'player'}</div>
+                        <div style={{
+                          fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
+                          color: awaitingFirstResult ? 'var(--fp-text-dim)' : 'var(--fp-primary)',
+                        }}>
+                          {awaitingFirstResult ? '—' : `${e.score}/${e.totalPossible}`}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </HudFrame>
+          );
+        })()}
 
         {tab === 'overview' && (
           <HudFrame>
@@ -324,7 +395,9 @@ export function PoolDetail() {
             disabled={!canJoin()}
             onClick={handleJoin}
           >
-            {canJoin() ? `▶ ${entryCount > 0 ? 'NEW ENTRY' : 'MAKE PICKS'} · ${quiniela.cost}` : 'POOL LOCKED'}
+            {canJoin()
+              ? `▶ ${entryCount > 0 ? t(locale, 'NEW ENTRY') : t(locale, 'MAKE PICKS')} · ${quiniela.cost}`
+              : t(locale, 'POOL LOCKED')}
           </ArcadeButton>
         </div>
       </div>
