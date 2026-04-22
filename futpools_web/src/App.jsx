@@ -16,6 +16,7 @@ import { LiveMatch } from './pages/LiveMatch';
 import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
 import { SignupBonusModal } from './components/SignupBonusModal';
+import { LandingPage } from './pages/LandingPage';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -29,6 +30,19 @@ function PublicRoute({ children }) {
   return !isAuthenticated ? children : <Navigate to="/" replace />;
 }
 
+/**
+ * `/` renders the marketing landing for anonymous visitors and the real
+ * in-app home (MainTabs) for authenticated users. Nested tab routes
+ * (/entries, /shop, /account) are the same URLs they were before — but
+ * unauth visitors who land there see the Landing instead of a tab layout,
+ * since we don't render an `<Outlet/>` in the landing branch.
+ */
+function RootSwitch() {
+  const { isAuthenticated, ready } = useAuth();
+  if (!ready) return null;
+  return isAuthenticated ? <MainTabs /> : <LandingPage />;
+}
+
 export default function App() {
   return (
     <LocaleProvider>
@@ -40,7 +54,7 @@ export default function App() {
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-            <Route path="/" element={<PrivateRoute><MainTabs /></PrivateRoute>}>
+            <Route path="/" element={<RootSwitch />}>
               <Route index element={<Home />} />
               <Route path="entries" element={<MyEntries />} />
               <Route path="shop" element={<Recharge />} />
