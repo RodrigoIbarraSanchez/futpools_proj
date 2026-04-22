@@ -23,7 +23,7 @@ function formatPrice(cents, currency = 'USD') {
 export function Recharge() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, fetchUser } = useAuth();
+  const { user, token, fetchUser } = useAuth();
   const { locale } = useLocale();
   const [packs, setPacks] = useState([]);
   const [configured, setConfigured] = useState(true);
@@ -65,10 +65,11 @@ export function Recharge() {
 
   // Catalog load on mount.
   useEffect(() => {
+    if (!token) return undefined;  // wait for auth before hitting authed routes
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get('/payments/catalog');
+        const res = await api.get('/payments/catalog', token);
         if (cancelled) return;
         setPacks(res?.packs || []);
         setConfigured(res?.configured !== false);
@@ -86,13 +87,13 @@ export function Recharge() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [token]);
 
   const buyPack = async (packId) => {
     setPurchasingPackId(packId);
     setErrorMsg(null);
     try {
-      const res = await api.post('/payments/checkout-session', { packId });
+      const res = await api.post('/payments/checkout-session', { packId }, token);
       if (res?.url) {
         // Hand off to Stripe-hosted page. Browser navigates away; on return
         // the useEffect above catches ?success=1.
