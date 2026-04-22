@@ -1061,24 +1061,105 @@ const LANDING_CSS = `
 .fp-landing .brackets .bl { bottom: 10px; left: 10px; border-bottom: 2px solid var(--primary); border-left: 2px solid var(--primary); }
 .fp-landing .brackets .br { bottom: 10px; right: 10px; border-bottom: 2px solid var(--primary); border-right: 2px solid var(--primary); }
 
-/* Responsive */
-@media (max-width: 960px) {
-  .fp-landing .hero { grid-template-columns: 1fr; padding: 120px 20px 60px; gap: 40px; text-align: center; }
-  .fp-landing .hero-left { text-align: center; }
-  .fp-landing .hero-cta-row, .fp-landing .hero-stats { justify-content: center; margin-left: auto; margin-right: auto; }
-  .fp-landing .hero-stats { flex-wrap: wrap; gap: 20px; }
-  .fp-landing .phone { width: 280px; height: 580px; }
-  .fp-landing .steps { grid-template-columns: repeat(2, 1fr); }
-  .fp-landing .features { grid-template-columns: 1fr; }
-  .fp-landing .gamify { grid-template-columns: 1fr; padding: 60px 20px; }
-  .fp-landing .screens { grid-template-columns: repeat(2, 1fr); }
-  .fp-landing .nav-links { display: none; }
-  .fp-landing section { padding: 60px 20px; }
+/* ─────────── Responsive ───────────
+   Tiers:
+     · Desktop        > 1100px   2-col hero, 4-col steps, 3-col features
+     · Small desktop  ≤ 1100px   tighter gaps, 2-col features
+     · Tablet / phone ≤ 960px    single column, smaller phone mockup
+     · Phone          ≤ 640px    stacked CTAs, 1-col features, tuned type
+     · Small phone    ≤ 380px    hide lang switch, single-col screens */
+@media (max-width: 1100px) {
+  .fp-landing nav { padding: 16px 24px; }
+  .fp-landing .hero { gap: 40px; padding: 130px 24px 70px; }
+  .fp-landing section { padding: 80px 24px; }
+  .fp-landing .features { grid-template-columns: repeat(2, 1fr); }
+  .fp-landing .nav-links { gap: 20px; font-size: 12px; }
 }
-@media (max-width: 520px) {
-  .fp-landing nav { padding: 14px 16px; }
+@media (max-width: 960px) {
+  .fp-landing nav { padding: 14px 20px; }
+  .fp-landing .nav-links { display: none; }
+  .fp-landing .hero {
+    grid-template-columns: 1fr;
+    padding: 110px 20px 60px;
+    gap: 40px;
+    text-align: center;
+  }
+  .fp-landing .hero-left { text-align: center; }
+  .fp-landing .hero-sub { margin-left: auto; margin-right: auto; }
+  .fp-landing .hero-cta-row { justify-content: center; }
+  .fp-landing .hero-stats { justify-content: center; flex-wrap: wrap; gap: 24px; }
+  .fp-landing .phone { width: 300px; height: 620px; }
+  .fp-landing .steps { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .fp-landing .gamify { grid-template-columns: 1fr; padding: 60px 20px; gap: 32px; }
+  .fp-landing .xp-preview { max-width: 100%; margin: 0 auto; }
+  .fp-landing .gamify-title, .fp-landing .gamify-sub { text-align: center; }
+  .fp-landing .streak-chip { display: inline-flex; }
+  .fp-landing .gamify-left { text-align: center; }
+  .fp-landing .screens { grid-template-columns: repeat(2, 1fr); }
+  .fp-landing section { padding: 70px 20px; }
+  .fp-landing .section-header { margin-bottom: 48px; }
+}
+@media (max-width: 640px) {
+  .fp-landing nav { padding: 12px 16px; gap: 8px; }
+  .fp-landing .nav-right { gap: 10px; }
+  .fp-landing .logo { font-size: 17px; letter-spacing: 2px; }
   .fp-landing .nav-login { display: none; }
-  .fp-landing .screens { grid-template-columns: 1fr 1fr; }
-  .fp-landing footer { flex-direction: column; text-align: center; }
+  .fp-landing .btn-nav { padding: 9px 14px; font-size: 11px; letter-spacing: 1.5px; }
+
+  .fp-landing .hero { padding: 100px 16px 40px; gap: 28px; }
+  .fp-landing .kicker { font-size: 10px; letter-spacing: 2px; padding: 5px 10px; margin-bottom: 18px; }
+  .fp-landing h1 { font-size: clamp(34px, 9vw, 52px); margin-bottom: 18px; }
+  .fp-landing .hero-sub { font-size: 15px; margin-bottom: 24px; }
+  .fp-landing .hero-cta-row { flex-direction: column; align-items: stretch; gap: 10px; width: 100%; }
+  .fp-landing .btn-lg { padding: 15px 22px; font-size: 14px; justify-content: center; width: 100%; }
+  .fp-landing .form-note { font-size: 10px; }
+  .fp-landing .hero-stats { gap: 18px; margin-top: 24px; }
+  .fp-landing .stat .num { font-size: 22px; }
+  .fp-landing .stat .label { font-size: 9px; }
+
+  .fp-landing .phone { width: 240px; height: 500px; border-radius: 40px; padding: 10px; }
+  .fp-landing .phone-screen { border-radius: 32px; }
+  .fp-landing .island { width: 82px; height: 24px; }
+  .fp-landing .phone-wrap::before { inset: -40px; }
+
+  .fp-landing section { padding: 56px 16px; }
+  .fp-landing .section-header { margin-bottom: 36px; }
+  .fp-landing h2 { font-size: clamp(26px, 8vw, 40px); }
+  .fp-landing .section-sub { font-size: 14px; }
+  .fp-landing .section-kicker { font-size: 10px; letter-spacing: 3px; }
+
+  .fp-landing .steps { grid-template-columns: 1fr; gap: 12px; }
+  .fp-landing .step { padding: 22px 18px; }
+  .fp-landing .step-num { font-size: 36px; margin-bottom: 10px; }
+  .fp-landing .step-title { font-size: 16px; }
+
+  .fp-landing .features { grid-template-columns: 1fr; gap: 12px; }
+  .fp-landing .feature { padding: 22px 18px; min-height: auto; }
+
+  .fp-landing .xp-preview { padding: 22px; }
+  .fp-landing .badge { width: 40px; height: 40px; font-size: 13px; }
+  .fp-landing .badge-lg { width: 48px; height: 48px; font-size: 18px; }
+
+  .fp-landing .screens { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .fp-landing .cta-block { padding: 72px 16px; }
+  .fp-landing .counter { font-size: 11px; letter-spacing: 1.5px; padding: 6px 12px; margin-bottom: 22px; }
+  .fp-landing .cta-row { flex-direction: column; align-items: stretch; gap: 10px; margin: 26px auto 14px; max-width: 360px; }
+  .fp-landing .cta-row .btn { width: 100%; justify-content: center; }
+  .fp-landing .cta-sub { margin-top: 16px; }
+
+  .fp-landing footer { flex-direction: column; text-align: center; padding: 28px 16px; gap: 12px; }
+  .fp-landing footer .links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+}
+@media (max-width: 380px) {
+  .fp-landing nav { gap: 6px; }
+  .fp-landing .nav-right { gap: 6px; }
+  .fp-landing .lang-switch { display: none; }
+  .fp-landing .logo { font-size: 15px; letter-spacing: 1.5px; }
+  .fp-landing .btn-nav { padding: 8px 12px; font-size: 10px; }
+  .fp-landing .phone { width: 220px; height: 460px; }
+  .fp-landing .screens { grid-template-columns: 1fr; }
+  .fp-landing .hero-stats { gap: 14px; }
+  .fp-landing h1 { font-size: clamp(30px, 9.5vw, 44px); }
 }
 `;
