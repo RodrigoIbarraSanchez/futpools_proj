@@ -77,8 +77,12 @@ body {
   overflow-x: hidden;
 }
 
+/* The app is mobile-first and lives inside a 430px-wide "phone frame" on
+   desktop. The marketing landing, however, needs the full viewport, so we
+   opt it out of the frame via `:has()` — when #root contains the landing
+   subtree we skip the max-width clamp entirely. */
 @media (min-width: 430px) {
-  #root {
+  #root:not(:has(.fp-landing)) {
     max-width: 430px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(33, 226, 140, 0.06), 0 0 0 1px var(--fp-stroke);
