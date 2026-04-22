@@ -140,3 +140,53 @@
 10:44:04 PM [vite] hmr update /src/App.jsx
 10:23:12 AM [vite] hmr update /src/pages/LandingPage.jsx
 10:28:43 AM [vite] hmr update /src/index.css
+11:18:03 AM [vite] hmr update /src/pages/LandingPage.jsx
+11:18:15 AM [vite] hmr update /src/pages/LandingPage.jsx
+11:18:15 AM [vite] Internal server error: /Users/cooper/Documents/dev/futpools_proj/futpools_web/src/pages/LandingPage.jsx: Missing semicolon. (1020:4)
+
+  1018 |    be as narrow as ~180px on mobile, so we render each mockup at its native
+  1019 |    design size inside this scaler and scale uniformly to fill the card.
+> 1020 |    `cqw` (container query width) reads the card's current inline size, so
+       |     ^
+  1021 |    the factor recalculates on resize without JS. */
+  1022 | .fp-landing .mockup-scaler {
+  1023 |   position: absolute;
+  Plugin: vite:react-babel
+  File: /Users/cooper/Documents/dev/futpools_proj/futpools_web/src/pages/LandingPage.jsx:1020:4
+  1018|     be as narrow as ~180px on mobile, so we render each mockup at its native
+  1019|     design size inside this scaler and scale uniformly to fill the card.
+  1020|     `cqw` (container query width) reads the card's current inline size, so
+     |      ^
+  1021|     the factor recalculates on resize without JS. */
+  1022|  .fp-landing .mockup-scaler {
+      at constructor (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:365:19)
+      at JSXParserMixin.raise (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:6599:19)
+      at JSXParserMixin.semicolon (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:6895:10)
+      at JSXParserMixin.parseVarStatement (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:13231:10)
+      at JSXParserMixin.parseStatementContent (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:12851:23)
+      at JSXParserMixin.parseStatementLike (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:13309:10)
+      at JSXParserMixin.parseProgram (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:12612:25)
+      at JSXParserMixin.parse (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:14488:25)
+      at parse (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/parser/lib/index.js:14522:38)
+      at parser (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:261:32)
+      at /Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:223:11)
+      at /Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:189:28
+      at /Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:113:33
+      at step (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:287:14)
+      at /Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/cooper/Documents/dev/futpools_proj/futpools_web/node_modules/gensync/index.js:223:11)
+11:18:28 AM [vite] hmr update /src/pages/LandingPage.jsx

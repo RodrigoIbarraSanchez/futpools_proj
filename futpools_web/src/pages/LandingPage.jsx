@@ -239,19 +239,19 @@ export function LandingPage() {
 
         <div className="screens">
           <div className="screen-card">
-            <PickMockup c={c} />
+            <div className="mockup-scaler"><PickMockup c={c} /></div>
             <div className="screen-label">◆ {c('HACER PICKS', 'MAKE PICKS')}</div>
           </div>
           <div className="screen-card">
-            <LiveMockup c={c} />
+            <div className="mockup-scaler"><LiveMockup c={c} /></div>
             <div className="screen-label">◆ {c('PARTIDO EN VIVO', 'LIVE MATCH')}</div>
           </div>
           <div className="screen-card">
-            <BoardMockup c={c} />
+            <div className="mockup-scaler"><BoardMockup c={c} /></div>
             <div className="screen-label">◆ {c('CLASIFICACIÓN', 'LEADERBOARD')}</div>
           </div>
           <div className="screen-card">
-            <ProfileMockup c={c} />
+            <div className="mockup-scaler"><ProfileMockup c={c} /></div>
             <div className="screen-label">◆ {c('PERFIL', 'PROFILE')}</div>
           </div>
         </div>
@@ -1001,6 +1001,7 @@ const LANDING_CSS = `
   aspect-ratio: 9/19.5;
   overflow: hidden;
   transition: transform 0.3s;
+  container-type: inline-size;
 }
 .fp-landing .screen-card:hover { transform: translateY(-6px); }
 .fp-landing .screen-card::after {
@@ -1011,7 +1012,23 @@ const LANDING_CSS = `
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
   pointer-events: none;
+  z-index: 2;
 }
+/* Mockups were designed for a ~300x650 phone screen. The screen-card can
+   be as narrow as ~180px on mobile, so we render each mockup at its native
+   design size inside this scaler and scale uniformly to fill the card.
+   The cqw unit (container query width) reads the card's current inline
+   size, so the factor recalculates on resize without JS. */
+.fp-landing .mockup-scaler {
+  position: absolute;
+  top: 0; left: 0;
+  width: 300px;
+  height: 650px;
+  transform-origin: top left;
+  transform: scale(calc(100cqw / 300px));
+  pointer-events: none;
+}
+.fp-landing .mockup-scaler > div { width: 100%; height: 100%; }
 .fp-landing .screen-label {
   position: absolute; bottom: 12px; left: 14px; right: 14px;
   font-family: var(--mono); font-size: 10px;
