@@ -58,11 +58,28 @@ extension Color {
 enum ArenaFont {
     /// Display — angular/geometric game HUD feel.
     static func display(size: CGFloat, weight: Font.Weight = .heavy) -> Font {
-        // Try Oxanium first, else system rounded heavy.
+        // Prefer the variable Oxanium font (registered via UIAppFonts →
+        // Resources/Fonts/Oxanium.ttf). Variable font axis runs ExtraLight
+        // (200) → ExtraBold (800); `.weight(.black)` clamps to the top of
+        // the axis, giving the boldest available cut. Fall back to the
+        // legacy static Oxanium-Bold if it was pre-installed, then system.
+        if UIFont(name: "Oxanium", size: size) != nil {
+            return .custom("Oxanium", size: size).weight(weight)
+        }
         if UIFont(name: "Oxanium-Bold", size: size) != nil {
             return .custom("Oxanium-Bold", size: size)
         }
         return .system(size: size, weight: weight, design: .rounded)
+    }
+
+    /// Brand wordmark — always Oxanium at the boldest available weight.
+    /// Used by the FUTPOOLS lockup on login/splash/etc., which should never
+    /// degrade to the system font even during initial font load.
+    static func brand(size: CGFloat) -> Font {
+        if UIFont(name: "Oxanium", size: size) != nil {
+            return .custom("Oxanium", size: size).weight(.black)
+        }
+        return .system(size: size, weight: .black, design: .rounded)
     }
 
     /// Mono — tactical data, scores, timestamps (Football Manager vibe).

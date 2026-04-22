@@ -11,6 +11,9 @@ const predictionRoutes = require('./routes/predictions');
 const footballRoutes = require('./routes/football');
 const quinielaRoutes = require('./routes/quinielas');
 const settingsRoutes = require('./routes/settings');
+const leaderboardRoutes = require('./routes/leaderboard');
+const adminRoutes = require('./routes/admin');
+const adsRoutes = require('./routes/ads');
 
 const app = express();
 
@@ -26,6 +29,9 @@ app.use('/predictions', predictionRoutes);
 app.use('/football', footballRoutes);
 app.use('/quinielas', quinielaRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/leaderboard', leaderboardRoutes);
+app.use('/admin', adminRoutes);
+app.use('/ads', adsRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });

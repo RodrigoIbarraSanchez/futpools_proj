@@ -12,7 +12,10 @@ import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
 import { Recharge } from './pages/Recharge';
 import { CreatePool, InviteResolver } from './pages/CreatePool';
+import { LiveMatch } from './pages/LiveMatch';
+import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
+import { SignupBonusModal } from './components/SignupBonusModal';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -46,6 +49,8 @@ export default function App() {
 
             <Route path="/pool/:id" element={<PrivateRoute><PoolDetail /></PrivateRoute>} />
             <Route path="/pool/:id/pick" element={<PrivateRoute><QuinielaPick /></PrivateRoute>} />
+            <Route path="/fixture/:fixtureId" element={<PrivateRoute><LiveMatch /></PrivateRoute>} />
+            <Route path="/leaderboard" element={<PrivateRoute><GlobalLeaderboard /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="/recharge" element={<Navigate to="/shop" replace />} />
 
@@ -54,6 +59,7 @@ export default function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <SignupBonusModal />
         </BrowserRouter>
       </AuthProvider>
     </LocaleProvider>

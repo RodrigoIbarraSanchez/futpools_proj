@@ -25,7 +25,7 @@ function ShareButton({ pool }) {
   };
 
   return (
-    <button type="button" onClick={handleClick} title="Share invite link"
+    <button type="button" onClick={handleClick} title={t(locale, 'Share invite link')}
       style={{
         width: 32, height: 32,
         background: 'var(--fp-surface)',
@@ -88,6 +88,9 @@ export function PoolDetail() {
   const [entryCount, setEntryCount] = useState(0);
   const [leaderboard, setLeaderboard] = useState(null);
   const [showInsufficient, setShowInsufficient] = useState(false);
+  // Map fixtureId → "1"|"X"|"2" so we can pass the user's pick into LiveMatch
+  // when they tap a fixture. Mirrors iOS loadMyPicks.
+  const [myPicks, setMyPicks] = useState({});
 
   const userBalance = user?.balance ?? 0;
   const entryCost = quiniela ? parseEntryCost(quiniela.cost) : 0;
@@ -115,7 +118,16 @@ export function PoolDetail() {
 
   useEffect(() => {
     if (id && token) {
-      api.get(`/quinielas/${id}/entries/me`, token).then(e => setEntryCount(e?.length ?? 0)).catch(() => setEntryCount(0));
+      api.get(`/quinielas/${id}/entries/me`, token).then(entries => {
+        setEntryCount(entries?.length ?? 0);
+        // Latest entry's picks win if the user has multiple entries.
+        const latest = (entries || [])
+          .slice()
+          .sort((a, b) => (b.entryNumber ?? 0) - (a.entryNumber ?? 0))[0];
+        const map = {};
+        for (const p of latest?.picks || []) map[p.fixtureId] = p.pick;
+        setMyPicks(map);
+      }).catch(() => { setEntryCount(0); setMyPicks({}); });
     }
     if (id) {
       api.get(`/quinielas/${id}/leaderboard`).then(setLeaderboard).catch(() => setLeaderboard(null));
@@ -178,11 +190,14 @@ export function PoolDetail() {
           </div>
         )}
 
-        {quiniela.prizeLabel && (
+        {/* v3: creator's message to participants. Replaces the old
+            🏆 prizeLabel row — prize is now real coins shown elsewhere. */}
+        {quiniela.description && (
           <div style={{
             fontFamily: 'var(--fp-body)', fontSize: 12,
-            color: 'var(--fp-gold)', marginBottom: 6,
-          }}>🏆 {quiniela.prizeLabel}</div>
+            color: 'var(--fp-text)', marginBottom: 6,
+            whiteSpace: 'pre-wrap',
+          }}>💬 {quiniela.description}</div>
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: 8 }}>
@@ -205,7 +220,7 @@ export function PoolDetail() {
             <div style={{ fontSize: 32, filter: 'drop-shadow(0 0 8px var(--fp-gold))' }}>🏆</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
-                PRIZE POOL
+                {t(locale, 'PRIZE POOL')}
               </div>
               <div style={{
                 fontFamily: 'var(--fp-display)', fontSize: 26, fontWeight: 800,
@@ -214,7 +229,7 @@ export function PoolDetail() {
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
-                ENTRY
+                {t(locale, 'ENTRY')}
               </div>
               <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 18, fontWeight: 700, color: 'var(--fp-text)' }}>
                 {quiniela.cost}
@@ -227,9 +242,9 @@ export function PoolDetail() {
       {/* Tabs */}
       <div style={{ padding: '0 16px', display: 'flex', gap: 4, marginBottom: 10 }}>
         {[
-          ['fixtures', 'FIXTURES'],
-          ['ranking',  'RANKING'],
-          ['overview', 'INFO'],
+          ['fixtures', t(locale, 'FIXTURES')],
+          ['ranking',  t(locale, 'RANKING')],
+          ['overview', t(locale, 'INFO')],
         ].map(([k, label]) => (
           <button
             key={k}
@@ -250,37 +265,49 @@ export function PoolDetail() {
       {/* Tab content */}
       <div style={{ padding: '6px 16px 140px' }}>
         {tab === 'fixtures' && (quiniela.fixtures || []).map((f) => (
-          <HudFrame key={f.fixtureId} style={{ marginBottom: 8 }}>
-            <div style={{ padding: 12 }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', marginBottom: 10,
-                fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
-                color: 'var(--fp-text-muted)',
-              }}>
-                {f.kickoff ? new Date(f.kickoff).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase() : ''}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-                  <TeamCrest name={f.homeTeam} logoURL={f.homeLogo} size={32} />
-                  <div style={{
-                    fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
-                    letterSpacing: 0.5, textTransform: 'uppercase',
-                  }}>{String(f.homeTeam).slice(0,3)}</div>
-                </div>
+          <button
+            key={f.fixtureId}
+            type="button"
+            onClick={() => navigate(`/fixture/${f.fixtureId}`, {
+              state: { fixture: f, userPick: myPicks[f.fixtureId] || null },
+            })}
+            style={{
+              width: '100%', padding: 0, marginBottom: 8, cursor: 'pointer',
+              background: 'transparent', border: 'none', color: 'inherit', textAlign: 'left',
+            }}
+          >
+            <HudFrame>
+              <div style={{ padding: 12 }}>
                 <div style={{
-                  fontFamily: 'var(--fp-display)', fontSize: 10, letterSpacing: 2,
+                  display: 'flex', alignItems: 'center', marginBottom: 10,
+                  fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
                   color: 'var(--fp-text-muted)',
-                }}>VS</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+                }}>
+                  {f.kickoff ? new Date(f.kickoff).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase() : ''}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                    <TeamCrest name={f.homeTeam} logoURL={f.homeLogo} size={32} />
+                    <div style={{
+                      fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
+                      letterSpacing: 0.5, textTransform: 'uppercase',
+                    }}>{String(f.homeTeam).slice(0,3)}</div>
+                  </div>
                   <div style={{
-                    fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
-                    letterSpacing: 0.5, textTransform: 'uppercase',
-                  }}>{String(f.awayTeam).slice(0,3)}</div>
-                  <TeamCrest name={f.awayTeam} logoURL={f.awayLogo} size={32} />
+                    fontFamily: 'var(--fp-display)', fontSize: 10, letterSpacing: 2,
+                    color: 'var(--fp-text-muted)',
+                  }}>VS</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+                    <div style={{
+                      fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
+                      letterSpacing: 0.5, textTransform: 'uppercase',
+                    }}>{String(f.awayTeam).slice(0,3)}</div>
+                    <TeamCrest name={f.awayTeam} logoURL={f.awayLogo} size={32} />
+                  </div>
                 </div>
               </div>
-            </div>
-          </HudFrame>
+            </HudFrame>
+          </button>
         ))}
 
         {tab === 'ranking' && (() => {
@@ -350,16 +377,12 @@ export function PoolDetail() {
         {tab === 'overview' && (
           <HudFrame>
             <div style={{ padding: 14 }}>
-              <SectionLabel color="var(--fp-primary)">POOL INFO</SectionLabel>
+              <SectionLabel color="var(--fp-primary)">{t(locale, 'POOL INFO')}</SectionLabel>
               <div style={{ height: 8 }} />
               <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)', marginBottom: 12 }}>
                 {formatDateRange(quiniela.startDate, quiniela.endDate)}
               </div>
-              {quiniela.description && (
-                <div style={{ fontFamily: 'var(--fp-body)', fontSize: 13, color: 'var(--fp-text-dim)', marginBottom: 12 }}>
-                  {quiniela.description}
-                </div>
-              )}
+              {/* Description shown in the hero (💬 line) — avoid repeating it here. */}
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 <HudChip color="var(--fp-gold)">PRIZE {quiniela.prize}</HudChip>
                 <HudChip color="var(--fp-accent)">ENTRY {quiniela.cost}</HudChip>

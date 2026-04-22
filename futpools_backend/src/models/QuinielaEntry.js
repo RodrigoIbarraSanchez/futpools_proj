@@ -10,6 +10,13 @@ const quinielaEntrySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   entryNumber: { type: Number },
   picks: { type: [pickSchema], default: [] },
+  // Frozen at scoring time so re-running the scorer is idempotent. The tuple
+  // (score, ratingDelta) is the authoritative record — re-reading from live
+  // fixtures could change slightly if an API-Football event is corrected.
+  scoredAt: { type: Date, index: true },
+  score: { type: Number },
+  totalPossibleAtScoring: { type: Number },
+  ratingDelta: { type: Number },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

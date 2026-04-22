@@ -111,12 +111,18 @@ struct QuinielaFeaturedRequest: Encodable {
 }
 
 /// Body for `POST /quinielas` — any authenticated user can create a pool.
-/// MVP: no `entryCostCoins` / `rakePercent` yet — those arrive in Phase 2.
+/// v3: mutually exclusive economy picks.
+///   - `entryCostCoins > 0` → peer pool, all participants pay (presets 10/25/50/100/250/500).
+///   - `prizeCoins > 0`     → sponsored pool, creator pays prize × 1.1 upfront
+///     (presets 50/100/250/500/1000). Participants play free.
+/// Server rejects if both are > 0 simultaneously.
 struct QuinielaCreateRequest: Encodable {
     let name: String
     let description: String?
     let prizeLabel: String?
     let visibility: String // "public" | "private"
+    let entryCostCoins: Int
+    let prizeCoins: Int
     let fixtures: [QuinielaCreateFixture]
 }
 

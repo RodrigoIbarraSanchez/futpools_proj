@@ -3,20 +3,7 @@
 > vite
 
 
-  VITE v5.4.21  ready in 133 ms
+  VITE v5.4.21  ready in 169 ms
 
   ➜  Local:   http://localhost:5174/
   ➜  Network: use --host to expose
-12:00:00 PM [vite] hmr update /src/pages/Home.jsx
-12:00:03 PM [vite] hmr update /src/pages/Home.jsx
-1:00:10 PM [vite] hmr update /src/pages/Home.jsx
-1:00:35 PM [vite] hmr update /src/pages/Home.jsx
-1:00:46 PM [vite] hmr update /src/pages/Home.jsx
-1:00:56 PM [vite] hmr update /src/pages/Home.jsx
-1:01:21 PM [vite] hmr update /src/arena-ui/TabBar.jsx
-1:25:52 PM [vite] hmr update /src/pages/PoolDetail.jsx
-1:25:58 PM [vite] hmr update /src/pages/Home.jsx, /src/pages/PoolDetail.jsx, /src/pages/Login.jsx, /src/pages/MyEntries.jsx, /src/pages/Register.jsx, /src/pages/Settings.jsx, /src/pages/QuinielaPick.jsx, /src/pages/CreatePool.jsx, /src/pages/Account.jsx, /src/pages/Recharge.jsx, /src/arena-ui/TabBar.jsx, /src/components/InsufficientBalanceModal.jsx, /src/components/ComingSoonModal.jsx
-1:26:04 PM [vite] hmr update /src/pages/Home.jsx, /src/pages/PoolDetail.jsx, /src/pages/Login.jsx, /src/pages/MyEntries.jsx, /src/pages/Register.jsx, /src/pages/Settings.jsx, /src/pages/QuinielaPick.jsx, /src/pages/CreatePool.jsx, /src/pages/Account.jsx, /src/pages/Recharge.jsx, /src/arena-ui/TabBar.jsx, /src/components/InsufficientBalanceModal.jsx, /src/components/ComingSoonModal.jsx
-1:39:10 PM [vite] hmr update /src/pages/CreatePool.jsx
-1:39:40 PM [vite] hmr update /src/pages/CreatePool.jsx
-1:39:56 PM [vite] hmr update /src/pages/CreatePool.jsx

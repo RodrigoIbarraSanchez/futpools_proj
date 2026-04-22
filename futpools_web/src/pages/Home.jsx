@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -21,7 +21,7 @@ function isFixtureLive(fixture, liveFixtures) {
 
 function resolveStatus(q, locale, liveFixtures) {
   const hasActuallyLive = (q.fixtures || []).some(f => isFixtureLive(f, liveFixtures));
-  if (hasActuallyLive) return { key: 'live', label: 'LIVE', color: 'var(--fp-danger)' };
+  if (hasActuallyLive) return { key: 'live', label: t(locale, 'LIVE'), color: 'var(--fp-danger)' };
 
   if (q.status === 'completed') return { key: 'closed', label: t(locale, 'Completed').toUpperCase(), color: 'var(--fp-text-muted)' };
   const now = new Date();
@@ -56,11 +56,11 @@ function formatDate(d) {
 // ──────────────────────────────────────────────────────────────
 // Header — pool title + real coin balance
 // ──────────────────────────────────────────────────────────────
-function ArenaHeader({ coins }) {
+function ArenaHeader({ coins, locale, onJoinCode }) {
   return (
     <div style={{
       padding: '14px 16px 10px',
-      display: 'flex', alignItems: 'center', gap: 12,
+      display: 'flex', alignItems: 'center', gap: 10,
       borderBottom: '1px solid var(--fp-stroke)',
       background: 'linear-gradient(180deg, var(--fp-bg2), transparent)',
     }}>
@@ -69,7 +69,25 @@ function ArenaHeader({ coins }) {
         fontFamily: 'var(--fp-display)', fontSize: 24, fontWeight: 800,
         letterSpacing: 3, textTransform: 'uppercase',
         color: 'var(--fp-text)',
-      }}>POOLS</div>
+      }}>{t(locale, 'POOLS')}</div>
+      {onJoinCode && (
+        <button
+          type="button"
+          onClick={onJoinCode}
+          aria-label={t(locale, 'Join with code')}
+          title={t(locale, 'Join with code')}
+          style={{
+            width: 32, height: 32,
+            background: 'color-mix(in srgb, var(--fp-primary) 14%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fp-primary) 35%, transparent)',
+            clipPath: 'var(--fp-clip-sm)',
+            color: 'var(--fp-primary)',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 14,
+          }}
+        >🎟</button>
+      )}
       <CoinBadge value={coins} />
     </div>
   );
@@ -121,6 +139,132 @@ function ArenaBanner({ url }) {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Join-by-code modal
+// ──────────────────────────────────────────────────────────────
+
+const CODE_LEN = 8;
+const ALLOWED = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]+$/;
+
+function JoinByCodeModal({ open, onClose, onResolved, locale }) {
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(null);
+  const inputRef = useRef(null);
+
+  // reset + focus on open
+  useEffect(() => {
+    if (open) {
+      setCode('');
+      setErr(null);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  const handleChange = (val) => {
+    const clean = val.toUpperCase().split('').filter(ch => ALLOWED.test(ch)).join('').slice(0, CODE_LEN);
+    setCode(clean);
+    setErr(null);
+  };
+
+  const canSubmit = code.length === CODE_LEN && !loading;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const pool = await api.get(`/quinielas/invite/${code}`);
+      onResolved(pool);
+    } catch {
+      setErr(t(locale, 'Invalid or expired code. Double-check and try again.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 300,
+        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <HudFrame glow="var(--fp-primary)" style={{ width: '100%', maxWidth: 380 }}>
+        <div style={{ padding: 20 }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🎟️</div>
+          <div style={{
+            fontFamily: 'var(--fp-display)', fontSize: 18, fontWeight: 800,
+            color: 'var(--fp-text)', marginBottom: 4,
+          }}>
+            {t(locale, 'Have an invite code?')}
+          </div>
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-muted)',
+            marginBottom: 16, lineHeight: 1.4,
+          }}>
+            {t(locale, 'Enter the 8-character code your friend shared to jump straight into their pool.')}
+          </div>
+
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2,
+            color: 'var(--fp-text-muted)', marginBottom: 6,
+          }}>{t(locale, 'INVITE CODE')}</div>
+
+          <input
+            ref={inputRef}
+            type="text"
+            value={code}
+            onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            placeholder="YXX7VZTY"
+            maxLength={CODE_LEN}
+            autoComplete="one-time-code"
+            autoCapitalize="characters"
+            spellCheck={false}
+            style={{
+              width: '100%',
+              padding: '14px 12px',
+              background: 'var(--fp-bg2)',
+              border: `1px solid ${err ? 'var(--fp-danger)' : 'var(--fp-stroke)'}`,
+              color: 'var(--fp-primary)',
+              fontFamily: 'var(--fp-display)',
+              fontSize: 22,
+              fontWeight: 800,
+              letterSpacing: 6,
+              textAlign: 'center',
+              outline: 'none',
+              textTransform: 'uppercase',
+              clipPath: 'var(--fp-clip-sm)',
+            }}
+          />
+
+          {err && (
+            <div style={{
+              marginTop: 10, fontFamily: 'var(--fp-mono)', fontSize: 11,
+              color: 'var(--fp-danger)',
+            }}>{err}</div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <ArcadeButton variant="surface" fullWidth onClick={onClose}>
+              {t(locale, 'Cancel').toUpperCase()}
+            </ArcadeButton>
+            <ArcadeButton fullWidth disabled={!canSubmit} onClick={submit}>
+              {loading ? t(locale, 'JOINING…') : `▶ ${t(locale, 'JOIN POOL')}`}
+            </ArcadeButton>
+          </div>
+        </div>
+      </HudFrame>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
 // Quick Play hero
 // ──────────────────────────────────────────────────────────────
 function QuickPlayHero({ quiniela, liveFixtures, locale, embedded = false }) {
@@ -128,7 +272,7 @@ function QuickPlayHero({ quiniela, liveFixtures, locale, embedded = false }) {
 
   return (
     <div style={{ padding: embedded ? '4px 0 0' : '8px 16px 12px' }}>
-      {!embedded && <SectionLabel color="var(--fp-primary)">QUICK PLAY</SectionLabel>}
+      {!embedded && <SectionLabel color="var(--fp-primary)">{t(locale, 'QUICK PLAY')}</SectionLabel>}
       {!embedded && <div style={{ height: 8 }} />}
       <HudFrame
         clip="lg"
@@ -195,7 +339,7 @@ function FeaturedCarousel({ pools, liveFixtures, locale }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 16px', marginBottom: 8,
       }}>
-        <SectionLabel color="var(--fp-primary)">FEATURED</SectionLabel>
+        <SectionLabel color="var(--fp-primary)">{t(locale, 'FEATURED')}</SectionLabel>
         <span style={{
           fontFamily: 'var(--fp-mono)', fontSize: 10,
           color: 'var(--fp-text-muted)',
@@ -323,35 +467,39 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
               {preview.map((f, i) => {
                 const live = liveFixtures[f.fixtureId];
                 const isLiveFx = live?.status?.isLive === true;
+                // Symmetric row: [home crest + abbr]  [center text]  [away abbr + crest].
+                // The previous layout let the away crest drift away from its
+                // abbreviation and parked the score past the crest on the edge.
+                const centerText = isLiveFx
+                  ? `${live.score?.home ?? 0}-${live.score?.away ?? 0}${live.status.elapsed ? ` ${live.status.elapsed}'` : ''}`
+                  : (f.kickoff
+                      ? new Date(f.kickoff).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+                      : '—');
                 return (
                   <div key={f.fixtureId}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0',
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0',
                       borderTop: i > 0 ? '1px dashed var(--fp-stroke)' : 'none',
                     }}>
                     <TeamCrest name={f.homeTeam} logoURL={f.homeLogo} size={22} />
-                    <div style={{
-                      fontFamily: 'var(--fp-mono)', fontSize: 10,
-                      flex: 1, color: 'var(--fp-text-dim)',
-                    }}>
-                      {String(f.homeTeam).slice(0,3).toUpperCase()} <span style={{ color: 'var(--fp-text-faint)' }}>vs</span> {String(f.awayTeam).slice(0,3).toUpperCase()}
-                    </div>
+                    <span style={{
+                      fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+                      color: 'var(--fp-text)',
+                    }}>{String(f.homeTeam).slice(0, 3).toUpperCase()}</span>
+
+                    <div style={{ flex: 1 }} />
+                    <span style={{
+                      fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+                      color: isLiveFx ? 'var(--fp-danger)' : 'var(--fp-text-muted)',
+                      whiteSpace: 'nowrap',
+                    }}>{centerText}</span>
+                    <div style={{ flex: 1 }} />
+
+                    <span style={{
+                      fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+                      color: 'var(--fp-text)',
+                    }}>{String(f.awayTeam).slice(0, 3).toUpperCase()}</span>
                     <TeamCrest name={f.awayTeam} logoURL={f.awayLogo} size={22} />
-                    {isLiveFx ? (
-                      <span style={{
-                        fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
-                        color: 'var(--fp-danger)', marginLeft: 6,
-                      }}>
-                        {live.score?.home ?? 0}-{live.score?.away ?? 0} {live.status.elapsed ? `${live.status.elapsed}'` : ''}
-                      </span>
-                    ) : f.kickoff ? (
-                      <span style={{
-                        fontFamily: 'var(--fp-mono)', fontSize: 10,
-                        color: 'var(--fp-text-muted)', marginLeft: 6,
-                      }}>
-                        {new Date(f.kickoff).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    ) : null}
                   </div>
                 );
               })}
@@ -373,6 +521,8 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [showJoinByCode, setShowJoinByCode] = useState(false);
+  const navigate = useNavigate();
   const pollTimer = useRef(null);
 
   const loadPools = async () => {
@@ -482,7 +632,20 @@ export function Home() {
 
   return (
     <>
-      <ArenaHeader coins={user?.balance ?? 0} />
+      <ArenaHeader
+        coins={user?.balance ?? 0}
+        locale={locale}
+        onJoinCode={() => setShowJoinByCode(true)}
+      />
+      <JoinByCodeModal
+        open={showJoinByCode}
+        onClose={() => setShowJoinByCode(false)}
+        onResolved={(pool) => {
+          setShowJoinByCode(false);
+          if (pool?._id) navigate(`/pool/${pool._id}`);
+        }}
+        locale={locale}
+      />
 
       <ArenaBanner url={bannerURL} />
 

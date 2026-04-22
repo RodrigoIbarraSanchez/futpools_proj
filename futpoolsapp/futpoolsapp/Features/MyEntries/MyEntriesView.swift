@@ -254,10 +254,10 @@ private struct EntryDetailArena: View {
                 }
             }
 
-            HStack(spacing: 4) {
+            VStack(spacing: 6) {
                 ForEach(entry.quiniela.fixtures, id: \.fixtureId) { fx in
-                    let pick = entry.picks.first { $0.fixtureId == fx.fixtureId }?.pick ?? "-"
-                    PickChipCompact(home: fx.homeTeam, away: fx.awayTeam, pick: pick, live: liveFixtures[fx.fixtureId])
+                    let pick = entry.picks.first { $0.fixtureId == fx.fixtureId }?.pick
+                    PickRow(fixture: fx, pick: pick, live: liveFixtures[fx.fixtureId])
                 }
             }
         }
@@ -269,28 +269,229 @@ private struct EntryDetailArena: View {
     }
 }
 
-private struct PickChipCompact: View {
-    let home: String
-    let away: String
-    let pick: String
+// MARK: - Pick row
+
+/// Full-width row per pick: match teams, live score, and the user's pick
+/// called out with a state-aware badge (pending / leading / trailing / won / lost).
+/// Replaces the old cryptic "CLU 2 CRU" chips which were unreadable.
+private struct PickRow: View {
+    let fixture: QuinielaFixture
+    let pick: String?               // "1" | "X" | "2" | nil (no pick)
     let live: LiveFixture?
 
-    var body: some View {
-        let isLive = live?.status.isLive == true
-        let isFinal = ["FT","AET","PEN"].contains(live?.status.short?.uppercased() ?? "")
-        let color: Color = isLive ? .arenaDanger : (isFinal ? .arenaPrimary : .arenaTextMuted)
-
-        Text("\(short(home)) \(pick) \(short(away))")
-            .font(ArenaFont.mono(size: 9, weight: .bold))
-            .tracking(1)
-            .foregroundColor(color)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(HudCornerCutShape(cut: 4).fill(color.opacity(0.2)))
-            .clipShape(HudCornerCutShape(cut: 4))
+    /// Current result from the live feed, if scores are published.
+    private var liveResult: String? {
+        guard let h = live?.score.home, let a = live?.score.away else { return nil }
+        if h > a { return "1" }
+        if h < a { return "2" }
+        return "X"
     }
 
-    private func short(_ n: String) -> String { String(n.prefix(3)).uppercased() }
+    private var isLive: Bool  { live?.status.isLive == true }
+    private var isFinal: Bool { ["FT","AET","PEN"].contains(live?.status.short?.uppercased() ?? "") }
+
+    private enum PickState { case missing, pending, leading, trailing, won, lost }
+
+    private var state: PickState {
+        guard let pick, !pick.isEmpty, pick != "-" else { return .missing }
+        guard let result = liveResult else { return .pending }
+        if isFinal { return pick == result ? .won : .lost }
+        return pick == result ? .leading : .trailing
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            teamsRow
+            pickRow
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background(HudCornerCutShape(cut: 6).fill(Color.arenaSurfaceAlt))
+        .overlay(
+            // Left accent bar reflecting the pick's current state — gives a
+            // quick scan down the list to see which picks are winning/losing.
+            Rectangle()
+                .fill(accentColor)
+                .frame(width: 3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        )
+        .clipShape(HudCornerCutShape(cut: 6))
+    }
+
+    // Row 1 — home crest · name · score · name · away crest
+
+    private var teamsRow: some View {
+        HStack(spacing: 10) {
+            TeamCrestArena(name: fixture.homeTeam, color: .arenaAccent, size: 24, logoURL: fixture.homeLogo)
+            Text(fixture.homeTeam)
+                .font(ArenaFont.display(size: 12, weight: pick == "1" ? .heavy : .regular))
+                .foregroundColor(pick == "1" ? .arenaText : .arenaTextDim)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: 4)
+            scoreBlock
+            Spacer(minLength: 4)
+            Text(fixture.awayTeam)
+                .font(ArenaFont.display(size: 12, weight: pick == "2" ? .heavy : .regular))
+                .foregroundColor(pick == "2" ? .arenaText : .arenaTextDim)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .multilineTextAlignment(.trailing)
+            TeamCrestArena(name: fixture.awayTeam, color: .arenaHot, size: 24, logoURL: fixture.awayLogo)
+        }
+    }
+
+    @ViewBuilder
+    private var scoreBlock: some View {
+        if let h = live?.score.home, let a = live?.score.away {
+            HStack(spacing: 4) {
+                Text("\(h)")
+                    .font(ArenaFont.display(size: 16, weight: .heavy))
+                    .foregroundColor(.arenaText)
+                Text("-")
+                    .font(ArenaFont.display(size: 14, weight: .bold))
+                    .foregroundColor(.arenaTextDim)
+                Text("\(a)")
+                    .font(ArenaFont.display(size: 16, weight: .heavy))
+                    .foregroundColor(.arenaText)
+            }
+        } else {
+            Text("vs")
+                .font(ArenaFont.mono(size: 10))
+                .foregroundColor(.arenaTextDim)
+        }
+    }
+
+    // Row 2 — pick callout + status badge
+
+    private var pickRow: some View {
+        HStack(spacing: 8) {
+            // Pick badge — the letter they picked, coloured by current state
+            ZStack {
+                HudCornerCutShape(cut: 4).fill(badgeBackground)
+                Text(displayPick)
+                    .font(ArenaFont.display(size: 12, weight: .heavy))
+                    .foregroundColor(badgeForeground)
+            }
+            .frame(width: 28, height: 24)
+
+            Text(pickLabel)
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .tracking(1)
+                .foregroundColor(.arenaTextMuted)
+
+            Spacer()
+
+            statusBadge
+        }
+    }
+
+    private var displayPick: String {
+        switch pick {
+        case "1": return "1"
+        case "X": return "X"
+        case "2": return "2"
+        default:  return "—"
+        }
+    }
+
+    private var pickLabel: String {
+        switch pick {
+        case "1": return "YOUR PICK · HOME"
+        case "X": return "YOUR PICK · DRAW"
+        case "2": return "YOUR PICK · AWAY"
+        default:  return "NO PICK"
+        }
+    }
+
+    private var badgeBackground: Color {
+        switch state {
+        case .missing:  return Color.arenaBg2
+        case .pending:  return Color.arenaAccent.opacity(0.18)
+        case .leading, .won:  return Color.arenaPrimary.opacity(0.22)
+        case .trailing, .lost: return Color.arenaDanger.opacity(0.18)
+        }
+    }
+
+    private var badgeForeground: Color {
+        switch state {
+        case .missing:  return .arenaTextDim
+        case .pending:  return .arenaAccent
+        case .leading, .won:  return .arenaPrimary
+        case .trailing, .lost: return .arenaDanger
+        }
+    }
+
+    private var accentColor: Color {
+        switch state {
+        case .missing:  return .arenaStroke
+        case .pending:  return .arenaAccent.opacity(0.5)
+        case .leading, .won: return .arenaPrimary
+        case .trailing, .lost: return .arenaDanger.opacity(0.7)
+        }
+    }
+
+    @ViewBuilder
+    private var statusBadge: some View {
+        switch state {
+        case .missing:
+            Text("NO PICK")
+                .font(ArenaFont.mono(size: 9, weight: .bold))
+                .tracking(1.2)
+                .foregroundColor(.arenaTextDim)
+        case .pending:
+            HStack(spacing: 4) {
+                if isLive, let m = live?.status.elapsed {
+                    Circle().fill(Color.arenaDanger).frame(width: 5, height: 5)
+                    Text("LIVE \(m)'")
+                        .font(ArenaFont.mono(size: 9, weight: .bold))
+                        .tracking(1.2)
+                        .foregroundColor(.arenaDanger)
+                } else {
+                    Text("PENDING")
+                        .font(ArenaFont.mono(size: 9, weight: .bold))
+                        .tracking(1.2)
+                        .foregroundColor(.arenaAccent)
+                }
+            }
+        case .leading:
+            HStack(spacing: 3) {
+                Circle().fill(Color.arenaPrimary).frame(width: 5, height: 5)
+                Text("LEADING")
+                    .font(ArenaFont.mono(size: 9, weight: .bold))
+                    .tracking(1.2)
+                    .foregroundColor(.arenaPrimary)
+            }
+        case .trailing:
+            HStack(spacing: 3) {
+                Circle().fill(Color.arenaDanger).frame(width: 5, height: 5)
+                Text("TRAILING")
+                    .font(ArenaFont.mono(size: 9, weight: .bold))
+                    .tracking(1.2)
+                    .foregroundColor(.arenaDanger)
+            }
+        case .won:
+            HStack(spacing: 3) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(.arenaPrimary)
+                Text("+1 PT")
+                    .font(ArenaFont.mono(size: 9, weight: .bold))
+                    .tracking(1.2)
+                    .foregroundColor(.arenaPrimary)
+            }
+        case .lost:
+            HStack(spacing: 3) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(.arenaDanger)
+                Text("MISSED")
+                    .font(ArenaFont.mono(size: 9, weight: .bold))
+                    .tracking(1.2)
+                    .foregroundColor(.arenaDanger)
+            }
+        }
+    }
 }
 
 #Preview {

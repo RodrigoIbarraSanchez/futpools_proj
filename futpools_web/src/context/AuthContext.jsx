@@ -9,6 +9,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [ready, setReady] = useState(false);
+  // One-shot signup celebration state — set by register() when the server
+  // grants a bonus, cleared by acknowledgeSignupBonus() after the modal is
+  // dismissed. Deliberately session-only; a re-login won't reshow it.
+  const [pendingSignupBonus, setPendingSignupBonus] = useState(null);
 
   const getToken = useCallback(() => localStorage.getItem(TOKEN_KEY), []);
 
@@ -50,7 +54,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (email, password, username, displayName) => {
     setError(null);
     try {
-      const { token, user: u } = await api.post('/auth/register', {
+      const { token, user: u, signupBonus } = await api.post('/auth/register', {
         email: email.trim().toLowerCase(),
         password,
         username: username.trim().toLowerCase(),
@@ -58,11 +62,20 @@ export function AuthProvider({ children }) {
       });
       localStorage.setItem(TOKEN_KEY, token);
       setUser(u);
+      // Trigger the welcome modal only when the server actually credited a
+      // bonus on this call. Idempotent re-registers return null.
+      if (typeof signupBonus === 'number' && signupBonus > 0) {
+        setPendingSignupBonus(signupBonus);
+      }
       return true;
     } catch (e) {
       setError(e.message || 'Registration failed');
       return false;
     }
+  }, []);
+
+  const acknowledgeSignupBonus = useCallback(() => {
+    setPendingSignupBonus(null);
   }, []);
 
   const logout = useCallback(() => {
@@ -94,6 +107,8 @@ export function AuthProvider({ children }) {
     fetchUser,
     updateDisplayName,
     ready,
+    pendingSignupBonus,
+    acknowledgeSignupBonus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

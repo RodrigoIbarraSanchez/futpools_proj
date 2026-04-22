@@ -11,12 +11,15 @@ enum ArenaTab: String, CaseIterable, Identifiable {
     case pools, entries, shop, profile
     var id: String { rawValue }
 
+    /// Resolved label — goes through `String(localized:)` so Spanish users see
+    /// "QUINIELAS / PARTICIPACIONES / TIENDA / PERFIL" instead of the English
+    /// keys. Static strings bypass SwiftUI's automatic Text localization.
     var label: String {
         switch self {
-        case .pools:   return "POOLS"
-        case .entries: return "ENTRIES"
-        case .shop:    return "SHOP"
-        case .profile: return "PROFILE"
+        case .pools:   return String(localized: "POOLS")
+        case .entries: return String(localized: "ENTRIES")
+        case .shop:    return String(localized: "SHOP")
+        case .profile: return String(localized: "PROFILE")
         }
     }
 
@@ -31,9 +34,22 @@ enum ArenaTab: String, CaseIterable, Identifiable {
 }
 
 struct MainTabView: View {
+    @EnvironmentObject var auth: AuthService
     @State private var selected: ArenaTab = .pools
     @State private var tabBarHidden: Bool = false
     @State private var showCreate = false
+
+    /// Binds the celebration sheet to the AuthService flag. SwiftUI `sheet`
+    /// needs a Bool binding, so we translate nil/non-nil ↔ false/true and
+    /// wire the dismiss path through `acknowledgeSignupBonus()`.
+    private var showSignupBonus: Binding<Bool> {
+        Binding(
+            get: { auth.pendingSignupBonus != nil },
+            set: { newValue in
+                if !newValue { auth.acknowledgeSignupBonus() }
+            }
+        )
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -58,6 +74,12 @@ struct MainTabView: View {
         .onPreferenceChange(ArenaTabBarHiddenKey.self) { tabBarHidden = $0 }
         .fullScreenCover(isPresented: $showCreate) {
             CreatePoolView()
+        }
+        .fullScreenCover(isPresented: showSignupBonus) {
+            SignupBonusCelebrationSheet(
+                amount: auth.pendingSignupBonus ?? 0,
+                onDismiss: { auth.acknowledgeSignupBonus() }
+            )
         }
     }
 }
@@ -116,7 +138,7 @@ struct ArenaTabBar: View {
             }
             .buttonStyle(.plain)
             .offset(y: -22) // lift above the bar
-            .accessibilityLabel("Create pool")
+            .accessibilityLabel(Text("Create pool"))
         }
     }
 

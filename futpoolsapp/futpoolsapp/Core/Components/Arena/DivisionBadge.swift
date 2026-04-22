@@ -27,6 +27,18 @@ enum DivisionTier: String {
         case .legend:  return "★"
         }
     }
+
+    /// Maps the backend FutPools Rank tier to the existing visual shield tier.
+    /// Done here (not in Models/) so the UI layer owns the look-mapping.
+    init(rank: RankTier) {
+        switch rank {
+        case .rookie:  self = .bronze
+        case .amateur: self = .silver
+        case .pro:     self = .gold
+        case .veteran: self = .diamond
+        case .legend:  self = .legend
+        }
+    }
 }
 
 struct DivisionBadge: View {

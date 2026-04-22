@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const ProcessedIAPTransaction = require('../models/ProcessedIAPTransaction');
 const { decodeJWSPayload, getTransactionIds, getAmountForProductId } = require('../services/iapService');
+const { applyDelta } = require('../services/transactionService');
 
 const ADMIN_EMAILS = new Set(['demo@futpools.app', 'admin@futpools.app']);
 
@@ -63,35 +64,43 @@ exports.rechargeBalance = async (req, res) => {
       return res.status(400).json({ message: 'Unknown product' });
     }
 
-    const existing = await ProcessedIAPTransaction.findOne({ originalTransactionId });
-    if (existing) {
+    // Legacy idempotency table is preserved for audit continuity with older
+    // receipts, but the ledger is now authoritative.
+    const legacy = await ProcessedIAPTransaction.findOne({ originalTransactionId });
+    if (legacy) {
       const user = await User.findById(req.user._id).select('balance').lean();
       return res.json({ balance: user?.balance ?? 0, alreadyProcessed: true });
     }
 
-    const mongoose = require('mongoose');
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    try {
-      await User.findByIdAndUpdate(
-        req.user._id,
-        { $inc: { balance: amount } },
-        { session, new: true }
-      ).select('balance');
-      await ProcessedIAPTransaction.create(
-        [{ originalTransactionId, userId: req.user._id, productId, amount }],
-        { session }
-      );
-      await session.commitTransaction();
-    } catch (err) {
-      await session.abortTransaction();
-      throw err;
-    } finally {
-      session.endSession();
+    const result = await applyDelta({
+      userId: req.user._id,
+      amount,
+      kind: 'iap_credit',
+      idempotencyKey: `iap:${originalTransactionId}`,
+      note: `productId=${productId}`,
+    });
+
+    // Keep writing to the legacy table so ops dashboards that read it stay in
+    // sync until we migrate them.
+    if (result.applied) {
+      try {
+        await ProcessedIAPTransaction.create({
+          originalTransactionId,
+          userId: req.user._id,
+          productId,
+          amount,
+        });
+      } catch (e) {
+        // Not fatal — the ledger is the source of truth now.
+        if (e?.code !== 11000) console.warn('[IAP] legacy mirror failed:', e.message);
+      }
     }
 
     const user = await User.findById(req.user._id).select('balance').lean();
-    res.json({ balance: user?.balance ?? 0 });
+    res.json({
+      balance: user?.balance ?? 0,
+      alreadyProcessed: result.alreadyProcessed === true,
+    });
   } catch (err) {
     console.error('[IAP] recharge error:', err);
     res.status(500).json({ message: 'Server error' });

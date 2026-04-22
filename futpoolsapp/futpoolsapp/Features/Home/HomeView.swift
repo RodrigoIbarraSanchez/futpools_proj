@@ -9,6 +9,8 @@ struct HomeView: View {
     @EnvironmentObject var auth: AuthService
     @StateObject private var vm = HomeViewModel()
     @State private var activeFilter: String = "all"
+    @State private var showJoinByCode = false
+    @State private var joinedPool: Quiniela?
 
     var body: some View {
         NavigationStack {
@@ -17,7 +19,10 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
-                        ArenaHeader(coins: auth.currentUser?.balanceValue ?? 0)
+                        ArenaHeader(
+                            coins: auth.currentUser?.balanceValue ?? 0,
+                            onJoinCode: { showJoinByCode = true }
+                        )
                             .padding(.horizontal, 16)
                             .padding(.top, 6)
 
@@ -94,6 +99,25 @@ struct HomeView: View {
             }
             .refreshable {
                 vm.loadQuinielas()
+            }
+            .sheet(isPresented: $showJoinByCode) {
+                JoinByCodeView { pool in
+                    // Push the pool detail after the sheet finishes dismissing;
+                    // doing it too eagerly conflicts with SwiftUI's sheet
+                    // animation and the push silently drops.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        joinedPool = pool
+                    }
+                }
+                .preferredColorScheme(.dark)
+            }
+            .navigationDestination(isPresented: Binding(
+                get: { joinedPool != nil },
+                set: { if !$0 { joinedPool = nil } }
+            )) {
+                if let pool = joinedPool {
+                    QuinielaDetailView(quiniela: pool)
+                }
             }
         }
     }
@@ -181,14 +205,28 @@ struct HomeView: View {
 
 private struct ArenaHeader: View {
     let coins: Double
+    var onJoinCode: (() -> Void)?
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Text("POOLS")
                 .font(ArenaFont.display(size: 24, weight: .heavy))
                 .tracking(3)
                 .foregroundColor(.arenaText)
             Spacer()
+            if let onJoinCode {
+                Button(action: onJoinCode) {
+                    Image(systemName: "ticket.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.arenaPrimary)
+                        .frame(width: 32, height: 32)
+                        .background(HudCornerCutShape(cut: 6).fill(Color.arenaPrimary.opacity(0.14)))
+                        .overlay(HudCornerCutShape(cut: 6).stroke(Color.arenaPrimary.opacity(0.35), lineWidth: 1))
+                        .clipShape(HudCornerCutShape(cut: 6))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(NSLocalizedString("Join with code", comment: ""))
+            }
             CoinBadge(value: coins)
         }
     }
@@ -326,7 +364,10 @@ private struct QuickPlaySection: View {
                                 .foregroundColor(derivedStatus.color)
                             Spacer()
                             if let entries = quiniela.entriesCount {
-                                Text("\(entries) JUGADORES")
+                                // Use the localized "%lld PLAYERS" key — was
+                                // hardcoded Spanish "JUGADORES" which leaked
+                                // into EN builds.
+                                Text(String(format: String(localized: "%lld PLAYERS"), entries))
                                     .font(ArenaFont.mono(size: 10))
                                     .foregroundColor(.arenaTextMuted)
                             }
@@ -348,7 +389,7 @@ private struct QuickPlaySection: View {
                             QuinielaDetailView(quiniela: quiniela)
                         } label: {
                             HStack {
-                                Text("▶ \(isLive ? "RESUME" : "OPEN")")
+                                Text("▶ \(Text(isLive ? LocalizedStringKey("RESUME") : LocalizedStringKey("OPEN")))")
                                     .font(ArenaFont.display(size: 13, weight: .heavy))
                                     .tracking(2)
                                     .foregroundColor(.arenaOnPrimary)
@@ -512,33 +553,59 @@ struct ArenaPoolCard: View {
 
     @ViewBuilder
     private func fixtureMiniRow(_ fx: QuinielaFixture) -> some View {
+        // Symmetric layout: each team is a tight [crest + name] group flanking
+        // a center column that holds either the live score or the kickoff time.
+        // The previous row ([crest][text][Spacer][crest][score]) let the away
+        // crest drift away from its name and jammed the score out to the edge
+        // — worse, row width shifted when the center text grew from "21:06"
+        // to "0-1 37'", making stacked rows visually misaligned.
         let live = liveFixtures[fx.fixtureId]
-        HStack(spacing: 8) {
+        let isLive = live?.status.isLive == true
+        let centerText: String = {
+            if let live, isLive {
+                let home = live.score.home ?? 0
+                let away = live.score.away ?? 0
+                if let min = live.status.elapsed {
+                    return "\(home)-\(away) \(min)'"
+                }
+                return "\(home)-\(away)"
+            }
+            if let date = fx.kickoffDate {
+                return shortTime(date)
+            }
+            return "—"
+        }()
+
+        HStack(spacing: 6) {
             TeamCrestArena(
                 name: fx.homeTeam,
                 color: ArenaTeamColor.color(for: fx.homeTeam),
                 size: 22,
                 logoURL: fx.homeLogo
             )
-            Text("\(shortName(fx.homeTeam)) vs \(shortName(fx.awayTeam))")
-                .font(ArenaFont.mono(size: 10))
-                .foregroundColor(.arenaTextDim)
-            Spacer()
+            Text(shortName(fx.homeTeam))
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .foregroundColor(.arenaText)
+
+            Spacer(minLength: 6)
+
+            Text(centerText)
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .foregroundColor(isLive ? .arenaDanger : .arenaTextMuted)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+
+            Spacer(minLength: 6)
+
+            Text(shortName(fx.awayTeam))
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .foregroundColor(.arenaText)
             TeamCrestArena(
                 name: fx.awayTeam,
                 color: ArenaTeamColor.color(for: fx.awayTeam),
                 size: 22,
                 logoURL: fx.awayLogo
             )
-            if let live, live.status.isLive == true {
-                Text("\(live.score.home ?? 0)-\(live.score.away ?? 0) \(live.status.elapsed.map { "\($0)'" } ?? "")")
-                    .font(ArenaFont.mono(size: 10, weight: .bold))
-                    .foregroundColor(.arenaDanger)
-            } else if let date = fx.kickoffDate {
-                Text(shortTime(date))
-                    .font(ArenaFont.mono(size: 10))
-                    .foregroundColor(.arenaTextMuted)
-            }
         }
     }
 
@@ -590,7 +657,7 @@ private struct EmptyArenaState: View {
                     .foregroundColor(.arenaTextDim)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                ArcadeButton(title: "REFRESH", size: .sm, action: onRefresh)
+                ArcadeButton(title: String(localized: "REFRESH"), size: .sm, action: onRefresh)
             }
             .padding(20)
             .frame(maxWidth: .infinity)

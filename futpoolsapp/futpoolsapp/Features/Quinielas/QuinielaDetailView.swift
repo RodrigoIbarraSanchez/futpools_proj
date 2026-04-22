@@ -33,6 +33,9 @@ struct QuinielaDetailView: View {
     @State private var liveTimer: Timer?
     @State private var adminErrorMessage: String?
     @State private var isTogglingFeatured = false
+    /// Picks (fixtureId → "1"|"X"|"2") for the current user, loaded once per
+    /// detail open to power the LiveMatchView's "YOUR PICK" card.
+    @State private var myPicks: [Int: String] = [:]
 
     private let client = APIClient.shared
 
@@ -181,6 +184,7 @@ struct QuinielaDetailView: View {
             loadEntryCount()
             loadLiveFixtures(force: true)
             loadLeaderboard()
+            loadMyPicks()
             startLivePolling()
         }
         .onDisappear { stopLivePolling() }
@@ -188,6 +192,7 @@ struct QuinielaDetailView: View {
             if newValue == false {
                 loadEntryCount()
                 loadLeaderboard()
+                loadMyPicks()
                 Task { await auth.fetchUser() }
             }
         }
@@ -218,10 +223,14 @@ struct QuinielaDetailView: View {
                     .foregroundColor(.arenaTextDim)
             }
 
-            if let label = quiniela.prizeLabel, !label.isEmpty {
-                Text("🏆 \(label)")
+            // v3: show the creator's free-text message (replaces the legacy
+            // prizeLabel). Speech-bubble glyph makes the intent obvious — this
+            // is a note to participants, not a prize statement.
+            if let msg = quiniela.description, !msg.isEmpty {
+                Text("💬 \(msg)")
                     .font(ArenaFont.body(size: 12))
-                    .foregroundColor(.arenaGold)
+                    .foregroundColor(.arenaText)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
             }
 
@@ -353,8 +362,13 @@ struct QuinielaDetailView: View {
         case .fixtures:
             VStack(spacing: 8) {
                 ForEach(quiniela.fixtures) { fx in
-                    ArenaFixtureRow(fixture: fx, live: liveFixtures[fx.fixtureId])
-                        .padding(.horizontal, 16)
+                    NavigationLink {
+                        LiveMatchView(fixture: fx, userPick: myPicks[fx.fixtureId])
+                    } label: {
+                        ArenaFixtureRow(fixture: fx, live: liveFixtures[fx.fixtureId])
+                            .padding(.horizontal, 16)
+                    }
+                    .buttonStyle(.plain)
                 }
                 if latestEntryNumber != nil {
                     HStack {
@@ -420,6 +434,28 @@ struct QuinielaDetailView: View {
                     let f = DateFormatter(); f.dateStyle = .medium; f.timeStyle = .short
                     latestEntryDate = first.createdAtValue.map(f.string(from:))
                 }
+            } catch {}
+        }
+    }
+
+    /// Picks of the user's latest entry — used by the LiveMatchView's
+    /// "YOUR PICK" card. Picks from older entries are ignored to keep the
+    /// detail predictable when the user has multiple entries.
+    private func loadMyPicks() {
+        Task {
+            guard let token = KeychainHelper.getToken() else { return }
+            do {
+                let entries: [QuinielaEntry] = try await client.request(
+                    method: "GET",
+                    path: "/quinielas/\(quiniela.id)/entries/me",
+                    token: token
+                )
+                let latest = entries
+                    .sorted { ($0.entryNumber ?? 0) > ($1.entryNumber ?? 0) }
+                    .first
+                var map: [Int: String] = [:]
+                for p in latest?.picks ?? [] { map[p.fixtureId] = p.pick }
+                myPicks = map
             } catch {}
         }
     }

@@ -11,6 +11,11 @@ final class AuthService: ObservableObject {
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     @Published var errorMessage: String?
+    /// Coin amount granted at registration. Non-nil only for the one-shot
+    /// celebration sheet right after register — cleared when the user
+    /// acknowledges it. Not persisted (deliberate — we only want to show the
+    /// welcome once per session, and fresh signups only happen once anyway).
+    @Published var pendingSignupBonus: Int?
 
     private let client = APIClient.shared
 
@@ -42,10 +47,21 @@ final class AuthService: ObservableObject {
             )
             KeychainHelper.saveToken(res.token)
             currentUser = res.user
+            // Trigger the welcome celebration only if the server granted a
+            // bonus on this specific register call (idempotent re-registers
+            // will return null so we don't re-show it).
+            if let bonus = res.signupBonus, bonus > 0 {
+                pendingSignupBonus = bonus
+            }
             isAuthenticated = true
         } catch {
             handleError(error)
         }
+    }
+
+    /// Called by the celebration sheet when the user taps "LET'S GO".
+    func acknowledgeSignupBonus() {
+        pendingSignupBonus = nil
     }
 
     func login(email: String, password: String) async {

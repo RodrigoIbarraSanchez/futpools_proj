@@ -2,6 +2,10 @@
 //  ProfileView.swift
 //  futpoolsapp
 //
+//  The profile surface is the primary showcase for FutPools Rank — tier, rating,
+//  stats, achievements — sitting above the legacy balance + created-pools rows.
+//  Designed to feel like a trophy case, not a settings page.
+//
 
 import SwiftUI
 
@@ -10,8 +14,13 @@ struct ProfileView: View {
     @State private var showEditName = false
     @State private var showSettings = false
     @State private var showRechargeSheet = false
+    @State private var showAdmin = false
     @State private var myPools: [Quiniela] = []
     @State private var loadingMyPools = false
+
+    @State private var rankSummary: UserRankSummary?
+    @State private var loadingRank = false
+
     private let client = APIClient.shared
 
     private var displayName: String {
@@ -26,6 +35,10 @@ struct ProfileView: View {
         return "player"
     }
 
+    private var unlockedCodes: Set<String> {
+        Set((rankSummary?.achievements ?? []).map { $0.code })
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -34,7 +47,10 @@ struct ProfileView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         hero
+                        rankSection
                         balanceCard
+                        achievementsSection
+                        adminSection
                         myCreatedPoolsSection
                         signOutSection
                     }
@@ -72,11 +88,130 @@ struct ProfileView: View {
             .sheet(isPresented: $showRechargeSheet) {
                 RechargeView().environmentObject(auth)
             }
-            .task { await loadMyPools() }
+            .sheet(isPresented: $showAdmin) {
+                AdminDashboardView().environmentObject(auth)
+            }
+            .task { await refreshAll() }
+            .refreshable { await refreshAll() }
         }
     }
 
+    // MARK: - Refresh
+
+    private func refreshAll() async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await loadMyPools() }
+            group.addTask { await loadRank() }
+        }
+    }
+
+    // MARK: - Rank
+
+    @ViewBuilder
+    private var rankSection: some View {
+        VStack(spacing: 10) {
+            RankHeroCard(summary: rankSummary)
+            RankStatsGrid(summary: rankSummary)
+            NavigationLink {
+                GlobalLeaderboardView()
+                    .environmentObject(auth)
+            } label: {
+                HStack(spacing: 8) {
+                    Text("◆")
+                        .font(ArenaFont.mono(size: 10, weight: .bold))
+                        .foregroundColor(.arenaPrimary)
+                    Text(String(localized: "VIEW GLOBAL LEADERBOARD"))
+                        .font(ArenaFont.mono(size: 10, weight: .bold))
+                        .tracking(2)
+                        .foregroundColor(.arenaText)
+                    Spacer(minLength: 0)
+                    Text("›")
+                        .font(ArenaFont.display(size: 16, weight: .bold))
+                        .foregroundColor(.arenaPrimary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    ZStack {
+                        HudCornerCutShape(cut: 10).fill(Color.arenaSurface)
+                        HudCornerCutShape(cut: 10).stroke(Color.arenaStroke, lineWidth: 1)
+                    }
+                )
+                .clipShape(HudCornerCutShape(cut: 10))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func loadRank() async {
+        guard let t = auth.token else { return }
+        loadingRank = true
+        defer { loadingRank = false }
+        do {
+            let s: UserRankSummary = try await client.request(
+                method: "GET",
+                path: "/leaderboard/me",
+                token: t
+            )
+            rankSummary = s
+        } catch {
+            // Leave previous summary; UI will show the "NO RATING YET" empty state
+            // if rankSummary is nil.
+        }
+    }
+
+    // MARK: - Achievements
+
+    @ViewBuilder
+    private var achievementsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("◆ " + String(localized: "ACHIEVEMENTS"))
+                .font(ArenaFont.display(size: 10, weight: .bold))
+                .tracking(3)
+                .foregroundColor(.arenaTextMuted)
+            AchievementsGridView(unlockedCodes: unlockedCodes)
+        }
+        .padding(.horizontal, 16)
+    }
+
     // MARK: - My created pools
+
+    @ViewBuilder
+    private var adminSection: some View {
+        if auth.currentUser?.isAdmin == true {
+            Button {
+                showAdmin = true
+            } label: {
+                HudFrame(
+                    cut: 12,
+                    fill: AnyShapeStyle(
+                        LinearGradient(
+                            colors: [Color.arenaPrimary.opacity(0.18), Color.arenaSurface],
+                            startPoint: .leading, endPoint: .trailing
+                        )
+                    )
+                ) {
+                    HStack(spacing: 10) {
+                        Text("⬢")
+                            .font(ArenaFont.display(size: 16, weight: .heavy))
+                            .foregroundColor(.arenaPrimary)
+                        Text("ADMIN CONSOLE")
+                            .font(ArenaFont.mono(size: 10, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.arenaText)
+                        Spacer()
+                        Text("›")
+                            .font(ArenaFont.display(size: 16, weight: .bold))
+                            .foregroundColor(.arenaPrimary)
+                    }
+                    .padding(14)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+        }
+    }
 
     @ViewBuilder
     private var myCreatedPoolsSection: some View {
@@ -91,7 +226,7 @@ struct ProfileView: View {
             .padding(.horizontal, 16)
         } else if !myPools.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                Text("◆ MY CREATED POOLS")
+                Text("◆ " + String(localized: "MY CREATED POOLS"))
                     .font(ArenaFont.display(size: 10, weight: .bold))
                     .tracking(3)
                     .foregroundColor(.arenaTextMuted)
@@ -127,9 +262,10 @@ struct ProfileView: View {
         }
     }
 
+    // MARK: - Hero / balance / sign out
+
     private var hero: some View {
         VStack(spacing: 12) {
-            // Simple neutral avatar with initials — no magenta mock
             HudCornerCutShape(cut: 14)
                 .fill(Color.arenaSurfaceAlt)
                 .overlay(
@@ -209,7 +345,7 @@ struct ProfileView: View {
                             .foregroundColor(.arenaGold)
                     }
                     Spacer()
-                    ArcadeButton(title: "+ TOP UP", variant: .accent, size: .sm) {
+                    ArcadeButton(title: String(localized: "+ TOP UP"), variant: .accent, size: .sm) {
                         showRechargeSheet = true
                     }
                 }
@@ -221,7 +357,7 @@ struct ProfileView: View {
     }
 
     private var signOutSection: some View {
-        ArcadeButton(title: "SIGN OUT", variant: .surface, fullWidth: true) {
+        ArcadeButton(title: String(localized: "SIGN OUT"), variant: .surface, fullWidth: true) {
             auth.logout()
         }
         .padding(.horizontal, 16)

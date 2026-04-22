@@ -5,6 +5,7 @@ const {
   searchTeamsApi,
   getTeamFixtures,
   getLeagueFixtures,
+  getFixtureEvents,
 } = require('../services/apiFootball');
 const League = require('../models/League');
 const Team = require('../models/Team');
@@ -100,6 +101,18 @@ exports.searchTeamsApi = async (req, res) => {
     res.json(list);
   } catch (err) {
     console.warn('[Football] searchTeamsApi failed:', err.message);
+    res.json([]);
+  }
+};
+
+exports.getFixtureEvents = async (req, res) => {
+  try {
+    const id = Number(req.params.id || 0);
+    if (!id) return res.status(400).json({ message: 'fixtureId is required' });
+    const events = await getFixtureEvents(id);
+    res.json(events);
+  } catch (err) {
+    console.warn('[Football] getFixtureEvents failed:', err.message);
     res.json([]);
   }
 };

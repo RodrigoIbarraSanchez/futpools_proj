@@ -185,6 +185,12 @@ input, button { font-size: 16px; /* avoids iOS zoom on focus */ }
 
 .fp-pop-in { animation: fpPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
+/* Soft breathing glow for live-match indicators — matches iOS shadow pulse. */
+@keyframes fp-live-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.72; }
+}
+
 /* ─── Scrollbar ─────────────────────────── */
 *::-webkit-scrollbar { width: 3px; height: 3px; }
 *::-webkit-scrollbar-thumb { background: rgba(33,226,140,0.4); }

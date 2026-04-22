@@ -3,6 +3,8 @@ const QuinielaEntry = require('../models/QuinielaEntry');
 const User = require('../models/User');
 const { fetchFixturesByIds } = require('../services/apiFootball');
 const { isAdminUser } = require('../middleware/auth');
+const { applyScoringToQuiniela } = require('./ratingController');
+const { debitOrFail } = require('../services/transactionService');
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN']);
 
@@ -27,14 +29,26 @@ async function mintUniqueInviteCode() {
   throw new Error('Could not mint a unique invite code after 5 attempts');
 }
 
-/** Compute pool status from fixtures: scheduled | live | completed */
-function computePoolStatus(fixtures) {
+/**
+ * Compute pool status from fixtures: scheduled | live | completed.
+ *
+ * The `fixture.status` we persist on the Quiniela doc is frozen at create
+ * time — it never transitions to FT even after the match finishes in the
+ * real world. If we trusted it alone, a completed pool would look 'live'
+ * forever (kickoff in past + stored status == "NS" → anyStarted + !allFinished).
+ *
+ * The `liveStatusMap` parameter lets callers pass a fixtureId → currentStatus
+ * map sourced from API-Football so the computation reflects reality. Live
+ * map keys beat the stored value; a missing key falls back to the snapshot.
+ */
+function computePoolStatus(fixtures, liveStatusMap) {
   if (!fixtures || fixtures.length === 0) return 'scheduled';
   const now = new Date();
   let allFinished = true;
   let anyStarted = false;
   for (const f of fixtures) {
-    const short = String(f.status || '').trim().toUpperCase();
+    const liveShort = liveStatusMap && f.fixtureId ? liveStatusMap.get(f.fixtureId) : null;
+    const short = (liveShort || String(f.status || '')).trim().toUpperCase();
     if (FINISHED_STATUSES.has(short)) {
       anyStarted = true;
     } else {
@@ -48,8 +62,48 @@ function computePoolStatus(fixtures) {
   return 'scheduled';
 }
 
-function addPoolStatus(quiniela) {
-  return { ...quiniela, status: computePoolStatus(quiniela.fixtures || []) };
+function addPoolStatus(quiniela, liveStatusMap) {
+  return { ...quiniela, status: computePoolStatus(quiniela.fixtures || [], liveStatusMap) };
+}
+
+/**
+ * Batch-fetch current fixture statuses for a list of pools. One round-trip
+ * to API-Football (which is itself cached 25s upstream) regardless of how
+ * many pools are in the list. Returns a Map<fixtureId, shortStatus>.
+ */
+async function buildLiveStatusMap(pools) {
+  const fixtureIds = [...new Set(
+    pools.flatMap((q) => (q.fixtures || []).map((f) => f.fixtureId).filter(Boolean))
+  )];
+  if (fixtureIds.length === 0) return new Map();
+  try {
+    const live = await fetchFixturesByIds(fixtureIds);
+    return new Map(live.map((f) => [f.fixtureId, (f?.status?.short || '').toUpperCase()]));
+  } catch (err) {
+    console.warn('[Quiniela] live status fetch failed:', err.message);
+    return new Map();
+  }
+}
+
+/**
+ * Sort pools so users see them in the order that makes sense:
+ *   1. LIVE (something is happening right now)
+ *   2. SCHEDULED (upcoming — soonest first, so today's pools appear first)
+ *   3. COMPLETED (already settled — most-recently finished first, so users
+ *      see their latest result at the top of the completed bucket)
+ * Stale completed pools from last month drift to the bottom naturally.
+ */
+const POOL_STATUS_RANK = { live: 0, scheduled: 1, completed: 2 };
+function sortPoolsByStatus(pools) {
+  return [...pools].sort((a, b) => {
+    const rankA = POOL_STATUS_RANK[a.status] ?? 99;
+    const rankB = POOL_STATUS_RANK[b.status] ?? 99;
+    if (rankA !== rankB) return rankA - rankB;
+    if (a.status === 'completed') {
+      return new Date(b.endDate || b.startDate) - new Date(a.endDate || a.startDate);
+    }
+    return new Date(a.startDate) - new Date(b.startDate);
+  });
 }
 
 /**
@@ -59,7 +113,11 @@ function addPoolStatus(quiniela) {
  */
 exports.createQuiniela = async (req, res) => {
   try {
-    const { name, description, prizeLabel, visibility, fixtures } = req.body || {};
+    const {
+      name, description, prizeLabel, visibility, fixtures,
+      entryCostCoins: rawEntryCost,
+      prizeCoins: rawPrizeCoins,
+    } = req.body || {};
 
     const trimmedName = String(name || '').trim();
     if (!trimmedName) return res.status(400).json({ message: 'Name is required' });
@@ -71,6 +129,12 @@ exports.createQuiniela = async (req, res) => {
     // Live statuses from API-Football — kickoff is in the past but the match
     // hasn't finished, so it's still fair game for a pool (useful for demos).
     const LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
+    const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO', 'CANC', 'ABD']);
+    // Window within which a "not started" fixture is still acceptable even if
+    // the nominal kickoff is past. Some feeds lag — Real Madrid's actual
+    // kickoff can be 15-30 min after the scheduled time, and we don't want a
+    // 400 to block the user mid-demo. 3 hours covers the whole game length.
+    const LIVE_TOLERANCE_MS = 3 * 60 * 60 * 1000;
 
     const now = new Date();
     const normalizedFixtures = [];
@@ -81,7 +145,12 @@ exports.createQuiniela = async (req, res) => {
       }
       const status = String(f.status || '').toUpperCase();
       const isLive = LIVE_STATUSES.has(status);
-      if (kickoff <= now && !isLive) {
+      const isFinished = FINISHED_STATUSES.has(status);
+      const withinWindow = kickoff.getTime() > now.getTime() - LIVE_TOLERANCE_MS;
+      if (isFinished) {
+        return res.status(400).json({ message: 'Finished fixtures cannot be added to a pool' });
+      }
+      if (kickoff <= now && !isLive && !withinWindow) {
         return res.status(400).json({ message: 'All fixture kickoffs must be in the future or live' });
       }
       if (!f.homeTeam || !f.awayTeam) {
@@ -106,15 +175,74 @@ exports.createQuiniela = async (req, res) => {
     // Only admins can create public pools. Everyone else is forced to private,
     // regardless of what the client sends — keeps the "public" surface curated.
     const vis = visibility === 'public' && isAdminUser(req.user) ? 'public' : 'private';
+
+    // Entry-cost gating (v3 peer pool, 3-tier simplification):
+    //   25   — Casual
+    //   100  — Standard
+    //   500  — High Stakes
+    // 0 means "not a peer pool". Reducing from 6 presets to 3 matches
+    // competitor UX norms (Sleeper/DraftKings) and lowers analysis paralysis.
+    const ENTRY_COST_PRESETS = new Set([0, 25, 100, 500]);
+    const entryCostCoins = ENTRY_COST_PRESETS.has(Number(rawEntryCost)) ? Number(rawEntryCost) : 0;
+
+    // Sponsored prize gating (v3, 3-tier): 50 Casual / 250 Standard / 1000
+    // High Stakes. 0 = not sponsored. Same rationale as entry presets above.
+    const PRIZE_COIN_PRESETS = new Set([0, 50, 250, 1000]);
+    const prizeCoins = PRIZE_COIN_PRESETS.has(Number(rawPrizeCoins)) ? Number(rawPrizeCoins) : 0;
+
+    // Mutex: can't be both peer AND sponsored. If client sends both, reject —
+    // a pool has ONE economy model. This matches the simplified wizard UX.
+    if (entryCostCoins > 0 && prizeCoins > 0) {
+      return res.status(400).json({
+        message: 'A pool is either peer-pay or creator-sponsored, not both',
+        code: 'MUTUALLY_EXCLUSIVE_FUNDING',
+      });
+    }
+
+    // Pick the funding model + min participants for the chosen economy.
+    const fundingModel = prizeCoins > 0 ? 'sponsored' : (entryCostCoins > 0 ? 'peer' : 'none');
+    // Sponsored needs at least 2 participants (else no contest). Peer also 2.
+    // For a thicker default on sponsored, we scale with fixture count — a
+    // 12-fixture pool should gather more players to feel legit.
+    const minParticipants =
+      fundingModel === 'sponsored' ? Math.max(2, Math.floor(normalizedFixtures.length / 3)) :
+      fundingModel === 'peer' ? 2 : 1;
+
+    // Sponsored flow: debit creator upfront for prize × 1.1 BEFORE we create
+    // the pool document. If balance is insufficient, bail early so we never
+    // leave a phantom pool behind. The rake (10% fee) stays in the system as
+    // a virtual sink — it does NOT enter the pot.
+    let sponsorDebitKey = null;
     const inviteCode = await mintUniqueInviteCode();
+    if (fundingModel === 'sponsored') {
+      const RAKE = 0.10;
+      const totalToDebit = Math.ceil(prizeCoins * (1 + RAKE));
+      // Tie the idempotency key to the invite code — unique per pool attempt.
+      sponsorDebitKey = `sponsor:${inviteCode}`;
+      const result = await debitOrFail({
+        userId: req.user._id,
+        amount: totalToDebit,
+        kind: 'sponsorship_debit',
+        idempotencyKey: sponsorDebitKey,
+        note: `Sponsor prize ${prizeCoins} coins for pool ${trimmedName}`,
+      });
+      if (!result.ok) {
+        return res.status(400).json({
+          message: 'Insufficient balance to sponsor this prize',
+          code: 'INSUFFICIENT_BALANCE',
+          needed: totalToDebit,
+          currentBalance: result.balance,
+        });
+      }
+    }
 
     const doc = await Quiniela.create({
       name: trimmedName,
       description: String(description || '').trim(),
-      prize: '',           // legacy field unused in MVP free pools
+      prize: '',           // legacy field unused in v3
       prizeLabel: String(prizeLabel || '').trim(),
-      cost: '0',           // MVP = free, no entry fee
-      currency: 'MXN',
+      cost: String(entryCostCoins),  // mirror into legacy field for UI back-compat
+      currency: 'COIN',
       startDate: dates[0],
       endDate: dates[dates.length - 1],
       fixtures: normalizedFixtures,
@@ -122,6 +250,14 @@ exports.createQuiniela = async (req, res) => {
       createdBy: req.user._id,
       visibility: vis,
       inviteCode,
+      fundingModel,
+      entryCostCoins,
+      platformPrizeCoins: prizeCoins, // sponsored → creator's prize lives here
+      prizeFunderUserId: fundingModel === 'sponsored' ? req.user._id : undefined,
+      minParticipants,
+      rakePercent: 10,
+      prizeLockStatus: 'pledged',
+      settlementStatus: 'pending',
     });
 
     console.log(`[Quiniela] create user=${req.user._id} code=${inviteCode} fixtures=${normalizedFixtures.length}`);
@@ -174,12 +310,14 @@ exports.getMyCreatedQuinielas = async (req, res) => {
       { $group: { _id: '$quiniela', count: { $sum: 1 } } },
     ]);
     const countMap = new Map(counts.map((c) => [String(c._id), c.count]));
-    res.json(list.map((q) => addPoolStatus({
+    const liveStatusMap = await buildLiveStatusMap(list);
+    const withCounts = list.map((q) => addPoolStatus({
       ...q,
       entriesCount: countMap.get(String(q._id)) ?? 0,
       createdByUsername: req.user.username,
       createdByDisplayName: req.user.displayName,
-    })));
+    }, liveStatusMap));
+    res.json(sortPoolsByStatus(withCounts));
   } catch (err) {
     console.error('[Quiniela] getMine error:', err.message);
     res.status(500).json({ message: 'Server error' });
@@ -197,7 +335,6 @@ exports.getQuinielas = async (req, res) => {
     }
     const list = await Quiniela.find({ $or: visibilityClauses })
       .populate('createdBy', 'username displayName')
-      .sort({ startDate: 1 })
       .lean();
     const ids = list.map((q) => q._id);
     const counts = await QuinielaEntry.aggregate([
@@ -205,14 +342,19 @@ exports.getQuinielas = async (req, res) => {
       { $group: { _id: '$quiniela', count: { $sum: 1 } } },
     ]);
     const countMap = new Map(counts.map((c) => [String(c._id), c.count]));
+    // Cross-reference with live fixture data so completed pools don't keep
+    // claiming to be 'live' just because the stored status snapshot is stale.
+    const liveStatusMap = await buildLiveStatusMap(list);
     const withCounts = list.map((q) => addPoolStatus({
       ...q,
       entriesCount: countMap.get(String(q._id)) ?? 0,
       createdByUsername: q.createdBy?.username || null,
       createdByDisplayName: q.createdBy?.displayName || null,
       createdBy: q.createdBy?._id || null,
-    }));
-    res.json(withCounts);
+    }, liveStatusMap));
+    // Live first, then upcoming (sooner = higher), then completed (recently
+    // finished = higher within the bucket). Users scan tops-down.
+    res.json(sortPoolsByStatus(withCounts));
   } catch (err) {
     console.error('[Quiniela] list error:', err.message);
     res.status(500).json({ message: 'Server error' });
@@ -226,13 +368,14 @@ exports.getQuinielaById = async (req, res) => {
       .lean();
     if (!doc) return res.status(404).json({ message: 'Quiniela not found' });
     const entriesCount = await QuinielaEntry.countDocuments({ quiniela: req.params.id });
+    const liveStatusMap = await buildLiveStatusMap([doc]);
     res.json(addPoolStatus({
       ...doc,
       entriesCount,
       createdByUsername: doc.createdBy?.username || null,
       createdByDisplayName: doc.createdBy?.displayName || null,
       createdBy: doc.createdBy?._id || null,
-    }));
+    }, liveStatusMap));
   } catch (err) {
     console.error('[Quiniela] byId error:', err.message);
     res.status(500).json({ message: 'Server error' });
@@ -250,27 +393,23 @@ exports.submitEntry = async (req, res) => {
     const quiniela = await Quiniela.findById(quinielaId);
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
 
-    const entryCost = parseFloat(String(quiniela.cost).replace(/[^0-9.-]/g, '')) || 0;
-    if (entryCost > 0) {
-      const updated = await User.findOneAndUpdate(
-        { _id: req.user._id, balance: { $gte: entryCost } },
-        { $inc: { balance: -entryCost } },
-        { new: true }
-      );
-      if (!updated) {
-        const u = await User.findById(req.user._id).select('balance').lean();
-        const currentBalance = u?.balance ?? 0;
-        return res.status(400).json({
-          message: 'Insufficient balance',
-          code: 'INSUFFICIENT_BALANCE',
-          entryCost,
-          currentBalance,
-        });
-      }
-    }
+    // Coin cost resolution:
+    //   Sponsored pools (v3) → participants ALWAYS play free (creator paid up
+    //   front for the prize). This short-circuits any legacy `cost` value.
+    //   Peer pools → use `entryCostCoins`.
+    //   Legacy/undeclared → parse the old `cost` string.
+    const coinCost = quiniela.fundingModel === 'sponsored'
+      ? 0
+      : (Number(quiniela.entryCostCoins) > 0
+          ? Number(quiniela.entryCostCoins)
+          : (parseFloat(String(quiniela.cost).replace(/[^0-9.-]/g, '')) || 0));
 
+    // Reserve the entry doc id up-front so the ledger idempotency key can
+    // reference it. The debit runs BEFORE the entry is persisted to avoid a
+    // window where balance is decremented but the pool has no record of the
+    // entry existing.
     const entryCount = await QuinielaEntry.countDocuments({ quiniela: quinielaId, user: req.user._id });
-    const entry = await QuinielaEntry.create({
+    const entry = new QuinielaEntry({
       quiniela: quinielaId,
       user: req.user._id,
       entryNumber: entryCount + 1,
@@ -278,6 +417,28 @@ exports.submitEntry = async (req, res) => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    if (coinCost > 0) {
+      const result = await debitOrFail({
+        userId: req.user._id,
+        amount: coinCost,
+        kind: 'entry_debit',
+        idempotencyKey: `entry:${entry._id}`,
+        quiniela: quinielaId,
+        entry: entry._id,
+        note: `Entry #${entry.entryNumber} in ${quiniela.name}`,
+      });
+      if (!result.ok) {
+        return res.status(400).json({
+          message: 'Insufficient balance',
+          code: 'INSUFFICIENT_BALANCE',
+          entryCost: coinCost,
+          currentBalance: result.balance,
+        });
+      }
+    }
+
+    await entry.save();
     await entry.populate('quiniela');
     res.status(201).json(entry);
   } catch (err) {
@@ -540,6 +701,17 @@ exports.getLeaderboard = async (req, res) => {
     }
 
     res.json({ leaderboard, totalCount, totalPossible, userEntry });
+
+    // Fire-and-forget scoring hook: once all fixtures are FT, `applyScoringToQuiniela`
+    // updates user rating/streaks/achievements and stamps entries with scoredAt.
+    // Idempotent — repeat calls on already-scored pools are no-ops. A cron in Phase
+    // 2 will replace this opportunistic trigger, but reading a finished leaderboard
+    // is a reasonable moment to settle for Phase 1.
+    if (totalPossible > 0 && totalPossible === (quiniela.fixtures || []).length) {
+      applyScoringToQuiniela(quinielaId).catch((err) => {
+        console.warn('[Quiniela] post-leaderboard scoring failed', err.message);
+      });
+    }
   } catch (err) {
     console.error('[Quiniela] getLeaderboard error:', err.message);
     res.status(500).json({ message: 'Server error' });

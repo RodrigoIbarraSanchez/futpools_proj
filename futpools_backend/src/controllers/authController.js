@@ -2,9 +2,14 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
+const { applyDelta } = require('../services/transactionService');
 
 const ADMIN_EMAILS = new Set(['demo@futpools.app', 'admin@futpools.app']);
 const RESET_CODE_EXPIRY_MINUTES = 15;
+// v3: every new account gets seeded coins so the first Sponsored pool they
+// create doesn't require an IAP. Defaulting to 100 (enough for a 50-coin
+// prize + 5-coin fee with headroom). Override via env without redeploy.
+const SIGNUP_BONUS_COINS = Math.max(0, Number(process.env.SIGNUP_BONUS_COINS) || 100);
 
 const generateToken = (userId) => {
   return jwt.sign(
@@ -44,10 +49,37 @@ exports.register = async (req, res) => {
       displayName: String(displayName || '').trim(),
     });
     await user.save();
+
+    // v3 signup bonus — credit the new account and write a ledger row so the
+    // balance change is auditable. Idempotent via signup:<userId> in case the
+    // register endpoint is retried (e.g. by a flaky client). Non-fatal on
+    // failure — the user is still created; we just log and continue.
+    //
+    // We echo the bonus amount in the response so the client can celebrate it
+    // with a welcome sheet ("🎁 +100 COINS") without having to compare
+    // balances or guess. Null = no bonus applied.
+    let bonusGranted = null;
+    if (SIGNUP_BONUS_COINS > 0) {
+      try {
+        const result = await applyDelta({
+          userId: user._id,
+          amount: SIGNUP_BONUS_COINS,
+          kind: 'signup_bonus',
+          idempotencyKey: `signup:${user._id}`,
+          note: `Welcome bonus (${SIGNUP_BONUS_COINS} coins)`,
+        });
+        if (result.applied) bonusGranted = SIGNUP_BONUS_COINS;
+        user = await User.findById(user._id);
+      } catch (err) {
+        console.warn('[Auth] signup bonus failed:', err.message);
+      }
+    }
+
     const token = generateToken(user._id);
     const isAdmin = ADMIN_EMAILS.has(user.email.toLowerCase());
     res.status(201).json({
       token,
+      signupBonus: bonusGranted,
       user: {
         id: user._id,
         email: user.email,

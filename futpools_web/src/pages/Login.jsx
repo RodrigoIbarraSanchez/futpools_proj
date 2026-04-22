@@ -48,9 +48,11 @@ export function Login() {
       <div style={{ position: 'relative', zIndex: 1, padding: '80px 28px 40px', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Logo lockup */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          {/* BRAND wordmark — never translated (FutPools is a proper noun).
+              Hardcoded JSX so it stays "FUTPOOLS" across all locales. */}
           <div style={{
             fontFamily: 'var(--fp-display)',
-            fontWeight: 800, fontSize: 44,
+            fontWeight: 900, fontSize: 44,
             color: 'var(--fp-text)',
             letterSpacing: 6,
             lineHeight: 1,

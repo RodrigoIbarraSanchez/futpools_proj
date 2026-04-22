@@ -38,7 +38,7 @@ export function Recharge() {
             <div style={{
               fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2,
               color: 'var(--fp-text-muted)', marginBottom: 4,
-            }}>CURRENT BALANCE</div>
+            }}>{t(locale, 'CURRENT BALANCE')}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%',

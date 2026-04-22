@@ -134,6 +134,16 @@
 "Be the first to join!" = "Be the first to join!";
 "RANKED BY JOIN ORDER · RESULTS PENDING" = "RANKED BY JOIN ORDER · RESULTS PENDING";
 
+// Join with code
+"JOIN WITH CODE" = "JOIN WITH CODE";
+"Join with code" = "Join with code";
+"Have an invite code?" = "Have an invite code?";
+"Enter the 8-character code your friend shared to jump straight into their pool." = "Enter the 8-character code your friend shared to jump straight into their pool.";
+"JOIN POOL" = "JOIN POOL";
+"JOINING…" = "JOINING…";
+"Paste" = "Paste";
+"Invalid or expired code. Double-check and try again." = "Invalid or expired code. Double-check and try again.";
+
 // Create pool
 "CREATE POOL" = "CREATE POOL";
 "BASICS" = "BASICS";
@@ -193,3 +203,224 @@
 
 // Profile
 "MY CREATED POOLS" = "MY CREATED POOLS";
+
+// FutPools Rank
+"RANK" = "RANK";
+"GLOBAL RANK" = "GLOBAL RANK";
+"RATING" = "RATING";
+"PEAK" = "PEAK";
+"POOLS PLAYED" = "POOLS PLAYED";
+"POOLS WON" = "POOLS WON";
+"WIN RATE" = "WIN RATE";
+"CURRENT STREAK" = "CURRENT STREAK";
+"BEST STREAK" = "BEST STREAK";
+"ACHIEVEMENTS" = "ACHIEVEMENTS";
+"LEADERBOARD" = "LEADERBOARD";
+"VIEW GLOBAL LEADERBOARD" = "VIEW GLOBAL LEADERBOARD";
+"NO RATING YET" = "NO RATING YET";
+"Play a pool to start ranking." = "Play a pool to start ranking.";
+"LOCKED" = "LOCKED";
+"TIER" = "TIER";
+"Rookie" = "Rookie";
+"Amateur" = "Amateur";
+"Pro" = "Pro";
+"Veteran" = "Veteran";
+"Legend" = "Legend";
+"TIER UP!" = "TIER UP!";
+
+// Achievements
+"First Pool" = "First Pool";
+"Played your first pool." = "Played your first pool.";
+"First Win" = "First Win";
+"Won your first pool." = "Won your first pool.";
+"Perfect Matchday" = "Perfect Matchday";
+"100%% correct in a pool." = "100%% correct in a pool.";
+"Streak 5" = "Streak 5";
+"Win 5 pools in a row." = "Win 5 pools in a row.";
+"Streak 10" = "Streak 10";
+"Win 10 pools in a row." = "Win 10 pools in a row.";
+"Streak 20" = "Streak 20";
+"Win 20 pools in a row." = "Win 20 pools in a row.";
+"Veteran (25)" = "Veteran (25)";
+"Played 25 pools." = "Played 25 pools.";
+"Century (100)" = "Century (100)";
+"Played 100 pools." = "Played 100 pools.";
+"Amateur Unlocked" = "Amateur Unlocked";
+"Reached the Amateur tier." = "Reached the Amateur tier.";
+"Pro Unlocked" = "Pro Unlocked";
+"Reached the Pro tier." = "Reached the Pro tier.";
+"Veteran Unlocked" = "Veteran Unlocked";
+"Reached the Veteran tier." = "Reached the Veteran tier.";
+"Legend Unlocked" = "Legend Unlocked";
+"Reached the Legend tier." = "Reached the Legend tier.";
+"Podium Pro" = "Podium Pro";
+"10 top-3 finishes." = "10 top-3 finishes.";
+"Weekly Winner" = "Weekly Winner";
+"Won a weekly event." = "Won a weekly event.";
+"Comeback Kid" = "Comeback Kid";
+"Win after three losses." = "Win after three losses.";
+
+// Global leaderboard empty state
+"NO RANKINGS YET" = "NO RANKINGS YET";
+"Play a pool to appear here." = "Play a pool to appear here.";
+
+// Coin pool entry type
+"ENTRY TYPE" = "ENTRY TYPE";
+"FREE" = "FREE";
+"COINS" = "COINS";
+"Bragging rights + rank points" = "Bragging rights + rank points";
+"Winner takes 90%% of the pot" = "Winner takes 90%% of the pot";
+"ENTRY COST" = "ENTRY COST";
+"Minimum 2 players. 10%% platform rake — winner receives the rest of the pot." = "Minimum 2 players. 10%% platform rake — winner receives the rest of the pot.";
+
+// Pricing tier labels (3-preset system)
+"CASUAL" = "CASUAL";
+"STANDARD" = "STANDARD";
+"HIGH STAKES" = "HIGH STAKES";
+
+// Tab bar labels
+"SHOP" = "SHOP";
+"PROFILE" = "PROFILE";
+"Create pool" = "Create pool";
+
+// Home view
+"◆ ACTIVE POOLS" = "◆ ACTIVE POOLS";
+"◆ FEATURED" = "◆ FEATURED";
+"◆ QUICK PLAY" = "◆ QUICK PLAY";
+"%lld PLAYERS" = "%lld PLAYERS";
+"%lld JUGADORES" = "%lld PLAYERS";
+"RESUME" = "RESUME";
+"OPEN" = "OPEN";
+"NO POOLS RIGHT NOW" = "NO POOLS RIGHT NOW";
+"Check back soon or we'll notify you when new pools are available." = "Check back soon or we'll notify you when new pools are available.";
+"REFRESH" = "REFRESH";
+
+// Pool detail (QuinielaDetailView)
+"PRIZE POOL" = "PRIZE POOL";
+"ENTRY" = "ENTRY";
+"FIXTURES" = "FIXTURES";
+"RANKING" = "RANKING";
+"RULES" = "RULES";
+"INFO" = "INFO";
+"POOL FINISHED" = "POOL FINISHED";
+"OPENS · %@" = "OPENS · %@";
+"▶ MAKE PICKS · %@" = "▶ MAKE PICKS · %@";
+"POOL LOCKED" = "POOL LOCKED";
+"LIVE NOW" = "LIVE NOW";
+"CREATED BY @%@" = "CREATED BY @%@";
+"LIVE" = "LIVE";
+
+// Recharge / Coin Shop
+"COIN SHOP" = "COIN SHOP";
+"CURRENT BALANCE" = "CURRENT BALANCE";
+"◆ SELECT A PACK" = "◆ SELECT A PACK";
+"SELECT A PACK" = "SELECT A PACK";
+"NO PACKS AVAILABLE" = "NO PACKS AVAILABLE";
+"Check your connection and try again." = "Check your connection and try again.";
+"Close" = "Close";
+"PURCHASING…" = "PURCHASING…";
+"▶ PURCHASE %@" = "▶ PURCHASE %@";
+"Purchase could not be verified." = "Purchase could not be verified.";
+"Balance updated." = "Balance updated.";
+"Purchase pending approval." = "Purchase pending approval.";
+"BEST VALUE" = "BEST VALUE";
+"+10%% BONUS" = "+10%% BONUS";
+"POPULAR" = "POPULAR";
+"COINS" = "COINS";
+"+%lld BONUS" = "+%lld BONUS";
+
+// My Entries
+"MY ENTRIES" = "MY ENTRIES";
+"[ %lld TOTAL ]" = "[ %lld TOTAL ]";
+"NO ENTRIES YET" = "NO ENTRIES YET";
+"Join a pool and submit picks to get started." = "Join a pool and submit picks to get started.";
+"LOADING ENTRIES…" = "LOADING ENTRIES…";
+"ENTRIES #%lld" = "ENTRIES #%lld";
+"ENTRY #%lld" = "ENTRY #%lld";
+"%1$lld/%2$lld PTS" = "%1$lld/%2$lld PTS";
+"HIDE PICKS" = "HIDE PICKS";
+"SHOW PICKS" = "SHOW PICKS";
+"NO PICK" = "NO PICK";
+"LIVE %lld'" = "LIVE %lld'";
+"PENDING" = "PENDING";
+"LEADING" = "LEADING";
+"TRAILING" = "TRAILING";
+"+1 PT" = "+1 PT";
+"MISSED" = "MISSED";
+
+// Profile
+"ADMIN CONSOLE" = "ADMIN CONSOLE";
+"LOADING MY POOLS…" = "LOADING MY POOLS…";
+"+ TOP UP" = "+ TOP UP";
+"SIGN OUT" = "SIGN OUT";
+"BALANCE" = "BALANCE";
+"%@ COINS" = "%@ COINS";
+
+// Pool card body
+"%lld SELECTED" = "%lld SELECTED";
+
+// Auth — Register screen (mirrors login)
+"▶ CREATE ACCOUNT" = "▶ CREATE ACCOUNT";
+"▶ REGISTER" = "▶ REGISTER";
+"LOADING…" = "LOADING…";
+"NAME" = "NAME";
+"USERNAME" = "USERNAME";
+"EMAIL" = "EMAIL";
+"PASSWORD" = "PASSWORD";
+"HAVE AN ACCOUNT?" = "HAVE AN ACCOUNT?";
+"← SIGN IN" = "← SIGN IN";
+"Name is required" = "Name is required";
+"Name must be at least 2 characters" = "Name must be at least 2 characters";
+"Username is required" = "Username is required";
+"Invalid username (3-20, letters/numbers/._)" = "Invalid username (3-20, letters/numbers/._)";
+"Email is required" = "Email is required";
+"Enter a valid email" = "Enter a valid email";
+"Password is required" = "Password is required";
+"At least 6 characters" = "At least 6 characters";
+
+// v3 — Sponsor vs Coins wizard
+"SPONSOR PRIZE" = "SPONSOR PRIZE";
+"COINS ENTRY" = "COINS ENTRY";
+"You pay, friends play free" = "You pay, friends play free";
+"Everyone pays the same" = "Everyone pays the same";
+"PRIZE AMOUNT" = "PRIZE AMOUNT";
+"TOTAL YOU PAY" = "TOTAL YOU PAY";
+"prize" = "prize";
+"platform fee" = "platform fee";
+"If pool doesn't reach min players, you get a full refund." = "If pool doesn't reach min players, you get a full refund.";
+
+// Signup bonus celebration
+"WELCOME BONUS" = "WELCOME BONUS";
+"On the house — enough to sponsor your first pool." = "On the house — enough to sponsor your first pool.";
+"LET'S GO" = "LET'S GO";
+
+// CreatePool wizard — section headers & fields (v3)
+"BASICS" = "BASICS";
+"NAME" = "NAME";
+"PRIZE LABEL (optional)" = "PRIZE LABEL (optional)";
+"MESSAGE (optional)" = "MESSAGE (optional)";
+"La vaquita del mundial" = "La vaquita del mundial";
+"el perdedor paga la pizza" = "el perdedor paga la pizza";
+"¡Que gane el mejor! 🏆" = "May the best one win! 🏆";
+"VISIBILITY" = "VISIBILITY";
+"PRIVATE" = "PRIVATE";
+"PUBLIC" = "PUBLIC";
+"Only people with the code" = "Only people with the code";
+"Show in everyone's Home" = "Show in everyone's Home";
+"PRIVATE POOL — share by invite code" = "PRIVATE POOL — share by invite code";
+"FIXTURES" = "FIXTURES";
+"%lld SELECTED" = "%lld SELECTED";
+"ADD FIXTURES" = "ADD FIXTURES";
+"Search any league or team — add games one by one" = "Search any league or team — add games one by one";
+"ADD MORE FIXTURES" = "ADD MORE FIXTURES";
+"CREATE POOL" = "CREATE POOL";
+"▶ CREATE POOL" = "▶ CREATE POOL";
+"CREATING…" = "CREATING…";
+"Cancel" = "Cancel";
+"%lld COINS" = "%lld COINS";
+"%1$lld prize + %2$lld platform fee. If pool doesn't reach min players, you get a full refund." = "%1$lld prize + %2$lld platform fee. If pool doesn't reach min players, you get a full refund.";
+
+// CreatePool wizard canSubmit hints
+"Add a name to continue" = "Add a name to continue";
+"Pick at least one match" = "Pick at least one match";
+"Pick a sponsor prize or coins entry" = "Pick a sponsor prize or coins entry";

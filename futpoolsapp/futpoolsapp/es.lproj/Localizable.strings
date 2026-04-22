@@ -134,6 +134,16 @@
 "Be the first to join!" = "¡Sé el primero en unirte!";
 "RANKED BY JOIN ORDER · RESULTS PENDING" = "ORDEN DE REGISTRO · RESULTADOS PENDIENTES";
 
+// Join with code
+"JOIN WITH CODE" = "UNIRSE CON CÓDIGO";
+"Join with code" = "Unirse con código";
+"Have an invite code?" = "¿Tienes un código?";
+"Enter the 8-character code your friend shared to jump straight into their pool." = "Ingresa el código de 8 caracteres que te compartió tu amigo para entrar directo a su quiniela.";
+"JOIN POOL" = "UNIRSE A LA QUINIELA";
+"JOINING…" = "UNIENDO…";
+"Paste" = "Pegar";
+"Invalid or expired code. Double-check and try again." = "Código inválido o expirado. Revísalo e inténtalo de nuevo.";
+
 // Create pool
 "CREATE POOL" = "CREAR QUINIELA";
 "BASICS" = "BÁSICOS";
@@ -193,3 +203,224 @@
 
 // Profile
 "MY CREATED POOLS" = "MIS QUINIELAS CREADAS";
+
+// FutPools Rank
+"RANK" = "RANGO";
+"GLOBAL RANK" = "RANGO GLOBAL";
+"RATING" = "PUNTOS";
+"PEAK" = "PICO";
+"POOLS PLAYED" = "JUGADAS";
+"POOLS WON" = "GANADAS";
+"WIN RATE" = "% ACIERTOS";
+"CURRENT STREAK" = "RACHA ACTUAL";
+"BEST STREAK" = "MEJOR RACHA";
+"ACHIEVEMENTS" = "LOGROS";
+"LEADERBOARD" = "TABLA";
+"VIEW GLOBAL LEADERBOARD" = "VER TABLA GLOBAL";
+"NO RATING YET" = "SIN RANGO AÚN";
+"Play a pool to start ranking." = "Juega una quiniela para entrar al ranking.";
+"LOCKED" = "BLOQUEADO";
+"TIER" = "NIVEL";
+"Rookie" = "Novato";
+"Amateur" = "Amateur";
+"Pro" = "Pro";
+"Veteran" = "Veterano";
+"Legend" = "Leyenda";
+"TIER UP!" = "¡NIVEL NUEVO!";
+
+// Achievements
+"First Pool" = "Primera quiniela";
+"Played your first pool." = "Jugaste tu primera quiniela.";
+"First Win" = "Primera victoria";
+"Won your first pool." = "Ganaste tu primera quiniela.";
+"Perfect Matchday" = "Jornada perfecta";
+"100%% correct in a pool." = "100%% de aciertos en una quiniela.";
+"Streak 5" = "Racha de 5";
+"Win 5 pools in a row." = "Gana 5 quinielas seguidas.";
+"Streak 10" = "Racha de 10";
+"Win 10 pools in a row." = "Gana 10 quinielas seguidas.";
+"Streak 20" = "Racha de 20";
+"Win 20 pools in a row." = "Gana 20 quinielas seguidas.";
+"Veteran (25)" = "Veterano (25)";
+"Played 25 pools." = "Jugaste 25 quinielas.";
+"Century (100)" = "Siglo (100)";
+"Played 100 pools." = "Jugaste 100 quinielas.";
+"Amateur Unlocked" = "Amateur desbloqueado";
+"Reached the Amateur tier." = "Alcanzaste el nivel Amateur.";
+"Pro Unlocked" = "Pro desbloqueado";
+"Reached the Pro tier." = "Alcanzaste el nivel Pro.";
+"Veteran Unlocked" = "Veterano desbloqueado";
+"Reached the Veteran tier." = "Alcanzaste el nivel Veterano.";
+"Legend Unlocked" = "Leyenda desbloqueada";
+"Reached the Legend tier." = "Alcanzaste el nivel Leyenda.";
+"Podium Pro" = "Podio Pro";
+"10 top-3 finishes." = "10 finales en el top 3.";
+"Weekly Winner" = "Ganador semanal";
+"Won a weekly event." = "Ganaste un evento semanal.";
+"Comeback Kid" = "Remontada";
+"Win after three losses." = "Gana después de 3 derrotas.";
+
+// Global leaderboard empty state
+"NO RANKINGS YET" = "SIN RANKING AÚN";
+"Play a pool to appear here." = "Juega una quiniela para aparecer aquí.";
+
+// Coin pool entry type
+"ENTRY TYPE" = "TIPO DE ENTRADA";
+"FREE" = "GRATIS";
+"COINS" = "MONEDAS";
+"Bragging rights + rank points" = "Presume + puntos de ranking";
+"Winner takes 90%% of the pot" = "El ganador se lleva 90%% del pozo";
+"ENTRY COST" = "COSTO DE ENTRADA";
+"Minimum 2 players. 10%% platform rake — winner receives the rest of the pot." = "Mínimo 2 jugadores. Comisión del 10%% — el ganador se lleva el resto.";
+
+// Pricing tier labels (3-preset system)
+"CASUAL" = "CASUAL";
+"STANDARD" = "ESTÁNDAR";
+"HIGH STAKES" = "ALTO RIESGO";
+
+// Tab bar labels
+"SHOP" = "TIENDA";
+"PROFILE" = "PERFIL";
+"Create pool" = "Crear quiniela";
+
+// Home view
+"◆ ACTIVE POOLS" = "◆ QUINIELAS ACTIVAS";
+"◆ FEATURED" = "◆ DESTACADAS";
+"◆ QUICK PLAY" = "◆ JUEGO RÁPIDO";
+"%lld PLAYERS" = "%lld JUGADORES";
+"%lld JUGADORES" = "%lld JUGADORES";
+"RESUME" = "CONTINUAR";
+"OPEN" = "ABRIR";
+"NO POOLS RIGHT NOW" = "NO HAY QUINIELAS AHORA";
+"Check back soon or we'll notify you when new pools are available." = "Vuelve pronto — te avisaremos cuando haya nuevas quinielas.";
+"REFRESH" = "ACTUALIZAR";
+
+// Pool detail (QuinielaDetailView)
+"PRIZE POOL" = "BOTE";
+"ENTRY" = "ENTRADA";
+"FIXTURES" = "PARTIDOS";
+"RANKING" = "RANKING";
+"RULES" = "REGLAS";
+"INFO" = "INFO";
+"POOL FINISHED" = "QUINIELA FINALIZADA";
+"OPENS · %@" = "ABRE · %@";
+"▶ MAKE PICKS · %@" = "▶ HACER PRONÓSTICOS · %@";
+"POOL LOCKED" = "QUINIELA CERRADA";
+"LIVE NOW" = "EN VIVO";
+"CREATED BY @%@" = "CREADA POR @%@";
+"LIVE" = "EN VIVO";
+
+// Recharge / Coin Shop
+"COIN SHOP" = "TIENDA DE MONEDAS";
+"CURRENT BALANCE" = "BALANCE ACTUAL";
+"◆ SELECT A PACK" = "◆ SELECCIONA UN PAQUETE";
+"SELECT A PACK" = "SELECCIONA UN PAQUETE";
+"NO PACKS AVAILABLE" = "SIN PAQUETES DISPONIBLES";
+"Check your connection and try again." = "Verifica tu conexión e intenta de nuevo.";
+"Close" = "Cerrar";
+"PURCHASING…" = "COMPRANDO…";
+"▶ PURCHASE %@" = "▶ COMPRAR %@";
+"Purchase could not be verified." = "La compra no pudo verificarse.";
+"Balance updated." = "Saldo actualizado.";
+"Purchase pending approval." = "Compra pendiente de aprobación.";
+"BEST VALUE" = "MEJOR OFERTA";
+"+10%% BONUS" = "+10%% BONO";
+"POPULAR" = "POPULAR";
+"COINS" = "MONEDAS";
+"+%lld BONUS" = "+%lld DE BONO";
+
+// My Entries
+"MY ENTRIES" = "MIS PARTICIPACIONES";
+"[ %lld TOTAL ]" = "[ %lld TOTAL ]";
+"NO ENTRIES YET" = "SIN PARTICIPACIONES AÚN";
+"Join a pool and submit picks to get started." = "Únete a una quiniela y envía tus pronósticos para comenzar.";
+"LOADING ENTRIES…" = "CARGANDO PARTICIPACIONES…";
+"ENTRIES #%lld" = "PARTICIPACIONES #%lld";
+"ENTRY #%lld" = "PARTICIPACIÓN #%lld";
+"%1$lld/%2$lld PTS" = "%1$lld/%2$lld PTS";
+"HIDE PICKS" = "OCULTAR PRONÓSTICOS";
+"SHOW PICKS" = "VER PRONÓSTICOS";
+"NO PICK" = "SIN PRONÓSTICO";
+"LIVE %lld'" = "EN VIVO %lld'";
+"PENDING" = "PENDIENTE";
+"LEADING" = "VA GANANDO";
+"TRAILING" = "VA PERDIENDO";
+"+1 PT" = "+1 PT";
+"MISSED" = "FALLÓ";
+
+// Profile
+"ADMIN CONSOLE" = "CONSOLA DE ADMIN";
+"LOADING MY POOLS…" = "CARGANDO MIS QUINIELAS…";
+"+ TOP UP" = "+ RECARGAR";
+"SIGN OUT" = "CERRAR SESIÓN";
+"BALANCE" = "SALDO";
+"%@ COINS" = "%@ MONEDAS";
+
+// Pool card body
+"%lld SELECTED" = "%lld SELECCIONADOS";
+
+// Auth — Register screen (mirrors login)
+"▶ CREATE ACCOUNT" = "▶ CREAR CUENTA";
+"▶ REGISTER" = "▶ REGISTRARSE";
+"LOADING…" = "CARGANDO…";
+"NAME" = "NOMBRE";
+"USERNAME" = "USUARIO";
+"EMAIL" = "EMAIL";
+"PASSWORD" = "CONTRASEÑA";
+"HAVE AN ACCOUNT?" = "¿YA TIENES CUENTA?";
+"← SIGN IN" = "← INICIAR SESIÓN";
+"Name is required" = "El nombre es obligatorio";
+"Name must be at least 2 characters" = "El nombre debe tener al menos 2 caracteres";
+"Username is required" = "El usuario es obligatorio";
+"Invalid username (3-20, letters/numbers/._)" = "Usuario inválido (3-20, letras/números/._)";
+"Email is required" = "El email es obligatorio";
+"Enter a valid email" = "Ingresa un email válido";
+"Password is required" = "La contraseña es obligatoria";
+"At least 6 characters" = "Mínimo 6 caracteres";
+
+// v3 — Sponsor vs Coins wizard
+"SPONSOR PRIZE" = "PATROCINAR PREMIO";
+"COINS ENTRY" = "ENTRADA CON MONEDAS";
+"You pay, friends play free" = "Tú pagas, amigos juegan gratis";
+"Everyone pays the same" = "Todos pagan lo mismo";
+"PRIZE AMOUNT" = "MONTO DEL PREMIO";
+"TOTAL YOU PAY" = "TOTAL QUE PAGAS";
+"prize" = "premio";
+"platform fee" = "comisión de plataforma";
+"If pool doesn't reach min players, you get a full refund." = "Si la quiniela no alcanza el mínimo de jugadores, recibes reembolso completo.";
+
+// Signup bonus celebration
+"WELCOME BONUS" = "BONO DE BIENVENIDA";
+"On the house — enough to sponsor your first pool." = "Cortesía de la casa — suficiente para patrocinar tu primera quiniela.";
+"LET'S GO" = "¡VAMOS!";
+
+// CreatePool wizard — section headers & fields (v3)
+"BASICS" = "BÁSICOS";
+"NAME" = "NOMBRE";
+"PRIZE LABEL (optional)" = "ETIQUETA DE PREMIO (opcional)";
+"MESSAGE (optional)" = "MENSAJE (opcional)";
+"La vaquita del mundial" = "La vaquita del mundial";
+"el perdedor paga la pizza" = "el perdedor paga la pizza";
+"¡Que gane el mejor! 🏆" = "¡Que gane el mejor! 🏆";
+"VISIBILITY" = "VISIBILIDAD";
+"PRIVATE" = "PRIVADA";
+"PUBLIC" = "PÚBLICA";
+"Only people with the code" = "Solo quienes tengan el código";
+"Show in everyone's Home" = "Visible para todos";
+"PRIVATE POOL — share by invite code" = "QUINIELA PRIVADA — comparte por código de invitación";
+"FIXTURES" = "PARTIDOS";
+"%lld SELECTED" = "%lld SELECCIONADOS";
+"ADD FIXTURES" = "AÑADIR PARTIDOS";
+"Search any league or team — add games one by one" = "Busca cualquier liga o equipo y agrega partidos uno por uno";
+"ADD MORE FIXTURES" = "AÑADIR MÁS PARTIDOS";
+"CREATE POOL" = "CREAR QUINIELA";
+"▶ CREATE POOL" = "▶ CREAR QUINIELA";
+"CREATING…" = "CREANDO…";
+"Cancel" = "Cancelar";
+"%lld COINS" = "%lld MONEDAS";
+"%1$lld prize + %2$lld platform fee. If pool doesn't reach min players, you get a full refund." = "%1$lld de premio + %2$lld de comisión. Si no se alcanza el mínimo de jugadores, te reembolsamos todo.";
+
+// CreatePool wizard canSubmit hints
+"Add a name to continue" = "Agrega un nombre para continuar";
+"Pick at least one match" = "Selecciona al menos un partido";
+"Pick a sponsor prize or coins entry" = "Elige un premio patrocinado o entrada con monedas";

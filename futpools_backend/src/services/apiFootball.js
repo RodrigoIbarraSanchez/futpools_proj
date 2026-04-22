@@ -81,6 +81,7 @@ const cache = {
   searchTeams: new Map(),        // query -> { updatedAt, payload }
   teamFixtures: new Map(),       // teamId -> { updatedAt, payload }
   leagueFixtures: new Map(),     // leagueId:season -> { updatedAt, payload }
+  fixtureEvents: new Map(),      // fixtureId -> { updatedAt, payload }
 };
 
 const cacheTTLms = 25 * 1000; // 25s to allow 30s polling
@@ -707,6 +708,28 @@ const getLeagueFixtures = async (leagueId, season) => {
   return out;
 };
 
+/// Match feed for a single fixture (goals, cards, substitutions, VAR).
+/// Cached aggressively (25s) since it powers the live match view which polls.
+const getFixtureEvents = async (fixtureId) => {
+  const key = String(fixtureId);
+  const hit = cache.fixtureEvents.get(key);
+  if (hit && Date.now() - hit.updatedAt < cacheTTLms) return hit.payload;
+
+  const data = await apiFetch('/fixtures/events', { fixture: fixtureId });
+  const out = (data?.response || []).map((e) => ({
+    minute: e?.time?.elapsed ?? null,
+    extra: e?.time?.extra ?? null,
+    team: e?.team ? { id: e.team.id, name: e.team.name, logo: e.team.logo } : null,
+    player: e?.player?.name || null,
+    assist: e?.assist?.name || null,
+    type: e?.type || null,          // "Goal" | "Card" | "subst" | "Var"
+    detail: e?.detail || null,      // "Normal Goal" | "Yellow Card" | "Substitution 1" | etc.
+    comments: e?.comments || null,
+  })).sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0)); // newest first
+  cache.fixtureEvents.set(key, { updatedAt: Date.now(), payload: out });
+  return out;
+};
+
 module.exports = {
   fetchFixturesForMatchday,
   fetchFixturesByIds,
@@ -714,5 +737,6 @@ module.exports = {
   searchTeamsApi,
   getTeamFixtures,
   getLeagueFixtures,
+  getFixtureEvents,
   startLivePolling,
 };

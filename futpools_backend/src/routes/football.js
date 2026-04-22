@@ -13,5 +13,7 @@ router.get('/teams', footballController.getTeamsByLeague);
 router.get('/leagues/search', footballController.searchLeagues);
 // GET /football/teams/search?query=chivas
 router.get('/teams/search', footballController.searchTeamsApi);
+// GET /football/fixtures/:id/events — goals, cards, substitutions (for live match)
+router.get('/fixtures/:id/events', footballController.getFixtureEvents);
 
 module.exports = router;

@@ -40,11 +40,11 @@ struct RechargeView: View {
                         } else if products.isEmpty {
                             HudFrame {
                                 VStack(spacing: 10) {
-                                    Text("NO PACKS AVAILABLE")
+                                    Text("NO PACKS AVAILABLE", bundle: nil)
                                         .font(ArenaFont.display(size: 12, weight: .bold))
                                         .tracking(2)
                                         .foregroundColor(.arenaText)
-                                    Text("Check your connection and try again.")
+                                    Text("Check your connection and try again.", bundle: nil)
                                         .font(ArenaFont.body(size: 12))
                                         .foregroundColor(.arenaTextDim)
                                         .multilineTextAlignment(.center)
@@ -103,7 +103,7 @@ struct RechargeView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(String(localized: "Close")) { dismiss() }
                         .foregroundColor(.arenaTextDim)
                 }
             }
@@ -112,9 +112,11 @@ struct RechargeView: View {
     }
 
     private var purchaseTitle: String {
-        if isPurchasing { return "PURCHASING…" }
-        if let p = selectedProduct { return "▶ PURCHASE \(p.displayPrice)" }
-        return "SELECT A PACK"
+        if isPurchasing { return String(localized: "PURCHASING…") }
+        if let p = selectedProduct {
+            return String(format: String(localized: "▶ PURCHASE %@"), p.displayPrice)
+        }
+        return String(localized: "SELECT A PACK")
     }
 
     private var selectedProduct: StoreKit.Product? {
@@ -136,7 +138,7 @@ struct RechargeView: View {
             }
             .buttonStyle(.plain)
             Spacer()
-            Text("COIN SHOP")
+            Text("COIN SHOP", bundle: nil)
                 .font(ArenaFont.display(size: 12, weight: .bold))
                 .tracking(3)
                 .foregroundColor(.arenaText)
@@ -159,7 +161,7 @@ struct RechargeView: View {
             glow: .arenaGold
         ) {
             VStack(spacing: 4) {
-                Text("CURRENT BALANCE")
+                Text("CURRENT BALANCE", bundle: nil)
                     .font(ArenaFont.mono(size: 9))
                     .tracking(2)
                     .foregroundColor(.arenaTextMuted)
@@ -187,7 +189,7 @@ struct RechargeView: View {
         .padding(.horizontal, 16)
     }
 
-    private func sectionHeader(_ title: String) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         HStack {
             Text(title)
                 .font(ArenaFont.display(size: 10, weight: .bold))
@@ -235,18 +237,18 @@ struct RechargeView: View {
                     case .verified(let t):
                         transaction = t
                     case .unverified:
-                        errorMessage = "Purchase could not be verified."
+                        errorMessage = String(localized: "Purchase could not be verified.")
                         isPurchasing = false
                         return
                     }
                     let jws = verification.jwsRepresentation
                     try await auth.rechargeBalance(signedTransaction: jws)
                     await transaction.finish()
-                    successMessage = "Balance updated."
+                    successMessage = String(localized: "Balance updated.")
                 case .userCancelled:
                     break
                 case .pending:
-                    successMessage = "Purchase pending approval."
+                    successMessage = String(localized: "Purchase pending approval.")
                 @unknown default:
                     break
                 }
@@ -277,9 +279,9 @@ private struct PackRow: View {
     }
 
     private var tag: String? {
-        if coins >= 500 { return "BEST VALUE" }
-        if coins >= 200 { return "+10% BONUS" }
-        if coins == 100 { return "POPULAR" }
+        if coins >= 500 { return String(localized: "BEST VALUE") }
+        if coins >= 200 { return String(localized: "+10% BONUS") }
+        if coins == 100 { return String(localized: "POPULAR") }
         return nil
     }
 

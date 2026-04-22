@@ -137,8 +137,32 @@ struct PickerFixture: Decodable, Identifiable, Equatable, Hashable {
 final class CreatePoolViewModel: ObservableObject {
     // Draft inputs
     @Published var draftName = ""
-    @Published var draftPrizeLabel = ""
+    // Free-text message the creator leaves for participants. Replaces the old
+    // `prizeLabel` UI now that the prize itself is either coins (sponsored /
+    // peer pool) or empty — a separate label text was redundant. Persisted
+    // server-side in the existing `description` field.
+    @Published var draftDescription = ""
     @Published var draftVisibility = "private"  // "public" | "private"
+    // 0 = not a peer pool. >0 = peer coin pool; must match backend presets
+    // (10 / 25 / 50 / 100 / 250 / 500). Mutually exclusive with draftPrizeCoins.
+    @Published var draftEntryCostCoins: Int = 0
+    // v3 — creator-sponsored prize (amount of coins the winner receives).
+    // Backend charges creator × 1.1 on create. Presets 50/100/250/500/1000.
+    // Mutually exclusive with draftEntryCostCoins; set one or the other to 0
+    // when switching modes via the setter helpers below.
+    @Published var draftPrizeCoins: Int = 0
+
+    /// Switch the wizard to Sponsor mode with the given prize amount.
+    func setSponsorPrize(_ amount: Int) {
+        draftEntryCostCoins = 0
+        draftPrizeCoins = amount
+    }
+
+    /// Switch the wizard to Coins (peer-pay) mode with the given entry cost.
+    func setPeerEntryCost(_ amount: Int) {
+        draftPrizeCoins = 0
+        draftEntryCostCoins = amount
+    }
 
     // Search
     @Published var searchQuery = ""
@@ -164,6 +188,9 @@ final class CreatePoolViewModel: ObservableObject {
     var canSubmit: Bool {
         !draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !selectedFixtures.isEmpty
+            // v3: every user-created pool must commit to exactly ONE economy —
+            // either Sponsor (creator funds prize) or Coins (peer pay).
+            && (draftPrizeCoins > 0 || draftEntryCostCoins > 0)
     }
 
     // MARK: Search (debounced)
@@ -275,11 +302,17 @@ final class CreatePoolViewModel: ObservableObject {
         isSubmitting = true
         defer { isSubmitting = false }
 
+        let trimmedDescription = draftDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         let body = QuinielaCreateRequest(
             name: draftName.trimmingCharacters(in: .whitespacesAndNewlines),
-            description: nil,
-            prizeLabel: draftPrizeLabel.trimmingCharacters(in: .whitespacesAndNewlines),
+            description: trimmedDescription.isEmpty ? nil : trimmedDescription,
+            // Legacy field — leave empty now that v3 prize lives in
+            // platformPrizeCoins / entryCostCoins. Still sent (nullable string)
+            // for backend back-compat until we phase the field out entirely.
+            prizeLabel: nil,
             visibility: draftVisibility,
+            entryCostCoins: draftEntryCostCoins,
+            prizeCoins: draftPrizeCoins,
             fixtures: picks.map { fx in
                 QuinielaCreateFixture(
                     fixtureId: fx.fixtureId,

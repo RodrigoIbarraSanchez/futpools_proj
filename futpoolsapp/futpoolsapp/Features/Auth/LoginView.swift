@@ -21,15 +21,18 @@ struct LoginView: View {
 
             ScrollView {
                 VStack(spacing: 26) {
-                    // Logo lockup
+                    // Logo lockup — BRAND NAME, never localized. "FUT" +
+                    // "POOLS" used to auto-translate to "FUTQUINIELAS" in ES
+                    // because "POOLS" had a key in .strings. `Text(verbatim:)`
+                    // skips the localization table entirely.
                     VStack(spacing: 6) {
                         HStack(spacing: 0) {
-                            Text("FUT")
-                                .font(ArenaFont.display(size: 44, weight: .heavy))
+                            Text(verbatim: "FUT")
+                                .font(ArenaFont.brand(size: 44))
                                 .tracking(6)
                                 .foregroundColor(.arenaText)
-                            Text("POOLS")
-                                .font(ArenaFont.display(size: 44, weight: .heavy))
+                            Text(verbatim: "POOLS")
+                                .font(ArenaFont.brand(size: 44))
                                 .tracking(6)
                                 .foregroundColor(.arenaPrimary)
                                 .shadow(color: .arenaPrimary.opacity(0.85), radius: 14)

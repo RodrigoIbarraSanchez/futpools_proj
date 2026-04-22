@@ -34,14 +34,17 @@ struct ArenaStatTile: View {
 }
 
 struct ArenaStatInline: View {
-    let label: String
+    // LocalizedStringKey so callers can pass literal keys ("PRIZE POOL", etc.)
+    // and SwiftUI resolves them against Localizable.strings.
+    let label: LocalizedStringKey
     let value: String
     var color: Color = .arenaText
     var isMono: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label.uppercased())
+            Text(label)
+                .textCase(.uppercase)
                 .font(ArenaFont.mono(size: 9))
                 .tracking(1.5)
                 .foregroundColor(.arenaTextMuted)

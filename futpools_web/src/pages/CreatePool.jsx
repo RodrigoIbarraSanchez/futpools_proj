@@ -513,8 +513,20 @@ export function CreatePool() {
   const isAdmin = user?.isAdmin === true;
 
   const [name, setName] = useState('');
-  const [prizeLabel, setPrizeLabel] = useState('');
+  // v3: free-text message from creator to participants. Replaces the old
+  // prize label (prize is now defined in ENTRY TYPE as real coins).
+  // Persisted server-side in the existing `description` field.
+  const [message, setMessage] = useState('');
   const [visibility, setVisibility] = useState('private');
+  // v3 mutex — exactly one of these is > 0 at a time. Sponsor = creator pays
+  // prizeCoins × 1.1 upfront (participants free). Coins = peer-pay, everyone
+  // pays entryCostCoins. Both start at 0; the wizard enforces a pick before
+  // CREATE is enabled (see canSubmit below).
+  const [entryCostCoins, setEntryCostCoins] = useState(0);
+  const [prizeCoins, setPrizeCoins] = useState(0);
+  const setSponsorPrize = (amount) => { setEntryCostCoins(0); setPrizeCoins(amount); };
+  const setPeerEntryCost = (amount) => { setPrizeCoins(0); setEntryCostCoins(amount); };
+  const wizardMode = entryCostCoins > 0 ? 'coins' : 'sponsor';
 
   // Basket: Map fixtureId → full fixture object (so we preserve kickoff/teams for submit)
   const [basket, setBasket] = useState(() => new Map());
@@ -544,7 +556,24 @@ export function CreatePool() {
     .filter(isPickable)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  const canSubmit = name.trim().length > 0 && selectedFixtures.length > 0 && !submitting;
+  const canSubmit =
+    name.trim().length > 0
+    && selectedFixtures.length > 0
+    && !submitting
+    // v3: require an explicit economy — Sponsor OR Coins, not neither.
+    && (prizeCoins > 0 || entryCostCoins > 0);
+
+  // First-blocking reason for the disabled CTA. Order mirrors the wizard
+  // steps so the hint points the user to the next thing to fix.
+  const canSubmitHint = !canSubmit
+    ? (name.trim().length === 0
+        ? t(locale, 'Add a name to continue')
+        : selectedFixtures.length === 0
+          ? t(locale, 'Pick at least one match')
+          : (prizeCoins === 0 && entryCostCoins === 0)
+            ? t(locale, 'Pick a sponsor prize or coins entry')
+            : null)
+    : null;
 
   const onSubmit = async () => {
     if (!canSubmit) return;
@@ -553,9 +582,13 @@ export function CreatePool() {
     try {
       const payload = {
         name: name.trim(),
-        description: '',
-        prizeLabel: prizeLabel.trim(),
+        description: message.trim(),
+        // Legacy field — v3 UI no longer collects a prize label since the
+        // prize is real coins. Leave blank for back-compat with older clients.
+        prizeLabel: '',
         visibility,
+        entryCostCoins,
+        prizeCoins,
         fixtures: selectedFixtures.map(fx => ({
           fixtureId: fx.fixtureId,
           leagueId:   fx.league?.id,
@@ -610,8 +643,105 @@ export function CreatePool() {
           <ArenaLabel>{t(locale, 'NAME')}</ArenaLabel>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t(locale, 'La vaquita del mundial')} style={arenaInputStyle} />
           <div style={{ height: 10 }} />
-          <ArenaLabel>{t(locale, 'PRIZE LABEL (optional)')}</ArenaLabel>
-          <input value={prizeLabel} onChange={(e) => setPrizeLabel(e.target.value)} placeholder={t(locale, 'el perdedor paga la pizza')} style={arenaInputStyle} />
+          <ArenaLabel>{t(locale, 'MESSAGE (optional)')}</ArenaLabel>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={t(locale, '¡Que gane el mejor! 🏆')}
+            rows={3}
+            style={{ ...arenaInputStyle, resize: 'vertical', fontFamily: 'var(--fp-mono)' }}
+          />
+        </div>
+
+        {/* ENTRY TYPE — v3 Sponsor (default) vs Coins peer selector */}
+        <div style={{ marginBottom: 18 }}>
+          <SectionLabel color="var(--fp-primary)">{t(locale, 'ENTRY TYPE')}</SectionLabel>
+          <div style={{ height: 8 }} />
+          <div style={{ display: 'flex', gap: 6 }}>
+            <EntryTypePill
+              active={wizardMode === 'sponsor'}
+              title={t(locale, 'SPONSOR PRIZE')}
+              subtitle={t(locale, 'You pay, friends play free')}
+              onClick={() => { if (prizeCoins === 0) setSponsorPrize(50); }}
+            />
+            <EntryTypePill
+              active={wizardMode === 'coins'}
+              title={t(locale, 'COINS ENTRY')}
+              subtitle={t(locale, 'Everyone pays the same')}
+              onClick={() => { if (entryCostCoins === 0) setPeerEntryCost(25); }}
+            />
+          </div>
+
+          {wizardMode === 'sponsor' && (
+            <>
+              <div style={{ height: 12 }} />
+              <ArenaLabel>{t(locale, 'PRIZE AMOUNT')}</ArenaLabel>
+              <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6,
+              }}>
+                {SPONSOR_PRIZE_PRESETS.map(({ amount, tierKey }) => (
+                  <CoinPresetChip
+                    key={amount}
+                    amount={amount}
+                    tierLabel={t(locale, tierKey)}
+                    active={prizeCoins === amount}
+                    accent="var(--fp-primary)"
+                    onClick={() => setSponsorPrize(amount)}
+                  />
+                ))}
+              </div>
+              {prizeCoins > 0 && (
+                <div style={{
+                  marginTop: 10, padding: 10,
+                  background: 'color-mix(in srgb, var(--fp-primary) 10%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--fp-primary) 40%, transparent)',
+                  clipPath: 'var(--fp-clip-sm)',
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700,
+                    letterSpacing: 1.5, color: 'var(--fp-text-muted)',
+                  }}>{t(locale, 'TOTAL YOU PAY')}</div>
+                  <div style={{
+                    fontFamily: 'var(--fp-display)', fontSize: 18, fontWeight: 900,
+                    color: 'var(--fp-gold)', marginTop: 2,
+                  }}>{Math.ceil(prizeCoins * 1.1)} {t(locale, 'COINS')}</div>
+                  <div style={{
+                    marginTop: 4, fontFamily: 'var(--fp-mono)', fontSize: 9,
+                    color: 'var(--fp-text-dim)',
+                  }}>
+                    {prizeCoins} {t(locale, 'prize')} + {Math.ceil(prizeCoins * 1.1) - prizeCoins} {t(locale, 'platform fee')}. {t(locale, "If pool doesn't reach min players, you get a full refund.")}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {wizardMode === 'coins' && (
+            <>
+              <div style={{ height: 12 }} />
+              <ArenaLabel>{t(locale, 'ENTRY COST')}</ArenaLabel>
+              <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6,
+              }}>
+                {ENTRY_COIN_PRESETS.map(({ amount, tierKey }) => (
+                  <CoinPresetChip
+                    key={amount}
+                    amount={amount}
+                    tierLabel={t(locale, tierKey)}
+                    active={entryCostCoins === amount}
+                    accent="var(--fp-gold)"
+                    onClick={() => setPeerEntryCost(amount)}
+                  />
+                ))}
+              </div>
+              <div style={{
+                marginTop: 8, fontFamily: 'var(--fp-mono)', fontSize: 9,
+                color: 'var(--fp-text-dim)',
+              }}>
+                {t(locale, 'Minimum 2 players. 10% platform rake — winner receives the rest of the pot.')}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Visibility */}
@@ -706,6 +836,13 @@ export function CreatePool() {
         zIndex: 40,
       }}>
         <div style={{ maxWidth: 430, margin: '0 auto' }}>
+          {canSubmitHint && (
+            <div style={{
+              marginBottom: 8, textAlign: 'center',
+              fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+              letterSpacing: 1.2, color: 'var(--fp-text-dim)',
+            }}>{canSubmitHint}</div>
+          )}
           <ArcadeButton size="lg" fullWidth disabled={!canSubmit} onClick={onSubmit}>
             {submitting ? t(locale, 'Creating…') : `▶ ${t(locale, 'CREATE POOL')}`}
           </ArcadeButton>
@@ -721,6 +858,78 @@ export function CreatePool() {
         locale={locale}
       />
     </>
+  );
+}
+
+// 3-tier presets (v3 simplification). Label each by intent so the user
+// picks semantically; the numeric amount is secondary information.
+// MUST match the backend whitelist — anything outside coerces to 0.
+const SPONSOR_PRIZE_PRESETS = [
+  { amount: 50,   tierKey: 'CASUAL' },
+  { amount: 250,  tierKey: 'STANDARD' },
+  { amount: 1000, tierKey: 'HIGH STAKES' },
+];
+const ENTRY_COIN_PRESETS = [
+  { amount: 25,  tierKey: 'CASUAL' },
+  { amount: 100, tierKey: 'STANDARD' },
+  { amount: 500, tierKey: 'HIGH STAKES' },
+];
+
+function EntryTypePill({ active, title, subtitle, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1, padding: 10, cursor: 'pointer',
+        background: active ? 'var(--fp-primary)' : 'var(--fp-surface)',
+        border: `1px solid ${active ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
+        clipPath: 'var(--fp-clip-sm)',
+        textAlign: 'left',
+      }}
+    >
+      <div style={{
+        fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 900,
+        letterSpacing: 2, color: active ? 'var(--fp-on-primary)' : 'var(--fp-text)',
+      }}>{title}</div>
+      <div style={{
+        marginTop: 4, fontFamily: 'var(--fp-mono)', fontSize: 9,
+        color: active ? 'color-mix(in srgb, var(--fp-on-primary) 85%, transparent)' : 'var(--fp-text-muted)',
+      }}>{subtitle}</div>
+    </button>
+  );
+}
+
+function CoinPresetChip({ amount, active, onClick, accent = 'var(--fp-gold)', tierLabel }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '10px 4px', cursor: 'pointer', textAlign: 'center',
+        background: active ? accent : 'var(--fp-surface)',
+        border: `1px solid ${active ? accent : 'var(--fp-stroke)'}`,
+        clipPath: 'var(--fp-clip-sm)',
+      }}
+    >
+      {tierLabel && (
+        <div style={{
+          fontFamily: 'var(--fp-mono)', fontSize: 8, fontWeight: 700,
+          letterSpacing: 1.2,
+          color: active ? 'color-mix(in srgb, var(--fp-on-primary) 90%, transparent)' : 'var(--fp-text-muted)',
+          marginBottom: 2,
+        }}>{tierLabel}</div>
+      )}
+      <div style={{
+        fontFamily: 'var(--fp-display)', fontSize: 18, fontWeight: 900,
+        color: active ? 'var(--fp-on-primary)' : accent,
+      }}>{amount}</div>
+      <div style={{
+        fontFamily: 'var(--fp-mono)', fontSize: 8, fontWeight: 700,
+        letterSpacing: 1.5,
+        color: active ? 'color-mix(in srgb, var(--fp-on-primary) 80%, transparent)' : 'var(--fp-text-muted)',
+      }}>COINS</div>
+    </button>
   );
 }
 
