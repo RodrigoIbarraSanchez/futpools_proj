@@ -573,6 +573,12 @@ struct LiveMatchView: View {
                     .lineLimit(1)
             }
             Spacer()
+            // Team crest at the trailing edge — users were guessing which team
+            // each sub/card/goal belonged to. 20pt logo is big enough to read
+            // at a glance without eating layout.
+            if let team = ev.team {
+                teamCrestTag(team)
+            }
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
@@ -583,6 +589,32 @@ struct LiveMatchView: View {
                 .frame(width: 3)
                 .frame(maxWidth: .infinity, alignment: .leading)
         )
+    }
+
+    /// Team crest + 3-letter abbreviation for a match-feed event. Prefers the
+    /// remote logo URL; falls back to the abbreviation tag if the logo fails
+    /// or is missing (e.g. minor leagues where API-Football lacks crests).
+    @ViewBuilder
+    private func teamCrestTag(_ team: MatchFeedEvent.TeamBlock) -> some View {
+        HStack(spacing: 4) {
+            if let urlString = team.logo, let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let img):
+                        img.resizable().aspectRatio(contentMode: .fit)
+                    default:
+                        Color.clear
+                    }
+                }
+                .frame(width: 20, height: 20)
+            }
+            if let name = team.name, !name.isEmpty {
+                Text(threeLetter(name))
+                    .font(ArenaFont.mono(size: 9, weight: .bold))
+                    .tracking(1)
+                    .foregroundColor(.arenaTextMuted)
+            }
+        }
     }
 
     @ViewBuilder

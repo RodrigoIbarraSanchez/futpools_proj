@@ -32,6 +32,11 @@ struct Quiniela: Decodable, Identifiable {
     let inviteCode: String?
     /// Free-text label for MVP user-pools ("the loser buys pizza"). Not money.
     let prizeLabel: String?
+    /// v3 economy — filled by backend. nil on legacy pools.
+    let fundingModel: String?
+    let platformPrizeCoins: Int?
+    let entryCostCoins: Int?
+    let rakePercent: Int?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -52,6 +57,10 @@ struct Quiniela: Decodable, Identifiable {
         case visibility
         case inviteCode
         case prizeLabel
+        case fundingModel
+        case platformPrizeCoins
+        case entryCostCoins
+        case rakePercent
     }
 
     var startDateValue: Date? {

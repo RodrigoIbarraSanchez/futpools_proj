@@ -21,5 +21,13 @@
 	<array>
 		<string>Oxanium.ttf</string>
 	</array>
+	<!-- Declare supported locales. Without this, iOS treats the app as
+	     English-only and never looks up keys in es.lproj — even though the
+	     compiled strings file is sitting right there in the bundle. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+	</array>
 </dict>
 </plist>

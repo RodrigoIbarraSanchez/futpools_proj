@@ -70,6 +70,28 @@ function EventRow({ ev, locale }) {
       <span style={{ flex: 1, fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text)' }}>
         {ev.player || '—'}
       </span>
+      {/* Team crest + abbreviation — tells the user which side the
+          event belongs to without forcing them to cross-reference. */}
+      {ev.team && (ev.team.logo || ev.team.name) && (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {ev.team.logo && (
+            <img
+              src={ev.team.logo}
+              alt=""
+              width={20}
+              height={20}
+              style={{ objectFit: 'contain' }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+          )}
+          {ev.team.name && (
+            <span style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700,
+              letterSpacing: 1, color: 'var(--fp-text-muted)',
+            }}>{threeLetter(ev.team.name)}</span>
+          )}
+        </span>
+      )}
     </div>
   );
 }

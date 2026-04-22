@@ -359,6 +359,18 @@
 // Pool card body
 "%lld SELECTED" = "%lld SELECTED";
 
+// Rules modal (pool detail)
+"GAME RULES" = "GAME RULES";
+"Pick 1 (home), X (draw) or 2 (away) for each match in the pool." = "Pick 1 (home), X (draw) or 2 (away) for each match in the pool.";
+"+1 point for every correct pick. All matches count the same." = "+1 point for every correct pick. All matches count the same.";
+"Picks lock the moment the first match kicks off. No edits after that." = "Picks lock the moment the first match kicks off. No edits after that.";
+"The creator sponsored a %lld-coin prize. Winner takes it all — no split." = "The creator sponsored a %lld-coin prize. Winner takes it all — no split.";
+"The creator sponsored the prize. Winner takes it all." = "The creator sponsored the prize. Winner takes it all.";
+"Every player pays %1$lld coins. Winner takes the full pot (minus a %2$lld%% platform fee)." = "Every player pays %1$lld coins. Winner takes the full pot (minus a %2$lld%% platform fee).";
+"Platform-funded prize. Winner takes it all if the pool fills to the minimum." = "Platform-funded prize. Winner takes it all if the pool fills to the minimum.";
+"Winner takes the whole prize — no splits." = "Winner takes the whole prize — no splits.";
+"Every pool you finish earns rating for your global rank and can unlock achievements." = "Every pool you finish earns rating for your global rank and can unlock achievements.";
+
 // Auth — Register screen (mirrors login)
 "▶ CREATE ACCOUNT" = "▶ CREATE ACCOUNT";
 "▶ REGISTER" = "▶ REGISTER";

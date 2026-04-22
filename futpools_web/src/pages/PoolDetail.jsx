@@ -11,6 +11,10 @@ import {
 import { InsufficientBalanceModal } from '../components/InsufficientBalanceModal';
 
 function ShareButton({ pool }) {
+  // Pull locale from context — previously referenced as a free variable
+  // which threw ReferenceError at runtime, crashing the whole PoolDetail
+  // subtree into a blank screen whenever the share button tried to render.
+  const { locale } = useLocale();
   const [copied, setCopied] = useState(false);
   const url = typeof window !== 'undefined'
     ? `${window.location.origin}/p/${pool.inviteCode}`
@@ -88,9 +92,15 @@ export function PoolDetail() {
   const [entryCount, setEntryCount] = useState(0);
   const [leaderboard, setLeaderboard] = useState(null);
   const [showInsufficient, setShowInsufficient] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   // Map fixtureId → "1"|"X"|"2" so we can pass the user's pick into LiveMatch
   // when they tap a fixture. Mirrors iOS loadMyPicks.
   const [myPicks, setMyPicks] = useState({});
+  // Map fixtureId → live fixture payload (status, score, elapsed). Polled
+  // every 30s with a smart skip: only hit the API if the pool has at least
+  // one fixture that's live or within ±3h of kickoff — otherwise the data
+  // is stable and polling wastes quota.
+  const [liveByFixture, setLiveByFixture] = useState({});
 
   const userBalance = user?.balance ?? 0;
   const entryCost = quiniela ? parseEntryCost(quiniela.cost) : 0;
@@ -115,6 +125,44 @@ export function PoolDetail() {
   };
 
   useEffect(() => { load(); }, [id]);
+
+  // Live score/minute polling — mirrors iOS behavior so fixtures in this
+  // view animate the same way (2-2 · 81' red dot, etc.). Smart skip keeps
+  // us off API-Football when the pool is all future or all finished.
+  useEffect(() => {
+    const fixtures = quiniela?.fixtures || [];
+    if (fixtures.length === 0) return undefined;
+    const ids = fixtures.map((f) => f.fixtureId).filter(Boolean);
+    if (ids.length === 0) return undefined;
+
+    const isWorthPolling = () => {
+      const now = Date.now();
+      const WINDOW_MS = 3 * 60 * 60 * 1000;
+      return fixtures.some((f) => {
+        const live = liveByFixture[f.fixtureId];
+        if (live?.status?.isLive) return true;
+        if (!f.kickoff) return false;
+        const k = new Date(f.kickoff).getTime();
+        return Math.abs(now - k) < WINDOW_MS;
+      });
+    };
+
+    const refresh = async () => {
+      try {
+        const arr = await api.get(`/football/fixtures?ids=${ids.join(',')}`);
+        const next = {};
+        for (const f of arr || []) next[f.fixtureId] = f;
+        setLiveByFixture(next);
+      } catch { /* keep previous snapshot */ }
+    };
+
+    // Fire once on mount regardless of window, so the first paint has data.
+    refresh();
+    const interval = setInterval(() => {
+      if (isWorthPolling()) refresh();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [quiniela]);
 
   useEffect(() => {
     if (id && token) {
@@ -168,11 +216,18 @@ export function PoolDetail() {
           }}>
             [ POOL · {String(id).slice(-6).toUpperCase()} ]
           </div>
-          {quiniela.inviteCode ? (
-            <ShareButton pool={quiniela} />
-          ) : (
-            <div style={{ width: 32 }} />
-          )}
+          {/* Right-side actions stacked: share first, rules below. Rules
+              used to live in its own tab, but it's reference content that
+              most users only open once — a modal off a "?" icon is a better
+              fit than stealing a tab slot. */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {quiniela.inviteCode ? (
+              <ShareButton pool={quiniela} />
+            ) : (
+              <div style={{ width: 32, height: 32 }} />
+            )}
+            <IconButton onClick={() => setShowRules(true)} aria-label={t(locale, 'GAME RULES')}>?</IconButton>
+          </div>
         </div>
 
         <div style={{
@@ -244,7 +299,6 @@ export function PoolDetail() {
         {[
           ['fixtures', t(locale, 'FIXTURES')],
           ['ranking',  t(locale, 'RANKING')],
-          ['overview', t(locale, 'INFO')],
         ].map(([k, label]) => (
           <button
             key={k}
@@ -264,140 +318,106 @@ export function PoolDetail() {
 
       {/* Tab content */}
       <div style={{ padding: '6px 16px 140px' }}>
-        {tab === 'fixtures' && (quiniela.fixtures || []).map((f) => (
-          <button
-            key={f.fixtureId}
-            type="button"
-            onClick={() => navigate(`/fixture/${f.fixtureId}`, {
-              state: { fixture: f, userPick: myPicks[f.fixtureId] || null },
-            })}
-            style={{
-              width: '100%', padding: 0, marginBottom: 8, cursor: 'pointer',
-              background: 'transparent', border: 'none', color: 'inherit', textAlign: 'left',
-            }}
-          >
-            <HudFrame>
-              <div style={{ padding: 12 }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', marginBottom: 10,
-                  fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
-                  color: 'var(--fp-text-muted)',
-                }}>
-                  {f.kickoff ? new Date(f.kickoff).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase() : ''}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-                    <TeamCrest name={f.homeTeam} logoURL={f.homeLogo} size={32} />
-                    <div style={{
-                      fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
-                      letterSpacing: 0.5, textTransform: 'uppercase',
-                    }}>{String(f.homeTeam).slice(0,3)}</div>
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--fp-display)', fontSize: 10, letterSpacing: 2,
-                    color: 'var(--fp-text-muted)',
-                  }}>VS</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
-                    <div style={{
-                      fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
-                      letterSpacing: 0.5, textTransform: 'uppercase',
-                    }}>{String(f.awayTeam).slice(0,3)}</div>
-                    <TeamCrest name={f.awayTeam} logoURL={f.awayLogo} size={32} />
-                  </div>
-                </div>
-              </div>
-            </HudFrame>
-          </button>
-        ))}
-
-        {tab === 'ranking' && (() => {
-          const rows = leaderboard?.entries || leaderboard?.leaderboard || [];
-          // Before the first fixture finishes, totalPossible = 0 for every row;
-          // we still render the list so participants know they're in, sorted
-          // server-side by entry number (join order).
-          const awaitingFirstResult = rows.length > 0 && (rows[0]?.totalPossible ?? 0) === 0;
+        {tab === 'fixtures' && (quiniela.fixtures || []).map((f) => {
+          const live = liveByFixture[f.fixtureId];
+          const isLive = live?.status?.isLive === true;
+          const isHT = (live?.status?.short || '').toUpperCase() === 'HT';
+          const FINISHED = new Set(['FT', 'AET', 'PEN']);
+          const isFinal = FINISHED.has((live?.status?.short || '').toUpperCase());
+          const hasScore = typeof live?.score?.home === 'number'
+            && typeof live?.score?.away === 'number';
+          const showScoreBlock = hasScore && (isLive || isFinal);
+          const minute = live?.status?.elapsed;
           return (
-            <HudFrame>
-              <div style={{ padding: 14 }}>
-                <SectionLabel color="var(--fp-primary)">{t(locale, 'LEADERBOARD')}</SectionLabel>
-                <div style={{ height: 12 }} />
-                {rows.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--fp-text-dim)' }}>
-                    <div style={{ fontSize: 28, marginBottom: 6 }}>👥</div>
-                    <div style={{
-                      fontFamily: 'var(--fp-display)', fontWeight: 800, letterSpacing: 2, fontSize: 13,
-                      color: 'var(--fp-text-muted)',
-                    }}>{t(locale, 'No entries yet')}</div>
-                    <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 10, marginTop: 4 }}>
-                      {t(locale, 'Be the first to join!')}
+            <button
+              key={f.fixtureId}
+              type="button"
+              onClick={() => navigate(`/fixture/${f.fixtureId}`, {
+                state: { fixture: f, userPick: myPicks[f.fixtureId] || null },
+              })}
+              style={{
+                width: '100%', padding: 0, marginBottom: 8, cursor: 'pointer',
+                background: 'transparent', border: 'none', color: 'inherit', textAlign: 'left',
+                // Red glow around rows that are live right now — matches the
+                // iOS "live card" treatment so the user's eye jumps to them.
+                filter: isLive && !isHT
+                  ? 'drop-shadow(0 0 10px color-mix(in srgb, var(--fp-danger) 45%, transparent))'
+                  : undefined,
+              }}
+            >
+              <HudFrame>
+                <div style={{ padding: 12 }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', marginBottom: 10,
+                    fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
+                    color: 'var(--fp-text-muted)',
+                  }}>
+                    <span>
+                      {f.kickoff ? new Date(f.kickoff).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase() : ''}
+                    </span>
+                    <span style={{ flex: 1 }} />
+                    {isLive && !isHT && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        color: 'var(--fp-danger)', fontWeight: 800,
+                      }}>
+                        <span style={{
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: 'var(--fp-danger)',
+                          boxShadow: '0 0 6px var(--fp-danger)',
+                        }} />
+                        {minute != null ? `${minute}'` : 'LIVE'}
+                      </span>
+                    )}
+                    {isHT && (
+                      <span style={{ color: 'var(--fp-gold)', fontWeight: 800 }}>HT</span>
+                    )}
+                    {isFinal && (
+                      <span style={{ color: 'var(--fp-text-muted)', fontWeight: 800 }}>FT</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                      <TeamCrest name={f.homeTeam} logoURL={live?.logos?.home || f.homeLogo} size={32} />
+                      <div style={{
+                        fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
+                        letterSpacing: 0.5, textTransform: 'uppercase',
+                      }}>{String(f.homeTeam).slice(0, 3)}</div>
+                    </div>
+                    {showScoreBlock ? (
+                      <div style={{
+                        padding: '4px 12px',
+                        background: 'var(--fp-bg2)',
+                        border: `1px solid ${isLive && !isHT ? 'color-mix(in srgb, var(--fp-danger) 50%, transparent)' : 'var(--fp-stroke)'}`,
+                        clipPath: 'var(--fp-clip-sm)',
+                        fontFamily: 'var(--fp-display)', fontSize: 18, fontWeight: 900,
+                        letterSpacing: 1, color: 'var(--fp-text)',
+                        minWidth: 64, textAlign: 'center',
+                      }}>
+                        {live.score.home}–{live.score.away}
+                      </div>
+                    ) : (
+                      <div style={{
+                        fontFamily: 'var(--fp-display)', fontSize: 10, letterSpacing: 2,
+                        color: 'var(--fp-text-muted)',
+                      }}>VS</div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+                      <div style={{
+                        fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
+                        letterSpacing: 0.5, textTransform: 'uppercase',
+                      }}>{String(f.awayTeam).slice(0, 3)}</div>
+                      <TeamCrest name={f.awayTeam} logoURL={live?.logos?.away || f.awayLogo} size={32} />
                     </div>
                   </div>
-                ) : (
-                  <>
-                    {awaitingFirstResult && (
-                      <div style={{
-                        fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
-                        color: 'var(--fp-accent)', marginBottom: 10,
-                      }}>
-                        {t(locale, 'RANKED BY JOIN ORDER · RESULTS PENDING')}
-                      </div>
-                    )}
-                    {rows.slice(0, 12).map((e) => (
-                      <div key={e.entryId || e.userId || e.rank} style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '8px 4px',
-                        background: e.isSelf ? 'color-mix(in srgb, var(--fp-primary) 15%, transparent)' : 'transparent',
-                        clipPath: e.isSelf ? 'var(--fp-clip-sm)' : 'none',
-                      }}>
-                        <div style={{
-                          width: 24, textAlign: 'center',
-                          fontFamily: 'var(--fp-mono)', fontSize: 12, fontWeight: 700,
-                          color: 'var(--fp-text-dim)',
-                        }}>{e.rank}</div>
-                        <div style={{
-                          flex: 1,
-                          fontFamily: 'var(--fp-mono)', fontSize: 12,
-                          color: 'var(--fp-text)',
-                        }}>{e.displayName || e.userId || 'player'}</div>
-                        <div style={{
-                          fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
-                          color: awaitingFirstResult ? 'var(--fp-text-dim)' : 'var(--fp-primary)',
-                        }}>
-                          {awaitingFirstResult ? '—' : `${e.score}/${e.totalPossible}`}
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </HudFrame>
-          );
-        })()}
-
-        {tab === 'overview' && (
-          <HudFrame>
-            <div style={{ padding: 14 }}>
-              <SectionLabel color="var(--fp-primary)">{t(locale, 'POOL INFO')}</SectionLabel>
-              <div style={{ height: 8 }} />
-              <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)', marginBottom: 12 }}>
-                {formatDateRange(quiniela.startDate, quiniela.endDate)}
-              </div>
-              {/* Description shown in the hero (💬 line) — avoid repeating it here. */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <HudChip color="var(--fp-gold)">PRIZE {quiniela.prize}</HudChip>
-                <HudChip color="var(--fp-accent)">ENTRY {quiniela.cost}</HudChip>
-                <HudChip>FIXTURES {quiniela.fixtures?.length || 0}</HudChip>
-                {entryCount > 0 && <HudChip color="var(--fp-hot)">ENTRY #{entryCount}</HudChip>}
-              </div>
-              {entryCount > 0 && (
-                <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)', marginTop: 10 }}>
-                  {entryCount === 1
-                    ? t(locale, 'You already have one entry in this pool.')
-                    : tFormat(locale, 'You already have {n} entr(y|ies) in this pool.', { n: entryCount })}
                 </div>
-              )}
-            </div>
-          </HudFrame>
+              </HudFrame>
+            </button>
+          );
+        })}
+
+        {tab === 'ranking' && (
+          <LeaderboardPanel leaderboard={leaderboard} locale={locale} />
         )}
       </div>
 
@@ -433,6 +453,249 @@ export function PoolDetail() {
           onClose={() => setShowInsufficient(false)}
         />
       )}
+
+      {showRules && (
+        <RulesModal
+          locale={locale}
+          quiniela={quiniela}
+          onClose={() => setShowRules(false)}
+        />
+      )}
     </>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Leaderboard — podium for top 3 + compact table below. Mirrors iOS
+// ArenaLeaderboardPanel so the two platforms feel identical.
+// ────────────────────────────────────────────────────────────────────
+
+function LeaderboardPanel({ leaderboard, locale }) {
+  const rows = leaderboard?.entries || leaderboard?.leaderboard || [];
+  // `totalPossible` = 0 for every row until at least one fixture is FT. We
+  // still render participants so the board doesn't look broken, but swap the
+  // podium for a "ranked by join order" banner until real scores land.
+  const awaitingFirstResult = rows.length > 0 && (rows[0]?.totalPossible ?? 0) === 0;
+  const showPodium = rows.length >= 3 && !awaitingFirstResult;
+
+  return (
+    <HudFrame>
+      <div style={{ padding: 14 }}>
+        <SectionLabel color="var(--fp-primary)">◆ {t(locale, 'LEADERBOARD')}</SectionLabel>
+        <div style={{ height: 14 }} />
+
+        {rows.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--fp-text-dim)' }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>👥</div>
+            <div style={{
+              fontFamily: 'var(--fp-display)', fontWeight: 800, letterSpacing: 2, fontSize: 13,
+              color: 'var(--fp-text-muted)',
+            }}>{t(locale, 'No entries yet')}</div>
+            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 10, marginTop: 4 }}>
+              {t(locale, 'Be the first to join!')}
+            </div>
+          </div>
+        ) : (
+          <>
+            {awaitingFirstResult && (
+              <div style={{
+                fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                color: 'var(--fp-accent)', marginBottom: 10,
+              }}>
+                {t(locale, 'RANKED BY JOIN ORDER · RESULTS PENDING')}
+              </div>
+            )}
+
+            {showPodium && (
+              <div style={{
+                display: 'flex', alignItems: 'flex-end', gap: 8, height: 140,
+                paddingBottom: 2, marginBottom: 14,
+                borderBottom: '1px solid var(--fp-stroke)',
+              }}>
+                <PodiumColumn rank={2} row={rows[1]} height={70}  tint="#C6CED9" />
+                <PodiumColumn rank={1} row={rows[0]} height={100} tint="#FFD166" />
+                <PodiumColumn rank={3} row={rows[2]} height={55}  tint="#C8925B" />
+              </div>
+            )}
+
+            {(awaitingFirstResult ? rows : rows.slice(3)).slice(0, 12).map((e, idx) => {
+              const displayRank = awaitingFirstResult ? (idx + 1) : (idx + 4);
+              return (
+                <div
+                  key={e.entryId || e.userId || e.rank || displayRank}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 4px',
+                    background: e.isSelf ? 'color-mix(in srgb, var(--fp-primary) 15%, transparent)' : 'transparent',
+                    borderBottom: '1px solid var(--fp-stroke)',
+                    clipPath: e.isSelf ? 'var(--fp-clip-sm)' : 'none',
+                  }}
+                >
+                  <div style={{
+                    width: 24, textAlign: 'center',
+                    fontFamily: 'var(--fp-mono)', fontSize: 12, fontWeight: 700,
+                    color: 'var(--fp-text-dim)',
+                  }}>{displayRank}</div>
+                  <div style={{
+                    flex: 1,
+                    fontFamily: 'var(--fp-mono)', fontSize: 12,
+                    color: 'var(--fp-text)',
+                  }}>{e.displayName || e.userId || 'player'}</div>
+                  <div style={{
+                    fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
+                    color: awaitingFirstResult ? 'var(--fp-text-dim)' : 'var(--fp-primary)',
+                  }}>
+                    {awaitingFirstResult ? '—' : `${e.score}/${e.totalPossible}`}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+    </HudFrame>
+  );
+}
+
+function PodiumColumn({ rank, row, height, tint }) {
+  const name = row?.displayName || row?.userId || 'player';
+  const score = row?.score ?? 0;
+  const total = row?.totalPossible ?? 0;
+  const initial = String(name).charAt(0).toUpperCase();
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+      {/* Avatar medallion */}
+      <div style={{
+        width: 40, height: 40, borderRadius: 6,
+        background: `color-mix(in srgb, ${tint} 30%, transparent)`,
+        border: `2px solid ${tint}`,
+        boxShadow: `0 0 12px ${tint}aa`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'var(--fp-display)', fontSize: 18, fontWeight: 900,
+        color: 'var(--fp-on-primary)',
+      }}>{initial}</div>
+      <div style={{
+        fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 600,
+        color: 'var(--fp-text)', maxWidth: '100%',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>{name}</div>
+      <div style={{
+        fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+        color: tint,
+      }}>{score}/{total}</div>
+      {/* Pillar — cut-corner block scaled by rank */}
+      <div style={{
+        width: '100%', height,
+        background: `linear-gradient(180deg, ${tint}, color-mix(in srgb, ${tint} 40%, transparent))`,
+        clipPath: 'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px)',
+        position: 'relative',
+        marginTop: 4,
+      }}>
+        <div style={{
+          position: 'absolute', top: 6, left: 0, right: 0, textAlign: 'center',
+          fontFamily: 'var(--fp-display)', fontSize: 22, fontWeight: 900,
+          color: 'var(--fp-on-primary)',
+        }}>{rank}</div>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Rules modal — moved out of the tab bar. Triggered by the "?" icon
+// in the header. Content is tailored to the pool's funding model so
+// users only read the rules that actually apply to them.
+// ────────────────────────────────────────────────────────────────────
+
+function rulesForPool(q, locale) {
+  const fundingModel = q?.fundingModel || 'none';
+  const entryCost = q?.entryCostCoins || 0;
+  const prizeCoins = q?.platformPrizeCoins || 0;
+  const rakePct = q?.rakePercent ?? 10;
+
+  // Prize mechanic varies by funding model — only show the one that's live.
+  let prizeRule;
+  if (fundingModel === 'sponsored') {
+    prizeRule = prizeCoins > 0
+      ? tFormat(locale, 'The creator sponsored a {n}-coin prize. Winner takes it all — no split.', { n: prizeCoins })
+      : t(locale, 'The creator sponsored the prize. Winner takes it all.');
+  } else if (fundingModel === 'peer' && entryCost > 0) {
+    prizeRule = tFormat(locale, 'Every player pays {n} coins. Winner takes the full pot (minus a {r}% platform fee).', {
+      n: entryCost, r: rakePct,
+    });
+  } else if (fundingModel === 'platform') {
+    prizeRule = t(locale, 'Platform-funded prize. Winner takes it all if the pool fills to the minimum.');
+  } else {
+    prizeRule = t(locale, 'Winner takes the whole prize — no splits.');
+  }
+
+  return [
+    ['01', t(locale, 'Pick 1 (home), X (draw) or 2 (away) for each match in the pool.')],
+    ['02', t(locale, '+1 point for every correct pick. All matches count the same.')],
+    ['03', t(locale, 'Picks lock the moment the first match kicks off. No edits after that.')],
+    ['04', prizeRule],
+    ['05', t(locale, 'Every pool you finish earns rating for your global rank and can unlock achievements.')],
+  ];
+}
+
+function RulesModal({ locale, quiniela, onClose }) {
+  const rules = rulesForPool(quiniela, locale);
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 220,
+        background: 'color-mix(in srgb, var(--fp-bg) 88%, transparent)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: 420 }}
+      >
+        <HudFrame glow="var(--fp-primary)" brackets>
+          <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <SectionLabel color="var(--fp-primary)">◆ {t(locale, 'GAME RULES')}</SectionLabel>
+              <div style={{ flex: 1 }} />
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)', fontSize: 16,
+                  padding: 4,
+                }}
+              >✕</button>
+            </div>
+            {rules.map(([n, text]) => (
+              <div key={n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <div style={{
+                  fontFamily: 'var(--fp-mono)', fontSize: 12, fontWeight: 700,
+                  color: 'var(--fp-primary)', minWidth: 22,
+                }}>{n}</div>
+                <div style={{
+                  fontFamily: 'var(--fp-body)', fontSize: 12,
+                  color: 'var(--fp-text-dim)', lineHeight: 1.5,
+                }}>{text}</div>
+              </div>
+            ))}
+          </div>
+        </HudFrame>
+      </div>
+    </div>
   );
 }

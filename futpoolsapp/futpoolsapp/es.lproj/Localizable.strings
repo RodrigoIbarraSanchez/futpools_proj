@@ -359,6 +359,18 @@
 // Pool card body
 "%lld SELECTED" = "%lld SELECCIONADOS";
 
+// Rules modal (pool detail)
+"GAME RULES" = "REGLAS DEL JUEGO";
+"Pick 1 (home), X (draw) or 2 (away) for each match in the pool." = "Elige 1 (local), X (empate) o 2 (visitante) para cada partido de la quiniela.";
+"+1 point for every correct pick. All matches count the same." = "+1 punto por cada acierto. Todos los partidos valen igual.";
+"Picks lock the moment the first match kicks off. No edits after that." = "Los pronósticos se cierran al iniciar el primer partido. No se puede editar después.";
+"The creator sponsored a %lld-coin prize. Winner takes it all — no split." = "El creador patrocinó un premio de %lld monedas. El ganador se lo lleva todo — sin repartir.";
+"The creator sponsored the prize. Winner takes it all." = "El creador patrocinó el premio. El ganador se lo lleva todo.";
+"Every player pays %1$lld coins. Winner takes the full pot (minus a %2$lld%% platform fee)." = "Cada jugador paga %1$lld monedas. El ganador se lleva el pozo completo (menos %2$lld%% de comisión).";
+"Platform-funded prize. Winner takes it all if the pool fills to the minimum." = "Premio patrocinado por la plataforma. El ganador se lo lleva todo si la quiniela llega al mínimo.";
+"Winner takes the whole prize — no splits." = "El ganador se lleva el premio completo — sin repartir.";
+"Every pool you finish earns rating for your global rank and can unlock achievements." = "Cada quiniela que termines suma puntos a tu rango global y puede desbloquear logros.";
+
 // Auth — Register screen (mirrors login)
 "▶ CREATE ACCOUNT" = "▶ CREAR CUENTA";
 "▶ REGISTER" = "▶ REGISTRARSE";

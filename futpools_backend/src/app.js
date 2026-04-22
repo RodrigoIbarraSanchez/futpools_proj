@@ -14,10 +14,23 @@ const settingsRoutes = require('./routes/settings');
 const leaderboardRoutes = require('./routes/leaderboard');
 const adminRoutes = require('./routes/admin');
 const adsRoutes = require('./routes/ads');
+const paymentsRoutes = require('./routes/payments');
+const paymentsController = require('./controllers/paymentsController');
 
 const app = express();
 
 app.use(cors());
+
+// Stripe webhook MUST be registered before the global JSON parser so the
+// request body stays a raw Buffer — the SDK's signature verification relies
+// on the exact bytes Stripe signed. Any body-parsing in between invalidates
+// the signature.
+app.post(
+  '/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  paymentsController.handleWebhook
+);
+
 app.use(express.json());
 
 app.use('/auth', authRoutes);
@@ -32,6 +45,7 @@ app.use('/settings', settingsRoutes);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/admin', adminRoutes);
 app.use('/ads', adsRoutes);
+app.use('/payments', paymentsRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });

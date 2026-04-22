@@ -8,7 +8,8 @@ import SwiftUI
 private enum ArenaPoolTab: String, CaseIterable {
     case fixtures = "FIXTURES"
     case ranking  = "RANKING"
-    case rules    = "RULES"
+    // `rules` lives in a modal now (triggered by a "?" button next to share)
+    // — a full tab was overkill for reference content users peek at once.
 }
 
 struct QuinielaDetailView: View {
@@ -29,6 +30,7 @@ struct QuinielaDetailView: View {
     @State private var leaderboardLoading = false
     @State private var showInsufficientBalanceSheet = false
     @State private var showRechargeSheet = false
+    @State private var showRulesSheet = false
     @State private var pendingRechargeAfterDismiss = false
     @State private var liveTimer: Timer?
     @State private var adminErrorMessage: String?
@@ -99,6 +101,17 @@ struct QuinielaDetailView: View {
                     }
                 }
             }
+            // Rules moved from a tab to a modal — sits next to share so it's
+            // reachable at any time without hijacking a whole tab slot.
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showRulesSheet = true
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .foregroundColor(.arenaText)
+                }
+                .accessibilityLabel(Text("GAME RULES"))
+            }
             if canManage {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -137,6 +150,25 @@ struct QuinielaDetailView: View {
                 onDismiss: { showEditSheet = false },
                 onError: { msg in adminErrorMessage = msg }
             )
+        }
+        .sheet(isPresented: $showRulesSheet) {
+            NavigationStack {
+                ZStack {
+                    ArenaBackground()
+                    ScrollView {
+                        ArenaRulesPanel(quiniela: quiniela)
+                            .padding(16)
+                    }
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(String(localized: "Close")) { showRulesSheet = false }
+                            .foregroundColor(.arenaTextDim)
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
         }
         .alert(
             "Update failed",
@@ -383,10 +415,6 @@ struct QuinielaDetailView: View {
 
         case .ranking:
             ArenaLeaderboardPanel(leaderboard: leaderboard, isLoading: leaderboardLoading)
-                .padding(.horizontal, 16)
-
-        case .rules:
-            ArenaRulesPanel()
                 .padding(.horizontal, 16)
         }
     }
@@ -981,6 +1009,11 @@ private struct PodiumColumn: View {
 }
 
 struct ArenaRulesPanel: View {
+    /// Optional pool context — when provided, rule 04 is tailored to the
+    /// pool's funding model (sponsored/peer/platform) instead of showing a
+    /// generic blurb. Passing nil is fine for previews/tests.
+    var quiniela: Quiniela? = nil
+
     var body: some View {
         HudFrame {
             VStack(alignment: .leading, spacing: 12) {
@@ -990,11 +1023,11 @@ struct ArenaRulesPanel: View {
                     .foregroundColor(.arenaPrimary)
 
                 let rules: [(String, String)] = [
-                    ("01", "Predice 1 (local), X (empate) o 2 (visitante) para cada partido."),
-                    ("02", "+1 pt por cada acierto. Multiplicadores x2 en partidos 🔥 HOT."),
-                    ("03", "Los picks se cierran al iniciar el primer partido."),
-                    ("04", "El premio se reparte 60/30/10 entre top 3."),
-                    ("05", "Ganar sube tu XP y tu división. ¡Llega a LEGEND!"),
+                    ("01", NSLocalizedString("Pick 1 (home), X (draw) or 2 (away) for each match in the pool.", comment: "")),
+                    ("02", NSLocalizedString("+1 point for every correct pick. All matches count the same.", comment: "")),
+                    ("03", NSLocalizedString("Picks lock the moment the first match kicks off. No edits after that.", comment: "")),
+                    ("04", prizeRule),
+                    ("05", NSLocalizedString("Every pool you finish earns rating for your global rank and can unlock achievements.", comment: "")),
                 ]
 
                 ForEach(rules, id: \.0) { n, text in
@@ -1009,6 +1042,32 @@ struct ArenaRulesPanel: View {
                 }
             }
             .padding(14)
+        }
+    }
+
+    /// Picks the right prize-mechanic sentence based on the pool's funding.
+    /// Winner-takes-all in all v3 models — no 60/30/10 split anywhere.
+    private var prizeRule: String {
+        let model = quiniela?.fundingModel ?? "none"
+        let prize = quiniela?.platformPrizeCoins ?? 0
+        let entry = quiniela?.entryCostCoins ?? 0
+        let rake  = quiniela?.rakePercent ?? 10
+        _ = (model, prize, entry, rake) // silence unused-warning on some paths below
+        switch model {
+        case "sponsored":
+            if prize > 0 {
+                return String(format: NSLocalizedString("The creator sponsored a %lld-coin prize. Winner takes it all — no split.", comment: ""), prize)
+            }
+            return NSLocalizedString("The creator sponsored the prize. Winner takes it all.", comment: "")
+        case "peer":
+            if entry > 0 {
+                return String(format: NSLocalizedString("Every player pays %1$lld coins. Winner takes the full pot (minus a %2$lld%% platform fee).", comment: ""), entry, rake)
+            }
+            return NSLocalizedString("Winner takes the whole prize — no splits.", comment: "")
+        case "platform":
+            return NSLocalizedString("Platform-funded prize. Winner takes it all if the pool fills to the minimum.", comment: "")
+        default:
+            return NSLocalizedString("Winner takes the whole prize — no splits.", comment: "")
         }
     }
 }

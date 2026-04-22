@@ -85,7 +85,7 @@ struct RegisterView: View {
                                 .foregroundColor(.arenaPrimary)
                                 .shadow(color: .arenaPrimary.opacity(0.85), radius: 14)
                         }
-                        Text("· ARENA v2.0 ·")
+                        Text("· ARENA ·")
                             .font(ArenaFont.mono(size: 11))
                             .tracking(4)
                             .foregroundColor(.arenaTextDim)
