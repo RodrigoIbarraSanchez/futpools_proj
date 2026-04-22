@@ -245,31 +245,45 @@ export function Recharge() {
 
 // ────────────────────────────────────────────────────────────────────
 
+/** Coins drawn on the pack card scale with tier so each pack reads distinctly
+ *  even at a glance: 50→1, 100→2, 200→3, 500→4. */
+function coinStackCount(coinAmount) {
+  if (coinAmount >= 500) return 4;
+  if (coinAmount >= 200) return 3;
+  if (coinAmount >= 100) return 2;
+  return 1;
+}
+
 function CoinPackCard({ pack, locale, purchasing, disabled, onBuy }) {
   const { coinAmount, bonusCoins, priceCents, currency, badge } = pack;
   const accent = badge === 'BEST VALUE' ? 'var(--fp-hot)'
               : badge === '+10% BONUS'  ? 'var(--fp-primary)'
               : badge === 'POPULAR'     ? 'var(--fp-accent)'
               : 'var(--fp-gold)';
+  const stackCount = coinStackCount(coinAmount);
   return (
     <HudFrame>
       <div style={{
         padding: 14, display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 8, minHeight: 180,
+        gap: 8, minHeight: 200,
       }}>
-        {badge && (
-          <div style={{
-            fontFamily: 'var(--fp-mono)', fontSize: 8, fontWeight: 800, letterSpacing: 1.5,
-            color: accent,
-            padding: '2px 8px',
-            border: `1px solid ${accent}`,
-            clipPath: 'var(--fp-clip-sm)',
-          }}>{t(locale, badge)}</div>
-        )}
+        {/* Fixed-height badge slot keeps the coin stack aligned across cards
+            whether or not the pack carries a badge. */}
+        <div style={{ height: 18, display: 'flex', alignItems: 'center' }}>
+          {badge && (
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 8, fontWeight: 800, letterSpacing: 1.5,
+              color: accent,
+              padding: '2px 8px',
+              border: `1px solid ${accent}`,
+              clipPath: 'var(--fp-clip-sm)',
+            }}>{t(locale, badge)}</div>
+          )}
+        </div>
 
-        {/* Coin stack — one medallion per ~100 coins, capped at 3 */}
+        {/* Coin stack — one medallion per pack tier. */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 44 }}>
-          {Array.from({ length: Math.min(3, Math.max(1, Math.round(coinAmount / 100) + 1)) }).map((_, i) => (
+          {Array.from({ length: stackCount }).map((_, i) => (
             <div key={i} style={{
               width: 36, height: 36, borderRadius: '50%',
               background: 'radial-gradient(circle at 35% 35%, var(--fp-gold), #B88A1F)',
@@ -289,14 +303,16 @@ function CoinPackCard({ pack, locale, purchasing, disabled, onBuy }) {
           color: 'var(--fp-text-muted)',
         }}>{t(locale, 'COINS')}</div>
 
-        {bonusCoins > 0 && (
-          <div style={{
-            fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
-            color: 'var(--fp-accent)',
-          }}>
-            {tFormat(locale, '+{n} BONUS', { n: bonusCoins })}
-          </div>
-        )}
+        {/* Bonus slot is always rendered (placeholder when zero) so the CTA
+            button lands at the same Y across every card. */}
+        <div style={{
+          height: 14,
+          fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+          color: 'var(--fp-accent)',
+          visibility: bonusCoins > 0 ? 'visible' : 'hidden',
+        }}>
+          {tFormat(locale, '+{n} BONUS', { n: bonusCoins || 0 })}
+        </div>
 
         <div style={{ flex: 1 }} />
 
