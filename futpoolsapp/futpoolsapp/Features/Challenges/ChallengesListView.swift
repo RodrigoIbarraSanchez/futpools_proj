@@ -218,7 +218,7 @@ struct ChallengeRowCard: View {
     private var iWon: Bool {
         challenge.status == .settled && challenge.winnerUserId != nil &&
         ((challenge.youAre == "challenger" && challenge.winnerUserId == challenge.challenger.id) ||
-         (challenge.youAre == "opponent"   && challenge.winnerUserId == challenge.opponent.id))
+         (challenge.youAre == "opponent"   && challenge.winnerUserId == challenge.opponent?.id))
     }
 
     private var myPick: String? {
@@ -228,8 +228,13 @@ struct ChallengeRowCard: View {
         challenge.youAre == "challenger" ? challenge.opponentPick : challenge.challengerPick
     }
     private var opponentName: String {
-        let other = challenge.youAre == "challenger" ? challenge.opponent : challenge.challenger
-        return other.username ?? "—"
+        // For an open challenge that the viewer created, `opponent` is nil
+        // until someone claims the slot — render a placeholder instead of
+        // collapsing to "—" which reads like a deleted user.
+        if challenge.youAre == "challenger" {
+            return challenge.opponent?.username ?? String(localized: "OPEN SLOT")
+        }
+        return challenge.challenger.username ?? "—"
     }
 
     var body: some View {

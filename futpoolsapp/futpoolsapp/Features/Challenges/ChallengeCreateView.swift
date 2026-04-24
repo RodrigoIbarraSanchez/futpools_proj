@@ -36,7 +36,7 @@ struct ChallengeCreateView: View {
                     section(title: "④ \(String(localized: "STAKE"))", locked: vm.challengerPick == nil) {
                         stakeSection
                     }
-                    section(title: "⑤ \(String(localized: "OPPONENT"))", locked: vm.stakeCoins == nil) {
+                    section(title: "⑤ \(String(localized: "OPPONENT")) · \(String(localized: "OPTIONAL"))", locked: vm.stakeCoins == nil) {
                         opponentSection
                     }
 
@@ -306,15 +306,38 @@ struct ChallengeCreateView: View {
     }
 
     private var opponentSection: some View {
-        TextField("@username", text: $vm.opponentUsername)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .font(ArenaFont.mono(size: 13))
-            .foregroundColor(.arenaText)
-            .padding(10)
-            .background(HudCornerCutShape(cut: 5).fill(Color.arenaBg2))
-            .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
-            .disabled(vm.stakeCoins == nil)
+        VStack(alignment: .leading, spacing: 8) {
+            TextField("@username", text: $vm.opponentUsername)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .font(ArenaFont.mono(size: 13))
+                .foregroundColor(.arenaText)
+                .padding(10)
+                .background(HudCornerCutShape(cut: 5).fill(Color.arenaBg2))
+                .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
+                .disabled(vm.stakeCoins == nil)
+            // Mode hint: blank input → backend creates an open challenge whose
+            // share link can be claimed by anyone. Web parity: same copy in
+            // futpools_web/src/pages/ChallengeCreate.jsx step 5.
+            Text(vm.isOpen
+                 ? "🔗 " + String(localized: "OPEN CHALLENGE — leave blank and share the link with anyone.")
+                 : String(localized: "Direct challenge: this user will see it in their inbox."))
+                .font(ArenaFont.mono(size: 10))
+                .foregroundColor(vm.isOpen ? .arenaAccent : .arenaTextMuted)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    HudCornerCutShape(cut: 5).fill(
+                        vm.isOpen ? Color.arenaAccent.opacity(0.12) : Color.arenaSurfaceAlt
+                    )
+                )
+                .overlay(
+                    HudCornerCutShape(cut: 5).stroke(
+                        vm.isOpen ? Color.arenaAccent.opacity(0.45) : Color.arenaStroke,
+                        lineWidth: 1
+                    )
+                )
+        }
     }
 
     // MARK: — Review + submit
@@ -403,9 +426,15 @@ final class ChallengeCreateViewModel: ObservableObject {
     private let client = APIClient.shared
     private var searchTask: Task<Void, Never>?
 
+    /// Opponent is now optional. Submit unblocks once the four required
+    /// steps (fixture/market/pick/stake) are complete. Blank opponent means
+    /// "open challenge — share the link". Web parity: ChallengeCreate.jsx.
     var canSubmit: Bool {
         pickedFixture != nil && marketType != nil && challengerPick != nil
-            && stakeCoins != nil && !opponentUsername.trimmingCharacters(in: .whitespaces).isEmpty
+            && stakeCoins != nil
+    }
+    var isOpen: Bool {
+        opponentUsername.trimmingCharacters(in: .whitespaces).isEmpty
     }
     var insufficientBalance: Bool {
         if let s = stakeCoins { return balance < s }
@@ -415,7 +444,10 @@ final class ChallengeCreateViewModel: ObservableObject {
         if isSubmitting { return String(localized: "SENDING…") }
         if insufficientBalance { return String(localized: "INSUFFICIENT BALANCE") }
         if canSubmit, let s = stakeCoins {
-            return "▶ " + String(format: String(localized: "SEND · %d COINS"), s)
+            let template = isOpen
+                ? String(localized: "CREATE & SHARE · %d COINS")
+                : String(localized: "SEND · %d COINS")
+            return "▶ " + String(format: template, s)
         }
         return String(localized: "COMPLETE ALL STEPS")
     }
@@ -523,7 +555,6 @@ final class ChallengeCreateViewModel: ObservableObject {
     func submit(token: String?, refreshUser: () async -> Void) async -> String? {
         guard let fx = pickedFixture, let mt = marketType,
               let p = challengerPick, let s = stakeCoins else { return nil }
-        guard !opponentUsername.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
         isSubmitting = true
         error = nil
         defer { isSubmitting = false }
@@ -534,8 +565,16 @@ final class ChallengeCreateViewModel: ObservableObject {
             f.formatOptions = [.withInternetDateTime]
             return f.string(from: d)
         }()
+        // Open challenge: omit username entirely. The Encodable impl on
+        // ChallengeCreateRequest skips the field when nil/empty so the
+        // backend takes the "no identifier → open mode" branch instead of
+        // trying to resolve a blank username (which would 400).
+        let trimmedOpponent = opponentUsername
+            .trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: "@", with: "")
+            .lowercased()
         let body = ChallengeCreateRequest(
-            opponentUsername: opponentUsername.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "@", with: "").lowercased(),
+            opponentUsername: trimmedOpponent.isEmpty ? nil : trimmedOpponent,
             fixture: ChallengeFixture(
                 fixtureId: fx.fixtureId,
                 leagueId: fx.league?.id,

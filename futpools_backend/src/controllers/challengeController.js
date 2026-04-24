@@ -31,6 +31,10 @@ async function mintUniqueCode() {
  *   - `opponentUsername`: case-insensitive username (human-facing share flow)
  *
  * Returns { user, error } — exactly one is non-null.
+ *
+ * Callers should only invoke this when at least one of the two identifiers
+ * was provided. createChallenge skips it entirely for open-mode challenges
+ * (no opponent specified at create time).
  */
 async function resolveOpponent({ opponentUserId, opponentUsername }) {
   if (opponentUserId) {
@@ -57,6 +61,12 @@ function serializeChallenge(c, meUserId) {
   const me = meUserId ? String(meUserId) : null;
   const challengerId = String(c.challenger?._id || c.challenger);
   const opponentId = c.opponent ? String(c.opponent?._id || c.opponent) : null;
+  // `isOpen` is the source of truth for "any user can claim this slot".
+  // It's *only* true while the challenge is pending with no opponent set —
+  // once accepted, the slot is filled and no further claims should be
+  // possible. The web client uses this to decide whether to show the
+  // claim picker to a viewer who isn't the challenger.
+  const isOpen = !opponentId && c.status === 'pending';
   const youAre = me === challengerId ? 'challenger'
     : me === opponentId ? 'opponent'
     : null;
@@ -78,6 +88,7 @@ function serializeChallenge(c, meUserId) {
     acceptedAt: c.acceptedAt,
     settledAt: c.settledAt,
     youAre,
+    isOpen,
   };
 }
 
@@ -91,7 +102,16 @@ function populatedUser(u) {
   };
 }
 
-/** POST /challenges — body: { opponentUserId|opponentUsername, fixture, marketType, challengerPick, stakeCoins } */
+/**
+ * POST /challenges — body: {
+ *   opponentUserId | opponentUsername | (omitted for open challenge),
+ *   fixture, marketType, challengerPick, stakeCoins,
+ * }
+ *
+ * If neither opponentUserId nor opponentUsername is provided, the challenge
+ * is created in "open" mode (opponent: null) and can be claimed by any
+ * non-challenger via the share link + accept flow.
+ */
 exports.createChallenge = async (req, res) => {
   try {
     const {
@@ -115,10 +135,19 @@ exports.createChallenge = async (req, res) => {
       return res.status(400).json({ message: 'Fixture already started', code: 'FIXTURE_STARTED' });
     }
 
-    const { user: opponent, error } = await resolveOpponent({ opponentUserId, opponentUsername });
-    if (error) return res.status(400).json({ message: error });
-    if (String(opponent._id) === String(req.user._id)) {
-      return res.status(400).json({ message: 'Cannot challenge yourself' });
+    // Open mode kicks in when caller didn't name a target. We deliberately
+    // distinguish "missing identifier" (open) from "identifier supplied but
+    // not found" (error) so a typo doesn't silently demote a directed
+    // challenge into an open one.
+    const opponentRequested = !!(opponentUserId || opponentUsername);
+    let opponentId = null;
+    if (opponentRequested) {
+      const { user: opponent, error } = await resolveOpponent({ opponentUserId, opponentUsername });
+      if (error) return res.status(400).json({ message: error });
+      if (String(opponent._id) === String(req.user._id)) {
+        return res.status(400).json({ message: 'Cannot challenge yourself' });
+      }
+      opponentId = opponent._id;
     }
 
     // Reserve the doc id BEFORE debiting so the ledger idempotency key can
@@ -127,7 +156,7 @@ exports.createChallenge = async (req, res) => {
     const challenge = new Challenge({
       code,
       challenger: req.user._id,
-      opponent: opponent._id,
+      opponent: opponentId,
       stakeCoins: Number(stakeCoins),
       marketType,
       challengerPick,
@@ -198,7 +227,22 @@ exports.listMine = async (req, res) => {
   }
 };
 
-/** GET /challenges/:id — must be challenger or opponent. */
+/**
+ * Decide whether `viewerId` is allowed to read `c`. Challenger and (current)
+ * opponent always see it. Third parties see *only* open pending challenges —
+ * the share-link flow depends on this; once accepted, the slot is filled and
+ * subsequent viewers get 403 to avoid metadata leaks on directed challenges.
+ */
+function canReadChallenge(c, viewerId) {
+  const vid = String(viewerId);
+  if (vid === String(c.challenger?._id || c.challenger)) return true;
+  const oid = c.opponent ? String(c.opponent?._id || c.opponent) : null;
+  if (oid && vid === oid) return true;
+  if (!oid && c.status === 'pending') return true; // open challenge — anyone with the link may view
+  return false;
+}
+
+/** GET /challenges/:id — challenger, opponent, or any authed user for an open pending. */
 exports.getById = async (req, res) => {
   try {
     const c = await Challenge.findById(req.params.id)
@@ -206,9 +250,7 @@ exports.getById = async (req, res) => {
       .populate('opponent', 'username displayName');
     if (!c) return res.status(404).json({ message: 'Challenge not found' });
 
-    const uid = String(req.user._id);
-    if (uid !== String(c.challenger?._id || c.challenger) &&
-        uid !== String(c.opponent?._id || c.opponent)) {
+    if (!canReadChallenge(c, req.user._id)) {
       return res.status(403).json({ message: 'Not allowed' });
     }
 
@@ -221,9 +263,10 @@ exports.getById = async (req, res) => {
 };
 
 /**
- * GET /challenges/code/:code — invite-link resolver. Returns the challenge
- * if the requester is the intended opponent OR the creator. A random third
- * party hitting the link gets 403 so leaked codes don't leak metadata.
+ * GET /challenges/code/:code — invite-link resolver. Same access rules as
+ * getById: challenger/opponent always; any authed viewer for open pending
+ * (that's the whole point of an open invite). Directed challenges remain
+ * private after acceptance so leaked codes don't leak metadata.
  */
 exports.getByCode = async (req, res) => {
   try {
@@ -232,9 +275,7 @@ exports.getByCode = async (req, res) => {
       .populate('opponent', 'username displayName');
     if (!c) return res.status(404).json({ message: 'Challenge not found' });
 
-    const uid = String(req.user._id);
-    if (uid !== String(c.challenger?._id || c.challenger) &&
-        uid !== String(c.opponent?._id || c.opponent)) {
+    if (!canReadChallenge(c, req.user._id)) {
       return res.status(403).json({ message: 'Not allowed' });
     }
 
@@ -246,21 +287,37 @@ exports.getByCode = async (req, res) => {
   }
 };
 
-/** POST /challenges/:id/accept — body: { opponentPick } */
+/**
+ * POST /challenges/:id/accept — body: { opponentPick }
+ *
+ * Two paths:
+ *   directed: req.user must equal the pre-set opponent. Save mutates the
+ *             existing doc.
+ *   open    : opponent is null on read. We debit first, then atomically
+ *             claim the slot via findOneAndUpdate filtering on
+ *             `opponent: null, status: pending` so two concurrent accepts
+ *             can't both win. Loser of the race gets refunded.
+ */
 exports.acceptChallenge = async (req, res) => {
   try {
     const { opponentPick } = req.body || {};
     const c = await Challenge.findById(req.params.id);
     if (!c) return res.status(404).json({ message: 'Challenge not found' });
 
-    if (String(c.opponent) !== String(req.user._id)) {
-      return res.status(403).json({ message: 'Not allowed' });
-    }
     if (c.status !== 'pending') {
       return res.status(400).json({ message: 'Challenge not pending', code: 'NOT_PENDING', status: c.status });
     }
     if (new Date(c.fixture.kickoff) <= new Date()) {
       return res.status(400).json({ message: 'Fixture already started', code: 'FIXTURE_STARTED' });
+    }
+
+    const isOpen = !c.opponent;
+    if (isOpen) {
+      if (String(c.challenger) === String(req.user._id)) {
+        return res.status(400).json({ message: 'Cannot accept your own challenge', code: 'SELF_ACCEPT' });
+      }
+    } else if (String(c.opponent) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Not allowed' });
     }
 
     const allowed = VALID_PICKS[c.marketType] || [];
@@ -275,7 +332,10 @@ exports.acceptChallenge = async (req, res) => {
       userId: req.user._id,
       amount: c.stakeCoins,
       kind: 'challenge_debit',
-      idempotencyKey: `challenge:debit:${c._id}:opponent`,
+      // For open challenges the opponent is the claimer's id, so two
+      // distinct claimers get distinct idempotency keys (no false skip).
+      // For directed it's a stable string per user-challenge pair.
+      idempotencyKey: `challenge:debit:${c._id}:opponent:${req.user._id}`,
       note: `Challenge ${c.code} accepted`,
     });
     if (!debit.ok) {
@@ -285,6 +345,39 @@ exports.acceptChallenge = async (req, res) => {
         entryCost: c.stakeCoins,
         currentBalance: debit.balance,
       });
+    }
+
+    if (isOpen) {
+      // Atomic slot claim. Filter on `opponent: null, status: 'pending'` so
+      // a concurrent accept loses the race deterministically. We bypass the
+      // pre-validate hook (findOneAndUpdate skips it), but every invariant
+      // it would have checked is already enforced above.
+      const claimed = await Challenge.findOneAndUpdate(
+        { _id: c._id, opponent: null, status: 'pending' },
+        { $set: {
+            opponent: req.user._id,
+            opponentPick,
+            status: 'accepted',
+            acceptedAt: new Date(),
+          },
+        },
+        { new: true }
+      );
+      if (!claimed) {
+        // Lost the race — somebody else just claimed the slot, or the
+        // challenger cancelled in the same millisecond. Refund and bail.
+        await applyDelta({
+          userId: req.user._id,
+          amount: c.stakeCoins,
+          kind: 'refund_credit',
+          idempotencyKey: `challenge:refund:${c._id}:opponent:${req.user._id}`,
+          note: `Challenge ${c.code} claim conflict`,
+        });
+        return res.status(409).json({ message: 'Challenge already claimed', code: 'ALREADY_CLAIMED' });
+      }
+      await claimed.populate('challenger', 'username displayName');
+      await claimed.populate('opponent', 'username displayName');
+      return res.json(serializeChallenge(claimed, req.user._id));
     }
 
     c.opponentPick = opponentPick;

@@ -519,6 +519,17 @@
 "SHARE LINK" = "COMPARTIR LINK";
 "LINK COPIED ✓" = "LINK COPIADO ✓";
 "CANCEL CHALLENGE" = "CANCELAR RETO";
+"OPTIONAL" = "OPCIONAL";
+"OPEN CHALLENGE — leave blank and share the link with anyone." = "RETO ABIERTO — déjalo vacío y comparte el enlace con quien quieras.";
+"Direct challenge: this user will see it in their inbox." = "Reto directo: este usuario lo verá en su bandeja.";
+"CREATE & SHARE · %d COINS" = "CREAR Y COMPARTIR · %d MONEDAS";
+"OPEN — SHARE THE LINK" = "ABIERTO — COMPARTE EL ENLACE";
+"The first person to open this link and accept will become your opponent." = "La primera persona que abra este enlace y acepte será tu rival.";
+"OPEN SLOT" = "PLAZA ABIERTA";
+"WAITING" = "ESPERANDO";
+"CLAIM THIS CHALLENGE" = "TOMA ESTE RETO";
+"Someone else just claimed this challenge." = "Otra persona acaba de tomar este reto.";
+"You can't accept your own challenge." = "No puedes aceptar tu propio reto.";
 "PICKS LOCKED" = "PICKS TRABADOS";
 "Winner takes %d coins." = "El ganador se lleva %d monedas.";
 "YOU WON · +%d COINS" = "GANASTE · +%d MONEDAS";

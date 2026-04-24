@@ -60,6 +60,12 @@ export function ChallengeDetail() {
       if (/INSUFFICIENT_BALANCE/.test(msg)) setError(t(locale, 'Insufficient balance — visit the shop to recharge.'));
       else if (/DUPLICATE_PICK/.test(msg)) setError(t(locale, 'Pick must differ from the challenger.'));
       else if (/FIXTURE_STARTED/.test(msg)) setError(t(locale, 'Fixture already started.'));
+      else if (/ALREADY_CLAIMED/.test(msg)) {
+        // Slot raced out from under us — refresh so the UI reflects the new state.
+        setError(t(locale, 'Someone else just claimed this challenge.'));
+        await load();
+      }
+      else if (/SELF_ACCEPT/.test(msg)) setError(t(locale, "You can't accept your own challenge."));
       else setError(msg);
     } finally {
       setBusy(false);
@@ -217,92 +223,79 @@ export function ChallengeDetail() {
               color: 'var(--fp-text-muted)',
             }}>VS</div>
             <PickColumn
-              label={c.opponent?.displayName || `@${c.opponent?.username || '—'}`}
+              label={c.opponent?.displayName
+                || (c.opponent?.username ? `@${c.opponent.username}` : t(locale, 'OPEN SLOT'))}
               isMe={c.youAre === 'opponent'}
-              pick={c.opponentPick ? pickLabel(c.marketType, c.opponentPick) : t(locale, 'PENDING')}
+              isOpen={c.isOpen}
+              pick={c.opponentPick
+                ? pickLabel(c.marketType, c.opponentPick)
+                : (c.isOpen ? t(locale, 'WAITING') : t(locale, 'PENDING'))}
               winner={c.status === 'settled' && String(c.winnerUserId) === String(c.opponent?.id)}
             />
           </div>
         </HudFrame>
 
-        {/* Action zone — depends on role + status */}
+        {/* Action zone — depends on role + status + open/directed */}
         <div style={{ height: 12 }} />
 
-        {/* Received pending: accept picker */}
+        {/* Directed received pending: accept picker (with decline option) */}
         {c.youAre === 'opponent' && c.status === 'pending' && (
-          <HudFrame>
-            <div style={{ padding: 14 }}>
-              <div style={{
-                fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 2,
-                color: 'var(--fp-primary)', marginBottom: 8,
-              }}>◆ {t(locale, 'PICK YOUR SIDE')}</div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-                {(PICK_OPTIONS[c.marketType] || []).map((opt) => {
-                  const taken = opt.k === c.challengerPick;
-                  const active = opponentPick === opt.k;
-                  return (
-                    <button
-                      key={opt.k}
-                      type="button"
-                      disabled={taken}
-                      onClick={() => setOpponentPick(opt.k)}
-                      style={{
-                        flex: 1, padding: '12px 4px',
-                        background: taken ? 'var(--fp-bg2)' : active ? 'var(--fp-primary)' : 'var(--fp-surface)',
-                        color: taken ? 'var(--fp-text-faint)' : active ? 'var(--fp-on-primary)' : 'var(--fp-text-dim)',
-                        border: `1px solid ${active ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
-                        clipPath: 'var(--fp-clip-sm)',
-                        cursor: taken ? 'not-allowed' : 'pointer',
-                        opacity: taken ? 0.45 : 1,
-                        fontFamily: 'var(--fp-display)',
-                      }}
-                    >
-                      <div style={{ fontSize: 16, fontWeight: 900 }}>{opt.k}</div>
-                      <div style={{ fontSize: 9, opacity: 0.75, fontFamily: 'var(--fp-mono)' }}>
-                        {taken ? t(locale, 'TAKEN') : opt.l}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <ArcadeButton
-                  size="lg"
-                  fullWidth
-                  disabled={!opponentPick || busy}
-                  onClick={handleAccept}
-                >
-                  {busy ? t(locale, 'ACCEPTING…') : `▶ ${tFormat(locale, 'ACCEPT · {n} COINS', { n: c.stakeCoins })}`}
-                </ArcadeButton>
-              </div>
-              <div style={{ height: 8 }} />
-              <button
-                type="button"
-                disabled={busy}
-                onClick={handleDecline}
-                style={{
-                  width: '100%', padding: 10,
-                  background: 'transparent',
-                  border: '1px solid var(--fp-stroke)',
-                  clipPath: 'var(--fp-clip-sm)',
-                  color: 'var(--fp-text-muted)',
-                  fontFamily: 'var(--fp-display)', fontSize: 12, fontWeight: 700, letterSpacing: 2,
-                  cursor: 'pointer',
-                }}
-              >{t(locale, 'DECLINE')}</button>
-            </div>
-          </HudFrame>
+          <ClaimPicker
+            locale={locale}
+            challengerPick={c.challengerPick}
+            marketType={c.marketType}
+            stakeCoins={c.stakeCoins}
+            opponentPick={opponentPick}
+            setOpponentPick={setOpponentPick}
+            busy={busy}
+            onAccept={handleAccept}
+            onDecline={handleDecline}
+            showDecline
+          />
         )}
 
-        {/* Sent pending: share + cancel */}
+        {/* Open + viewer is a third party (not the challenger): same picker
+            but no Decline (they didn't receive a directed invite — there's
+            nothing to decline). Self-accept is blocked by the backend; we
+            also gate the UI so the challenger never sees this block. */}
+        {c.isOpen && c.youAre === null && (
+          <ClaimPicker
+            locale={locale}
+            challengerPick={c.challengerPick}
+            marketType={c.marketType}
+            stakeCoins={c.stakeCoins}
+            opponentPick={opponentPick}
+            setOpponentPick={setOpponentPick}
+            busy={busy}
+            onAccept={handleAccept}
+            showDecline={false}
+            heading={t(locale, 'CLAIM THIS CHALLENGE')}
+          />
+        )}
+
+        {/* Sent pending: share + cancel. Copy + emphasis differ between
+            directed (we're waiting for a known person) and open (we're
+            waiting for any link recipient). */}
         {c.youAre === 'challenger' && c.status === 'pending' && (
-          <HudFrame>
+          <HudFrame glow={c.isOpen ? 'var(--fp-accent)' : undefined}>
             <div style={{ padding: 14 }}>
               <div style={{
                 fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 2,
-                color: 'var(--fp-primary)', marginBottom: 8,
-              }}>◆ {tFormat(locale, 'WAITING FOR @{user}', { user: (c.opponent?.username || '—').toUpperCase() })}</div>
-              <ArcadeButton size="md" fullWidth onClick={handleShare}>
+                color: c.isOpen ? 'var(--fp-accent)' : 'var(--fp-primary)', marginBottom: 8,
+              }}>
+                ◆ {c.isOpen
+                  ? t(locale, 'OPEN — SHARE THE LINK')
+                  : tFormat(locale, 'WAITING FOR @{user}', { user: (c.opponent?.username || '—').toUpperCase() })}
+              </div>
+              {c.isOpen && (
+                <div style={{
+                  fontFamily: 'var(--fp-mono)', fontSize: 10, lineHeight: 1.5,
+                  color: 'var(--fp-text-muted)', marginBottom: 10,
+                }}>
+                  {t(locale, 'The first person to open this link and accept will become your opponent.')}
+                </div>
+              )}
+              <ArcadeButton size="lg" fullWidth onClick={handleShare}>
                 {copied ? t(locale, 'LINK COPIED ✓') : `▶ ${t(locale, 'SHARE LINK')}`}
               </ArcadeButton>
               <div style={{ height: 8 }} />
@@ -397,21 +390,103 @@ export function ChallengeDetail() {
   );
 }
 
-function PickColumn({ label, isMe, pick, winner }) {
+function PickColumn({ label, isMe, isOpen, pick, winner }) {
+  // Open-slot column gets the accent palette to read as a "claim me" badge
+  // rather than a player. The label already says "OPEN SLOT" in this case.
+  const labelColor = isOpen ? 'var(--fp-accent)'
+    : isMe ? 'var(--fp-primary)'
+    : 'var(--fp-text-muted)';
   return (
     <div style={{ flex: 1, textAlign: 'center' }}>
       <div style={{
-        fontFamily: 'var(--fp-mono)', fontSize: 9, color: isMe ? 'var(--fp-primary)' : 'var(--fp-text-muted)',
+        fontFamily: 'var(--fp-mono)', fontSize: 9, color: labelColor,
         letterSpacing: 1, marginBottom: 4,
       }}>{isMe ? 'YOU' : label}</div>
       <div style={{
         fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 900,
-        color: winner ? 'var(--fp-primary)' : 'var(--fp-text)',
+        color: winner ? 'var(--fp-primary)'
+          : isOpen ? 'var(--fp-accent)'
+          : 'var(--fp-text)',
         textShadow: winner ? '0 0 16px rgba(33,226,140,0.6)' : 'none',
       }}>
         {pick || '—'}
       </div>
     </div>
+  );
+}
+
+// Shared accept-picker used for both directed-received and open-claim flows.
+// Same visual; only the optional Decline button differs.
+function ClaimPicker({
+  locale, challengerPick, marketType, stakeCoins,
+  opponentPick, setOpponentPick,
+  busy, onAccept, onDecline, showDecline, heading,
+}) {
+  return (
+    <HudFrame>
+      <div style={{ padding: 14 }}>
+        <div style={{
+          fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 2,
+          color: 'var(--fp-primary)', marginBottom: 8,
+        }}>◆ {heading || t(locale, 'PICK YOUR SIDE')}</div>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          {(PICK_OPTIONS[marketType] || []).map((opt) => {
+            const taken = opt.k === challengerPick;
+            const active = opponentPick === opt.k;
+            return (
+              <button
+                key={opt.k}
+                type="button"
+                disabled={taken}
+                onClick={() => setOpponentPick(opt.k)}
+                style={{
+                  flex: 1, padding: '12px 4px',
+                  background: taken ? 'var(--fp-bg2)' : active ? 'var(--fp-primary)' : 'var(--fp-surface)',
+                  color: taken ? 'var(--fp-text-faint)' : active ? 'var(--fp-on-primary)' : 'var(--fp-text-dim)',
+                  border: `1px solid ${active ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
+                  clipPath: 'var(--fp-clip-sm)',
+                  cursor: taken ? 'not-allowed' : 'pointer',
+                  opacity: taken ? 0.45 : 1,
+                  fontFamily: 'var(--fp-display)',
+                }}
+              >
+                <div style={{ fontSize: 16, fontWeight: 900 }}>{opt.k}</div>
+                <div style={{ fontSize: 9, opacity: 0.75, fontFamily: 'var(--fp-mono)' }}>
+                  {taken ? t(locale, 'TAKEN') : opt.l}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <ArcadeButton
+          size="lg"
+          fullWidth
+          disabled={!opponentPick || busy}
+          onClick={onAccept}
+        >
+          {busy ? t(locale, 'ACCEPTING…') : `▶ ${tFormat(locale, 'ACCEPT · {n} COINS', { n: stakeCoins })}`}
+        </ArcadeButton>
+        {showDecline && (
+          <>
+            <div style={{ height: 8 }} />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onDecline}
+              style={{
+                width: '100%', padding: 10,
+                background: 'transparent',
+                border: '1px solid var(--fp-stroke)',
+                clipPath: 'var(--fp-clip-sm)',
+                color: 'var(--fp-text-muted)',
+                fontFamily: 'var(--fp-display)', fontSize: 12, fontWeight: 700, letterSpacing: 2,
+                cursor: 'pointer',
+              }}
+            >{t(locale, 'DECLINE')}</button>
+          </>
+        )}
+      </div>
+    </HudFrame>
   );
 }
 

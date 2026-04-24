@@ -148,6 +148,11 @@ export function PoolDetail() {
     (f) => f.kickoff && new Date(f.kickoff).getTime() > now
   );
   const canManage = isOwner && isScheduled;
+  // Once the pool starts, the manage button morphs into "view predictions" —
+  // same modal, same fetch, but the backend now ships picks per entry. The
+  // creator still sees the participant list either way; only the action
+  // surface (delete vs. read-only picks) differs by phase.
+  const canViewPicks = isOwner && !isScheduled && (quiniela?.entriesCount ?? 0) > 0;
 
   const canJoin = () => {
     if (!quiniela?.fixtures?.length) return false;
@@ -310,7 +315,7 @@ export function PoolDetail() {
           </span>
         </div>
 
-        {canManage && (
+        {(canManage || canViewPicks) && (
           <button
             type="button"
             onClick={() => setShowManage(true)}
@@ -328,7 +333,7 @@ export function PoolDetail() {
               textTransform: 'uppercase',
             }}
           >
-            <span>◆ {t(locale, 'MANAGE PARTICIPANTS')}</span>
+            <span>◆ {t(locale, canManage ? 'MANAGE PARTICIPANTS' : 'VIEW PREDICTIONS')}</span>
             <span style={{ fontSize: 14 }}>→</span>
           </button>
         )}
@@ -534,6 +539,8 @@ export function PoolDetail() {
           locale={locale}
           quinielaId={id}
           token={token}
+          fixtures={quiniela.fixtures || []}
+          liveByFixture={liveByFixture}
           onClose={() => setShowManage(false)}
           onMutated={() => load()}
         />
@@ -778,18 +785,27 @@ function RulesModal({ locale, quiniela, onClose }) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// ParticipantManageModal — creator-only admin surface shown when the
-// pool hasn't started. Lists each participant with their entry count,
-// offers per-entry delete and full-player removal. Mirrors the shape
-// of `GET /quinielas/:id/participants`.
+// ParticipantManageModal — creator-only admin surface. Two modes off
+// the same fetch:
+//   • scheduled  → manage mode: per-entry delete + full-player removal,
+//                  picks hidden by the backend so the creator can't kick
+//                  on the basis of who guessed well.
+//   • started/   → read-only predictions view: picks per entry rendered
+//     completed    with the same PickRow visual language used in
+//                  MyEntries (won/lost/leading/trailing/pending).
+// Mirrors the shape of `GET /quinielas/:id/participants` (see
+// quinielaController.getParticipants for the contract).
 
-function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated }) {
+function ParticipantManageModal({ locale, quinielaId, token, fixtures, liveByFixture, onClose, onMutated }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   // Track which row is currently executing a delete so we can disable the
   // button and avoid double-click double-deletes. Keys: entryId or userId.
   const [pending, setPending] = useState(new Set());
+  // In view-picks mode entries are collapsed by default — even a 5-player
+  // pool with 1 entry each blows up the modal otherwise. Set holds entryIds.
+  const [openEntries, setOpenEntries] = useState(new Set());
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -804,6 +820,14 @@ function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated 
   }, [quinielaId, token]);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleEntry = (entryId) => {
+    setOpenEntries((prev) => {
+      const next = new Set(prev);
+      if (next.has(entryId)) next.delete(entryId); else next.add(entryId);
+      return next;
+    });
+  };
 
   const markPending = (key, on) => {
     setPending((prev) => {
@@ -855,7 +879,14 @@ function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated 
   };
 
   const participants = data?.participants || [];
-  const notScheduled = data?.status && data.status !== 'scheduled';
+  const status = data?.status;
+  const isScheduled = status === 'scheduled';
+  // Backend authority — never assume from local state. `picksHidden` is true
+  // exactly when the server suppressed picks (scheduled phase); flip the UI
+  // mode off the same flag so we never render a "view picks" UI with no
+  // picks attached.
+  const showPicks = data?.picksHidden === false;
+  const title = showPicks ? 'PARTICIPANT PREDICTIONS' : 'MANAGE PARTICIPANTS';
 
   return (
     <div
@@ -878,7 +909,7 @@ function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated 
                 flex: 1,
                 fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800, letterSpacing: 2,
                 color: 'var(--fp-accent)',
-              }}>◆ {t(locale, 'MANAGE PARTICIPANTS')}</div>
+              }}>◆ {t(locale, title)}</div>
               <button
                 onClick={onClose}
                 style={{
@@ -898,11 +929,6 @@ function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated 
                 padding: 10, color: 'var(--fp-danger)',
                 fontFamily: 'var(--fp-mono)', fontSize: 11,
               }}>{error}</div>
-            ) : notScheduled ? (
-              <div style={{
-                padding: 16, textAlign: 'center',
-                fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-muted)',
-              }}>{t(locale, 'Pool already started. Participants are locked in.')}</div>
             ) : participants.length === 0 ? (
               <div style={{
                 padding: 24, textAlign: 'center',
@@ -934,58 +960,112 @@ function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated 
                             {handle && <>{handle} · </>}{p.entryCount} {t(locale, 'ENTRIES')}
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          disabled={isPending}
-                          onClick={() => handleRemoveParticipant(p)}
-                          style={{
-                            padding: '6px 10px',
-                            background: 'transparent',
-                            border: '1px solid color-mix(in srgb, var(--fp-danger) 55%, transparent)',
-                            color: 'var(--fp-danger)',
-                            clipPath: 'var(--fp-clip-sm)',
-                            fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800,
-                            letterSpacing: 1.5, cursor: isPending ? 'default' : 'pointer',
-                            opacity: isPending ? 0.5 : 1,
-                          }}
-                        >{isPending ? '…' : t(locale, 'REMOVE')}</button>
+                        {isScheduled && (
+                          <button
+                            type="button"
+                            disabled={isPending}
+                            onClick={() => handleRemoveParticipant(p)}
+                            style={{
+                              padding: '6px 10px',
+                              background: 'transparent',
+                              border: '1px solid color-mix(in srgb, var(--fp-danger) 55%, transparent)',
+                              color: 'var(--fp-danger)',
+                              clipPath: 'var(--fp-clip-sm)',
+                              fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800,
+                              letterSpacing: 1.5, cursor: isPending ? 'default' : 'pointer',
+                              opacity: isPending ? 0.5 : 1,
+                            }}
+                          >{isPending ? '…' : t(locale, 'REMOVE')}</button>
+                        )}
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {p.entries.map((e) => {
                           const entryPending = pending.has(e._id);
+                          const isOpen = openEntries.has(e._id);
+                          const hasScore = typeof e.score === 'number' && typeof e.totalPossible === 'number' && e.totalPossible > 0;
+                          // Whole row is the toggle in view-picks mode; in
+                          // manage mode we keep the static header with a
+                          // delete affordance (no expansion needed — picks
+                          // are hidden anyway).
                           return (
                             <div key={e._id} style={{
-                              display: 'flex', alignItems: 'center', gap: 8,
-                              padding: '5px 8px',
                               background: 'var(--fp-surface)',
                               clipPath: 'var(--fp-clip-sm)',
                             }}>
-                              <span style={{
-                                fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
-                                color: 'var(--fp-primary)', minWidth: 28,
-                              }}>#{e.entryNumber}</span>
-                              <span style={{
-                                flex: 1,
-                                fontFamily: 'var(--fp-mono)', fontSize: 9,
-                                color: 'var(--fp-text-muted)',
-                              }}>
-                                {e.createdAt
-                                  ? new Date(e.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
-                                  : ''}
-                              </span>
-                              <button
-                                type="button"
-                                disabled={entryPending}
-                                onClick={() => handleDeleteEntry(e._id)}
+                              <div
+                                onClick={showPicks ? () => toggleEntry(e._id) : undefined}
                                 style={{
-                                  background: 'transparent', border: 'none',
-                                  color: 'var(--fp-danger)',
-                                  fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800,
-                                  letterSpacing: 1, cursor: entryPending ? 'default' : 'pointer',
-                                  opacity: entryPending ? 0.5 : 1,
+                                  display: 'flex', alignItems: 'center', gap: 8,
+                                  padding: '5px 8px',
+                                  cursor: showPicks ? 'pointer' : 'default',
                                 }}
-                              >{entryPending ? '…' : t(locale, 'DELETE')}</button>
+                              >
+                                <span style={{
+                                  fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+                                  color: 'var(--fp-primary)', minWidth: 28,
+                                }}>#{e.entryNumber}</span>
+                                <span style={{
+                                  flex: 1,
+                                  fontFamily: 'var(--fp-mono)', fontSize: 9,
+                                  color: 'var(--fp-text-muted)',
+                                }}>
+                                  {e.createdAt
+                                    ? new Date(e.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                                    : ''}
+                                </span>
+                                {showPicks && hasScore && (
+                                  <span style={{
+                                    fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800,
+                                    color: 'var(--fp-gold)', letterSpacing: 1,
+                                  }}>{e.score}/{e.totalPossible} {t(locale, 'PTS')}</span>
+                                )}
+                                {isScheduled ? (
+                                  <button
+                                    type="button"
+                                    disabled={entryPending}
+                                    onClick={() => handleDeleteEntry(e._id)}
+                                    style={{
+                                      background: 'transparent', border: 'none',
+                                      color: 'var(--fp-danger)',
+                                      fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800,
+                                      letterSpacing: 1, cursor: entryPending ? 'default' : 'pointer',
+                                      opacity: entryPending ? 0.5 : 1,
+                                    }}
+                                  >{entryPending ? '…' : t(locale, 'DELETE')}</button>
+                                ) : showPicks ? (
+                                  <span style={{
+                                    fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-muted)',
+                                  }}>{isOpen ? '▲' : '▼'}</span>
+                                ) : null}
+                              </div>
+
+                              {showPicks && isOpen && (
+                                <div style={{
+                                  padding: '6px 8px 8px',
+                                  display: 'flex', flexDirection: 'column', gap: 6,
+                                  borderTop: '1px solid var(--fp-stroke)',
+                                }}>
+                                  {(fixtures || []).length === 0 ? (
+                                    <div style={{
+                                      fontFamily: 'var(--fp-mono)', fontSize: 9, color: 'var(--fp-text-muted)',
+                                    }}>{t(locale, 'NO PICKS YET')}</div>
+                                  ) : (
+                                    (fixtures || []).map((fx) => {
+                                      const pick = (e.picks || []).find((p) => p.fixtureId === fx.fixtureId)?.pick;
+                                      return (
+                                        <ParticipantPickRow
+                                          key={fx.fixtureId}
+                                          fixture={fx}
+                                          pick={pick}
+                                          live={liveByFixture?.[fx.fixtureId]}
+                                          locale={locale}
+                                        />
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -995,8 +1075,137 @@ function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated 
                 })}
               </div>
             )}
+
+            {!loading && !error && showPicks && participants.length > 0 && (
+              <div style={{
+                marginTop: 12, padding: '8px 10px',
+                background: 'var(--fp-surface-alt)',
+                clipPath: 'var(--fp-clip-sm)',
+                fontFamily: 'var(--fp-mono)', fontSize: 9,
+                color: 'var(--fp-text-muted)', letterSpacing: 1,
+              }}>
+                {t(locale, 'Tap an entry to reveal picks.')}
+              </div>
+            )}
           </div>
         </HudFrame>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// ParticipantPickRow — read-only pick row for the creator's view of a
+// participant's entry. Mirrors MyEntries.PickRow's color states (won /
+// lost / leading / trailing / pending / missing) so picks read the same
+// across surfaces — the only difference is the label says "PICK" instead
+// of "YOUR PICK" since the creator isn't the picker.
+
+const FINISHED_PICK_STATUSES = new Set(['FT', 'AET', 'PEN']);
+
+function ParticipantPickRow({ fixture, pick, live, locale }) {
+  const home = live?.score?.home;
+  const away = live?.score?.away;
+  const liveResult = (typeof home === 'number' && typeof away === 'number')
+    ? (home > away ? '1' : home < away ? '2' : 'X')
+    : null;
+  const short = (live?.status?.short || '').toUpperCase();
+  const isLive = live?.status?.isLive === true;
+  const isFinal = FINISHED_PICK_STATUSES.has(short);
+
+  let state = 'missing';
+  if (pick && pick !== '-' && pick !== '') {
+    if (!liveResult) state = 'pending';
+    else if (isFinal) state = pick === liveResult ? 'won' : 'lost';
+    else state = pick === liveResult ? 'leading' : 'trailing';
+  }
+
+  const palette = {
+    missing:  { badgeBg: 'var(--fp-bg2)', fg: 'var(--fp-text-dim)', accent: 'var(--fp-stroke)' },
+    pending:  { badgeBg: 'color-mix(in srgb, var(--fp-accent) 18%, transparent)', fg: 'var(--fp-accent)', accent: 'color-mix(in srgb, var(--fp-accent) 50%, transparent)' },
+    leading:  { badgeBg: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)', fg: 'var(--fp-primary)', accent: 'var(--fp-primary)' },
+    trailing: { badgeBg: 'color-mix(in srgb, var(--fp-danger) 18%, transparent)',  fg: 'var(--fp-danger)',  accent: 'color-mix(in srgb, var(--fp-danger) 70%, transparent)' },
+    won:      { badgeBg: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)', fg: 'var(--fp-primary)', accent: 'var(--fp-primary)' },
+    lost:     { badgeBg: 'color-mix(in srgb, var(--fp-danger) 18%, transparent)',  fg: 'var(--fp-danger)',  accent: 'color-mix(in srgb, var(--fp-danger) 70%, transparent)' },
+  }[state];
+
+  const statusEl = (() => {
+    switch (state) {
+      case 'missing':
+        return <span style={{ color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.2 }}>{t(locale, 'NO PICK')}</span>;
+      case 'pending':
+        return <span style={{ color: 'var(--fp-accent)', fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.2 }}>{t(locale, 'PENDING').toUpperCase()}</span>;
+      case 'leading':
+        return <span style={{ color: 'var(--fp-primary)', fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.2 }}>● {t(locale, 'LEADING')}</span>;
+      case 'trailing':
+        return <span style={{ color: 'var(--fp-danger)', fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.2 }}>● {t(locale, 'TRAILING')}</span>;
+      case 'won':
+        return <span style={{ color: 'var(--fp-primary)', fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.2 }}>✓ +1 {t(locale, 'PT')}</span>;
+      case 'lost':
+        return <span style={{ color: 'var(--fp-danger)', fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.2 }}>✗ {t(locale, 'MISSED')}</span>;
+      default: return null;
+    }
+  })();
+
+  const showScore = typeof home === 'number' && typeof away === 'number';
+
+  return (
+    <div style={{
+      padding: '8px',
+      background: 'var(--fp-surface-alt)',
+      clipPath: 'var(--fp-clip-sm)',
+      borderLeft: `3px solid ${palette.accent}`,
+      display: 'flex', flexDirection: 'column', gap: 6,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <TeamCrest name={fixture.homeTeam} logoURL={fixture.homeLogo} size={18} />
+        <span style={{
+          flex: 1,
+          fontFamily: 'var(--fp-display)', fontSize: 11,
+          fontWeight: pick === '1' ? 800 : 500,
+          color: pick === '1' ? 'var(--fp-text)' : 'var(--fp-text-dim)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{fixture.homeTeam}</span>
+        <div style={{ minWidth: 46, textAlign: 'center' }}>
+          {showScore ? (
+            <span style={{ fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800, color: 'var(--fp-text)' }}>
+              {home}–{away}
+            </span>
+          ) : (
+            <span style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, color: 'var(--fp-text-dim)' }}>vs</span>
+          )}
+        </div>
+        <span style={{
+          flex: 1, textAlign: 'right',
+          fontFamily: 'var(--fp-display)', fontSize: 11,
+          fontWeight: pick === '2' ? 800 : 500,
+          color: pick === '2' ? 'var(--fp-text)' : 'var(--fp-text-dim)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{fixture.awayTeam}</span>
+        <TeamCrest name={fixture.awayTeam} logoURL={fixture.awayLogo} size={18} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{
+          width: 24, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: palette.badgeBg, clipPath: 'var(--fp-clip-sm)',
+          fontFamily: 'var(--fp-display)', fontSize: 11, fontWeight: 900,
+          color: palette.fg,
+        }}>
+          {pick === '1' || pick === 'X' || pick === '2' ? pick : '—'}
+        </div>
+        <div style={{ flex: 1 }}>
+          {isLive && live?.status?.elapsed != null && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              color: 'var(--fp-danger)',
+              fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700,
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--fp-danger)' }} />
+              LIVE {live.status.elapsed}'
+            </span>
+          )}
+        </div>
+        {statusEl}
       </div>
     </div>
   );

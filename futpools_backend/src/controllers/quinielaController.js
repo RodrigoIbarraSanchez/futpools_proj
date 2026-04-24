@@ -734,11 +734,12 @@ exports.getLeaderboard = async (req, res) => {
  * GET /quinielas/:id/participants — creator/admin view of who has entered.
  *
  * Mounted behind `requireOwnerOrAdmin` so only the pool's creator (or a
- * platform admin) sees it. Intentionally omits `picks` from the response:
- * revealing picks to the creator before kickoff would give them an
- * information edge (e.g. "kick the one who guessed well"), breaking pool
- * fairness. Picks stay private until the pool is completed — the per-user
- * picks surface only in that user's own /entries/me response.
+ * platform admin) sees it. `picks` is included only once the pool has
+ * started (status !== 'scheduled'): exposing picks to the creator before
+ * kickoff would let them moderate based on who guessed well ("kick the
+ * one with the lucky picks"), breaking fairness. After kickoff the picks
+ * are locked and reveal is harmless — at that point the creator gets the
+ * same view participants see on the leaderboard, just grouped by player.
  */
 exports.getParticipants = async (req, res) => {
   try {
@@ -746,6 +747,9 @@ exports.getParticipants = async (req, res) => {
     // `req.resource` is populated by requireOwnerOrAdmin — no second fetch.
     const quiniela = req.resource || await Quiniela.findById(quinielaId);
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
+
+    const status = computePoolStatus(quiniela.fixtures || [], null);
+    const exposePicks = status !== 'scheduled';
 
     const entries = await QuinielaEntry.find({ quiniela: quinielaId })
       .populate('user', 'username displayName')
@@ -768,15 +772,25 @@ exports.getParticipants = async (req, res) => {
       }
       const row = byUser.get(uid);
       row.entryCount += 1;
-      row.entries.push({
+      const entryOut = {
         _id: String(e._id),
         entryNumber: e.entryNumber,
         createdAt: e.createdAt,
-      });
+        score: typeof e.score === 'number' ? e.score : null,
+        totalPossible: typeof e.totalPossibleAtScoring === 'number' ? e.totalPossibleAtScoring : null,
+      };
+      if (exposePicks) {
+        entryOut.picks = (e.picks || []).map((p) => ({
+          fixtureId: p.fixtureId,
+          pick: p.pick,
+        }));
+      }
+      row.entries.push(entryOut);
     }
 
     res.json({
-      status: computePoolStatus(quiniela.fixtures || [], null),
+      status,
+      picksHidden: !exposePicks,
       participants: [...byUser.values()],
     });
   } catch (err) {

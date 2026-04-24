@@ -3,10 +3,12 @@
 //  futpoolsapp
 //
 //  Challenge detail screen with role-aware actions:
-//     viewer = challenger, status = pending   → share + cancel
-//     viewer = opponent,   status = pending   → pick a side + accept/decline
-//     any,                 status = accepted  → locked picks, watch settlement
-//     any,                 status = settled   → winner highlight
+//     viewer = challenger, status = pending, directed → share + cancel ("WAITING FOR @user")
+//     viewer = challenger, status = pending, open     → share + cancel ("OPEN — SHARE THE LINK")
+//     viewer = opponent,   status = pending           → pick a side + accept/decline
+//     viewer = third party, status = pending, open    → claim picker (accept only)
+//     any,                 status = accepted          → locked picks, watch settlement
+//     any,                 status = settled           → winner highlight
 //
 
 import Combine
@@ -95,21 +97,31 @@ struct ChallengeDetailView: View {
             .frame(maxWidth: .infinity)
         }
 
-        // Picks faceoff
+        // Picks faceoff. Opponent column collapses to an "OPEN SLOT" badge
+        // when the slot hasn't been claimed yet — mirrors web parity.
+        let isOpen = c.isOpen ?? false
+        let opponentLabel: String = {
+            if let dn = c.opponent?.displayName { return dn }
+            if let un = c.opponent?.username { return "@\(un)" }
+            return String(localized: "OPEN SLOT")
+        }()
         HudFrame {
             HStack(spacing: 12) {
                 pickColumn(
                     label: c.challenger.displayName ?? "@\(c.challenger.username ?? "—")",
                     isMe: c.youAre == "challenger",
+                    isOpen: false,
                     pick: Challenge.pickLabel(c.challengerPick, market: c.marketType),
                     winner: c.status == .settled && c.winnerUserId == c.challenger.id
                 )
                 Text("VS").font(ArenaFont.display(size: 14, weight: .black)).foregroundColor(.arenaTextMuted)
                 pickColumn(
-                    label: c.opponent.displayName ?? "@\(c.opponent.username ?? "—")",
+                    label: opponentLabel,
                     isMe: c.youAre == "opponent",
-                    pick: c.opponentPick.map { Challenge.pickLabel($0, market: c.marketType) } ?? String(localized: "PENDING"),
-                    winner: c.status == .settled && c.winnerUserId == c.opponent.id
+                    isOpen: isOpen,
+                    pick: c.opponentPick.map { Challenge.pickLabel($0, market: c.marketType) }
+                        ?? (isOpen ? String(localized: "WAITING") : String(localized: "PENDING")),
+                    winner: c.status == .settled && c.winnerUserId == c.opponent?.id
                 )
             }
             .padding(14)
@@ -117,7 +129,13 @@ struct ChallengeDetailView: View {
 
         // Role-aware action zone
         if c.status == .pending && c.youAre == "opponent" {
-            acceptPanel(c)
+            // Directed receive: full picker + decline.
+            acceptPanel(c, showDecline: true, heading: String(localized: "PICK YOUR SIDE"))
+        } else if c.status == .pending && isOpen && c.youAre == nil {
+            // Third party hitting an open challenge link — same picker, no
+            // decline (nothing to refuse), and a "claim" heading. Self-accept
+            // is blocked server-side; we don't render this for challengers.
+            acceptPanel(c, showDecline: false, heading: String(localized: "CLAIM THIS CHALLENGE"))
         } else if c.status == .pending && c.youAre == "challenger" {
             waitingPanel(c)
         } else if c.status == .accepted {
@@ -137,13 +155,16 @@ struct ChallengeDetailView: View {
         }
     }
 
-    // MARK: — Accept panel (opponent, pending)
-
+    // MARK: — Accept panel (directed-opponent OR open-claim)
+    //
+    // Same UI for both flows. Only difference: open-claim has no Decline
+    // button (third party didn't receive a directed invite — there's nothing
+    // to refuse). Heading copy varies via the `heading` arg.
     @ViewBuilder
-    private func acceptPanel(_ c: Challenge) -> some View {
+    private func acceptPanel(_ c: Challenge, showDecline: Bool, heading: String) -> some View {
         HudFrame {
             VStack(alignment: .leading, spacing: 10) {
-                Text("◆ \(String(localized: "PICK YOUR SIDE"))")
+                Text("◆ \(heading)")
                     .font(ArenaFont.mono(size: 10))
                     .tracking(2)
                     .foregroundColor(.arenaPrimary)
@@ -188,21 +209,23 @@ struct ChallengeDetailView: View {
                         await auth.fetchUser()
                     }
                 }
-                Button {
-                    Task {
-                        await vm.decline(id: c.id, token: auth.token)
+                if showDecline {
+                    Button {
+                        Task {
+                            await vm.decline(id: c.id, token: auth.token)
+                        }
+                    } label: {
+                        Text(String(localized: "DECLINE"))
+                            .font(ArenaFont.display(size: 12, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.arenaTextMuted)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
                     }
-                } label: {
-                    Text(String(localized: "DECLINE"))
-                        .font(ArenaFont.display(size: 12, weight: .bold))
-                        .tracking(2)
-                        .foregroundColor(.arenaTextMuted)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
+                    .buttonStyle(.plain)
+                    .disabled(vm.isBusy)
                 }
-                .buttonStyle(.plain)
-                .disabled(vm.isBusy)
             }
             .padding(14)
         }
@@ -212,15 +235,23 @@ struct ChallengeDetailView: View {
 
     @ViewBuilder
     private func waitingPanel(_ c: Challenge) -> some View {
+        let isOpen = c.isOpen ?? false
         HudFrame {
-            VStack(spacing: 10) {
-                Text("◆ " + String(format: String(localized: "WAITING FOR @%@"), (c.opponent.username ?? "—").uppercased()))
+            VStack(alignment: .leading, spacing: 10) {
+                Text("◆ " + (isOpen
+                    ? String(localized: "OPEN — SHARE THE LINK")
+                    : String(format: String(localized: "WAITING FOR @%@"), (c.opponent?.username ?? "—").uppercased())))
                     .font(ArenaFont.mono(size: 10))
                     .tracking(2)
-                    .foregroundColor(.arenaPrimary)
+                    .foregroundColor(isOpen ? .arenaAccent : .arenaPrimary)
+                if isOpen {
+                    Text(String(localized: "The first person to open this link and accept will become your opponent."))
+                        .font(ArenaFont.mono(size: 10))
+                        .foregroundColor(.arenaTextMuted)
+                }
                 ArcadeButton(
                     title: vm.copied ? String(localized: "LINK COPIED ✓") : "▶ " + String(localized: "SHARE LINK"),
-                    size: .md, fullWidth: true,
+                    size: .lg, fullWidth: true,
                     disabled: false
                 ) {
                     vm.copyShareLink(code: c.code)
@@ -267,7 +298,7 @@ struct ChallengeDetailView: View {
     private func settledPanel(_ c: Challenge) -> some View {
         let iWon = c.winnerUserId != nil &&
             ((c.youAre == "challenger" && c.winnerUserId == c.challenger.id) ||
-             (c.youAre == "opponent" && c.winnerUserId == c.opponent.id))
+             (c.youAre == "opponent" && c.winnerUserId == c.opponent?.id))
         VStack(spacing: 4) {
             Text(iWon ? "🏆" : "💀").font(.system(size: 36))
             Text(iWon
@@ -316,14 +347,18 @@ struct ChallengeDetailView: View {
 
     // MARK: — Helpers
 
-    private func pickColumn(label: String, isMe: Bool, pick: String, winner: Bool) -> some View {
-        VStack(spacing: 4) {
+    private func pickColumn(label: String, isMe: Bool, isOpen: Bool, pick: String, winner: Bool) -> some View {
+        // Open-slot column gets the accent palette to read as a "claim me"
+        // badge instead of a player. Web parity in PoolDetail PickColumn.
+        let labelColor: Color = isOpen ? .arenaAccent : (isMe ? .arenaPrimary : .arenaTextMuted)
+        let pickColor: Color = winner ? .arenaPrimary : (isOpen ? .arenaAccent : .arenaText)
+        return VStack(spacing: 4) {
             Text(isMe ? String(localized: "YOU") : label)
                 .font(ArenaFont.mono(size: 9))
-                .foregroundColor(isMe ? .arenaPrimary : .arenaTextMuted)
+                .foregroundColor(labelColor)
             Text(pick)
                 .font(ArenaFont.display(size: 16, weight: .black))
-                .foregroundColor(winner ? .arenaPrimary : .arenaText)
+                .foregroundColor(pickColor)
                 .shadow(color: winner ? .arenaPrimary.opacity(0.6) : .clear, radius: 16)
         }
         .frame(maxWidth: .infinity)
@@ -394,6 +429,14 @@ final class ChallengeDetailViewModel: ObservableObject {
                 actionError = String(localized: "Pick must differ from the challenger.")
             } else if desc.contains("FIXTURE_STARTED") {
                 actionError = String(localized: "Fixture already started.")
+            } else if desc.contains("ALREADY_CLAIMED") {
+                // Lost the open-claim race — refresh so UI flips to the
+                // accepted-by-someone-else state instead of leaving the picker
+                // visible (which would let them try again on a closed slot).
+                actionError = String(localized: "Someone else just claimed this challenge.")
+                await load(id: id, token: token)
+            } else if desc.contains("SELF_ACCEPT") {
+                actionError = String(localized: "You can't accept your own challenge.")
             } else {
                 actionError = desc
             }

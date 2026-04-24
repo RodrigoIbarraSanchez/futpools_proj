@@ -50,9 +50,14 @@ const challengeSchema = new mongoose.Schema({
   // futpools.com/c/ABC23456 / futpools://c/ABC23456
   code: { type: String, required: true, unique: true, uppercase: true, index: true },
   challenger: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  // Directed-invite v1: opponent is chosen at create time. A future "open
-  // marketplace" mode could leave this null and match via acceptChallenge.
-  opponent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  // Two modes:
+  //   directed (opponent set at create) — only that user can accept.
+  //   open (opponent null at create)    — first non-challenger to claim via
+  //                                       /accept becomes the opponent.
+  // Open mode lets the challenger share a link without knowing anyone's
+  // username. Atomic claim happens in acceptChallenge via findOneAndUpdate
+  // with `opponent: null` filter so two concurrent accepts can't both win.
+  opponent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
   stakeCoins: { type: Number, required: true, enum: ALLOWED_STAKES },
   marketType: { type: String, required: true, enum: MARKET_TYPES },
   challengerPick: { type: String, required: true },
@@ -78,10 +83,13 @@ const challengeSchema = new mongoose.Schema({
 challengeSchema.index({ challenger: 1, createdAt: -1 });
 challengeSchema.index({ opponent: 1, createdAt: -1 });
 
-// Enforce that challenger/opponent are different and picks are valid for the
-// chosen market. Runs on every save so hand-crafted docs don't slip through.
+// Enforce that challenger/opponent are different (when opponent is set) and
+// picks are valid for the chosen market. Runs on every save so hand-crafted
+// docs don't slip through. Open challenges (opponent: null) skip the
+// challenger==opponent check by definition — the controller still blocks
+// self-accept at claim time.
 challengeSchema.pre('validate', function enforceInvariants(next) {
-  if (String(this.challenger) === String(this.opponent)) {
+  if (this.opponent && String(this.challenger) === String(this.opponent)) {
     return next(new Error('challenger and opponent must be different users'));
   }
   const allowed = VALID_PICKS[this.marketType];

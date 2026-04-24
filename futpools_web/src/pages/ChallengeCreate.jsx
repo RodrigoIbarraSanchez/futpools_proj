@@ -44,8 +44,12 @@ export function ChallengeCreate() {
   const [error, setError] = useState(null);
 
   const balance = user?.balance ?? 0;
-  const canSubmit = !!(fixture && marketType && pick && stake && opponent.trim());
+  // Opponent is now optional: if blank, the backend creates an "open"
+  // challenge whose share link can be claimed by the first non-creator who
+  // accepts. Submit is gated on the four required steps only.
+  const canSubmit = !!(fixture && marketType && pick && stake);
   const insufficientBalance = stake != null && balance < stake;
+  const isOpen = !opponent.trim();
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -53,8 +57,7 @@ export function ChallengeCreate() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await api.post('/challenges', {
-        opponentUsername: opponent.trim().replace(/^@/, '').toLowerCase(),
+      const body = {
         fixture: {
           fixtureId: fixture.fixtureId,
           leagueId: fixture.leagueId,
@@ -70,7 +73,14 @@ export function ChallengeCreate() {
         marketType,
         challengerPick: pick,
         stakeCoins: stake,
-      }, token);
+      };
+      if (!isOpen) {
+        // Only send the username when the user typed one; an empty string
+        // would still pass `if (opponentUsername)` on the backend and try
+        // to resolve a blank → "Opponent not found" error.
+        body.opponentUsername = opponent.trim().replace(/^@/, '').toLowerCase();
+      }
+      const res = await api.post('/challenges', body, token);
       // Server accepted — hop to detail so the creator can copy the share link.
       navigate(`/challenges/${res._id}`, { replace: true });
     } catch (e) {
@@ -185,8 +195,8 @@ export function ChallengeCreate() {
           </div>
         </Section>
 
-        {/* SECTION 5 — Opponent */}
-        <Section title={`⑤ ${t(locale, 'OPPONENT')}`} locked={!stake}>
+        {/* SECTION 5 — Opponent (optional). Empty input → open challenge. */}
+        <Section title={`⑤ ${t(locale, 'OPPONENT')} · ${t(locale, 'OPTIONAL')}`} locked={!stake}>
           <input
             type="text"
             placeholder="@username"
@@ -203,6 +213,20 @@ export function ChallengeCreate() {
               outline: 'none',
             }}
           />
+          <div style={{
+            marginTop: 8, padding: '8px 10px',
+            background: isOpen
+              ? 'color-mix(in srgb, var(--fp-accent) 14%, transparent)'
+              : 'var(--fp-surface-alt)',
+            border: `1px solid ${isOpen ? 'color-mix(in srgb, var(--fp-accent) 45%, transparent)' : 'var(--fp-stroke)'}`,
+            clipPath: 'var(--fp-clip-sm)',
+            fontFamily: 'var(--fp-mono)', fontSize: 10, lineHeight: 1.5,
+            color: isOpen ? 'var(--fp-accent)' : 'var(--fp-text-muted)',
+          }}>
+            {isOpen
+              ? `🔗 ${t(locale, 'OPEN CHALLENGE — leave blank and share the link with anyone.')}`
+              : t(locale, 'Direct challenge: this user will see it in their inbox.')}
+          </div>
         </Section>
 
         {/* Summary + submit */}
@@ -253,8 +277,9 @@ export function ChallengeCreate() {
           >
             {submitting ? t(locale, 'SENDING…')
               : insufficientBalance ? t(locale, 'INSUFFICIENT BALANCE')
-              : canSubmit ? `▶ ${tFormat(locale, 'SEND · {n} COINS', { n: stake })}`
-              : t(locale, 'COMPLETE ALL STEPS')}
+              : canSubmit
+                ? `▶ ${tFormat(locale, isOpen ? 'CREATE & SHARE · {n} COINS' : 'SEND · {n} COINS', { n: stake })}`
+                : t(locale, 'COMPLETE ALL STEPS')}
           </ArcadeButton>
         </div>
       </div>

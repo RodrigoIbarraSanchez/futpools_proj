@@ -65,7 +65,10 @@ struct Challenge: Codable, Identifiable {
     let id: String
     let code: String
     let challenger: ChallengeUser
-    let opponent: ChallengeUser
+    /// Optional now: open challenges are created with no opponent, and any
+    /// non-creator can claim the slot via the share link. Once claimed, the
+    /// field is populated and behaves like a directed challenge.
+    let opponent: ChallengeUser?
     let stakeCoins: Int
     let marketType: ChallengeMarketType
     let challengerPick: String
@@ -80,13 +83,17 @@ struct Challenge: Codable, Identifiable {
     let settledAt: String?
     /// Computed by the backend — `"challenger"` / `"opponent"` / `nil`.
     let youAre: String?
+    /// True iff opponent is null AND status is pending — the slot can still be
+    /// claimed by any non-creator hitting the share link. Older payloads (or
+    /// non-pending challenges) decode this as nil; treat nil as false.
+    let isOpen: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case code, challenger, opponent, stakeCoins, marketType
         case challengerPick, opponentPick, fixture, status
         case winnerUserId, outcomeKey, rakePercent
-        case createdAt, acceptedAt, settledAt, youAre
+        case createdAt, acceptedAt, settledAt, youAre, isOpen
     }
 
     var payoutIfWin: Int {
@@ -112,13 +119,33 @@ struct Challenge: Codable, Identifiable {
 // MARK: — Request bodies
 
 struct ChallengeCreateRequest: Encodable {
-    /// Either `opponentUserId` or `opponentUsername` must be set. v1 iOS uses
-    /// username since the flow is "type your friend's @handle".
-    let opponentUsername: String
+    /// Optional. When nil, the backend creates an "open" challenge whose
+    /// share link can be claimed by any non-creator. Web parity:
+    /// `futpools_web/.../ChallengeCreate.jsx` omits this field entirely
+    /// when the opponent input is blank.
+    let opponentUsername: String?
     let fixture: ChallengeFixture
     let marketType: String
     let challengerPick: String
     let stakeCoins: Int
+
+    enum CodingKeys: String, CodingKey {
+        case opponentUsername, fixture, marketType, challengerPick, stakeCoins
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        // Only include opponentUsername when set — backend distinguishes
+        // "missing identifier" (open) from "identifier provided but blank"
+        // (would 400 with Opponent not found).
+        if let u = opponentUsername, !u.isEmpty {
+            try c.encode(u, forKey: .opponentUsername)
+        }
+        try c.encode(fixture, forKey: .fixture)
+        try c.encode(marketType, forKey: .marketType)
+        try c.encode(challengerPick, forKey: .challengerPick)
+        try c.encode(stakeCoins, forKey: .stakeCoins)
+    }
 }
 
 struct ChallengeAcceptRequest: Encodable {
