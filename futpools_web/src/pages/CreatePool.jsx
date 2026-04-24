@@ -1006,15 +1006,31 @@ function CreatedSuccess({ pool, onClose, locale }) {
 // ────────────────────────────────────────────────────────────────────
 // Invite resolver — keep from original file
 
+/**
+ * Extract the first 8 valid invite-alphabet chars from a path segment. The
+ * backend mint uses `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no 0/O/1/I) — any
+ * char outside that set is garbage from a mangled share (e.g. a messaging
+ * app that glued the share text onto the URL when a friend pasted it back
+ * into the address bar). We pull the first 8 alphabet chars we see, which
+ * recovers the invite for URLs like `/p/TADWQ2WL Join my FutPools…`.
+ */
+const INVITE_ALPHABET_RE = /[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]/g;
+function sanitizeInviteCode(raw) {
+  if (!raw) return '';
+  const upper = decodeURIComponent(String(raw)).toUpperCase();
+  const matches = upper.match(INVITE_ALPHABET_RE) || [];
+  return matches.slice(0, 8).join('');
+}
+
 export function InviteResolver() {
   const navigate = useNavigate();
-  const path = typeof window !== 'undefined' ? window.location.pathname : '';
-  const code = path.split('/').pop();
+  const rawCode = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
+  const code = sanitizeInviteCode(rawCode);
 
   useEffect(() => {
-    if (!code) return;
+    if (!code || code.length !== 8) { navigate('/', { replace: true }); return; }
     let cancel = false;
-    api.get(`/quinielas/invite/${code.toUpperCase()}`)
+    api.get(`/quinielas/invite/${code}`)
       .then((pool) => { if (!cancel && pool?._id) navigate(`/pool/${pool._id}`, { replace: true }); })
       .catch(() => { if (!cancel) navigate('/', { replace: true }); });
     return () => { cancel = true; };

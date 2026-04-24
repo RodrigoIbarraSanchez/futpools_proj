@@ -405,18 +405,28 @@ function PickColumn({ label, isMe, pick, winner }) {
 // unauth users get pushed to /login with a return hint. Matches the pool
 // invite pattern.
 
+// Same sanitizer the pool invite resolver uses — tolerates trailing garbage
+// from mangled shares. Invite alphabet is `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`.
+const CHALLENGE_ALPHABET_RE = /[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]/g;
+function sanitizeChallengeCode(raw) {
+  if (!raw) return '';
+  const upper = decodeURIComponent(String(raw)).toUpperCase();
+  const matches = upper.match(CHALLENGE_ALPHABET_RE) || [];
+  return matches.slice(0, 8).join('');
+}
+
 export function ChallengeInviteResolver() {
   const navigate = useNavigate();
   const { token, ready } = useAuth();
-  const path = typeof window !== 'undefined' ? window.location.pathname : '';
-  const code = path.split('/').pop();
+  const rawCode = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
+  const code = sanitizeChallengeCode(rawCode);
 
   useEffect(() => {
     if (!ready) return;
-    if (!code) return;
+    if (!code || code.length !== 8) { navigate('/', { replace: true }); return; }
     if (!token) { navigate('/login', { replace: true }); return; }
     let cancel = false;
-    api.get(`/challenges/code/${code.toUpperCase()}`, token)
+    api.get(`/challenges/code/${code}`, token)
       .then((c) => { if (!cancel && c?._id) navigate(`/challenges/${c._id}`, { replace: true }); })
       .catch(() => { if (!cancel) navigate('/', { replace: true }); });
     return () => { cancel = true; };

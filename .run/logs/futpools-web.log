@@ -225,3 +225,5 @@
 7:09:29 AM [vite] hmr update /src/pages/Home.jsx, /src/pages/PoolDetail.jsx, /src/pages/MyEntries.jsx, /src/pages/QuinielaPick.jsx, /src/pages/Account.jsx, /src/pages/Recharge.jsx, /src/pages/CreatePool.jsx, /src/pages/LiveMatch.jsx, /src/pages/Register.jsx, /src/pages/Login.jsx, /src/pages/Settings.jsx, /src/components/SignupBonusModal.jsx, /src/pages/GlobalLeaderboard.jsx, /src/arena-ui/TabBar.jsx, /src/components/InsufficientBalanceModal.jsx, /src/components/ComingSoonModal.jsx, /src/pages/ChallengeCreate.jsx, /src/pages/ChallengeDetail.jsx, /src/pages/Challenges.jsx
 7:09:29 AM [vite] hmr invalidate /src/pages/Challenges.jsx Could not Fast Refresh ("pickLabel" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
 7:09:29 AM [vite] hmr update /src/App.jsx, /src/pages/ChallengeDetail.jsx
+10:08:30 AM [vite] hmr update /src/pages/CreatePool.jsx
+10:08:41 AM [vite] hmr update /src/pages/ChallengeDetail.jsx
