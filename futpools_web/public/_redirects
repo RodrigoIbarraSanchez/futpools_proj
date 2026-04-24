@@ -1,11 +1,1 @@
-# SPA fallback for Render's static hosting.
-#
-# Explicit entries for invite-link shapes first — some messaging apps garble
-# the shared URL (e.g. pasting the whole message "Join my FutPools: Foo!
-# https://…/p/CODE" into the address bar). The dedicated rules catch mangled
-# shapes before the generic `/*` wildcard. Every rule rewrites (200) to the
-# SPA index so React Router takes control and the client-side resolver pulls
-# the clean 8-char code out of whatever path garbage arrived.
-/p/*    /index.html   200
-/c/*    /index.html   200
-/*      /index.html   200
+/*  /index.html  200
