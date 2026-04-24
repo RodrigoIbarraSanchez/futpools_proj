@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocaleProvider } from './context/LocaleContext';
 import { Login } from './pages/Login';
@@ -29,8 +29,10 @@ function PrivateRoute({ children }) {
 
 function PublicRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
+  const location = useLocation();
   if (!ready) return null;
-  return !isAuthenticated ? children : <Navigate to="/" replace />;
+  const from = location.state?.from || '/';
+  return !isAuthenticated ? children : <Navigate to={from} replace />;
 }
 
 /**
@@ -64,7 +66,7 @@ export default function App() {
               <Route path="account" element={<Account />} />
             </Route>
 
-            <Route path="/pool/:id" element={<PrivateRoute><PoolDetail /></PrivateRoute>} />
+            <Route path="/pool/:id" element={<PoolDetail />} />
             <Route path="/pool/:id/pick" element={<PrivateRoute><QuinielaPick /></PrivateRoute>} />
             <Route path="/fixture/:fixtureId" element={<PrivateRoute><LiveMatch /></PrivateRoute>} />
             <Route path="/leaderboard" element={<PrivateRoute><GlobalLeaderboard /></PrivateRoute>} />

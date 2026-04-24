@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -108,6 +108,7 @@ function statusMeta(q, locale) {
 export function PoolDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, token } = useAuth();
   const { locale } = useLocale();
   const [quiniela, setQuiniela] = useState(null);
@@ -220,6 +221,7 @@ export function PoolDetail() {
 
   const handleJoin = () => {
     if (!canJoin()) return;
+    if (!user) { navigate('/login', { state: { from: location.pathname } }); return; }
     if (entryCost > 0 && !hasEnoughBalance) { setShowInsufficient(true); return; }
     navigate(`/pool/${id}/pick`);
   };
