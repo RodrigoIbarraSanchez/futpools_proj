@@ -948,17 +948,31 @@ function CreatedSuccess({ pool, onClose, locale }) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch { /* noop */ }
+    } catch {
+      // Clipboard API can fail in non-secure contexts or cross-origin iframes.
+      // Surface the URL in a prompt so the user can still grab it manually.
+      window.prompt('Copy this link', text);
+    }
   };
 
+  /// Mobile-only native share — desktop share sheets (Chrome macOS) can glue
+  /// `title`/`text` onto `url` when piping to a share target, producing
+  /// garbled links like `/p/CODE Foo Pool Name`. On desktop we copy straight
+  /// to the clipboard (more predictable, probably what the user wants anyway).
+  const isMobileShareAvailable = typeof navigator !== 'undefined'
+    && typeof navigator.share === 'function'
+    && ((navigator.userAgentData && navigator.userAgentData.mobile === true)
+      || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || ''));
+
   const share = async () => {
-    if (navigator.share) {
+    if (isMobileShareAvailable) {
       try {
-        await navigator.share({ title: pool.name, url: shareURL });
-      } catch { /* user cancelled */ }
-    } else {
-      copy(shareURL);
+        // URL only — no `title`/`text` so nothing can get concatenated.
+        await navigator.share({ url: shareURL });
+        return;
+      } catch { /* user cancelled or share failed → fall through to copy */ }
     }
+    copy(shareURL);
   };
 
   return (

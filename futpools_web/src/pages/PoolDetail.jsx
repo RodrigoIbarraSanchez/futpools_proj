@@ -20,12 +20,36 @@ function ShareButton({ pool }) {
     ? `${window.location.origin}/p/${pool.inviteCode}`
     : '';
 
+  /// Use native share ONLY on mobile devices — desktop share sheets (Chrome,
+  /// macOS) sometimes concatenate the `text`/`title` fields onto the `url`
+  /// when forwarding to a target, producing garbled links like
+  /// `/p/CODE Join my FutPools: Foo!`. On desktop, plain clipboard copy is
+  /// both more predictable AND more useful (the user probably wants to paste
+  /// the link into Slack/email/etc). We also pass ONLY the `url` field to
+  /// `navigator.share` on mobile — dropping `title`/`text` prevents the same
+  /// concatenation bug on any OS share targets that don't honor separation.
+  const isMobileShareAvailable = typeof navigator !== 'undefined'
+    && typeof navigator.share === 'function'
+    && ((navigator.userAgentData && navigator.userAgentData.mobile === true)
+      || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || ''));
+
+  const copyFallback = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Last-ditch: open a prompt so the user can copy manually.
+      window.prompt(t(locale, 'Copy this link'), url);
+    }
+  };
+
   const handleClick = async () => {
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Join my pool', text: `Join my FutPools: ${pool.name}`, url }); return; }
+    if (isMobileShareAvailable) {
+      try { await navigator.share({ url }); return; }
       catch { /* fall through to copy */ }
     }
-    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {}
+    await copyFallback();
   };
 
   return (

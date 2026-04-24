@@ -89,10 +89,25 @@ export function ChallengeDetail() {
   const handleShare = async () => {
     if (!c?.code) return;
     const url = `${window.location.origin}/c/${c.code}`;
+    // Mobile-only native share; pass ONLY `url` so no target can concat a
+    // `title`/`text` field onto it and produce a mangled link. Desktop always
+    // copies to clipboard for predictable UX. Same pattern as PoolDetail's
+    // ShareButton and CreatePool's post-create share.
+    const isMobile = typeof navigator !== 'undefined'
+      && typeof navigator.share === 'function'
+      && ((navigator.userAgentData && navigator.userAgentData.mobile === true)
+        || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || ''));
     try {
-      if (navigator.share) await navigator.share({ url, title: 'FutPools Challenge' });
-      else { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }
-    } catch { /* user aborted */ }
+      if (isMobile) {
+        await navigator.share({ url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      try { window.prompt('Copy this link', url); } catch { /* noop */ }
+    }
   };
 
   if (loading) {
