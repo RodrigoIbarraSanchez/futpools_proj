@@ -355,8 +355,26 @@ function FixtureSearch({ locale, onPick }) {
         ? `teamId=${src.id}`
         : `leagueId=${src.id}${src.season ? `&season=${src.season}` : ''}`;
       const data = await api.get(`/football/fixtures?${qs}`);
+      // Backend returns the API-Football preview shape ({date, teams:{home,away},
+      // league}) for team/league lookups — flatten into the kickoff/homeTeam
+      // shape the rest of this page reads. CreatePool does the same mapping at
+      // submit time; we do it eagerly here so the upcoming filter actually sees
+      // a kickoff value.
       const now = Date.now();
       const upcoming = (Array.isArray(data) ? data : [])
+        .map(fx => ({
+          fixtureId:  fx.fixtureId,
+          leagueId:   fx.league?.id,
+          leagueName: fx.league?.name || '',
+          homeTeamId: fx.teams?.home?.id,
+          awayTeamId: fx.teams?.away?.id,
+          homeTeam:   fx.teams?.home?.name || '',
+          awayTeam:   fx.teams?.away?.name || '',
+          homeLogo:   fx.teams?.home?.logo || '',
+          awayLogo:   fx.teams?.away?.logo || '',
+          kickoff:    fx.date,
+          status:     fx.status || '',
+        }))
         .filter(f => f.kickoff && new Date(f.kickoff).getTime() > now);
       setFixtures(upcoming);
     } catch { setFixtures([]); }
