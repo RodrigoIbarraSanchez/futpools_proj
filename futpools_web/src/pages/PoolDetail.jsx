@@ -16,9 +16,15 @@ function ShareButton({ pool }) {
   // subtree into a blank screen whenever the share button tried to render.
   const { locale } = useLocale();
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== 'undefined'
-    ? `${window.location.origin}/p/${pool.inviteCode}`
-    : '';
+  // Route share links through the backend so WhatsApp / Telegram bots
+  // receive a server-rendered page with og: meta tags and a fixture-card
+  // image. VITE_API_URL must be an absolute URL (https://…) for this to
+  // work; if it's relative or unset we fall back to the current origin.
+  const apiBase = import.meta.env.VITE_API_URL || '';
+  const shareOrigin = apiBase.startsWith('http')
+    ? apiBase.replace(/\/$/, '')
+    : (typeof window !== 'undefined' ? window.location.origin : '');
+  const url = pool.inviteCode ? `${shareOrigin}/p/${pool.inviteCode}` : '';
 
   /// Use native share ONLY on mobile devices — desktop share sheets (Chrome,
   /// macOS) sometimes concatenate the `text`/`title` fields onto the `url`

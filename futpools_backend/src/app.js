@@ -17,6 +17,7 @@ const adsRoutes = require('./routes/ads');
 const paymentsRoutes = require('./routes/payments');
 const paymentsController = require('./controllers/paymentsController');
 const challengeRoutes = require('./routes/challenges');
+const ogRoutes = require('./routes/og');
 
 const app = express();
 
@@ -33,6 +34,10 @@ app.post(
 );
 
 app.use(express.json());
+
+// OG share pages — must be registered before API routes so crawlers
+// (WhatsApp, Telegram, iMessage) receive the meta-tag HTML, not JSON.
+app.use(ogRoutes);
 
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
