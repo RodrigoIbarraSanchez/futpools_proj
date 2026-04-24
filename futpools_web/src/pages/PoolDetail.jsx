@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -93,6 +93,7 @@ export function PoolDetail() {
   const [leaderboard, setLeaderboard] = useState(null);
   const [showInsufficient, setShowInsufficient] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showManage, setShowManage] = useState(false);
   // Map fixtureId → "1"|"X"|"2" so we can pass the user's pick into LiveMatch
   // when they tap a fixture. Mirrors iOS loadMyPicks.
   const [myPicks, setMyPicks] = useState({});
@@ -105,6 +106,17 @@ export function PoolDetail() {
   const userBalance = user?.balance ?? 0;
   const entryCost = quiniela ? parseEntryCost(quiniela.cost) : 0;
   const hasEnoughBalance = userBalance >= entryCost;
+
+  // Creator-only admin surface is gated by ownership AND "pool hasn't started
+  // yet" (same gate the backend enforces). `isScheduled` mirrors the server's
+  // computePoolStatus === 'scheduled' — we can't rely on a persisted flag
+  // since status is derived on-read.
+  const isOwner = !!(user?.id && quiniela?.createdBy && String(user.id) === String(quiniela.createdBy));
+  const now = Date.now();
+  const isScheduled = !!quiniela?.fixtures?.length && quiniela.fixtures.every(
+    (f) => f.kickoff && new Date(f.kickoff).getTime() > now
+  );
+  const canManage = isOwner && isScheduled;
 
   const canJoin = () => {
     if (!quiniela?.fixtures?.length) return false;
@@ -265,6 +277,29 @@ export function PoolDetail() {
             {(quiniela.entriesCount ?? 0)} {t(locale, 'PLAYERS')}
           </span>
         </div>
+
+        {canManage && (
+          <button
+            type="button"
+            onClick={() => setShowManage(true)}
+            style={{
+              width: '100%',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 12px',
+              background: 'color-mix(in srgb, var(--fp-accent) 10%, var(--fp-surface) 90%)',
+              border: '1px solid color-mix(in srgb, var(--fp-accent) 45%, transparent)',
+              clipPath: 'var(--fp-clip-sm)',
+              marginBottom: 14,
+              cursor: 'pointer',
+              color: 'var(--fp-accent)',
+              fontFamily: 'var(--fp-display)', fontSize: 12, fontWeight: 800, letterSpacing: 2,
+              textTransform: 'uppercase',
+            }}
+          >
+            <span>◆ {t(locale, 'MANAGE PARTICIPANTS')}</span>
+            <span style={{ fontSize: 14 }}>→</span>
+          </button>
+        )}
 
         {/* Prize hero */}
         <HudFrame
@@ -459,6 +494,16 @@ export function PoolDetail() {
           locale={locale}
           quiniela={quiniela}
           onClose={() => setShowRules(false)}
+        />
+      )}
+
+      {showManage && (
+        <ParticipantManageModal
+          locale={locale}
+          quinielaId={id}
+          token={token}
+          onClose={() => setShowManage(false)}
+          onMutated={() => load()}
         />
       )}
     </>
@@ -693,6 +738,231 @@ function RulesModal({ locale, quiniela, onClose }) {
                 }}>{text}</div>
               </div>
             ))}
+          </div>
+        </HudFrame>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// ParticipantManageModal — creator-only admin surface shown when the
+// pool hasn't started. Lists each participant with their entry count,
+// offers per-entry delete and full-player removal. Mirrors the shape
+// of `GET /quinielas/:id/participants`.
+
+function ParticipantManageModal({ locale, quinielaId, token, onClose, onMutated }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // Track which row is currently executing a delete so we can disable the
+  // button and avoid double-click double-deletes. Keys: entryId or userId.
+  const [pending, setPending] = useState(new Set());
+
+  const load = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await api.get(`/quinielas/${quinielaId}/participants`, token);
+      setData(res);
+    } catch (e) {
+      setError(e.message || 'Failed to load participants');
+    } finally {
+      setLoading(false);
+    }
+  }, [quinielaId, token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const markPending = (key, on) => {
+    setPending((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key); else next.delete(key);
+      return next;
+    });
+  };
+
+  const handleDeleteEntry = async (entryId) => {
+    const ok = window.confirm(t(locale, 'Delete this entry? Coins will be refunded if paid.'));
+    if (!ok) return;
+    markPending(entryId, true);
+    try {
+      await api.delete(`/quinielas/${quinielaId}/entries/${entryId}`, token);
+      await load();
+      onMutated?.();
+    } catch (e) {
+      setError(e.message || 'Delete failed');
+    } finally {
+      markPending(entryId, false);
+    }
+  };
+
+  const handleRemoveParticipant = async (participant) => {
+    const entries = participant.entries || [];
+    if (entries.length === 0) return;
+    const who = participant.user?.displayName || participant.user?.username || 'this player';
+    const ok = window.confirm(
+      tFormat(locale, 'Remove {who}? All {n} of their entries will be deleted (coins refunded).', {
+        who, n: entries.length,
+      })
+    );
+    if (!ok) return;
+    markPending(participant.user?.id, true);
+    try {
+      // Fire all deletes in parallel. Backend idempotency on refund keys
+      // means a partial failure followed by a retry is safe.
+      await Promise.all(
+        entries.map((e) => api.delete(`/quinielas/${quinielaId}/entries/${e._id}`, token))
+      );
+      await load();
+      onMutated?.();
+    } catch (e) {
+      setError(e.message || 'Remove failed');
+    } finally {
+      markPending(participant.user?.id, false);
+    }
+  };
+
+  const participants = data?.participants || [];
+  const notScheduled = data?.status && data.status !== 'scheduled';
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 250,
+        background: 'rgba(0,0,0,0.82)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: 430, maxHeight: '88vh', overflowY: 'auto' }}
+      >
+        <HudFrame>
+          <div style={{ padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{
+                flex: 1,
+                fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800, letterSpacing: 2,
+                color: 'var(--fp-accent)',
+              }}>◆ {t(locale, 'MANAGE PARTICIPANTS')}</div>
+              <button
+                onClick={onClose}
+                style={{
+                  background: 'transparent', border: 'none', color: 'var(--fp-text-muted)',
+                  fontSize: 20, cursor: 'pointer', padding: 4,
+                }}
+              >✕</button>
+            </div>
+
+            {loading ? (
+              <div style={{
+                padding: 24, textAlign: 'center',
+                fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)',
+              }}>{t(locale, 'Loading…')}</div>
+            ) : error ? (
+              <div style={{
+                padding: 10, color: 'var(--fp-danger)',
+                fontFamily: 'var(--fp-mono)', fontSize: 11,
+              }}>{error}</div>
+            ) : notScheduled ? (
+              <div style={{
+                padding: 16, textAlign: 'center',
+                fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-muted)',
+              }}>{t(locale, 'Pool already started. Participants are locked in.')}</div>
+            ) : participants.length === 0 ? (
+              <div style={{
+                padding: 24, textAlign: 'center',
+                fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-muted)',
+              }}>{t(locale, 'No entries yet')}</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {participants.map((p) => {
+                  const name = p.user?.displayName || p.user?.username || '—';
+                  const handle = p.user?.username ? `@${p.user.username}` : '';
+                  const isPending = pending.has(p.user?.id);
+                  return (
+                    <div key={p.user?.id || name} style={{
+                      padding: 10,
+                      background: 'var(--fp-bg2)',
+                      clipPath: 'var(--fp-clip-sm)',
+                      border: '1px solid var(--fp-stroke)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            fontFamily: 'var(--fp-display)', fontSize: 12, fontWeight: 800,
+                            letterSpacing: 1, textTransform: 'uppercase',
+                          }}>{name}</div>
+                          <div style={{
+                            fontFamily: 'var(--fp-mono)', fontSize: 9,
+                            color: 'var(--fp-text-muted)',
+                          }}>
+                            {handle && <>{handle} · </>}{p.entryCount} {t(locale, 'ENTRIES')}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => handleRemoveParticipant(p)}
+                          style={{
+                            padding: '6px 10px',
+                            background: 'transparent',
+                            border: '1px solid color-mix(in srgb, var(--fp-danger) 55%, transparent)',
+                            color: 'var(--fp-danger)',
+                            clipPath: 'var(--fp-clip-sm)',
+                            fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800,
+                            letterSpacing: 1.5, cursor: isPending ? 'default' : 'pointer',
+                            opacity: isPending ? 0.5 : 1,
+                          }}
+                        >{isPending ? '…' : t(locale, 'REMOVE')}</button>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {p.entries.map((e) => {
+                          const entryPending = pending.has(e._id);
+                          return (
+                            <div key={e._id} style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              padding: '5px 8px',
+                              background: 'var(--fp-surface)',
+                              clipPath: 'var(--fp-clip-sm)',
+                            }}>
+                              <span style={{
+                                fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+                                color: 'var(--fp-primary)', minWidth: 28,
+                              }}>#{e.entryNumber}</span>
+                              <span style={{
+                                flex: 1,
+                                fontFamily: 'var(--fp-mono)', fontSize: 9,
+                                color: 'var(--fp-text-muted)',
+                              }}>
+                                {e.createdAt
+                                  ? new Date(e.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                                  : ''}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={entryPending}
+                                onClick={() => handleDeleteEntry(e._id)}
+                                style={{
+                                  background: 'transparent', border: 'none',
+                                  color: 'var(--fp-danger)',
+                                  fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800,
+                                  letterSpacing: 1, cursor: entryPending ? 'default' : 'pointer',
+                                  opacity: entryPending ? 0.5 : 1,
+                                }}
+                              >{entryPending ? '…' : t(locale, 'DELETE')}</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </HudFrame>
       </div>

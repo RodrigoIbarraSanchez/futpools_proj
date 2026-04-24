@@ -39,6 +39,9 @@ struct HomeView: View {
                                 .padding(.horizontal, 16)
                         }
 
+                        ChallengesTeaserCard()
+                            .padding(.horizontal, 16)
+
                         ArenaFilterStrip(
                             active: $activeFilter,
                             allCount: vm.quinielas.count,

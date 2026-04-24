@@ -17,6 +17,9 @@ import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
 import { SignupBonusModal } from './components/SignupBonusModal';
 import { LandingPage } from './pages/LandingPage';
+import { Challenges } from './pages/Challenges';
+import { ChallengeCreate } from './pages/ChallengeCreate';
+import { ChallengeDetail, ChallengeInviteResolver } from './pages/ChallengeDetail';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -70,6 +73,11 @@ export default function App() {
 
             <Route path="/create" element={<PrivateRoute><CreatePool /></PrivateRoute>} />
             <Route path="/p/:code" element={<InviteResolver />} />
+
+            <Route path="/challenges" element={<PrivateRoute><Challenges /></PrivateRoute>} />
+            <Route path="/challenges/new" element={<PrivateRoute><ChallengeCreate /></PrivateRoute>} />
+            <Route path="/challenges/:id" element={<PrivateRoute><ChallengeDetail /></PrivateRoute>} />
+            <Route path="/c/:code" element={<ChallengeInviteResolver />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

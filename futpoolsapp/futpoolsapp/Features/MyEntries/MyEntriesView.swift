@@ -144,6 +144,20 @@ private struct ArenaEntryGroupCard: View {
         return "PENDING"
     }
 
+    /// Entry-edit is allowed only while the pool is still scheduled — every
+    /// fixture must be in the future AND none can be mid-match. Mirrors the
+    /// backend's `computePoolStatus === 'scheduled'` gate.
+    private var isScheduled: Bool {
+        if let end = group.quiniela.endDateValue, end < Date() { return false }
+        let now = Date()
+        for fx in group.quiniela.fixtures {
+            if let date = fx.kickoffDate, date <= now { return false }
+            let short = (liveFixtures[fx.fixtureId]?.status.short ?? "").uppercased()
+            if !short.isEmpty && short != "NS" { return false }
+        }
+        return !group.quiniela.fixtures.isEmpty
+    }
+
     private var bestScore: (Int, Int) {
         let items: [(Int, Int)] = group.entries.map { e in
             let s = e.score ?? 0
@@ -208,7 +222,12 @@ private struct ArenaEntryGroupCard: View {
                 if isExpanded {
                     VStack(alignment: .leading, spacing: 10) {
                         ForEach(Array(group.entries.enumerated()), id: \.element.id) { idx, entry in
-                            EntryDetailArena(entry: entry, fallback: idx + 1, liveFixtures: liveFixtures)
+                            EntryDetailArena(
+                                entry: entry,
+                                fallback: idx + 1,
+                                liveFixtures: liveFixtures,
+                                isScheduled: isScheduled
+                            )
                             if idx < group.entries.count - 1 {
                                 Rectangle().fill(Color.arenaStroke).frame(height: 1)
                             }
@@ -232,6 +251,7 @@ private struct EntryDetailArena: View {
     let entry: QuinielaEntry
     let fallback: Int
     let liveFixtures: [Int: LiveFixture]
+    let isScheduled: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -245,6 +265,23 @@ private struct EntryDetailArena: View {
                         .font(ArenaFont.mono(size: 10, weight: .bold))
                         .tracking(1)
                         .foregroundColor(.arenaGold)
+                }
+                if isScheduled {
+                    NavigationLink {
+                        QuinielaPickView(quiniela: entry.quiniela, entryToEdit: entry)
+                    } label: {
+                        Text("✎ EDIT")
+                            .font(ArenaFont.mono(size: 9, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundColor(.arenaAccent)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 3)
+                                    .stroke(Color.arenaAccent.opacity(0.45), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
                 }
                 Spacer()
                 if let d = entry.createdAtValue {

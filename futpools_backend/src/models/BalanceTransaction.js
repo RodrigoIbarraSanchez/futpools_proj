@@ -17,6 +17,8 @@ const mongoose = require('mongoose');
  *   ads_credit         — rewarded-video reward
  *   signup_bonus       — v3 — gift to every new account on register
  *   sponsorship_debit  — v3 — creator pays prize×1.1 to sponsor a pool
+ *   challenge_debit    — stake locked in on a 1v1 challenge (create or accept)
+ *   challenge_payout   — 1v1 challenge winner is paid (2×stake − rake)
  */
 const balanceTransactionSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -27,6 +29,7 @@ const balanceTransactionSchema = new mongoose.Schema({
       'iap_credit', 'entry_debit', 'prize_credit', 'refund_credit',
       'admin_mint', 'admin_burn', 'ads_credit',
       'signup_bonus', 'sponsorship_debit',
+      'challenge_debit', 'challenge_payout',
     ],
     required: true,
     index: true,

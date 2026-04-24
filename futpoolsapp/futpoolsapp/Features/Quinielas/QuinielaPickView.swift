@@ -7,6 +7,10 @@ import SwiftUI
 
 struct QuinielaPickView: View {
     let quiniela: Quiniela
+    /// Optional existing entry to edit. When nil, the view creates a new
+    /// entry (POST). When non-nil, we hydrate picks from it and save via
+    /// PUT `/quinielas/:id/entries/:entryId`.
+    let entryToEdit: QuinielaEntry?
     @Environment(\.dismiss) private var dismiss
 
     @State private var picks: [Int: String] = [:]
@@ -17,6 +21,19 @@ struct QuinielaPickView: View {
 
     private let client = APIClient.shared
 
+    init(quiniela: Quiniela, entryToEdit: QuinielaEntry? = nil) {
+        self.quiniela = quiniela
+        self.entryToEdit = entryToEdit
+        // Seed picks from the edit target so the UI paints with prior
+        // choices highlighted instead of flashing empty rows first.
+        var seed: [Int: String] = [:]
+        if let entry = entryToEdit {
+            for p in entry.picks { seed[p.fixtureId] = p.pick }
+        }
+        _picks = State(initialValue: seed)
+    }
+
+    private var isEditing: Bool { entryToEdit != nil }
     private var count: Int { picks.filter { ["1", "X", "2"].contains($0.value) }.count }
     private var total: Int { quiniela.fixtures.count }
     private var complete: Bool { count == total && total > 0 }
@@ -92,16 +109,18 @@ struct QuinielaPickView: View {
     }
 
     private var submitTitle: String {
-        if isLoading { return "SUBMITTING…" }
-        if complete { return "▶ SUBMIT PICKS" }
-        return "COMPLETE ALL (\(total - count) LEFT)"
+        if isLoading { return String(localized: "SUBMITTING…") }
+        if complete {
+            return isEditing ? String(localized: "▶ SAVE CHANGES") : String(localized: "▶ SUBMIT PICKS")
+        }
+        return String(format: String(localized: "COMPLETE ALL (%d LEFT)"), total - count)
     }
 
     private var header: some View {
         // Back chevron comes from the native NavigationStack toolbar — no duplicate here.
         HStack {
             Spacer()
-            Text("MAKE YOUR PICKS")
+            Text(isEditing ? String(localized: "EDIT YOUR PICKS") : String(localized: "MAKE YOUR PICKS"))
                 .font(ArenaFont.display(size: 12, weight: .bold))
                 .tracking(3)
                 .foregroundColor(.arenaText)
@@ -141,12 +160,21 @@ struct QuinielaPickView: View {
                     isLoading = false
                     return
                 }
-                let _: QuinielaEntry = try await client.request(
-                    method: "POST",
-                    path: "/quinielas/\(quiniela.id)/entries",
-                    body: payload,
-                    token: token
-                )
+                if let editing = entryToEdit {
+                    let _: QuinielaEntry = try await client.request(
+                        method: "PUT",
+                        path: "/quinielas/\(quiniela.id)/entries/\(editing.id)",
+                        body: payload,
+                        token: token
+                    )
+                } else {
+                    let _: QuinielaEntry = try await client.request(
+                        method: "POST",
+                        path: "/quinielas/\(quiniela.id)/entries",
+                        body: payload,
+                        token: token
+                    )
+                }
                 showSuccess = true
             } catch {
                 errorMessage = error.localizedDescription

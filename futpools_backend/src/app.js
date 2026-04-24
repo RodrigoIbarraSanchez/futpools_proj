@@ -16,6 +16,7 @@ const adminRoutes = require('./routes/admin');
 const adsRoutes = require('./routes/ads');
 const paymentsRoutes = require('./routes/payments');
 const paymentsController = require('./controllers/paymentsController');
+const challengeRoutes = require('./routes/challenges');
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/leaderboard', leaderboardRoutes);
 app.use('/admin', adminRoutes);
 app.use('/ads', adsRoutes);
 app.use('/payments', paymentsRoutes);
+app.use('/challenges', challengeRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });

@@ -194,6 +194,42 @@ struct QuinielaPickResponse: Decodable {
     let pick: String
 }
 
+/// Response shape for `GET /quinielas/:id/participants` — creator-only admin
+/// view. Deliberately omits picks; only entry metadata needed to surface the
+/// "kick / delete this entry" UI without leaking other players' picks.
+struct ParticipantsResponse: Decodable {
+    let status: String
+    let participants: [ParticipantDTO]
+}
+
+struct ParticipantDTO: Decodable, Identifiable {
+    let user: ParticipantUser
+    let entryCount: Int
+    let firstEntryAt: String?
+    let entries: [ParticipantEntry]
+    var id: String { user.id }
+}
+
+struct ParticipantUser: Decodable {
+    let id: String
+    let username: String?
+    let displayName: String?
+}
+
+struct ParticipantEntry: Decodable, Identifiable {
+    let _id: String
+    let entryNumber: Int
+    let createdAt: String?
+    var id: String { _id }
+}
+
+/// Response from `DELETE /quinielas/:id/entries/:entryId`.
+struct DeleteEntryResponse: Decodable {
+    let ok: Bool
+    let refundedAmount: Int?
+    let entryId: String?
+}
+
 enum DateParser {
     private static let isoWithFractional: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -12,8 +12,15 @@ import {
 export function QuinielaPick() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { token } = useAuth();
   const { locale } = useLocale();
+
+  // When `?entryId=<id>` is present we're editing an existing entry rather
+  // than creating a new one. The screen reuses the same UI — only the title,
+  // the HTTP verb, and the pre-fill on mount differ.
+  const editEntryId = searchParams.get('entryId');
+  const isEditing = Boolean(editEntryId);
 
   const [quiniela, setQuiniela] = useState(null);
   const [picks, setPicks] = useState({});
@@ -25,8 +32,33 @@ export function QuinielaPick() {
 
   useEffect(() => {
     if (!id) return;
-    api.get(`/quinielas/${id}`).then(setQuiniela).catch(() => setQuiniela(null)).finally(() => setLoading(false));
-  }, [id]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const pool = await api.get(`/quinielas/${id}`);
+        if (cancelled) return;
+        setQuiniela(pool);
+
+        // Edit mode: hydrate picks from the existing entry so the user sees
+        // their previous choices highlighted instead of a blank slate.
+        if (isEditing && token) {
+          const entries = await api.get(`/quinielas/${id}/entries/me`, token);
+          const entry = (Array.isArray(entries) ? entries : [])
+            .find((e) => String(e._id) === String(editEntryId));
+          if (entry && !cancelled) {
+            const seed = {};
+            for (const p of (entry.picks || [])) seed[p.fixtureId] = p.pick;
+            setPicks(seed);
+          }
+        }
+      } catch {
+        if (!cancelled) setQuiniela(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id, isEditing, editEntryId, token]);
 
   const fixtures = quiniela?.fixtures || [];
   const count = fixtures.filter(f => ['1','X','2'].includes(picks[f.fixtureId])).length;
@@ -49,7 +81,11 @@ export function QuinielaPick() {
           .filter(f => ['1','X','2'].includes(picks[f.fixtureId]))
           .map(f => ({ fixtureId: f.fixtureId, pick: picks[f.fixtureId] })),
       };
-      await api.post(`/quinielas/${id}/entries`, payload, token);
+      if (isEditing) {
+        await api.put(`/quinielas/${id}/entries/${editEntryId}`, payload, token);
+      } else {
+        await api.post(`/quinielas/${id}/entries`, payload, token);
+      }
       setSuccess(true);
       setTimeout(() => navigate(-1), 1800);
     } catch (e) {
@@ -83,7 +119,7 @@ export function QuinielaPick() {
             fontFamily: 'var(--fp-display)', fontSize: 12, letterSpacing: 3,
             fontWeight: 700,
           }}>
-            MAKE YOUR PICKS
+            {isEditing ? t(locale, 'EDIT YOUR PICKS') : t(locale, 'MAKE YOUR PICKS')}
           </div>
           <div style={{ width: 32 }} />
         </div>
@@ -221,9 +257,9 @@ export function QuinielaPick() {
             disabled={!complete || submitting}
             onClick={handleSubmit}
           >
-            {submitting ? 'SUBMITTING…'
-              : complete ? '▶ SUBMIT PICKS'
-              : `COMPLETE ALL (${total - count} LEFT)`}
+            {submitting ? t(locale, 'SUBMITTING…')
+              : complete ? (isEditing ? t(locale, '▶ SAVE CHANGES') : t(locale, '▶ SUBMIT PICKS'))
+              : `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`}
           </ArcadeButton>
         </div>
       </div>
@@ -241,7 +277,7 @@ export function QuinielaPick() {
             <div style={{
               fontFamily: 'var(--fp-display)', fontSize: 28, fontWeight: 900,
               color: 'var(--fp-primary)', letterSpacing: 3, marginBottom: 6,
-            }}>PICKS LOCKED!</div>
+            }}>{isEditing ? t(locale, 'PICKS UPDATED!') : t(locale, 'PICKS LOCKED!')}</div>
             <div style={{
               fontFamily: 'var(--fp-body)', fontSize: 12,
               color: 'var(--fp-text-dim)',

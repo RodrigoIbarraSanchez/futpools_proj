@@ -31,6 +31,7 @@ struct QuinielaDetailView: View {
     @State private var showInsufficientBalanceSheet = false
     @State private var showRechargeSheet = false
     @State private var showRulesSheet = false
+    @State private var showManageSheet = false
     @State private var pendingRechargeAfterDismiss = false
     @State private var liveTimer: Timer?
     @State private var adminErrorMessage: String?
@@ -50,6 +51,20 @@ struct QuinielaDetailView: View {
         return uid == by
     }
     private var canManage: Bool { isAdmin || isOwner }
+
+    /// Mirrors the backend's `computePoolStatus === 'scheduled'` gate. True
+    /// only when every fixture is still in the future AND no fixture reports
+    /// a live/finished status. Used to gate participant-admin actions.
+    private var isScheduled: Bool {
+        guard !quiniela.fixtures.isEmpty else { return false }
+        let now = Date()
+        for fx in quiniela.fixtures {
+            if let date = fx.kickoffDate, date <= now { return false }
+            let short = (liveFixtures[fx.fixtureId]?.status.short ?? "").uppercased()
+            if !short.isEmpty && short != "NS" { return false }
+        }
+        return true
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -120,6 +135,13 @@ struct QuinielaDetailView: View {
                         } label: {
                             Label("Edit pool", systemImage: "pencil")
                         }
+                        if isScheduled {
+                            Button {
+                                showManageSheet = true
+                            } label: {
+                                Label("Manage participants", systemImage: "person.2.badge.gearshape")
+                            }
+                        }
                         if isAdmin {
                             Button {
                                 toggleFeatured()
@@ -149,6 +171,19 @@ struct QuinielaDetailView: View {
                 },
                 onDismiss: { showEditSheet = false },
                 onError: { msg in adminErrorMessage = msg }
+            )
+        }
+        .sheet(isPresented: $showManageSheet) {
+            ParticipantManageSheet(
+                quinielaId: quiniela.id,
+                token: auth.token,
+                onDismiss: { showManageSheet = false },
+                onMutated: {
+                    // Refresh leaderboard + entry count after kicks/deletes so
+                    // the detail view matches the new state when the sheet closes.
+                    loadEntryCount()
+                    loadLeaderboard()
+                }
             )
         }
         .sheet(isPresented: $showRulesSheet) {

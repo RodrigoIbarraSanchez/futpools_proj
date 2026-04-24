@@ -17,6 +17,19 @@ router.get('/:id', quinielaController.getQuinielaById);
 router.get('/:id/leaderboard', optionalAuth, quinielaController.getLeaderboard);
 router.post('/:id/entries', auth, quinielaController.submitEntry);
 router.get('/:id/entries/me', auth, quinielaController.getMyEntriesForQuiniela);
+// Entry-level CRUD: edit picks (owner only) and delete (owner or creator/admin).
+// Authorization branches live inside the handlers because the allowed roles
+// differ per-action (self for PUT; self OR creator OR admin for DELETE),
+// which the single-axis requireOwnerOrAdmin middleware can't express.
+router.put('/:id/entries/:entryId', auth, quinielaController.updateEntry);
+router.delete('/:id/entries/:entryId', auth, quinielaController.deleteEntry);
+// Participant list — creator/admin only.
+router.get(
+  '/:id/participants',
+  auth,
+  requireOwnerOrAdmin(loadQuinielaById),
+  quinielaController.getParticipants
+);
 
 // ── Pool creation (any authenticated user) ────────────────────────────
 router.post('/', auth, quinielaController.createQuiniela);

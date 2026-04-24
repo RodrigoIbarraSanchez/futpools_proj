@@ -172,6 +172,14 @@ function GroupCard({ group, locale, liveFixtures, isExpanded, onToggle }) {
     ? { label: t(locale, 'CLOSED'), color: 'var(--fp-text-muted)' }
     : { label: t(locale, 'PENDING'), color: 'var(--fp-accent)' };
 
+  // "Scheduled" = pool hasn't started. Editable only in this state. All
+  // fixtures must still be in the future AND the pool isn't closed.
+  const fixturesArr = group.quiniela?.fixtures || [];
+  const now = Date.now();
+  const isScheduled = !closed
+    && fixturesArr.length > 0
+    && fixturesArr.every(f => f.kickoff && new Date(f.kickoff).getTime() > now);
+
   const dateRange = group.quiniela?.startDate
     ? new Date(group.quiniela.startDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
     : '—';
@@ -251,6 +259,8 @@ function GroupCard({ group, locale, liveFixtures, isExpanded, onToggle }) {
                   liveFixtures={liveFixtures}
                   locale={locale}
                   withDivider={idx < sortedEntries.length - 1}
+                  isScheduled={isScheduled}
+                  quinielaId={group.quiniela?._id}
                 />
               ))}
             </div>
@@ -264,7 +274,7 @@ function GroupCard({ group, locale, liveFixtures, isExpanded, onToggle }) {
 // ────────────────────────────────────────────────────────────────────
 // Entry detail + pick row — mirrors iOS EntryDetailArena + PickRow
 
-function EntryDetail({ entry, fallbackNumber, fixtures, liveFixtures, locale, withDivider }) {
+function EntryDetail({ entry, fallbackNumber, fixtures, liveFixtures, locale, withDivider, isScheduled, quinielaId }) {
   const entryNumber = entry.entryNumber ?? fallbackNumber;
   const score = entry.score;
   const total = entry.totalPossible;
@@ -282,6 +292,21 @@ function EntryDetail({ entry, fallbackNumber, fixtures, liveFixtures, locale, wi
           }}>
             {t(locale, 'ENTRY')} #{entryNumber}
           </div>
+          {isScheduled && quinielaId && entry?._id && (
+            <Link
+              to={`/pool/${quinielaId}/pick?entryId=${entry._id}`}
+              style={{
+                fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                color: 'var(--fp-accent)',
+                padding: '3px 7px',
+                border: '1px solid color-mix(in srgb, var(--fp-accent) 45%, transparent)',
+                clipPath: 'var(--fp-clip-sm)',
+                textDecoration: 'none',
+              }}
+            >
+              ✎ {t(locale, 'EDIT')}
+            </Link>
+          )}
           {typeof score === 'number' && typeof total === 'number' && total > 0 && (
             <div style={{
               fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700, letterSpacing: 1,

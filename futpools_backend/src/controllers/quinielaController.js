@@ -4,7 +4,20 @@ const User = require('../models/User');
 const { fetchFixturesByIds } = require('../services/apiFootball');
 const { isAdminUser } = require('../middleware/auth');
 const { applyScoringToQuiniela } = require('./ratingController');
-const { debitOrFail } = require('../services/transactionService');
+const { debitOrFail, applyDelta } = require('../services/transactionService');
+
+/**
+ * Resolve the coin cost a participant pays/paid for a single entry in the
+ * given pool. Mirrors the logic in `submitEntry` so that refunds on delete
+ * return the exact amount debited on create. Sponsored pools are always
+ * free; peer pools use `entryCostCoins`; legacy pools parse the string
+ * `cost` (pre-v3 field).
+ */
+function resolveEntryCost(quiniela) {
+  if (quiniela.fundingModel === 'sponsored') return 0;
+  if (Number(quiniela.entryCostCoins) > 0) return Number(quiniela.entryCostCoins);
+  return parseFloat(String(quiniela.cost).replace(/[^0-9.-]/g, '')) || 0;
+}
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN']);
 
@@ -393,16 +406,15 @@ exports.submitEntry = async (req, res) => {
     const quiniela = await Quiniela.findById(quinielaId);
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
 
-    // Coin cost resolution:
-    //   Sponsored pools (v3) → participants ALWAYS play free (creator paid up
-    //   front for the prize). This short-circuits any legacy `cost` value.
-    //   Peer pools → use `entryCostCoins`.
-    //   Legacy/undeclared → parse the old `cost` string.
-    const coinCost = quiniela.fundingModel === 'sponsored'
-      ? 0
-      : (Number(quiniela.entryCostCoins) > 0
-          ? Number(quiniela.entryCostCoins)
-          : (parseFloat(String(quiniela.cost).replace(/[^0-9.-]/g, '')) || 0));
+    // Block submissions once any fixture has kicked off. Historically this
+    // handler accepted entries at any time — the client disabled the CTA but
+    // a direct API hit would succeed, which violates the core contract that
+    // picks are frozen at kickoff.
+    if (computePoolStatus(quiniela.fixtures || [], null) !== 'scheduled') {
+      return res.status(400).json({ message: 'Pool already started', code: 'POOL_STARTED' });
+    }
+
+    const coinCost = resolveEntryCost(quiniela);
 
     // Reserve the entry doc id up-front so the ledger idempotency key can
     // reference it. The debit runs BEFORE the entry is persisted to avoid a
@@ -714,6 +726,170 @@ exports.getLeaderboard = async (req, res) => {
     }
   } catch (err) {
     console.error('[Quiniela] getLeaderboard error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * GET /quinielas/:id/participants — creator/admin view of who has entered.
+ *
+ * Mounted behind `requireOwnerOrAdmin` so only the pool's creator (or a
+ * platform admin) sees it. Intentionally omits `picks` from the response:
+ * revealing picks to the creator before kickoff would give them an
+ * information edge (e.g. "kick the one who guessed well"), breaking pool
+ * fairness. Picks stay private until the pool is completed — the per-user
+ * picks surface only in that user's own /entries/me response.
+ */
+exports.getParticipants = async (req, res) => {
+  try {
+    const quinielaId = req.params.id;
+    // `req.resource` is populated by requireOwnerOrAdmin — no second fetch.
+    const quiniela = req.resource || await Quiniela.findById(quinielaId);
+    if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
+
+    const entries = await QuinielaEntry.find({ quiniela: quinielaId })
+      .populate('user', 'username displayName')
+      .sort({ createdAt: 1 })
+      .lean();
+
+    // Group by user, preserving entry order.
+    const byUser = new Map();
+    for (const e of entries) {
+      const uid = String(e.user?._id || e.user || 'unknown');
+      if (!byUser.has(uid)) {
+        byUser.set(uid, {
+          user: e.user
+            ? { id: String(e.user._id), username: e.user.username, displayName: e.user.displayName }
+            : { id: uid, username: null, displayName: null },
+          entryCount: 0,
+          firstEntryAt: e.createdAt,
+          entries: [],
+        });
+      }
+      const row = byUser.get(uid);
+      row.entryCount += 1;
+      row.entries.push({
+        _id: String(e._id),
+        entryNumber: e.entryNumber,
+        createdAt: e.createdAt,
+      });
+    }
+
+    res.json({
+      status: computePoolStatus(quiniela.fixtures || [], null),
+      participants: [...byUser.values()],
+    });
+  } catch (err) {
+    console.error('[Quiniela] getParticipants error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * PUT /quinielas/:id/entries/:entryId — entry owner edits their own picks.
+ *
+ * Only the user who submitted the entry can edit it. Neither the pool
+ * creator nor admins are allowed — editing someone else's picks would be
+ * tampering, not moderation. Blocked once the pool has started.
+ */
+exports.updateEntry = async (req, res) => {
+  try {
+    const { id: quinielaId, entryId } = req.params;
+    const { picks } = req.body || {};
+    if (!Array.isArray(picks) || picks.length === 0) {
+      return res.status(400).json({ message: 'Picks are required' });
+    }
+
+    const entry = await QuinielaEntry.findOne({ _id: entryId, quiniela: quinielaId });
+    if (!entry) return res.status(404).json({ message: 'Entry not found' });
+
+    if (String(entry.user) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Not allowed' });
+    }
+
+    const quiniela = await Quiniela.findById(quinielaId);
+    if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
+    if (computePoolStatus(quiniela.fixtures || [], null) !== 'scheduled') {
+      return res.status(400).json({ message: 'Pool already started', code: 'POOL_STARTED' });
+    }
+
+    // Validate each pick: fixtureId must exist in the pool, value must be 1/X/2.
+    const validFixtureIds = new Set((quiniela.fixtures || []).map((f) => Number(f.fixtureId)));
+    const validPicks = new Set(['1', 'X', '2']);
+    for (const p of picks) {
+      if (!validFixtureIds.has(Number(p.fixtureId)) || !validPicks.has(String(p.pick))) {
+        return res.status(400).json({ message: 'Invalid pick', invalid: p });
+      }
+    }
+
+    entry.picks = picks;
+    entry.updatedAt = new Date();
+    await entry.save();
+    await entry.populate('quiniela');
+    res.json(entry);
+  } catch (err) {
+    console.error('[Quiniela] updateEntry error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * DELETE /quinielas/:id/entries/:entryId — remove a single entry.
+ *
+ * Authorized for: the entry's owner (self-withdraw), the pool creator
+ * (kicking), or a platform admin. Blocked once the pool has started — once
+ * fixtures kick off, every entry is locked to preserve the leaderboard.
+ *
+ * Refund: if the pool debited coins on create, we credit the same amount
+ * back to the entry owner (NOT the requester — a creator kicking a player
+ * refunds the player, not themselves). Keyed by `refund:entry:<entryId>`
+ * so a duplicate DELETE — or a retry mid-flight — doesn't double-credit.
+ */
+exports.deleteEntry = async (req, res) => {
+  try {
+    const { id: quinielaId, entryId } = req.params;
+    const entry = await QuinielaEntry.findOne({ _id: entryId, quiniela: quinielaId });
+    if (!entry) return res.status(404).json({ message: 'Entry not found' });
+
+    const quiniela = await Quiniela.findById(quinielaId);
+    if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
+
+    const requesterId = String(req.user._id);
+    const entryOwnerId = String(entry.user);
+    const creatorId = quiniela.createdBy ? String(quiniela.createdBy) : null;
+    const isSelf = requesterId === entryOwnerId;
+    const isCreator = creatorId && requesterId === creatorId;
+    const isAdmin = isAdminUser(req.user);
+    if (!isSelf && !isCreator && !isAdmin) {
+      return res.status(403).json({ message: 'Not allowed' });
+    }
+
+    if (computePoolStatus(quiniela.fixtures || [], null) !== 'scheduled') {
+      return res.status(400).json({ message: 'Pool already started', code: 'POOL_STARTED' });
+    }
+
+    // Refund first, delete second. If the refund fails mid-flight, a retry
+    // of DELETE will hit the idempotency key and skip the double-credit —
+    // and the entry still exists, so the client sees a consistent state.
+    const coinCost = resolveEntryCost(quiniela);
+    let refundedAmount = 0;
+    if (coinCost > 0) {
+      const result = await applyDelta({
+        userId: entry.user,
+        amount: coinCost,
+        kind: 'refund_credit',
+        idempotencyKey: `refund:entry:${entry._id}`,
+        quiniela: quinielaId,
+        entry: entry._id,
+        note: `Entry #${entry.entryNumber} removed before kickoff`,
+      });
+      if (result.applied) refundedAmount = coinCost;
+    }
+
+    await entry.deleteOne();
+    res.json({ ok: true, refundedAmount, entryId: String(entry._id) });
+  } catch (err) {
+    console.error('[Quiniela] deleteEntry error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
