@@ -641,7 +641,12 @@ exports.deleteQuiniela = async (req, res) => {
 exports.getLeaderboard = async (req, res) => {
   try {
     const quinielaId = req.params.id;
-    const top = Math.min(Math.max(Number(req.query.top) || 5, 1), 50);
+    // Default `top` matches the web/iOS leaderboard view (podium 3 +
+    // table up to 12 = 15-ish). Old default of 5 silently dropped real
+    // participants from medium pools — the header showed "N players"
+    // while the table only listed the first 5. Cap at 50 to avoid huge
+    // payloads when someone hand-crafts ?top=999.
+    const top = Math.min(Math.max(Number(req.query.top) || 20, 1), 50);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
 
