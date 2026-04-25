@@ -347,6 +347,12 @@
 "TRAILING" = "VA PERDIENDO";
 "+1 PT" = "+1 PT";
 "MISSED" = "FALLÓ";
+"PT" = "PT";
+"PTS" = "PTS";
+"PARTICIPANT PREDICTIONS" = "PRONÓSTICOS DE PARTICIPANTES";
+"View predictions" = "Ver pronósticos";
+"Tap an entry to reveal picks." = "Toca una participación para ver sus picks.";
+"NO PICKS YET" = "SIN PICKS";
 
 // Profile
 "ADMIN CONSOLE" = "CONSOLA DE ADMIN";

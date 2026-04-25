@@ -135,11 +135,23 @@ struct QuinielaDetailView: View {
                         } label: {
                             Label("Edit pool", systemImage: "pencil")
                         }
+                        // Same sheet, two modes: when the pool hasn't started
+                        // it's the moderation surface (kick / delete entry).
+                        // After kickoff the backend ships picks per entry and
+                        // the sheet flips to "view predictions" — picks read-
+                        // only, no destructive actions. Web parity in
+                        // futpools_web/.../PoolDetail.jsx (canManage / canViewPicks).
                         if isScheduled {
                             Button {
                                 showManageSheet = true
                             } label: {
                                 Label("Manage participants", systemImage: "person.2.badge.gearshape")
+                            }
+                        } else if (quiniela.entriesCount ?? 0) > 0 {
+                            Button {
+                                showManageSheet = true
+                            } label: {
+                                Label("View predictions", systemImage: "eye")
                             }
                         }
                         if isAdmin {
@@ -177,6 +189,8 @@ struct QuinielaDetailView: View {
             ParticipantManageSheet(
                 quinielaId: quiniela.id,
                 token: auth.token,
+                fixtures: quiniela.fixtures,
+                liveFixtures: liveFixtures,
                 onDismiss: { showManageSheet = false },
                 onMutated: {
                     // Refresh leaderboard + entry count after kicks/deletes so

@@ -195,10 +195,14 @@ struct QuinielaPickResponse: Decodable {
 }
 
 /// Response shape for `GET /quinielas/:id/participants` — creator-only admin
-/// view. Deliberately omits picks; only entry metadata needed to surface the
-/// "kick / delete this entry" UI without leaking other players' picks.
+/// view. Picks are bundled per entry once the pool starts (status !=
+/// "scheduled"); during the scheduled phase the backend strips them and
+/// sets `picksHidden: true` so the creator can't kick a player based on who
+/// guessed well. Web parity: futpools_backend/.../quinielaController.js
+/// getParticipants.
 struct ParticipantsResponse: Decodable {
     let status: String
+    let picksHidden: Bool?
     let participants: [ParticipantDTO]
 }
 
@@ -220,7 +224,18 @@ struct ParticipantEntry: Decodable, Identifiable {
     let _id: String
     let entryNumber: Int
     let createdAt: String?
+    /// Optional — present only when the backend reveals picks (post-kickoff).
+    /// Nil during scheduled phase.
+    let picks: [ParticipantPick]?
+    /// Optional scoring stamp. Both nil until first FT in the pool.
+    let score: Int?
+    let totalPossible: Int?
     var id: String { _id }
+}
+
+struct ParticipantPick: Decodable, Hashable {
+    let fixtureId: Int
+    let pick: String
 }
 
 /// Response from `DELETE /quinielas/:id/entries/:entryId`.

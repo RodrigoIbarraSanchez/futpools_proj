@@ -347,6 +347,12 @@
 "TRAILING" = "TRAILING";
 "+1 PT" = "+1 PT";
 "MISSED" = "MISSED";
+"PT" = "PT";
+"PTS" = "PTS";
+"PARTICIPANT PREDICTIONS" = "PARTICIPANT PREDICTIONS";
+"View predictions" = "View predictions";
+"Tap an entry to reveal picks." = "Tap an entry to reveal picks.";
+"NO PICKS YET" = "NO PICKS YET";
 
 // Profile
 "ADMIN CONSOLE" = "ADMIN CONSOLE";
