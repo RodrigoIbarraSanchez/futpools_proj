@@ -18,9 +18,23 @@ final class APIClient {
     private let baseURL: String
     private let session: URLSession
 
-    init(baseURL: String = "http://localhost:3000", session: URLSession = .shared) {
-        self.baseURL = baseURL
+    /// Base URL resolution order:
+    ///   1. Explicit constructor arg (tests).
+    ///   2. `FPApiBaseURL` in Info.plist — flip per-build (dev LAN IP,
+    ///      staging, prod) without recompiling Swift.
+    ///   3. `http://localhost:3000` fallback — works in the simulator;
+    ///      a physical device needs the Info.plist override (localhost
+    ///      on a phone is the phone, not your Mac).
+    init(baseURL: String? = nil, session: URLSession = .shared) {
+        if let baseURL { self.baseURL = baseURL }
+        else if let configured = Bundle.main.object(forInfoDictionaryKey: "FPApiBaseURL") as? String,
+                !configured.isEmpty {
+            self.baseURL = configured
+        } else {
+            self.baseURL = "http://localhost:3000"
+        }
         self.session = session
+        print("[API] baseURL = \(self.baseURL)")
     }
 
     func request<T: Decodable>(
