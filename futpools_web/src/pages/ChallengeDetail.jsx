@@ -94,11 +94,20 @@ export function ChallengeDetail() {
 
   const handleShare = async () => {
     if (!c?.code) return;
-    const url = `${window.location.origin}/c/${c.code}`;
+    // Route the share URL through the backend host so /c/:code hits the og.js
+    // route that renders OG meta tags + a fixture-card image — that's what
+    // WhatsApp/Telegram scrape to build a rich preview. Falling back to the
+    // current origin keeps dev (localhost:5173) usable; in prod the static
+    // frontend doesn't render OG tags, so the link must point at the API.
+    // Identical strategy to PoolDetail.ShareButton.
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    const shareOrigin = apiBase.startsWith('http')
+      ? apiBase.replace(/\/$/, '')
+      : (typeof window !== 'undefined' ? window.location.origin : '');
+    const url = `${shareOrigin}/c/${c.code}`;
     // Mobile-only native share; pass ONLY `url` so no target can concat a
     // `title`/`text` field onto it and produce a mangled link. Desktop always
-    // copies to clipboard for predictable UX. Same pattern as PoolDetail's
-    // ShareButton and CreatePool's post-create share.
+    // copies to clipboard for predictable UX.
     const isMobile = typeof navigator !== 'undefined'
       && typeof navigator.share === 'function'
       && ((navigator.userAgentData && navigator.userAgentData.mobile === true)
