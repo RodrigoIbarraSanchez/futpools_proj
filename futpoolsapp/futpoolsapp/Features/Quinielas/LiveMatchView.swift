@@ -47,13 +47,17 @@ struct MatchFeedEvent: Decodable, Identifiable {
     }
 
     var label: String {
+        // Localized — the previous Spanish-only literals were the reason
+        // English users saw "GOL"/"AMONESTACIÓN" in their match feed. Keys
+        // mirror the Localizable.strings entries; ES translations resolve
+        // back to GOL / AMONESTACIÓN / EXPULSIÓN / CAMBIO.
         switch category {
-        case .goal:         return "GOL"
-        case .yellowCard:   return "AMONESTACIÓN"
-        case .redCard:      return "EXPULSIÓN"
-        case .substitution: return "CAMBIO"
-        case .varEvent:     return "VAR"
-        case .other:        return (type ?? "EVENT").uppercased()
+        case .goal:         return String(localized: "GOAL")
+        case .yellowCard:   return String(localized: "YELLOW CARD")
+        case .redCard:      return String(localized: "RED CARD")
+        case .substitution: return String(localized: "SUBSTITUTION")
+        case .varEvent:     return String(localized: "VAR")
+        case .other:        return (type ?? String(localized: "EVENT")).uppercased()
         }
     }
 
@@ -163,7 +167,7 @@ struct LiveMatchView: View {
         let elapsed = vm.live?.status.elapsed
 
         return HStack(spacing: 8) {
-            Text("MATCH")
+            Text(String(localized: "MATCH"))
                 .font(ArenaFont.display(size: 13, weight: .heavy))
                 .tracking(3)
                 .foregroundColor(.arenaText)
@@ -176,7 +180,7 @@ struct LiveMatchView: View {
                 // not "LIVE".
                 statusChip(isLive: isLive && !isHT, isHT: isHT, isFinal: isFinal, elapsed: elapsed)
             } else {
-                Text("· UPCOMING")
+                Text("· " + String(localized: "UPCOMING"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundColor(.arenaAccent)
@@ -198,21 +202,21 @@ struct LiveMatchView: View {
                     .fill(Color.arenaDanger)
                     .frame(width: 5, height: 5)
                     .shadow(color: .arenaDanger.opacity(0.7), radius: 3)
-                Text("LIVE")
+                Text(String(localized: "LIVE"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundColor(.arenaDanger)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
             } else if isHT {
-                Text("HALF TIME")
+                Text(String(localized: "HALF TIME"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundColor(.arenaGold)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
             } else if isFinal {
-                Text("FINAL")
+                Text(String(localized: "FINAL"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundColor(.arenaTextMuted)
@@ -309,7 +313,7 @@ struct LiveMatchView: View {
                 // during the break, which is misleading. Show a neutral gold dot
                 // + label so the user understands the match is paused.
                 Circle().fill(Color.arenaGold).frame(width: 6, height: 6)
-                Text("HALF TIME")
+                Text(String(localized: "HALF TIME"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundColor(.arenaGold)
@@ -325,12 +329,12 @@ struct LiveMatchView: View {
                         .tracking(1)
                 }
             } else if isFinal {
-                Text("FINAL")
+                Text(String(localized: "FINAL"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundColor(.arenaTextMuted)
             } else if short == "NS" || short == "" {
-                Text("NOT STARTED")
+                Text(String(localized: "NOT STARTED"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundColor(.arenaTextDim)
@@ -387,7 +391,7 @@ struct LiveMatchView: View {
             HStack(spacing: 14) {
                 pickBadge(pick: pick, state: state)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("YOUR PICK")
+                    Text(String(localized: "YOUR PICK"))
                         .font(ArenaFont.mono(size: 9, weight: .bold))
                         .tracking(1.8)
                         .foregroundColor(.arenaTextMuted)
@@ -459,9 +463,9 @@ struct LiveMatchView: View {
 
     private func pickLongLabel(_ pick: String) -> String {
         switch pick {
-        case "1": return "HOME WIN"
-        case "X": return "DRAW"
-        case "2": return "AWAY WIN"
+        case "1": return String(localized: "HOME WIN")
+        case "X": return String(localized: "DRAW")
+        case "2": return String(localized: "AWAY WIN")
         default:  return pick
         }
     }
@@ -472,19 +476,21 @@ struct LiveMatchView: View {
             switch state {
             case .waiting:
                 Circle().fill(Color.arenaAccent).frame(width: 5, height: 5)
-                Text("WAITING FOR KICKOFF")
+                Text(String(localized: "WAITING FOR KICKOFF"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .foregroundColor(.arenaAccent)
                     .tracking(1.2)
             case .leading:
                 Circle().fill(Color.arenaPrimary).frame(width: 5, height: 5)
-                Text("LEADING · +1 PT IF IT HOLDS")
+                Text(String(localized: "LEADING · +1 PT IF IT HOLDS"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .foregroundColor(.arenaPrimary)
                     .tracking(1.2)
             case .trailing:
                 Circle().fill(Color.arenaDanger).frame(width: 5, height: 5)
-                Text(isLive ? "TRAILING · 0 PTS IF IT HOLDS" : "TRAILING")
+                Text(isLive
+                     ? String(localized: "TRAILING · 0 PTS IF IT HOLDS")
+                     : String(localized: "TRAILING"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .foregroundColor(.arenaDanger)
                     .tracking(1.2)
@@ -492,7 +498,7 @@ struct LiveMatchView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 11))
                     .foregroundColor(.arenaPrimary)
-                Text("EARNED · +1 PT")
+                Text(String(localized: "EARNED · +1 PT"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .foregroundColor(.arenaPrimary)
                     .tracking(1.2)
@@ -500,7 +506,7 @@ struct LiveMatchView: View {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 11))
                     .foregroundColor(.arenaDanger)
-                Text("MISSED · 0 PTS")
+                Text(String(localized: "MISSED · 0 PTS"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .foregroundColor(.arenaDanger)
                     .tracking(1.2)
@@ -520,14 +526,14 @@ struct LiveMatchView: View {
 
     private var matchFeed: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("◆ MATCH FEED")
+            Text("◆ " + String(localized: "MATCH FEED"))
                 .font(ArenaFont.display(size: 11, weight: .bold))
                 .tracking(3)
                 .foregroundColor(.arenaPrimary)
                 .padding(.horizontal, 16)
 
             if vm.events.isEmpty {
-                Text("No events yet — check back as the match progresses.")
+                Text(String(localized: "No events yet — check back as the match progresses."))
                     .font(ArenaFont.mono(size: 10))
                     .foregroundColor(.arenaTextDim)
                     .padding(.horizontal, 16)

@@ -47,12 +47,12 @@ struct MyEntriesView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("MY ENTRIES")
+            Text(String(localized: "MY ENTRIES"))
                 .font(ArenaFont.display(size: 28, weight: .heavy))
                 .tracking(1)
                 .foregroundColor(.arenaText)
             if !vm.entries.isEmpty {
-                Text("[ \(vm.entries.count) TOTAL ]")
+                Text("[ \(vm.entries.count) " + String(localized: "TOTAL") + " ]")
                     .font(ArenaFont.mono(size: 10))
                     .tracking(1)
                     .foregroundColor(.arenaTextMuted)
@@ -67,7 +67,7 @@ struct MyEntriesView: View {
         if vm.isLoading && vm.entries.isEmpty {
             VStack(spacing: 8) {
                 ProgressView().tint(.arenaPrimary)
-                Text("LOADING ENTRIES…")
+                Text(String(localized: "LOADING ENTRIES…"))
                     .font(ArenaFont.mono(size: 11))
                     .tracking(2)
                     .foregroundColor(.arenaTextDim)
@@ -84,11 +84,11 @@ struct MyEntriesView: View {
                 VStack(spacing: 12) {
                     Text("🎯")
                         .font(.system(size: 40))
-                    Text("NO ENTRIES YET")
+                    Text(String(localized: "NO ENTRIES YET"))
                         .font(ArenaFont.display(size: 14, weight: .heavy))
                         .tracking(2)
                         .foregroundColor(.arenaText)
-                    Text("Join a pool and submit picks to get started.")
+                    Text(String(localized: "Join a pool and submit picks to get started."))
                         .font(ArenaFont.body(size: 12))
                         .foregroundColor(.arenaTextDim)
                         .multilineTextAlignment(.center)

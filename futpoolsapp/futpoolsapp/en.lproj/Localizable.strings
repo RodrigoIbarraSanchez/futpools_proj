@@ -354,6 +354,90 @@
 "Tap an entry to reveal picks." = "Tap an entry to reveal picks.";
 "NO PICKS YET" = "NO PICKS YET";
 
+// Admin dashboard
+"ADMIN" = "ADMIN";
+"◆ ADMIN CONSOLE" = "◆ ADMIN CONSOLE";
+"Platform Events" = "Platform Events";
+"Create sponsored pools with guaranteed prizes. Prize unlocks only when minimum participants is reached." = "Create sponsored pools with guaranteed prizes. Prize unlocks only when minimum participants is reached.";
+"CREATE PLATFORM EVENT" = "CREATE PLATFORM EVENT";
+"Prize + min participants + fixtures" = "Prize + min participants + fixtures";
+
+// SharePoolSheet
+"COPIED ✓" = "COPIED ✓";
+"TAP TO COPY" = "TAP TO COPY";
+
+// Home / Profile / Recharge / Leaderboard / MyEntries cluster
+"LOADING POOLS…" = "LOADING POOLS…";
+"BONUS" = "BONUS";
+"EDIT NAME" = "EDIT NAME";
+"LOADING" = "LOADING";
+"TOTAL" = "TOTAL";
+
+// Auth flow (Login / Register / Forgot / Reset)
+"ARENA" = "ARENA";
+"INSERT COIN TO CONTINUE" = "INSERT COIN TO CONTINUE";
+"START MATCH" = "START MATCH";
+"NEW PLAYER?" = "NEW PLAYER?";
+"CREATE ACCOUNT →" = "CREATE ACCOUNT →";
+"FORGOT PASSWORD?" = "FORGOT PASSWORD?";
+"© 2026 FUTPOOLS · PRESS START" = "© 2026 FUTPOOLS · PRESS START";
+"COMING SOON" = "COMING SOON";
+"Password recovery will be available soon." = "Password recovery will be available soon.";
+"DONE" = "DONE";
+"CREATE ACCOUNT" = "CREATE ACCOUNT";
+"USERNAME" = "USERNAME";
+"HAVE AN ACCOUNT?" = "HAVE AN ACCOUNT?";
+"← SIGN IN" = "← SIGN IN";
+"Forgot password?" = "Forgot password?";
+"Enter your email and we'll send you a 6-digit code to reset your password." = "Enter your email and we'll send you a 6-digit code to reset your password.";
+"If an account exists with this email, you will receive a recovery code shortly. Check your inbox and enter the code on the next screen." = "If an account exists with this email, you will receive a recovery code shortly. Check your inbox and enter the code on the next screen.";
+"Email" = "Email";
+"Send code" = "Send code";
+"Enter code and new password" = "Enter code and new password";
+"Recover password" = "Recover password";
+"Enter the 6-digit code we sent to %@ and choose a new password." = "Enter the 6-digit code we sent to %@ and choose a new password.";
+"Code" = "Code";
+"New password" = "New password";
+"Confirm password" = "Confirm password";
+"Passwords don't match" = "Passwords don't match";
+"Reset password" = "Reset password";
+
+// Pool detail (QuinielaDetailView edit form, modals, fixture row)
+"POOL" = "POOL";
+"VS" = "VS";
+"vs" = "vs";
+"EDIT POOL" = "EDIT POOL";
+"DESCRIPTION" = "DESCRIPTION";
+"PRIZE" = "PRIZE";
+"FEATURED" = "FEATURED";
+"Pin to QUICK PLAY hero/carousel" = "Pin to QUICK PLAY hero/carousel";
+"Saving…" = "Saving…";
+"RECHARGE" = "RECHARGE";
+"CLOSE" = "CLOSE";
+"You need %1$@ to join. Your balance: %2$@." = "You need %1$@ to join. Your balance: %2$@.";
+
+// Live match detail (LiveMatchView)
+"MATCH" = "MATCH";
+"UPCOMING" = "UPCOMING";
+"HALF TIME" = "HALF TIME";
+"FINAL" = "FINAL";
+"NOT STARTED" = "NOT STARTED";
+"HOME WIN" = "HOME WIN";
+"DRAW" = "DRAW";
+"AWAY WIN" = "AWAY WIN";
+"WAITING FOR KICKOFF" = "WAITING FOR KICKOFF";
+"LEADING · +1 PT IF IT HOLDS" = "LEADING · +1 PT IF IT HOLDS";
+"TRAILING · 0 PTS IF IT HOLDS" = "TRAILING · 0 PTS IF IT HOLDS";
+"EARNED · +1 PT" = "EARNED · +1 PT";
+"MISSED · 0 PTS" = "MISSED · 0 PTS";
+"MATCH FEED" = "MATCH FEED";
+"No events yet — check back as the match progresses." = "No events yet — check back as the match progresses.";
+"GOAL" = "GOAL";
+"YELLOW CARD" = "YELLOW CARD";
+"RED CARD" = "RED CARD";
+"SUBSTITUTION" = "SUBSTITUTION";
+"EVENT" = "EVENT";
+
 // Profile
 "ADMIN CONSOLE" = "ADMIN CONSOLE";
 "LOADING MY POOLS…" = "LOADING MY POOLS…";
@@ -417,7 +501,7 @@
 "NAME" = "NAME";
 "PRIZE LABEL (optional)" = "PRIZE LABEL (optional)";
 "MESSAGE (optional)" = "MESSAGE (optional)";
-"La vaquita del mundial" = "La vaquita del mundial";
+"La vaquita del mundial" = "World Cup pool";
 "el perdedor paga la pizza" = "el perdedor paga la pizza";
 "¡Que gane el mejor! 🏆" = "May the best one win! 🏆";
 "VISIBILITY" = "VISIBILITY";

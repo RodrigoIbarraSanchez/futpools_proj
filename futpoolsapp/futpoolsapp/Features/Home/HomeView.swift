@@ -53,7 +53,10 @@ struct HomeView: View {
                         .padding(.horizontal, 16)
 
                         if vm.isLoading && vm.quinielas.isEmpty {
-                            ArenaLoadingState(title: "LOADING POOLS…", subtitle: "Fetching fixtures and entry counts")
+                            ArenaLoadingState(
+                                title: String(localized: "LOADING POOLS…"),
+                                subtitle: String(localized: "Fetching fixtures and entry counts")
+                            )
                                 .padding(.top, 24)
                         } else if let err = vm.errorMessage {
                             Text(err)
@@ -66,7 +69,7 @@ struct HomeView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.top, 24)
                         } else if !morePoolsList.isEmpty {
-                            Text("◆ ACTIVE POOLS")
+                            Text("◆ " + String(localized: "ACTIVE POOLS"))
                                 .font(ArenaFont.display(size: 10, weight: .bold))
                                 .tracking(3)
                                 .foregroundColor(.arenaTextMuted)
@@ -212,7 +215,7 @@ private struct ArenaHeader: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Text("POOLS")
+            Text(String(localized: "POOLS"))
                 .font(ArenaFont.display(size: 24, weight: .heavy))
                 .tracking(3)
                 .foregroundColor(.arenaText)

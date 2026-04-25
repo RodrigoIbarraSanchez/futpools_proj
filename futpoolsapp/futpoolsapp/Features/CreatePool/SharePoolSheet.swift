@@ -55,7 +55,9 @@ struct SharePoolSheet: View {
                             copied = true
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { copied = false }
                         } label: {
-                            Text(copied ? "COPIED ✓" : "TAP TO COPY")
+                            Text(copied
+                                 ? String(localized: "COPIED ✓")
+                                 : String(localized: "TAP TO COPY"))
                                 .font(ArenaFont.mono(size: 10))
                                 .tracking(1.5)
                                 .foregroundColor(copied ? .arenaPrimary : .arenaAccent)

@@ -196,7 +196,7 @@ struct ProfileView: View {
                         Text("⬢")
                             .font(ArenaFont.display(size: 16, weight: .heavy))
                             .foregroundColor(.arenaPrimary)
-                        Text("ADMIN CONSOLE")
+                        Text(String(localized: "ADMIN CONSOLE"))
                             .font(ArenaFont.mono(size: 10, weight: .bold))
                             .tracking(2)
                             .foregroundColor(.arenaText)
@@ -218,7 +218,7 @@ struct ProfileView: View {
         if loadingMyPools {
             HStack(spacing: 10) {
                 ProgressView().tint(.arenaPrimary)
-                Text("LOADING MY POOLS…")
+                Text(String(localized: "LOADING MY POOLS…"))
                     .font(ArenaFont.mono(size: 10))
                     .tracking(1.5)
                     .foregroundColor(.arenaTextDim)
@@ -335,11 +335,11 @@ struct ProfileView: View {
                         .frame(width: 36, height: 36)
                         .shadow(color: .arenaGold.opacity(0.6), radius: 8)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("BALANCE")
+                        Text(String(localized: "BALANCE"))
                             .font(ArenaFont.mono(size: 9))
                             .tracking(1.5)
                             .foregroundColor(.arenaTextMuted)
-                        Text(formatted(auth.currentUser?.balanceValue ?? 0) + " COINS")
+                        Text(formatted(auth.currentUser?.balanceValue ?? 0) + " " + String(localized: "COINS"))
                             .font(ArenaFont.display(size: 22, weight: .heavy))
                             .tracking(0.5)
                             .foregroundColor(.arenaGold)
@@ -452,15 +452,15 @@ private struct ArenaEditNameSheet: View {
                 .padding(20)
                 .padding(.top, 20)
             }
-            .navigationTitle("EDIT NAME")
+            .navigationTitle(String(localized: "EDIT NAME"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { onDismiss() }
+                    Button(String(localized: "Cancel")) { onDismiss() }
                         .foregroundColor(.arenaTextDim)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { onSave(name) }
+                    Button(String(localized: "Save")) { onSave(name) }
                         .fontWeight(.semibold)
                         .foregroundColor(.arenaPrimary)
                 }

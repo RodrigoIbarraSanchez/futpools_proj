@@ -354,6 +354,90 @@
 "Tap an entry to reveal picks." = "Toca una participación para ver sus picks.";
 "NO PICKS YET" = "SIN PICKS";
 
+// Admin dashboard
+"ADMIN" = "ADMIN";
+"◆ ADMIN CONSOLE" = "◆ CONSOLA DE ADMIN";
+"Platform Events" = "Eventos de la Plataforma";
+"Create sponsored pools with guaranteed prizes. Prize unlocks only when minimum participants is reached." = "Crea quinielas patrocinadas con premios garantizados. El premio se libera solo si se alcanza el mínimo de participantes.";
+"CREATE PLATFORM EVENT" = "CREAR EVENTO DE PLATAFORMA";
+"Prize + min participants + fixtures" = "Premio + mínimo de jugadores + partidos";
+
+// SharePoolSheet
+"COPIED ✓" = "COPIADO ✓";
+"TAP TO COPY" = "TOCA PARA COPIAR";
+
+// Home / Profile / Recharge / Leaderboard / MyEntries cluster
+"LOADING POOLS…" = "CARGANDO QUINIELAS…";
+"BONUS" = "BONO";
+"EDIT NAME" = "EDITAR NOMBRE";
+"LOADING" = "CARGANDO";
+"TOTAL" = "TOTAL";
+
+// Auth flow (Login / Register / Forgot / Reset)
+"ARENA" = "ARENA";
+"INSERT COIN TO CONTINUE" = "INSERTA MONEDA PARA CONTINUAR";
+"START MATCH" = "INICIAR PARTIDA";
+"NEW PLAYER?" = "¿NUEVO JUGADOR?";
+"CREATE ACCOUNT →" = "CREAR CUENTA →";
+"FORGOT PASSWORD?" = "¿OLVIDASTE TU CONTRASEÑA?";
+"© 2026 FUTPOOLS · PRESS START" = "© 2026 FUTPOOLS · PRESIONA START";
+"COMING SOON" = "PRÓXIMAMENTE";
+"Password recovery will be available soon." = "La recuperación de contraseña estará disponible pronto.";
+"DONE" = "LISTO";
+"CREATE ACCOUNT" = "CREAR CUENTA";
+"USERNAME" = "USUARIO";
+"HAVE AN ACCOUNT?" = "¿YA TIENES CUENTA?";
+"← SIGN IN" = "← INICIAR SESIÓN";
+"Forgot password?" = "¿Olvidaste tu contraseña?";
+"Enter your email and we'll send you a 6-digit code to reset your password." = "Ingresa tu email y te enviaremos un código de 6 dígitos para restablecer tu contraseña.";
+"If an account exists with this email, you will receive a recovery code shortly. Check your inbox and enter the code on the next screen." = "Si existe una cuenta con este email, recibirás un código de recuperación pronto. Revisa tu bandeja de entrada e ingrésalo en la siguiente pantalla.";
+"Email" = "Email";
+"Send code" = "Enviar código";
+"Enter code and new password" = "Ingresar código y nueva contraseña";
+"Recover password" = "Recuperar contraseña";
+"Enter the 6-digit code we sent to %@ and choose a new password." = "Ingresa el código de 6 dígitos que enviamos a %@ y elige una nueva contraseña.";
+"Code" = "Código";
+"New password" = "Nueva contraseña";
+"Confirm password" = "Confirmar contraseña";
+"Passwords don't match" = "Las contraseñas no coinciden";
+"Reset password" = "Restablecer contraseña";
+
+// Pool detail (QuinielaDetailView edit form, modals, fixture row)
+"POOL" = "QUINIELA";
+"VS" = "VS";
+"vs" = "vs";
+"EDIT POOL" = "EDITAR QUINIELA";
+"DESCRIPTION" = "DESCRIPCIÓN";
+"PRIZE" = "PREMIO";
+"FEATURED" = "DESTACADA";
+"Pin to QUICK PLAY hero/carousel" = "Fijar en el héroe/carrusel de QUICK PLAY";
+"Saving…" = "Guardando…";
+"RECHARGE" = "RECARGAR";
+"CLOSE" = "CERRAR";
+"You need %1$@ to join. Your balance: %2$@." = "Necesitas %1$@ para unirte. Tu saldo: %2$@.";
+
+// Live match detail (LiveMatchView)
+"MATCH" = "PARTIDO";
+"UPCOMING" = "PRÓXIMO";
+"HALF TIME" = "MEDIO TIEMPO";
+"FINAL" = "FINAL";
+"NOT STARTED" = "NO INICIADO";
+"HOME WIN" = "GANA LOCAL";
+"DRAW" = "EMPATE";
+"AWAY WIN" = "GANA VISITA";
+"WAITING FOR KICKOFF" = "ESPERANDO INICIO";
+"LEADING · +1 PT IF IT HOLDS" = "VA GANANDO · +1 PTO SI AGUANTA";
+"TRAILING · 0 PTS IF IT HOLDS" = "VA PERDIENDO · 0 PTOS SI AGUANTA";
+"EARNED · +1 PT" = "GANADO · +1 PTO";
+"MISSED · 0 PTS" = "FALLADO · 0 PTOS";
+"MATCH FEED" = "JUGADAS DEL PARTIDO";
+"No events yet — check back as the match progresses." = "Aún no hay jugadas — vuelve mientras avanza el partido.";
+"GOAL" = "GOL";
+"YELLOW CARD" = "AMONESTACIÓN";
+"RED CARD" = "EXPULSIÓN";
+"SUBSTITUTION" = "CAMBIO";
+"EVENT" = "EVENTO";
+
 // Profile
 "ADMIN CONSOLE" = "CONSOLA DE ADMIN";
 "LOADING MY POOLS…" = "CARGANDO MIS QUINIELAS…";

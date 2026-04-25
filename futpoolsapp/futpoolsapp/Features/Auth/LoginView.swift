@@ -37,7 +37,7 @@ struct LoginView: View {
                                 .foregroundColor(.arenaPrimary)
                                 .shadow(color: .arenaPrimary.opacity(0.85), radius: 14)
                         }
-                        Text("· ARENA ·")
+                        Text("· " + String(localized: "ARENA") + " ·")
                             .font(ArenaFont.mono(size: 11))
                             .tracking(4)
                             .foregroundColor(.arenaTextDim)
@@ -51,20 +51,20 @@ struct LoginView: View {
                         brackets: true
                     ) {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("▶ INSERT COIN TO CONTINUE")
+                            Text("▶ " + String(localized: "INSERT COIN TO CONTINUE"))
                                 .font(ArenaFont.display(size: 13, weight: .heavy))
                                 .tracking(3)
                                 .foregroundColor(.arenaPrimary)
 
                             ArenaField(
-                                label: "EMAIL",
+                                label: String(localized: "EMAIL"),
                                 text: $email,
                                 isSecure: false,
                                 isFocused: focused == true,
                                 onFocus: { focused = true }
                             )
                             ArenaField(
-                                label: "PASSWORD",
+                                label: String(localized: "PASSWORD"),
                                 text: $password,
                                 isSecure: true,
                                 isFocused: focused == false,
@@ -80,7 +80,9 @@ struct LoginView: View {
                             }
 
                             ArcadeButton(
-                                title: isLoading ? "LOADING…" : "▶ START MATCH",
+                                title: isLoading
+                                    ? String(localized: "LOADING…")
+                                    : "▶ " + String(localized: "START MATCH"),
                                 size: .lg,
                                 fullWidth: true,
                                 disabled: isLoading || email.isEmpty || password.isEmpty
@@ -101,14 +103,14 @@ struct LoginView: View {
                     // Secondary links
                     VStack(spacing: 10) {
                         HStack(spacing: 6) {
-                            Text("NEW PLAYER?")
+                            Text(String(localized: "NEW PLAYER?"))
                                 .font(ArenaFont.mono(size: 11))
                                 .tracking(1)
                                 .foregroundColor(.arenaTextMuted)
                             NavigationLink {
                                 RegisterView()
                             } label: {
-                                Text("CREATE ACCOUNT →")
+                                Text(String(localized: "CREATE ACCOUNT →"))
                                     .font(ArenaFont.display(size: 12, weight: .bold))
                                     .tracking(2)
                                     .foregroundColor(.arenaPrimary)
@@ -120,7 +122,7 @@ struct LoginView: View {
                                 NavigationLink {
                                     ForgotPasswordView()
                                 } label: {
-                                    Text("FORGOT PASSWORD?")
+                                    Text(String(localized: "FORGOT PASSWORD?"))
                                         .font(ArenaFont.mono(size: 10))
                                         .tracking(1)
                                         .foregroundColor(.arenaTextDim)
@@ -129,7 +131,7 @@ struct LoginView: View {
                                 Button {
                                     showComingSoon = true
                                 } label: {
-                                    Text("FORGOT PASSWORD?")
+                                    Text(String(localized: "FORGOT PASSWORD?"))
                                         .font(ArenaFont.mono(size: 10))
                                         .tracking(1)
                                         .foregroundColor(.arenaTextDim)
@@ -141,7 +143,7 @@ struct LoginView: View {
 
                     Spacer(minLength: 40)
 
-                    Text("© 2026 FUTPOOLS · PRESS START")
+                    Text(String(localized: "© 2026 FUTPOOLS · PRESS START"))
                         .font(ArenaFont.mono(size: 9))
                         .tracking(3)
                         .foregroundColor(.arenaTextFaint)
@@ -205,16 +207,16 @@ private struct ComingSoonPasswordRecoverySheet: View {
         ZStack {
             Color.arenaBg.ignoresSafeArea()
             VStack(spacing: 20) {
-                Text("COMING SOON")
+                Text(String(localized: "COMING SOON"))
                     .font(ArenaFont.display(size: 22, weight: .heavy))
                     .tracking(3)
                     .foregroundColor(.arenaText)
-                Text("Password recovery will be available soon.")
+                Text(String(localized: "Password recovery will be available soon."))
                     .font(ArenaFont.body(size: 14))
                     .foregroundColor(.arenaTextDim)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                ArcadeButton(title: "DONE", size: .md, fullWidth: true) {
+                ArcadeButton(title: String(localized: "DONE"), size: .md, fullWidth: true) {
                     onDismiss()
                 }
                 .padding(.horizontal)

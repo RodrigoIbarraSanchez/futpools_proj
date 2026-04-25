@@ -10,6 +10,15 @@ private enum ArenaPoolTab: String, CaseIterable {
     case ranking  = "RANKING"
     // `rules` lives in a modal now (triggered by a "?" button next to share)
     // — a full tab was overkill for reference content users peek at once.
+
+    /// Localized display label. The rawValue stays in English so the case
+    /// identifier remains stable — only the user-visible text translates.
+    var label: String {
+        switch self {
+        case .fixtures: return String(localized: "FIXTURES")
+        case .ranking:  return String(localized: "RANKING")
+        }
+    }
 }
 
 struct QuinielaDetailView: View {
@@ -285,7 +294,7 @@ struct QuinielaDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Spacer()
-                Text("[ POOL · \(quiniela.id.prefix(6).uppercased()) ]")
+                Text("[ \(String(localized: "POOL")) · \(quiniela.id.prefix(6).uppercased()) ]")
                     .font(ArenaFont.mono(size: 10))
                     .tracking(2)
                     .foregroundColor(.arenaTextMuted)
@@ -387,7 +396,7 @@ struct QuinielaDetailView: View {
                     .font(.system(size: 34))
                     .shadow(color: .arenaGold, radius: 10)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("PRIZE POOL")
+                    Text(String(localized: "PRIZE POOL"))
                         .font(ArenaFont.mono(size: 9))
                         .tracking(2)
                         .foregroundColor(.arenaTextMuted)
@@ -398,7 +407,7 @@ struct QuinielaDetailView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("ENTRY")
+                    Text(String(localized: "ENTRY"))
                         .font(ArenaFont.mono(size: 9))
                         .tracking(2)
                         .foregroundColor(.arenaTextMuted)
@@ -419,7 +428,7 @@ struct QuinielaDetailView: View {
         HStack(spacing: 4) {
             ForEach(ArenaPoolTab.allCases, id: \.self) { tab in
                 Button { selectedTab = tab } label: {
-                    Text(tab.rawValue)
+                    Text(tab.label)
                         .font(ArenaFont.display(size: 11, weight: .bold))
                         .tracking(2)
                         .foregroundColor(selectedTab == tab ? .arenaOnPrimary : .arenaTextDim)
@@ -681,19 +690,19 @@ private struct EditQuinielaSheet: View {
                 Color.arenaBg.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
-                        field(label: "NAME") {
+                        field(label: String(localized: "NAME")) {
                             TextField("", text: $name).arenaFieldStyle()
                         }
-                        field(label: "DESCRIPTION") {
+                        field(label: String(localized: "DESCRIPTION")) {
                             TextField("", text: $description, axis: .vertical)
                                 .lineLimit(3...6)
                                 .arenaFieldStyle()
                         }
                         HStack(spacing: 12) {
-                            field(label: "PRIZE") {
+                            field(label: String(localized: "PRIZE")) {
                                 TextField("", text: $prize).arenaFieldStyle()
                             }
-                            field(label: "ENTRY COST") {
+                            field(label: String(localized: "ENTRY COST")) {
                                 TextField("", text: $cost).arenaFieldStyle()
                             }
                         }
@@ -701,11 +710,11 @@ private struct EditQuinielaSheet: View {
                         // Featured toggle
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("FEATURED")
+                                Text(String(localized: "FEATURED"))
                                     .font(ArenaFont.mono(size: 10))
                                     .tracking(2)
                                     .foregroundColor(.arenaTextMuted)
-                                Text("Pin to QUICK PLAY hero/carousel")
+                                Text(String(localized: "Pin to QUICK PLAY hero/carousel"))
                                     .font(ArenaFont.body(size: 12))
                                     .foregroundColor(.arenaTextDim)
                             }
@@ -725,15 +734,15 @@ private struct EditQuinielaSheet: View {
                     .padding(20)
                 }
             }
-            .navigationTitle("EDIT POOL")
+            .navigationTitle(String(localized: "EDIT POOL"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { onDismiss() }
+                    Button(String(localized: "Cancel")) { onDismiss() }
                         .foregroundColor(.arenaTextDim)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(saving ? "Saving…" : "Save") { save() }
+                    Button(saving ? String(localized: "Saving…") : String(localized: "Save")) { save() }
                         .fontWeight(.semibold)
                         .foregroundColor(.arenaPrimary)
                         .disabled(saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || prize.isEmpty || cost.isEmpty)
@@ -860,7 +869,7 @@ struct ArenaFixtureRow: View {
                             .clipShape(HudCornerCutShape(cut: 8))
                             .shadow(color: .arenaDanger.opacity(isLive ? 0.7 : 0), radius: 6)
                     } else {
-                        Text("VS")
+                        Text(String(localized: "VS"))
                             .font(ArenaFont.display(size: 10, weight: .bold))
                             .tracking(2)
                             .foregroundColor(.arenaTextMuted)
@@ -907,7 +916,7 @@ struct ArenaLeaderboardPanel: View {
         HudFrame {
             VStack(spacing: 14) {
                 HStack(spacing: 0) {
-                    Text("◆ LEADERBOARD")
+                    Text("◆ " + String(localized: "LEADERBOARD"))
                         .font(ArenaFont.display(size: 11, weight: .bold))
                         .tracking(2)
                         .foregroundColor(.arenaPrimary)
@@ -975,11 +984,11 @@ struct ArenaLeaderboardPanel: View {
                         Image(systemName: "person.3.sequence.fill")
                             .font(.system(size: 22))
                             .foregroundColor(.arenaTextDim)
-                        Text("No entries yet")
+                        Text(String(localized: "No entries yet"))
                             .font(ArenaFont.display(size: 13, weight: .heavy))
                             .tracking(2)
                             .foregroundColor(.arenaTextMuted)
-                        Text("Be the first to join!")
+                        Text(String(localized: "Be the first to join!"))
                             .font(ArenaFont.mono(size: 10))
                             .foregroundColor(.arenaTextDim)
                     }
@@ -1066,7 +1075,7 @@ struct ArenaRulesPanel: View {
     var body: some View {
         HudFrame {
             VStack(alignment: .leading, spacing: 12) {
-                Text("◆ GAME RULES")
+                Text("◆ " + String(localized: "GAME RULES"))
                     .font(ArenaFont.display(size: 12, weight: .bold))
                     .tracking(2)
                     .foregroundColor(.arenaPrimary)
@@ -1131,19 +1140,20 @@ private struct ArenaInsufficientBalanceSheet: View {
         ZStack {
             Color.arenaBg.ignoresSafeArea()
             VStack(spacing: 20) {
-                Text("INSUFFICIENT BALANCE")
+                Text(String(localized: "INSUFFICIENT BALANCE"))
                     .font(ArenaFont.display(size: 20, weight: .heavy))
                     .tracking(2)
                     .foregroundColor(.arenaText)
 
-                Text("You need \(formatted(entryCost)) to join. Your balance: \(formatted(currentBalance)).")
+                Text(String(format: String(localized: "You need %1$@ to join. Your balance: %2$@."),
+                            formatted(entryCost), formatted(currentBalance)))
                     .font(ArenaFont.body(size: 13))
                     .foregroundColor(.arenaTextDim)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
-                ArcadeButton(title: "▶ RECHARGE", size: .lg, fullWidth: true, action: onRecharge)
-                Button("CLOSE", action: onDismiss)
+                ArcadeButton(title: "▶ " + String(localized: "RECHARGE"), size: .lg, fullWidth: true, action: onRecharge)
+                Button(String(localized: "CLOSE"), action: onDismiss)
                     .font(ArenaFont.mono(size: 11))
                     .tracking(1.5)
                     .foregroundColor(.arenaTextMuted)

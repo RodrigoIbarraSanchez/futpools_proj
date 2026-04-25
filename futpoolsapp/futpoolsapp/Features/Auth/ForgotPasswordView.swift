@@ -18,10 +18,10 @@ struct ForgotPasswordView: View {
             ScrollView {
                 VStack(spacing: AppSpacing.xl) {
                     VStack(spacing: AppSpacing.sm) {
-                        Text("Forgot password?")
+                        Text(String(localized: "Forgot password?"))
                             .font(.system(size: 24, weight: .bold, design: .rounded))
                             .foregroundColor(.appTextPrimary)
-                        Text("Enter your email and we'll send you a 6-digit code to reset your password.")
+                        Text(String(localized: "Enter your email and we'll send you a 6-digit code to reset your password."))
                             .font(AppFont.body())
                             .foregroundColor(.appTextSecondary)
                             .multilineTextAlignment(.center)
@@ -29,14 +29,14 @@ struct ForgotPasswordView: View {
                     .padding(.top, AppSpacing.xl)
 
                     if didSend {
-                        Text("If an account exists with this email, you will receive a recovery code shortly. Check your inbox and enter the code on the next screen.")
+                        Text(String(localized: "If an account exists with this email, you will receive a recovery code shortly. Check your inbox and enter the code on the next screen."))
                             .font(AppFont.caption())
                             .foregroundColor(.appPrimary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     } else {
                         VStack(spacing: AppSpacing.md) {
-                            TextField("Email", text: $email)
+                            TextField(String(localized: "Email"), text: $email)
                                 .textContentType(.emailAddress)
                                 .keyboardType(.emailAddress)
                                 .focused($isEmailFocused)
@@ -52,7 +52,7 @@ struct ForgotPasswordView: View {
                                 .padding(.horizontal)
                         }
 
-                        PrimaryButton("Send code", style: .purple) {
+                        PrimaryButton(String(localized: "Send code"), style: .purple) {
                             isEmailFocused = false
                             Task {
                                 isLoading = true
@@ -70,7 +70,7 @@ struct ForgotPasswordView: View {
                         NavigationLink {
                             ResetPasswordView(email: email)
                         } label: {
-                            Text("Enter code and new password")
+                            Text(String(localized: "Enter code and new password"))
                                 .font(AppFont.body())
                                 .foregroundColor(.appPrimary)
                         }
@@ -79,7 +79,7 @@ struct ForgotPasswordView: View {
                 }
             }
         }
-        .navigationTitle("Recover password")
+        .navigationTitle(String(localized: "Recover password"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

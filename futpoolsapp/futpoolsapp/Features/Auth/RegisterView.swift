@@ -85,7 +85,7 @@ struct RegisterView: View {
                                 .foregroundColor(.arenaPrimary)
                                 .shadow(color: .arenaPrimary.opacity(0.85), radius: 14)
                         }
-                        Text("· ARENA ·")
+                        Text("· " + String(localized: "ARENA") + " ·")
                             .font(ArenaFont.mono(size: 11))
                             .tracking(4)
                             .foregroundColor(.arenaTextDim)
@@ -100,13 +100,13 @@ struct RegisterView: View {
                         brackets: true
                     ) {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("▶ CREATE ACCOUNT")
+                            Text("▶ " + String(localized: "CREATE ACCOUNT"))
                                 .font(ArenaFont.display(size: 13, weight: .heavy))
                                 .tracking(3)
                                 .foregroundColor(.arenaPrimary)
 
                             ArenaRegField(
-                                label: "NAME",
+                                label: String(localized: "NAME"),
                                 text: $displayName,
                                 contentType: .name,
                                 keyboard: .default,
@@ -119,7 +119,7 @@ struct RegisterView: View {
                             if touchedName, let err = nameError { errorLine(err) }
 
                             ArenaRegField(
-                                label: "USERNAME",
+                                label: String(localized: "USERNAME"),
                                 text: $username,
                                 contentType: .username,
                                 keyboard: .default,
@@ -132,7 +132,7 @@ struct RegisterView: View {
                             if touchedUsername, let err = usernameError { errorLine(err) }
 
                             ArenaRegField(
-                                label: "EMAIL",
+                                label: String(localized: "EMAIL"),
                                 text: $email,
                                 contentType: .emailAddress,
                                 keyboard: .emailAddress,
@@ -145,7 +145,7 @@ struct RegisterView: View {
                             if touchedEmail, let err = emailError { errorLine(err) }
 
                             ArenaRegField(
-                                label: "PASSWORD",
+                                label: String(localized: "PASSWORD"),
                                 text: $password,
                                 contentType: .newPassword,
                                 keyboard: .default,
@@ -194,14 +194,14 @@ struct RegisterView: View {
                     // Back-to-login hint — mirror of the CREATE ACCOUNT hint
                     // on the login screen.
                     HStack(spacing: 6) {
-                        Text("HAVE AN ACCOUNT?")
+                        Text(String(localized: "HAVE AN ACCOUNT?"))
                             .font(ArenaFont.mono(size: 11))
                             .tracking(1)
                             .foregroundColor(.arenaTextMuted)
                         Button {
                             dismiss()
                         } label: {
-                            Text("← SIGN IN")
+                            Text(String(localized: "← SIGN IN"))
                                 .font(ArenaFont.display(size: 12, weight: .bold))
                                 .tracking(2)
                                 .foregroundColor(.arenaPrimary)
@@ -211,7 +211,7 @@ struct RegisterView: View {
 
                     Spacer(minLength: 40)
 
-                    Text("© 2026 FUTPOOLS · PRESS START")
+                    Text(String(localized: "© 2026 FUTPOOLS · PRESS START"))
                         .font(ArenaFont.mono(size: 9))
                         .tracking(3)
                         .foregroundColor(.arenaTextFaint)
@@ -238,7 +238,7 @@ struct RegisterView: View {
 /// we don't have to touch LoginView to expose the type. Shares the same
 /// visual treatment (label above, stroke-only input, focus ring in primary).
 private struct ArenaRegField: View {
-    let label: LocalizedStringKey
+    let label: String
     @Binding var text: String
     var contentType: UITextContentType?
     var keyboard: UIKeyboardType = .default

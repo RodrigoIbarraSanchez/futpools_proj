@@ -272,7 +272,7 @@ struct ChallengeRowCard: View {
                             .foregroundColor(.arenaPrimary)
                     }
                     Spacer()
-                    Text("vs")
+                    Text(String(localized: "vs"))
                         .font(ArenaFont.display(size: 12))
                         .foregroundColor(.arenaTextMuted)
                     Spacer()

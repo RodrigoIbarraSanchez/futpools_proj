@@ -25,21 +25,21 @@ struct SettingsView: View {
                 AppBackground()
                 Form {
                     Section {
-                        Picker(selection: $appLanguage, label: Text("App Language")) {
+                        Picker(selection: $appLanguage, label: Text(String(localized: "App Language"))) {
                             ForEach(languageOptions, id: \.id) { option in
                                 Text(option.label).tag(option.id)
                             }
                         }
                         .pickerStyle(.menu)
                     } header: {
-                        Text("App Language")
+                        Text(String(localized: "App Language"))
                     } footer: {
-                        Text("Changes apply instantly")
+                        Text(String(localized: "Changes apply instantly"))
                     }
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Settings")
+            .navigationTitle(String(localized: "Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
@@ -48,7 +48,7 @@ struct SettingsView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Text("Done")
+                        Text(String(localized: "Done"))
                             .foregroundColor(.appPrimary)
                     }
                 }

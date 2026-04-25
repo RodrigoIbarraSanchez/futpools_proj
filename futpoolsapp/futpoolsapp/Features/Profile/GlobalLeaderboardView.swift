@@ -42,7 +42,7 @@ struct GlobalLeaderboardView: View {
             if vm.loading && vm.rows.isEmpty {
                 VStack(spacing: 8) {
                     ProgressView().tint(.arenaPrimary)
-                    Text("LOADING")
+                    Text(String(localized: "LOADING"))
                         .font(ArenaFont.mono(size: 10, weight: .bold))
                         .tracking(2)
                         .foregroundColor(.arenaTextDim)

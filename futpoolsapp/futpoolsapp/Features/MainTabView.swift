@@ -138,7 +138,7 @@ struct ArenaTabBar: View {
             }
             .buttonStyle(.plain)
             .offset(y: -22) // lift above the bar
-            .accessibilityLabel(Text("Create pool"))
+            .accessibilityLabel(Text(String(localized: "Create pool")))
         }
     }
 

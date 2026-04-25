@@ -25,7 +25,7 @@ struct ResetPasswordView: View {
             AppBackground()
             ScrollView {
                 VStack(spacing: AppSpacing.xl) {
-                    Text("Enter the 6-digit code we sent to \(email) and choose a new password.")
+                    Text(String(format: String(localized: "Enter the 6-digit code we sent to %@ and choose a new password."), email))
                         .font(AppFont.body())
                         .foregroundColor(.appTextSecondary)
                         .multilineTextAlignment(.center)
@@ -33,24 +33,24 @@ struct ResetPasswordView: View {
                         .padding(.top, AppSpacing.lg)
 
                     VStack(spacing: AppSpacing.md) {
-                        TextField("Code", text: $code)
+                        TextField(String(localized: "Code"), text: $code)
                             .textContentType(.oneTimeCode)
                             .keyboardType(.numberPad)
                             .focused($focused, equals: .code)
                             .appTextFieldStyle()
 
-                        SecureField("New password", text: $newPassword)
+                        SecureField(String(localized: "New password"), text: $newPassword)
                             .textContentType(.newPassword)
                             .focused($focused, equals: .newPassword)
                             .appTextFieldStyle()
 
-                        SecureField("Confirm password", text: $confirmPassword)
+                        SecureField(String(localized: "Confirm password"), text: $confirmPassword)
                             .textContentType(.newPassword)
                             .focused($focused, equals: .confirm)
                             .appTextFieldStyle()
 
                         if !passwordsMatch {
-                            Text("Passwords don't match")
+                            Text(String(localized: "Passwords don't match"))
                                 .font(AppFont.caption())
                                 .foregroundColor(.appLiveRed)
                         }
@@ -65,7 +65,7 @@ struct ResetPasswordView: View {
                             .padding(.horizontal)
                     }
 
-                    PrimaryButton("Reset password", style: .green) {
+                    PrimaryButton(String(localized: "Reset password"), style: .green) {
                         focused = nil
                         guard newPassword == confirmPassword else { return }
                         Task {
@@ -80,7 +80,7 @@ struct ResetPasswordView: View {
                 }
             }
         }
-        .navigationTitle("New password")
+        .navigationTitle(String(localized: "New password"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { auth.clearError() }
     }

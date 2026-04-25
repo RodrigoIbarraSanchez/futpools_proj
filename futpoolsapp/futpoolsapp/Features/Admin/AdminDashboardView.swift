@@ -31,13 +31,13 @@ struct AdminDashboardView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("ADMIN")
+                    Text(String(localized: "ADMIN"))
                         .font(ArenaFont.display(size: 13, weight: .black))
                         .tracking(3)
                         .foregroundColor(.arenaText)
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(String(localized: "Close")) { dismiss() }
                         .foregroundColor(.arenaTextDim)
                 }
             }

@@ -114,7 +114,7 @@ struct ChallengeDetailView: View {
                     pick: Challenge.pickLabel(c.challengerPick, market: c.marketType),
                     winner: c.status == .settled && c.winnerUserId == c.challenger.id
                 )
-                Text("VS").font(ArenaFont.display(size: 14, weight: .black)).foregroundColor(.arenaTextMuted)
+                Text(String(localized: "VS")).font(ArenaFont.display(size: 14, weight: .black)).foregroundColor(.arenaTextMuted)
                 pickColumn(
                     label: opponentLabel,
                     isMe: c.youAre == "opponent",

@@ -333,11 +333,11 @@ private struct PackRow: View {
                             Text("\(coins + bonus)")
                                 .font(ArenaFont.display(size: 22, weight: .heavy))
                                 .foregroundColor(.arenaGold)
-                            Text("COINS")
+                            Text(String(localized: "COINS"))
                                 .font(ArenaFont.mono(size: 10))
                                 .foregroundColor(.arenaTextMuted)
                             if bonus > 0 {
-                                Text("+\(bonus) BONUS")
+                                Text("+\(bonus) " + String(localized: "BONUS"))
                                     .font(ArenaFont.mono(size: 10, weight: .bold))
                                     .foregroundColor(.arenaPrimary)
                             }
