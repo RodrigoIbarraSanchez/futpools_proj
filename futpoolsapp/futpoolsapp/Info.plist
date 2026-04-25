@@ -29,5 +29,26 @@
 		<string>en</string>
 		<string>es</string>
 	</array>
+	<!-- Backend base URL. Edit this string when you switch networks (dev
+	     LAN IP), point at staging, or build for prod. APIClient reads it
+	     at launch via FPApiBaseURL with a localhost:3000 fallback. -->
+	<key>FPApiBaseURL</key>
+	<string>http://192.168.100.5:3000</string>
+	<!-- Allow plain HTTP to the dev server on the local LAN. App Store
+	     builds should point FPApiBaseURL at https://… so this exception
+	     becomes inert; remove it before shipping if you want stricter ATS. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>192.168.100.5</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
 </dict>
 </plist>
