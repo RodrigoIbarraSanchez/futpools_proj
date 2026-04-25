@@ -2,8 +2,9 @@
 > futpools-dashboard-web@1.0.0 dev
 > vite --host --strictPort
 
+Re-optimizing dependencies because vite config has changed
 
-  VITE v5.4.21  ready in 197 ms
+  VITE v5.4.21  ready in 511 ms
 
   ➜  Local:   http://localhost:5173/
-  ➜  Network: http://192.168.100.7:5173/
+  ➜  Network: http://10.115.187.227:5173/
