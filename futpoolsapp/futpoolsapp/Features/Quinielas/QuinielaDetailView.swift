@@ -586,6 +586,10 @@ struct QuinielaDetailView: View {
                 var map: [Int: LiveFixture] = [:]
                 for f in data { if let id = f.fixtureId { map[id] = f } }
                 liveFixtures = map
+                // Live scores feed the leaderboard's `liveScore` per row, so
+                // refresh the panel on the same tick. Web parity:
+                // futpools_web/.../PoolDetail.jsx live-leaderboard effect.
+                loadLeaderboard()
             } catch {}
         }
     }
@@ -904,28 +908,110 @@ struct ArenaFixtureRow: View {
 struct ArenaLeaderboardPanel: View {
     let leaderboard: LeaderboardResponse?
     let isLoading: Bool
+    /// Drives the pulsing dot on the LIVE chip. State lives at panel scope
+    /// so all chips/animations share the same tick instead of each pulse
+    /// running its own clock.
+    @State private var pulse = false
 
-    /// `totalPossible` is 0 until at least one fixture has a final result. We
-    /// still show the participants (ordered by join number) so the leaderboard
-    /// doesn't look broken; a small note explains why scores are blank.
+    private var hasLive: Bool {
+        leaderboard?.hasLiveFixtures == true
+    }
+
+    private var totalPossible: Int {
+        leaderboard?.totalPossible ?? 0
+    }
+
+    /// `totalPossible` is 0 until at least one fixture has started. We still
+    /// show the participants (ordered by join number) so the panel doesn't
+    /// look broken; the join-order banner explains the placeholder scores.
     private var awaitingFirstResult: Bool {
-        (leaderboard?.leaderboard.first?.totalPossible ?? 0) == 0
+        totalPossible == 0
+    }
+
+    /// True when every fixture is settled with a real result (not live, not
+    /// pre-kickoff). Triggers the gold "FINAL RESULTS" chip — the user gets
+    /// a payoff signal that the table is now real.
+    private var allSettled: Bool {
+        guard !hasLive, totalPossible > 0,
+              let rows = leaderboard?.leaderboard, !rows.isEmpty else { return false }
+        return rows.allSatisfy { ($0.liveScore ?? $0.score) == $0.score }
+    }
+
+    /// Sort rows by the score the panel is actually displaying. Re-sorted
+    /// locally because the backend's order from the previous poll may
+    /// disagree with the current `liveScore` values during live mode.
+    private var sortedRows: [LeaderboardEntry] {
+        guard let rows = leaderboard?.leaderboard else { return [] }
+        let live = hasLive
+        return rows.sorted { a, b in
+            let sa = a.displayScore(hasLive: live)
+            let sb = b.displayScore(hasLive: live)
+            if sa != sb { return sa > sb }
+            return a.entryNumber < b.entryNumber
+        }
     }
 
     var body: some View {
         HudFrame {
             VStack(spacing: 14) {
-                HStack(spacing: 0) {
+                HStack(spacing: 8) {
                     Text("◆ " + String(localized: "LEADERBOARD"))
                         .font(ArenaFont.display(size: 11, weight: .bold))
                         .tracking(2)
                         .foregroundColor(.arenaPrimary)
+                    if hasLive {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.arenaDanger)
+                                .frame(width: 6, height: 6)
+                                .opacity(pulse ? 0.35 : 1)
+                                .scaleEffect(pulse ? 0.7 : 1)
+                                .shadow(color: .arenaDanger.opacity(0.7), radius: 4)
+                            Text(String(localized: "LIVE"))
+                                .font(ArenaFont.mono(size: 9, weight: .bold))
+                                .tracking(1.5)
+                                .foregroundColor(.arenaDanger)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            HudCornerCutShape(cut: 4)
+                                .fill(Color.arenaDanger.opacity(0.16))
+                        )
+                        .overlay(
+                            HudCornerCutShape(cut: 4)
+                                .stroke(Color.arenaDanger.opacity(0.55), lineWidth: 1)
+                        )
+                    }
+                    if allSettled {
+                        Text(String(localized: "FINAL RESULTS"))
+                            .font(ArenaFont.mono(size: 9, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundColor(.arenaGold)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                HudCornerCutShape(cut: 4)
+                                    .fill(Color.arenaGold.opacity(0.16))
+                            )
+                            .overlay(
+                                HudCornerCutShape(cut: 4)
+                                    .stroke(Color.arenaGold.opacity(0.5), lineWidth: 1)
+                            )
+                    }
                     Spacer(minLength: 0)
+                }
+                if hasLive {
+                    Text(String(localized: "LIVE POINTS · MAY CHANGE"))
+                        .font(ArenaFont.mono(size: 9))
+                        .tracking(1)
+                        .foregroundColor(.arenaTextMuted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 if isLoading {
                     ProgressView().tint(.arenaPrimary)
-                } else if let lb = leaderboard, let entries = leaderboardEntries(lb), !entries.isEmpty {
+                } else if !sortedRows.isEmpty {
                     if awaitingFirstResult {
                         Text(NSLocalizedString("RANKED BY JOIN ORDER · RESULTS PENDING", comment: ""))
                             .font(ArenaFont.mono(size: 9, weight: .bold))
@@ -937,11 +1023,11 @@ struct ArenaLeaderboardPanel: View {
                         // Podium (top 3). Skipped while results are pending so
                         // we don't imply a "winner" that's really just whoever
                         // joined first.
-                        if entries.count >= 3 && !awaitingFirstResult {
+                        if sortedRows.count >= 3 && !awaitingFirstResult {
                             HStack(alignment: .bottom, spacing: 8) {
-                                PodiumColumn(rank: 2, name: entries[1].name, score: entries[1].score, total: entries[1].total, height: 70, tint: .arenaSilver)
-                                PodiumColumn(rank: 1, name: entries[0].name, score: entries[0].score, total: entries[0].total, height: 100, tint: .arenaGold)
-                                PodiumColumn(rank: 3, name: entries[2].name, score: entries[2].score, total: entries[2].total, height: 55, tint: .arenaBronze)
+                                PodiumColumn(rank: 2, row: sortedRows[1], hasLive: hasLive, height: 70, tint: .arenaSilver)
+                                PodiumColumn(rank: 1, row: sortedRows[0], hasLive: hasLive, height: 100, tint: .arenaGold)
+                                PodiumColumn(rank: 3, row: sortedRows[2], hasLive: hasLive, height: 55, tint: .arenaBronze)
                             }
                             .frame(height: 130)
                             Divider().background(Color.arenaStroke)
@@ -949,35 +1035,54 @@ struct ArenaLeaderboardPanel: View {
 
                         // Table. When results are pending show every row from rank 1;
                         // otherwise the top-3 are already on the podium, so skip them.
-                        let tableRows = awaitingFirstResult ? Array(entries.enumerated()) : Array(entries.dropFirst(3).enumerated())
+                        let tableSlice = awaitingFirstResult ? sortedRows : Array(sortedRows.dropFirst(3))
                         let baseRank  = awaitingFirstResult ? 1 : 4
                         VStack(spacing: 0) {
-                            ForEach(tableRows, id: \.offset) { idx, row in
+                            ForEach(Array(tableSlice.enumerated()), id: \.element.entryId) { idx, row in
+                                let displayScore = row.displayScore(hasLive: hasLive)
+                                let delta = row.liveDelta ?? 0
+                                let rowIsLive = hasLive && delta > 0
                                 HStack(spacing: 10) {
                                     Text("\(idx + baseRank)")
                                         .font(ArenaFont.mono(size: 12, weight: .bold))
                                         .foregroundColor(.arenaTextDim)
                                         .frame(width: 24)
-                                    Text(row.name)
+                                    Text(row.displayName)
                                         .font(ArenaFont.mono(size: 12))
                                         .foregroundColor(.arenaText)
                                     Spacer()
+                                    if rowIsLive {
+                                        Text("+\(delta)")
+                                            .font(ArenaFont.mono(size: 9, weight: .bold))
+                                            .tracking(1)
+                                            .foregroundColor(.arenaDanger)
+                                            // Re-mount on delta change so the
+                                            // transition fires every time the
+                                            // user picks up a fresh live point.
+                                            .id("delta-\(row.entryId)-\(delta)")
+                                            .transition(.opacity.combined(with: .move(edge: .top)))
+                                    }
                                     if awaitingFirstResult {
                                         Text("—")
                                             .font(ArenaFont.mono(size: 13, weight: .bold))
                                             .foregroundColor(.arenaTextDim)
                                     } else {
-                                        Text("\(row.score)/\(row.total)")
+                                        Text("\(displayScore)/\(totalPossible)")
                                             .font(ArenaFont.mono(size: 13, weight: .bold))
-                                            .foregroundColor(.arenaPrimary)
+                                            .foregroundColor(rowIsLive ? .arenaDanger : .arenaPrimary)
+                                            .animation(.easeInOut(duration: 0.3), value: displayScore)
                                     }
                                 }
                                 .padding(.vertical, 6)
-                                if idx < tableRows.count - 1 {
+                                if idx < tableSlice.count - 1 {
                                     Rectangle().fill(Color.arenaStroke).frame(height: 1)
                                 }
                             }
                         }
+                        // Animate row reorders when the leaderboard tick lands
+                        // a fresh sort. Spring is gentle enough that a swap
+                        // doesn't feel disorienting on a small phone screen.
+                        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: sortedRows.map(\.entryId))
                     }
                 } else {
                     VStack(spacing: 8) {
@@ -999,36 +1104,31 @@ struct ArenaLeaderboardPanel: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
-    }
-
-    private struct LBRow {
-        let name: String
-        let score: Int
-        let total: Int
-    }
-
-    private func leaderboardEntries(_ lb: LeaderboardResponse) -> [LBRow]? {
-        let rows = lb.leaderboard
-        guard !rows.isEmpty else { return nil }
-        return rows.map { r in
-            LBRow(name: r.displayName, score: r.score, total: r.totalPossible)
+        .onAppear {
+            // Drive the pulsing live dot. Cheap, runs only while the panel
+            // is on screen.
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
         }
     }
 }
 
 private struct PodiumColumn: View {
     let rank: Int
-    let name: String
-    let score: Int
-    let total: Int
+    let row: LeaderboardEntry
+    let hasLive: Bool
     let height: CGFloat
     let tint: Color
+
+    private var displayScore: Int { row.displayScore(hasLive: hasLive) }
+    private var isLive: Bool { hasLive && (row.liveDelta ?? 0) > 0 }
 
     var body: some View {
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 6).fill(tint.opacity(0.3))
-                Text(String(name.prefix(1)).uppercased())
+                Text(String(row.displayName.prefix(1)).uppercased())
                     .font(ArenaFont.display(size: 18, weight: .heavy))
                     .foregroundColor(.arenaOnPrimary)
             }
@@ -1036,13 +1136,14 @@ private struct PodiumColumn: View {
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(tint, lineWidth: 2))
             .shadow(color: tint.opacity(0.8), radius: 8)
 
-            Text(name)
+            Text(row.displayName)
                 .font(ArenaFont.mono(size: 10, weight: .semibold))
                 .foregroundColor(.arenaText)
                 .lineLimit(1)
-            Text("\(score)/\(total)")
+            Text("\(displayScore)/\(row.totalPossible)")
                 .font(ArenaFont.mono(size: 10, weight: .bold))
-                .foregroundColor(tint)
+                .foregroundColor(isLive ? .arenaDanger : tint)
+                .animation(.easeInOut(duration: 0.3), value: displayScore)
 
             PodiumBlockShape(cut: 8)
                 .fill(

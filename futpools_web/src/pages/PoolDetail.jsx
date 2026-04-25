@@ -230,6 +230,41 @@ export function PoolDetail() {
     }
   }, [id, token]);
 
+  // Live leaderboard refetch — when a fixture in the pool is in progress
+  // (or just finished), the backend's `liveScore` per row can change
+  // minute-by-minute. Piggyback on the same 30s `liveByFixture` cadence
+  // so the table reorders in step with the score chips on the FIXTURES
+  // tab. Kept silent on errors: the previous snapshot stays visible
+  // rather than blanking the panel on a transient API hiccup.
+  useEffect(() => {
+    if (!id) return undefined;
+    const fixtures = quiniela?.fixtures || [];
+    if (fixtures.length === 0) return undefined;
+
+    const isWorthPolling = () => {
+      const now = Date.now();
+      const WINDOW_MS = 3 * 60 * 60 * 1000;
+      return fixtures.some((f) => {
+        const live = liveByFixture[f.fixtureId];
+        if (live?.status?.isLive) return true;
+        if (!f.kickoff) return false;
+        const k = new Date(f.kickoff).getTime();
+        return Math.abs(now - k) < WINDOW_MS;
+      });
+    };
+
+    const refresh = () => {
+      api.get(`/quinielas/${id}/leaderboard`)
+        .then(setLeaderboard)
+        .catch(() => { /* keep previous snapshot */ });
+    };
+
+    const interval = setInterval(() => {
+      if (isWorthPolling()) refresh();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [id, quiniela, liveByFixture]);
+
   const handleJoin = () => {
     if (!canJoin()) return;
     if (!user) { navigate('/login', { state: { from: location.pathname } }); return; }
@@ -554,18 +589,88 @@ export function PoolDetail() {
 // ArenaLeaderboardPanel so the two platforms feel identical.
 // ────────────────────────────────────────────────────────────────────
 
+// Helper for the leaderboard row — picks the live score when in vivo,
+// the settled score otherwise. Backend always sends both; we just decide
+// which to show based on the top-level `hasLiveFixtures` flag.
+function rowScore(row, hasLive) {
+  if (hasLive) return row?.liveScore ?? row?.score ?? 0;
+  return row?.score ?? row?.liveScore ?? 0;
+}
+
 function LeaderboardPanel({ leaderboard, locale }) {
-  const rows = leaderboard?.entries || leaderboard?.leaderboard || [];
-  // `totalPossible` = 0 for every row until at least one fixture is FT. We
-  // still render participants so the board doesn't look broken, but swap the
-  // podium for a "ranked by join order" banner until real scores land.
-  const awaitingFirstResult = rows.length > 0 && (rows[0]?.totalPossible ?? 0) === 0;
+  const rawRows = leaderboard?.entries || leaderboard?.leaderboard || [];
+  const hasLive = !!leaderboard?.hasLiveFixtures;
+  const totalPossible = leaderboard?.totalPossible ?? 0;
+  // Settle banner appears when every fixture in the pool has a final
+  // result and nothing is in progress — opposite of "live", and a nice
+  // payoff signal for the user (the table is now real, not provisional).
+  const allSettled = !hasLive && totalPossible > 0
+    && rawRows.length > 0
+    && rawRows.every((r) => (r.score ?? 0) === (r.liveScore ?? 0));
+  // Re-rank locally so the displayed `rank` always matches the order we
+  // render — needed in live mode where the backend's stale rank from a
+  // previous poll could disagree with what the row shows now.
+  const rows = [...rawRows].sort((a, b) => {
+    const sa = rowScore(a, hasLive);
+    const sb = rowScore(b, hasLive);
+    if (sb !== sa) return sb - sa;
+    return (a.entryNumber || 0) - (b.entryNumber || 0);
+  });
+
+  // `totalPossible` = 0 for every row before any fixture starts. Keep
+  // the join-order banner so the panel doesn't look broken pre-kickoff.
+  const awaitingFirstResult = rows.length > 0 && totalPossible === 0;
   const showPodium = rows.length >= 3 && !awaitingFirstResult;
 
   return (
     <HudFrame>
       <div style={{ padding: 14 }}>
-        <SectionLabel color="var(--fp-primary)">◆ {t(locale, 'LEADERBOARD')}</SectionLabel>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <SectionLabel color="var(--fp-primary)">◆ {t(locale, 'LEADERBOARD')}</SectionLabel>
+          {hasLive && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '3px 8px',
+              background: 'color-mix(in srgb, var(--fp-danger) 16%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--fp-danger) 55%, transparent)',
+              clipPath: 'var(--fp-clip-sm)',
+              color: 'var(--fp-danger)',
+              fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800, letterSpacing: 1.5,
+            }}>
+              <span style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: 'var(--fp-danger)',
+                boxShadow: '0 0 6px var(--fp-danger)',
+                animation: 'fp-live-pulse 1.2s ease-in-out infinite',
+              }} />
+              {t(locale, 'LIVE')}
+            </span>
+          )}
+          {allSettled && (
+            <span style={{
+              padding: '3px 8px',
+              background: 'color-mix(in srgb, var(--fp-gold) 16%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--fp-gold) 50%, transparent)',
+              clipPath: 'var(--fp-clip-sm)',
+              color: 'var(--fp-gold)',
+              fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800, letterSpacing: 1.5,
+            }}>
+              {t(locale, 'FINAL RESULTS')}
+            </span>
+          )}
+        </div>
+        {hasLive && (
+          <div style={{
+            marginTop: 6,
+            fontFamily: 'var(--fp-mono)', fontSize: 9, color: 'var(--fp-text-muted)', letterSpacing: 1,
+          }}>
+            {t(locale, 'LIVE POINTS · MAY CHANGE')}
+          </div>
+        )}
+        {/* Inline keyframes — the panel is a self-contained module so we
+            don't have to thread a global stylesheet just for the dot. */}
+        <style>{`@keyframes fp-live-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+@keyframes fp-delta-pulse { 0% { opacity: 0; transform: translateY(-2px); } 50% { opacity: 1; transform: translateY(0); } 100% { opacity: .65; transform: translateY(0); } }`}</style>
         <div style={{ height: 14 }} />
 
         {rows.length === 0 ? (
@@ -595,24 +700,33 @@ function LeaderboardPanel({ leaderboard, locale }) {
                 display: 'flex', alignItems: 'flex-end', gap: 8, height: 140,
                 paddingBottom: 2, marginBottom: 14,
                 borderBottom: '1px solid var(--fp-stroke)',
+                // Animate the podium subtly when picks shift between rows
+                // — `transition` on each child handles position deltas.
+                transition: 'all 0.4s ease',
               }}>
-                <PodiumColumn rank={2} row={rows[1]} height={70}  tint="#C6CED9" />
-                <PodiumColumn rank={1} row={rows[0]} height={100} tint="#FFD166" />
-                <PodiumColumn rank={3} row={rows[2]} height={55}  tint="#C8925B" />
+                <PodiumColumn rank={2} row={rows[1]} height={70}  tint="#C6CED9" hasLive={hasLive} />
+                <PodiumColumn rank={1} row={rows[0]} height={100} tint="#FFD166" hasLive={hasLive} />
+                <PodiumColumn rank={3} row={rows[2]} height={55}  tint="#C8925B" hasLive={hasLive} />
               </div>
             )}
 
             {(awaitingFirstResult ? rows : rows.slice(3)).slice(0, 12).map((e, idx) => {
               const displayRank = awaitingFirstResult ? (idx + 1) : (idx + 4);
+              const displayScore = rowScore(e, hasLive);
+              const isRowLive = hasLive && (e.liveDelta ?? 0) > 0;
               return (
                 <div
-                  key={e.entryId || e.userId || e.rank || displayRank}
+                  // Stable key by entryId so React reuses DOM nodes when rows
+                  // reorder — only then does the CSS transition on `transform`
+                  // animate the swap instead of cross-fading new rows in.
+                  key={e.entryId || e.userId || displayRank}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '8px 4px',
                     background: e.isSelf ? 'color-mix(in srgb, var(--fp-primary) 15%, transparent)' : 'transparent',
                     borderBottom: '1px solid var(--fp-stroke)',
                     clipPath: e.isSelf ? 'var(--fp-clip-sm)' : 'none',
+                    transition: 'background 0.3s ease, color 0.3s ease',
                   }}
                 >
                   <div style={{
@@ -625,11 +739,27 @@ function LeaderboardPanel({ leaderboard, locale }) {
                     fontFamily: 'var(--fp-mono)', fontSize: 12,
                     color: 'var(--fp-text)',
                   }}>{e.displayName || e.userId || 'player'}</div>
+                  {isRowLive && (e.liveDelta ?? 0) > 0 && (
+                    <span
+                      // Re-mount the badge each time the delta value changes
+                      // so the keyframe re-runs and the user sees a fresh
+                      // pulse on every live point earned.
+                      key={`delta-${e.entryId}-${e.liveDelta}`}
+                      style={{
+                        fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800, letterSpacing: 1,
+                        color: 'var(--fp-danger)',
+                        animation: 'fp-delta-pulse 0.9s ease-out forwards',
+                      }}
+                    >+{e.liveDelta}</span>
+                  )}
                   <div style={{
                     fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
-                    color: awaitingFirstResult ? 'var(--fp-text-dim)' : 'var(--fp-primary)',
+                    color: awaitingFirstResult
+                      ? 'var(--fp-text-dim)'
+                      : (isRowLive ? 'var(--fp-danger)' : 'var(--fp-primary)'),
+                    transition: 'color 0.3s ease',
                   }}>
-                    {awaitingFirstResult ? '—' : `${e.score}/${e.totalPossible}`}
+                    {awaitingFirstResult ? '—' : `${displayScore}/${totalPossible}`}
                   </div>
                 </div>
               );
@@ -641,10 +771,11 @@ function LeaderboardPanel({ leaderboard, locale }) {
   );
 }
 
-function PodiumColumn({ rank, row, height, tint }) {
+function PodiumColumn({ rank, row, height, tint, hasLive }) {
   const name = row?.displayName || row?.userId || 'player';
-  const score = row?.score ?? 0;
+  const displayScore = rowScore(row, hasLive);
   const total = row?.totalPossible ?? 0;
+  const isRowLive = hasLive && (row?.liveDelta ?? 0) > 0;
   const initial = String(name).charAt(0).toUpperCase();
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -665,8 +796,9 @@ function PodiumColumn({ rank, row, height, tint }) {
       }}>{name}</div>
       <div style={{
         fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
-        color: tint,
-      }}>{score}/{total}</div>
+        color: isRowLive ? 'var(--fp-danger)' : tint,
+        transition: 'color 0.3s ease',
+      }}>{displayScore}/{total}</div>
       {/* Pillar — cut-corner block scaled by rank */}
       <div style={{
         width: '100%', height,

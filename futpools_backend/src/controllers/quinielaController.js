@@ -660,23 +660,51 @@ exports.getLeaderboard = async (req, res) => {
     } catch (e) {
       console.warn('[Quiniela] getLeaderboard: fetch fixtures failed', e.message);
     }
-    const resultsByFixtureId = new Map();
+    // Two parallel result maps:
+    //   final → only fixtures in FT/AET/PEN. Settled, won't change.
+    //   live  → final + any in-progress fixture (incl. HT — score is frozen
+    //           at the break, but conceptually "still live" so the UI keeps
+    //           showing the LIVE indicator and the provisional points).
+    // The leaderboard exposes both so the client can show "X pts in vivo
+    // (Y settled)" without a second round-trip and animate row reorders
+    // as live results flip without touching settled scores.
+    const LEADERBOARD_LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
+    const finalResults = new Map();
+    const liveResults = new Map();
+    let liveFixtureCount = 0;
     for (const f of liveFixtures) {
       const short = (f?.status?.short || '').toUpperCase();
-      if (!FINISHED_STATUSES.has(short)) continue;
       const result = resultFromScore(f?.score?.home, f?.score?.away);
-      if (result != null) resultsByFixtureId.set(f.fixtureId, result);
+      if (FINISHED_STATUSES.has(short)) {
+        if (result != null) {
+          finalResults.set(f.fixtureId, result);
+          liveResults.set(f.fixtureId, result);
+        }
+      } else if (LEADERBOARD_LIVE_STATUSES.has(short)) {
+        liveFixtureCount += 1;
+        // 0-0 in the 1st minute is a real provisional result ("X" / draw)
+        // — count it. resultFromScore returns null only when scores are
+        // missing entirely, which would mean the match started but the
+        // feed hasn't caught up.
+        if (result != null) liveResults.set(f.fixtureId, result);
+      }
     }
+    const hasLiveFixtures = liveFixtureCount > 0;
 
     const entries = await QuinielaEntry.find({ quiniela: quinielaId })
       .sort({ entryNumber: 1, createdAt: 1 })
       .populate('user', 'displayName email');
-    const totalPossible = resultsByFixtureId.size;
+    // Total possible reflects the live picture so a 12-fixture pool with 1
+    // live + 1 final shows /2 (not /1) — that lines up with the
+    // points-shown-vs-points-possible reality of the moment.
+    const totalPossible = liveResults.size;
 
     const rows = entries.map((entry) => {
       let score = 0;
+      let liveScore = 0;
       for (const pick of entry.picks || []) {
-        if (resultsByFixtureId.get(pick.fixtureId) === pick.pick) score += 1;
+        if (finalResults.get(pick.fixtureId) === pick.pick) score += 1;
+        if (liveResults.get(pick.fixtureId) === pick.pick) liveScore += 1;
       }
       const user = entry.user || {};
       return {
@@ -684,12 +712,20 @@ exports.getLeaderboard = async (req, res) => {
         entryNumber: entry.entryNumber ?? 0,
         userId: user._id != null ? String(user._id) : null,
         displayName: user.displayName || user.email || 'Participant',
-        score,
+        score,            // settled points (FT only)
+        liveScore,        // settled + in-progress points
+        liveDelta: liveScore - score, // points currently "in play"
+        isLive: liveScore !== score,  // row has at least one live pick paying off
         totalPossible,
       };
     });
 
+    // Sort by live score so the table reflects the moment-by-moment reality.
+    // Ties broken by settled score (a player riding settled wins outranks
+    // one whose lead is purely from in-progress fixtures), then by join
+    // order so a fresh tie doesn't shuffle players randomly each refresh.
     rows.sort((a, b) => {
+      if (b.liveScore !== a.liveScore) return b.liveScore - a.liveScore;
       if (b.score !== a.score) return b.score - a.score;
       return (a.entryNumber || 0) - (b.entryNumber || 0);
     });
@@ -711,20 +747,31 @@ exports.getLeaderboard = async (req, res) => {
         userEntry = {
           rank: userRow.rank,
           score: userRow.score,
+          liveScore: userRow.liveScore,
+          liveDelta: userRow.liveDelta,
           totalPossible: userRow.totalPossible,
           displayName: userRow.displayName,
         };
       }
     }
 
-    res.json({ leaderboard, totalCount, totalPossible, userEntry });
+    res.json({
+      leaderboard,
+      totalCount,
+      totalPossible,
+      hasLiveFixtures,
+      liveFixtureCount,
+      userEntry,
+    });
 
     // Fire-and-forget scoring hook: once all fixtures are FT, `applyScoringToQuiniela`
     // updates user rating/streaks/achievements and stamps entries with scoredAt.
     // Idempotent — repeat calls on already-scored pools are no-ops. A cron in Phase
     // 2 will replace this opportunistic trigger, but reading a finished leaderboard
-    // is a reasonable moment to settle for Phase 1.
-    if (totalPossible > 0 && totalPossible === (quiniela.fixtures || []).length) {
+    // is a reasonable moment to settle for Phase 1. Settled count uses the
+    // `finalResults` map (FT-only) — `totalPossible` here would include
+    // live fixtures and trigger settlement before the match is actually over.
+    if (finalResults.size > 0 && finalResults.size === (quiniela.fixtures || []).length) {
       applyScoringToQuiniela(quinielaId).catch((err) => {
         console.warn('[Quiniela] post-leaderboard scoring failed', err.message);
       });

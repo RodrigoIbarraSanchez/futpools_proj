@@ -135,6 +135,8 @@ export const translations = {
     'No entries yet': 'No entries yet',
     'Be the first to join!': 'Be the first to join!',
     'RANKED BY JOIN ORDER · RESULTS PENDING': 'RANKED BY JOIN ORDER · RESULTS PENDING',
+    'LIVE POINTS · MAY CHANGE': 'LIVE POINTS · MAY CHANGE',
+    'FINAL RESULTS': 'FINAL RESULTS',
     'LEADERBOARD': 'LEADERBOARD',
     // Join by code
     'Join with code': 'Join with code',
@@ -562,6 +564,8 @@ export const translations = {
     'No entries yet': 'Sin entradas todavía',
     'Be the first to join!': '¡Sé el primero en unirte!',
     'RANKED BY JOIN ORDER · RESULTS PENDING': 'ORDEN DE REGISTRO · RESULTADOS PENDIENTES',
+    'LIVE POINTS · MAY CHANGE': 'PUNTOS EN VIVO · PUEDEN CAMBIAR',
+    'FINAL RESULTS': 'RESULTADOS FINALES',
     'LEADERBOARD': 'TABLA',
     // Join by code
     'Join with code': 'Unirse con código',

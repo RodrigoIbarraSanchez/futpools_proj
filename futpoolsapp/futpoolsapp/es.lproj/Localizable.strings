@@ -402,6 +402,10 @@
 "Passwords don't match" = "Las contraseñas no coinciden";
 "Reset password" = "Restablecer contraseña";
 
+// Live leaderboard
+"LIVE POINTS · MAY CHANGE" = "PUNTOS EN VIVO · PUEDEN CAMBIAR";
+"FINAL RESULTS" = "RESULTADOS FINALES";
+
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "QUINIELA";
 "VS" = "VS";
