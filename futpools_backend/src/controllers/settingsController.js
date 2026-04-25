@@ -18,10 +18,16 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
   try {
-    const { bannerImageURL } = req.body || {};
+    const body = req.body || {};
     const update = { updatedAt: new Date() };
-    if (typeof bannerImageURL === 'string') {
-      update.bannerImageURL = bannerImageURL.trim() || null;
+    // Use `in` rather than typeof so an explicit `null` payload (sent by
+    // the dashboard when the admin clears the input to remove the banner)
+    // actually nulls the field. The previous `typeof === 'string'` guard
+    // silently dropped null because `typeof null === 'object'`, leaving
+    // the old URL stuck in Mongo and the banner unremovable.
+    if ('bannerImageURL' in body) {
+      const raw = body.bannerImageURL;
+      update.bannerImageURL = (typeof raw === 'string' && raw.trim()) ? raw.trim() : null;
     }
     const doc = await Settings.findOneAndUpdate(
       { key: GLOBAL_KEY },
