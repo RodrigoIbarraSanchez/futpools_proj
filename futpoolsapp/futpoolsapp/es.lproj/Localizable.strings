@@ -405,6 +405,7 @@
 // Live leaderboard
 "LIVE POINTS · MAY CHANGE" = "PUNTOS EN VIVO · PUEDEN CAMBIAR";
 "FINAL RESULTS" = "RESULTADOS FINALES";
+"TIES BROKEN BY JOIN ORDER" = "EMPATES DESEMPATADOS POR ORDEN DE REGISTRO";
 
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "QUINIELA";

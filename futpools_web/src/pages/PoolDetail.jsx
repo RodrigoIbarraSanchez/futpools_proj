@@ -597,6 +597,34 @@ function rowScore(row, hasLive) {
   return row?.score ?? row?.liveScore ?? 0;
 }
 
+// Competition ranking (1,1,1,4 — not dense 1,1,1,2). Tied entries share
+// the same `displayRank`; the next group jumps by the size of the tie.
+// We only use the visible position to break ties for podium placement;
+// the rank label itself never lies about who's tied with whom — the user
+// in the screenshot was confused because three 1/1 rows showed up as
+// 1, 2, 3 even though they were tied.
+function withDisplayRanks(rows, hasLive) {
+  let lastScore = null;
+  let lastRank = 0;
+  return rows.map((row, i) => {
+    const score = rowScore(row, hasLive);
+    if (score !== lastScore) {
+      lastRank = i + 1;
+      lastScore = score;
+    }
+    return { ...row, displayRank: lastRank };
+  });
+}
+
+// Pillar height + tint derived from the *display rank*, not the screen
+// column. Ties get the same height and color so a "1, 1, 1" podium looks
+// like three winners instead of pretending one is ahead.
+function podiumStyleForRank(rank) {
+  if (rank <= 1) return { tint: '#FFD166', height: 100 };
+  if (rank === 2) return { tint: '#C6CED9', height: 70 };
+  return { tint: '#C8925B', height: 55 };
+}
+
 function LeaderboardPanel({ leaderboard, locale }) {
   const rawRows = leaderboard?.entries || leaderboard?.leaderboard || [];
   const hasLive = !!leaderboard?.hasLiveFixtures;
@@ -609,13 +637,20 @@ function LeaderboardPanel({ leaderboard, locale }) {
     && rawRows.every((r) => (r.score ?? 0) === (r.liveScore ?? 0));
   // Re-rank locally so the displayed `rank` always matches the order we
   // render — needed in live mode where the backend's stale rank from a
-  // previous poll could disagree with what the row shows now.
-  const rows = [...rawRows].sort((a, b) => {
+  // previous poll could disagree with what the row shows now. Then layer
+  // competition-ranking on top so tied scores share a rank label.
+  const sortedRows = [...rawRows].sort((a, b) => {
     const sa = rowScore(a, hasLive);
     const sb = rowScore(b, hasLive);
     if (sb !== sa) return sb - sa;
     return (a.entryNumber || 0) - (b.entryNumber || 0);
   });
+  const rows = withDisplayRanks(sortedRows, hasLive);
+  // True only when at least two adjacent rows currently share a score.
+  // Drives a small "TIES BROKEN BY JOIN ORDER" hint so the visible
+  // ordering inside a tie (Daniel above Yair when both have 1/1) doesn't
+  // look arbitrary.
+  const hasTies = rows.some((r, i) => i > 0 && r.displayRank === rows[i - 1].displayRank);
 
   // `totalPossible` = 0 for every row before any fixture starts. Keep
   // the join-order banner so the panel doesn't look broken pre-kickoff.
@@ -667,6 +702,14 @@ function LeaderboardPanel({ leaderboard, locale }) {
             {t(locale, 'LIVE POINTS · MAY CHANGE')}
           </div>
         )}
+        {hasTies && (
+          <div style={{
+            marginTop: hasLive ? 2 : 6,
+            fontFamily: 'var(--fp-mono)', fontSize: 9, color: 'var(--fp-text-faint)', letterSpacing: 1,
+          }}>
+            {t(locale, 'TIES BROKEN BY JOIN ORDER')}
+          </div>
+        )}
         {/* Inline keyframes — the panel is a self-contained module so we
             don't have to thread a global stylesheet just for the dot. */}
         <style>{`@keyframes fp-live-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
@@ -697,21 +740,27 @@ function LeaderboardPanel({ leaderboard, locale }) {
 
             {showPodium && (
               <div style={{
-                display: 'flex', alignItems: 'flex-end', gap: 8, height: 140,
+                display: 'flex', alignItems: 'flex-end', gap: 8,
                 paddingBottom: 2, marginBottom: 14,
                 borderBottom: '1px solid var(--fp-stroke)',
-                // Animate the podium subtly when picks shift between rows
-                // — `transition` on each child handles position deltas.
                 transition: 'all 0.4s ease',
               }}>
-                <PodiumColumn rank={2} row={rows[1]} height={70}  tint="#C6CED9" hasLive={hasLive} />
-                <PodiumColumn rank={1} row={rows[0]} height={100} tint="#FFD166" hasLive={hasLive} />
-                <PodiumColumn rank={3} row={rows[2]} height={55}  tint="#C8925B" hasLive={hasLive} />
+                {/* Pillar height/tint comes from the *display rank* — tied
+                    rows render identical pillars so a "1, 1, 1" podium
+                    looks like three winners instead of pretending one is
+                    ahead. Visible left/center/right column position still
+                    follows the sorted order so the row identities match
+                    the table below. */}
+                <PodiumColumn position={2} row={rows[1]} hasLive={hasLive} />
+                <PodiumColumn position={1} row={rows[0]} hasLive={hasLive} />
+                <PodiumColumn position={3} row={rows[2]} hasLive={hasLive} />
               </div>
             )}
 
             {(awaitingFirstResult ? rows : rows.slice(3)).slice(0, 12).map((e, idx) => {
-              const displayRank = awaitingFirstResult ? (idx + 1) : (idx + 4);
+              const displayRank = awaitingFirstResult
+                ? (e.displayRank ?? idx + 1)
+                : (e.displayRank ?? idx + 4);
               const displayScore = rowScore(e, hasLive);
               const isRowLive = hasLive && (e.liveDelta ?? 0) > 0;
               return (
@@ -730,14 +779,19 @@ function LeaderboardPanel({ leaderboard, locale }) {
                   }}
                 >
                   <div style={{
-                    width: 24, textAlign: 'center',
+                    width: 24, textAlign: 'center', flexShrink: 0,
                     fontFamily: 'var(--fp-mono)', fontSize: 12, fontWeight: 700,
                     color: 'var(--fp-text-dim)',
                   }}>{displayRank}</div>
+                  {/* `minWidth: 0` lets the ellipsis kick in inside a flex
+                      container — without it long names like "Daniel Alexis
+                      Yoldi Sanchez" overflow and shove the score off the
+                      right edge. */}
                   <div style={{
-                    flex: 1,
+                    flex: 1, minWidth: 0,
                     fontFamily: 'var(--fp-mono)', fontSize: 12,
                     color: 'var(--fp-text)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{e.displayName || e.userId || 'player'}</div>
                   {isRowLive && (e.liveDelta ?? 0) > 0 && (
                     <span
@@ -747,12 +801,13 @@ function LeaderboardPanel({ leaderboard, locale }) {
                       key={`delta-${e.entryId}-${e.liveDelta}`}
                       style={{
                         fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 800, letterSpacing: 1,
-                        color: 'var(--fp-danger)',
+                        color: 'var(--fp-danger)', flexShrink: 0,
                         animation: 'fp-delta-pulse 0.9s ease-out forwards',
                       }}
                     >+{e.liveDelta}</span>
                   )}
                   <div style={{
+                    flexShrink: 0,
                     fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
                     color: awaitingFirstResult
                       ? 'var(--fp-text-dim)'
@@ -771,17 +826,25 @@ function LeaderboardPanel({ leaderboard, locale }) {
   );
 }
 
-function PodiumColumn({ rank, row, height, tint, hasLive }) {
+function PodiumColumn({ position, row, hasLive }) {
   const name = row?.displayName || row?.userId || 'player';
   const displayScore = rowScore(row, hasLive);
   const total = row?.totalPossible ?? 0;
   const isRowLive = hasLive && (row?.liveDelta ?? 0) > 0;
   const initial = String(name).charAt(0).toUpperCase();
+  // Pillar style follows the *display rank* (so ties → same height/tint)
+  // with a fallback to the on-screen position for legacy callers/sanity.
+  const { tint, height } = podiumStyleForRank(row?.displayRank ?? position);
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+    // `minWidth: 0` so long names truncate to ellipsis instead of forcing
+    // the column to grow and shove sibling pillars out of place.
+    <div style={{
+      flex: 1, minWidth: 0,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+    }}>
       {/* Avatar medallion */}
       <div style={{
-        width: 40, height: 40, borderRadius: 6,
+        width: 40, height: 40, borderRadius: 6, flexShrink: 0,
         background: `color-mix(in srgb, ${tint} 30%, transparent)`,
         border: `2px solid ${tint}`,
         boxShadow: `0 0 12px ${tint}aa`,
@@ -791,7 +854,7 @@ function PodiumColumn({ rank, row, height, tint, hasLive }) {
       }}>{initial}</div>
       <div style={{
         fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 600,
-        color: 'var(--fp-text)', maxWidth: '100%',
+        color: 'var(--fp-text)', width: '100%', textAlign: 'center',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>{name}</div>
       <div style={{
@@ -811,7 +874,7 @@ function PodiumColumn({ rank, row, height, tint, hasLive }) {
           position: 'absolute', top: 6, left: 0, right: 0, textAlign: 'center',
           fontFamily: 'var(--fp-display)', fontSize: 22, fontWeight: 900,
           color: 'var(--fp-on-primary)',
-        }}>{rank}</div>
+        }}>{row?.displayRank ?? position}</div>
       </div>
     </div>
   );

@@ -951,6 +951,47 @@ struct ArenaLeaderboardPanel: View {
         }
     }
 
+    /// Competition ranking (1, 1, 1, 4 — never dense). Tied scores share
+    /// a label so the user doesn't read a fake hierarchy into a 1, 2, 3
+    /// when all three players are sitting on 1/1.
+    private var rankedRows: [(rank: Int, row: LeaderboardEntry)] {
+        let rows = sortedRows
+        var out: [(Int, LeaderboardEntry)] = []
+        var lastScore: Int? = nil
+        var lastRank = 0
+        for (i, row) in rows.enumerated() {
+            let s = row.displayScore(hasLive: hasLive)
+            if s != lastScore {
+                lastRank = i + 1
+                lastScore = s
+            }
+            out.append((lastRank, row))
+        }
+        return out
+    }
+
+    /// True when at least two adjacent rows share a display rank — drives
+    /// the small "TIES BROKEN BY JOIN ORDER" hint. We only want to show
+    /// the helper when it's actually useful.
+    private var hasTies: Bool {
+        let ranks = rankedRows.map { $0.rank }
+        for i in 1..<ranks.count {
+            if ranks[i] == ranks[i - 1] { return true }
+        }
+        return false
+    }
+
+    /// Pillar style derived from display rank (so a 3-way tie at rank 1
+    /// renders three identical gold pillars). Internal so the sibling
+    /// PodiumColumn can read it without a separate free function.
+    static func podiumStyle(forRank rank: Int) -> (tint: Color, height: CGFloat) {
+        switch rank {
+        case ...1:  return (.arenaGold, 100)
+        case 2:     return (.arenaSilver, 70)
+        default:    return (.arenaBronze, 55)
+        }
+    }
+
     var body: some View {
         HudFrame {
             VStack(spacing: 14) {
@@ -1008,10 +1049,17 @@ struct ArenaLeaderboardPanel: View {
                         .foregroundColor(.arenaTextMuted)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                if hasTies {
+                    Text(String(localized: "TIES BROKEN BY JOIN ORDER"))
+                        .font(ArenaFont.mono(size: 9))
+                        .tracking(1)
+                        .foregroundColor(.arenaTextFaint)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
                 if isLoading {
                     ProgressView().tint(.arenaPrimary)
-                } else if !sortedRows.isEmpty {
+                } else if !rankedRows.isEmpty {
                     if awaitingFirstResult {
                         Text(NSLocalizedString("RANKED BY JOIN ORDER · RESULTS PENDING", comment: ""))
                             .font(ArenaFont.mono(size: 9, weight: .bold))
@@ -1023,11 +1071,11 @@ struct ArenaLeaderboardPanel: View {
                         // Podium (top 3). Skipped while results are pending so
                         // we don't imply a "winner" that's really just whoever
                         // joined first.
-                        if sortedRows.count >= 3 && !awaitingFirstResult {
+                        if rankedRows.count >= 3 && !awaitingFirstResult {
                             HStack(alignment: .bottom, spacing: 8) {
-                                PodiumColumn(rank: 2, row: sortedRows[1], hasLive: hasLive, height: 70, tint: .arenaSilver)
-                                PodiumColumn(rank: 1, row: sortedRows[0], hasLive: hasLive, height: 100, tint: .arenaGold)
-                                PodiumColumn(rank: 3, row: sortedRows[2], hasLive: hasLive, height: 55, tint: .arenaBronze)
+                                PodiumColumn(position: 2, ranked: rankedRows[1], hasLive: hasLive)
+                                PodiumColumn(position: 1, ranked: rankedRows[0], hasLive: hasLive)
+                                PodiumColumn(position: 3, ranked: rankedRows[2], hasLive: hasLive)
                             }
                             .frame(height: 130)
                             Divider().background(Color.arenaStroke)
@@ -1035,22 +1083,26 @@ struct ArenaLeaderboardPanel: View {
 
                         // Table. When results are pending show every row from rank 1;
                         // otherwise the top-3 are already on the podium, so skip them.
-                        let tableSlice = awaitingFirstResult ? sortedRows : Array(sortedRows.dropFirst(3))
-                        let baseRank  = awaitingFirstResult ? 1 : 4
+                        let tableSlice: [(rank: Int, row: LeaderboardEntry)] = awaitingFirstResult
+                            ? rankedRows
+                            : Array(rankedRows.dropFirst(3))
                         VStack(spacing: 0) {
-                            ForEach(Array(tableSlice.enumerated()), id: \.element.entryId) { idx, row in
+                            ForEach(Array(tableSlice.enumerated()), id: \.element.row.entryId) { idx, item in
+                                let row = item.row
                                 let displayScore = row.displayScore(hasLive: hasLive)
                                 let delta = row.liveDelta ?? 0
                                 let rowIsLive = hasLive && delta > 0
                                 HStack(spacing: 10) {
-                                    Text("\(idx + baseRank)")
+                                    Text("\(item.rank)")
                                         .font(ArenaFont.mono(size: 12, weight: .bold))
                                         .foregroundColor(.arenaTextDim)
                                         .frame(width: 24)
                                     Text(row.displayName)
                                         .font(ArenaFont.mono(size: 12))
                                         .foregroundColor(.arenaText)
-                                    Spacer()
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     if rowIsLive {
                                         Text("+\(delta)")
                                             .font(ArenaFont.mono(size: 9, weight: .bold))
@@ -1082,7 +1134,7 @@ struct ArenaLeaderboardPanel: View {
                         // Animate row reorders when the leaderboard tick lands
                         // a fresh sort. Spring is gentle enough that a swap
                         // doesn't feel disorienting on a small phone screen.
-                        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: sortedRows.map(\.entryId))
+                        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: rankedRows.map { $0.row.entryId })
                     }
                 } else {
                     VStack(spacing: 8) {
@@ -1115,16 +1167,23 @@ struct ArenaLeaderboardPanel: View {
 }
 
 private struct PodiumColumn: View {
-    let rank: Int
-    let row: LeaderboardEntry
+    /// Visual column position (1=center, 2=left, 3=right). Drives nothing
+    /// but layout — actual tint/height/label come from the display rank.
+    let position: Int
+    let ranked: (rank: Int, row: LeaderboardEntry)
     let hasLive: Bool
-    let height: CGFloat
-    let tint: Color
 
+    private var row: LeaderboardEntry { ranked.row }
     private var displayScore: Int { row.displayScore(hasLive: hasLive) }
     private var isLive: Bool { hasLive && (row.liveDelta ?? 0) > 0 }
 
+    private var style: (tint: Color, height: CGFloat) {
+        ArenaLeaderboardPanel.podiumStyle(forRank: ranked.rank)
+    }
+
     var body: some View {
+        let tint = style.tint
+        let height = style.height
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 6).fill(tint.opacity(0.3))
@@ -1136,10 +1195,16 @@ private struct PodiumColumn: View {
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(tint, lineWidth: 2))
             .shadow(color: tint.opacity(0.8), radius: 8)
 
+            // Long names get squeezed (`minimumScaleFactor`) before they
+            // truncate, so a "Daniel Alexis Yoldi Sanchez" doesn't push
+            // the column taller than its siblings and break alignment.
             Text(row.displayName)
                 .font(ArenaFont.mono(size: 10, weight: .semibold))
                 .foregroundColor(.arenaText)
                 .lineLimit(1)
+                .minimumScaleFactor(0.55)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity)
             Text("\(displayScore)/\(row.totalPossible)")
                 .font(ArenaFont.mono(size: 10, weight: .bold))
                 .foregroundColor(isLive ? .arenaDanger : tint)
@@ -1156,7 +1221,9 @@ private struct PodiumColumn: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: height)
                 .overlay(
-                    Text("\(rank)")
+                    // Show the *display* rank (so 3-way tie reads "1, 1, 1")
+                    // not the visible column number.
+                    Text("\(ranked.rank)")
                         .font(ArenaFont.display(size: 22, weight: .black))
                         .foregroundColor(.arenaOnPrimary)
                         .padding(.top, 8),

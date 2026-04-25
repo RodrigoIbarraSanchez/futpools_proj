@@ -405,6 +405,7 @@
 // Live leaderboard
 "LIVE POINTS · MAY CHANGE" = "LIVE POINTS · MAY CHANGE";
 "FINAL RESULTS" = "FINAL RESULTS";
+"TIES BROKEN BY JOIN ORDER" = "TIES BROKEN BY JOIN ORDER";
 
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "POOL";
