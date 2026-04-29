@@ -40,6 +40,13 @@ struct HomeView: View {
                                 .padding(.horizontal, 16)
                         }
 
+                        // Daily Pick check-in: predict the day's featured
+                        // fixture for +1 Ticket immediate (and +1 bonus if
+                        // correct). The Tickets faucet that funds the
+                        // weekly sweepstakes entries.
+                        DailyPickCard()
+                            .padding(.horizontal, 16)
+
                         ChallengesTeaserCard()
                             .padding(.horizontal, 16)
 

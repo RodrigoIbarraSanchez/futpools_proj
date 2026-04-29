@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -548,7 +548,7 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
 
 // ──────────────────────────────────────────────────────────────
 export function Home() {
-  const { user, token } = useAuth();
+  const { user, token, fetchUser } = useAuth();
   const { locale } = useLocale();
   const [quinielas, setQuinielas] = useState([]);
   const [liveFixtures, setLiveFixtures] = useState({});
@@ -691,6 +691,8 @@ export function Home() {
         <QuickPlayHero quiniela={quickPlayPools[0]} liveFixtures={liveFixtures} locale={locale} />
       ) : null}
 
+      <DailyPickCard locale={locale} token={token} onTicketAwarded={fetchUser} />
+
       <ChallengesTeaser locale={locale} token={token} />
 
       <FilterStrip
@@ -753,6 +755,230 @@ export function Home() {
 }
 
 
+
+// ────────────────────────────────────────────────────────────────────
+// Daily Pick — Tickets check-in mechanism. Predicts the day's featured
+// fixture for +1 Ticket immediate, +1 bonus on settle if correct.
+// ────────────────────────────────────────────────────────────────────
+
+function DailyPickCard({ locale, token, onTicketAwarded }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await api.get('/daily-pick/today', token);
+      setData(res);
+      setError(null);
+    } catch {
+      // Quiet — empty state will show.
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const submit = async (pick) => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await api.post('/daily-pick/today/predict', { pick }, token);
+      setData(res);
+      onTicketAwarded?.();
+    } catch (e) {
+      const msg = e.message || '';
+      if (/DUPLICATE_PREDICTION/.test(msg)) {
+        await load();
+      } else if (/FIXTURE_STARTED/.test(msg)) {
+        setError(t(locale, 'Kickoff already happened. Come back tomorrow.'));
+        await load();
+      } else if (/INVALID_PICK/.test(msg)) {
+        setError(t(locale, 'Invalid pick.'));
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading && !data) return null;
+
+  const dp = data?.dailyPick;
+  const prediction = data?.prediction;
+  const hasStarted = dp?.fixture?.kickoff
+    ? new Date(dp.fixture.kickoff).getTime() <= Date.now()
+    : false;
+  const isSettled = !!dp?.finalResult;
+  const userWon = isSettled && prediction && prediction.pick === dp.finalResult;
+
+  // Empty state — no Daily Pick today (no priority-league fixture).
+  if (!dp) {
+    return (
+      <div style={{ padding: '0 16px', marginTop: 12 }}>
+        <div style={{
+          padding: 14,
+          background: 'var(--fp-surface)',
+          border: '1px solid var(--fp-stroke)',
+          clipPath: 'var(--fp-clip-sm)',
+        }}>
+          <div style={{
+            fontFamily: 'var(--fp-display)', fontSize: 11, fontWeight: 700, letterSpacing: 2,
+            color: 'var(--fp-accent)', marginBottom: 4,
+          }}>⚽ {t(locale, 'DAILY PICK')}</div>
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-muted)',
+          }}>
+            {t(locale, 'No featured match today. Come back tomorrow.')}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '0 16px', marginTop: 12 }}>
+      <div style={{
+        padding: 14,
+        background: 'var(--fp-surface)',
+        border: `1px solid ${prediction ? 'var(--fp-stroke)' : 'color-mix(in srgb, var(--fp-accent) 45%, transparent)'}`,
+        boxShadow: prediction ? 'none' : '0 0 16px color-mix(in srgb, var(--fp-accent) 28%, transparent)',
+        clipPath: 'var(--fp-clip-sm)',
+      }}>
+        {/* Header row */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{
+            flex: 1,
+            fontFamily: 'var(--fp-display)', fontSize: 11, fontWeight: 700, letterSpacing: 2,
+            color: 'var(--fp-accent)',
+          }}>⚽ {t(locale, 'DAILY PICK')}</div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '3px 8px',
+            background: 'color-mix(in srgb, var(--fp-accent) 13%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fp-accent) 30%, transparent)',
+            clipPath: 'var(--fp-clip-sm)',
+            color: 'var(--fp-accent)',
+            fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+          }}>🎟 +1</div>
+        </div>
+
+        {/* Fixture row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            {dp.fixture.homeLogo && (
+              <img src={dp.fixture.homeLogo} alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            )}
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 9, color: 'var(--fp-text-dim)',
+              marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>{dp.fixture.homeTeam}</div>
+          </div>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{
+              fontFamily: 'var(--fp-display)', fontSize: 12, fontWeight: 800, letterSpacing: 1,
+              color: 'var(--fp-text-muted)',
+            }}>VS</div>
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 9, color: 'var(--fp-accent)', marginTop: 2,
+            }}>{kickoffTime(dp.fixture.kickoff)}</div>
+            {dp.fixture.leagueName && (
+              <div style={{
+                fontFamily: 'var(--fp-mono)', fontSize: 8, color: 'var(--fp-text-dim)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{dp.fixture.leagueName}</div>
+            )}
+          </div>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            {dp.fixture.awayLogo && (
+              <img src={dp.fixture.awayLogo} alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            )}
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 9, color: 'var(--fp-text-dim)',
+              marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>{dp.fixture.awayTeam}</div>
+          </div>
+        </div>
+
+        {/* Action area */}
+        {prediction ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 0',
+            fontFamily: 'var(--fp-mono)', fontSize: 11,
+          }}>
+            <span style={{ color: 'var(--fp-text-muted)' }}>{t(locale, 'Your pick')}</span>
+            <span style={{
+              padding: '4px 10px',
+              fontFamily: 'var(--fp-display)', fontSize: 14, fontWeight: 900,
+              color: 'var(--fp-accent)',
+              background: 'color-mix(in srgb, var(--fp-accent) 13%, transparent)',
+              clipPath: 'var(--fp-clip-sm)',
+            }}>{prediction.pick}</span>
+            <span style={{ flex: 1 }} />
+            {isSettled
+              ? (userWon
+                  ? <span style={{ color: 'var(--fp-primary)', fontWeight: 700 }}>🏆 +1 {t(locale, 'BONUS')}</span>
+                  : <span style={{ color: 'var(--fp-danger)', fontWeight: 700 }}>{t(locale, 'MISSED')}</span>)
+              : <span style={{ color: 'var(--fp-text-dim)' }}>{t(locale, 'WAITING FOR FT')}</span>}
+          </div>
+        ) : hasStarted ? (
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-muted)',
+            textAlign: 'center', padding: 8,
+          }}>{t(locale, 'Kickoff already happened. Come back tomorrow.')}</div>
+        ) : (
+          <div>
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-muted)',
+              marginBottom: 6, letterSpacing: 1,
+            }}>{t(locale, 'Predict & earn 1 Ticket')}</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['1', 'X', '2'].map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => submit(k)}
+                  style={{
+                    flex: 1, padding: '10px 4px',
+                    background: 'var(--fp-bg2)',
+                    border: '1px solid color-mix(in srgb, var(--fp-accent) 35%, transparent)',
+                    clipPath: 'var(--fp-clip-sm)',
+                    color: submitting ? 'var(--fp-text-dim)' : 'var(--fp-text)',
+                    fontFamily: 'var(--fp-display)', cursor: submitting ? 'default' : 'pointer',
+                  }}
+                >
+                  <div style={{ fontSize: 16, fontWeight: 900 }}>{k}</div>
+                  <div style={{ fontSize: 8, fontFamily: 'var(--fp-mono)', color: 'var(--fp-text-muted)' }}>
+                    {k === '1' ? t(locale, 'HOME') : k === 'X' ? t(locale, 'DRAW') : t(locale, 'AWAY')}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            marginTop: 8, fontFamily: 'var(--fp-mono)', fontSize: 10,
+            color: 'var(--fp-danger)',
+          }}>{error}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function kickoffTime(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Challenges teaser — compact banner shown between the featured pool and

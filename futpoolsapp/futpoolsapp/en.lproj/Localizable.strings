@@ -410,6 +410,15 @@
 // Tickets v2.4
 "%lld Tickets" = "%lld Tickets";
 
+// Daily Pick (Tickets earning)
+"DAILY PICK" = "DAILY PICK";
+"No featured match today. Come back tomorrow." = "No featured match today. Come back tomorrow.";
+"Predict & earn 1 Ticket" = "Predict & earn 1 Ticket";
+"Your pick" = "Your pick";
+"WAITING FOR FT" = "WAITING FOR FT";
+"Kickoff already happened. Come back tomorrow." = "Kickoff already happened. Come back tomorrow.";
+"Invalid pick." = "Invalid pick.";
+
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "POOL";
 "VS" = "VS";

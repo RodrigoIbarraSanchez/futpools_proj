@@ -730,6 +730,22 @@ const getFixtureEvents = async (fixtureId) => {
   return out;
 };
 
+/**
+ * Fetch fixtures for a single league + ISO date (YYYY-MM-DD). Used by the
+ * Daily Pick scheduler to find candidate fixtures from priority leagues.
+ * Returns the raw API-Football `response` array — caller decides how to
+ * filter/sort.
+ */
+const getFixturesByLeagueAndDate = async (leagueId, date, season) => {
+  const resolvedSeason = Number(season) || Number(DEFAULT_SEASON) || new Date().getFullYear();
+  const data = await apiFetch('/fixtures', {
+    league: leagueId,
+    season: resolvedSeason,
+    date,
+  });
+  return data?.response || [];
+};
+
 module.exports = {
   fetchFixturesForMatchday,
   fetchFixturesByIds,
@@ -738,5 +754,6 @@ module.exports = {
   getTeamFixtures,
   getLeagueFixtures,
   getFixtureEvents,
+  getFixturesByLeagueAndDate,
   startLivePolling,
 };
