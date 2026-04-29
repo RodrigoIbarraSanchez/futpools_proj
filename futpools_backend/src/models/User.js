@@ -30,6 +30,13 @@ const userSchema = new mongoose.Schema({
     minlength: 2,
   },
   balance: { type: Number, default: 0 },
+  // Tickets (v2.4) — second virtual currency, completely decoupled from
+  // `balance`. Tickets are EARN-ONLY (Daily Pick check-in + rewarded ads),
+  // never sold via IAP/Stripe. Spent only on entries to premium sweepstakes
+  // pools that pay out real-world prizes. The legal wall between the two
+  // economies is enforced at the service layer: `transactionService` only
+  // touches `balance`, `ticketService` only touches `tickets`. Never both.
+  tickets: { type: Number, default: 0 },
 
   // ── FutPools Rank (skill track record) ────────────────────────────────
   // Elo-lite rating: each scored pool adjusts by K × (actual - expected) / max.

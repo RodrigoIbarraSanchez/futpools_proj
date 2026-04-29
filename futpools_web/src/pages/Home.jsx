@@ -56,11 +56,11 @@ function formatDate(d) {
 // ──────────────────────────────────────────────────────────────
 // Header — pool title + real coin balance
 // ──────────────────────────────────────────────────────────────
-function ArenaHeader({ coins, locale, onJoinCode }) {
+function ArenaHeader({ coins, tickets, locale, onJoinCode }) {
   return (
     <div style={{
       padding: '14px 16px 10px',
-      display: 'flex', alignItems: 'center', gap: 10,
+      display: 'flex', alignItems: 'center', gap: 8,
       borderBottom: '1px solid var(--fp-stroke)',
       background: 'linear-gradient(180deg, var(--fp-bg2), transparent)',
     }}>
@@ -88,6 +88,10 @@ function ArenaHeader({ coins, locale, onJoinCode }) {
           }}
         >🎟</button>
       )}
+      {/* Dual currency: Tickets first (cyan), Coins second (gold). The
+          visual difference makes the legal wall obvious — the user reads
+          them as two separate things, not interchangeable. */}
+      <TicketBadge value={tickets} />
       <CoinBadge value={coins} />
     </div>
   );
@@ -111,6 +115,37 @@ function CoinBadge({ value }) {
         color: 'var(--fp-gold)',
       }}>
         {Number(value).toLocaleString()}
+      </span>
+    </div>
+  );
+}
+
+function TicketBadge({ value }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 5,
+      padding: '6px 10px',
+      background: 'color-mix(in srgb, var(--fp-accent) 14%, transparent)',
+      border: '1px solid color-mix(in srgb, var(--fp-accent) 30%, transparent)',
+      clipPath: 'var(--fp-clip-sm)',
+    }}
+    aria-label={`${value} Tickets`}
+    title={`${value} Tickets`}
+    >
+      {/* SVG ticket glyph — same accent cyan that flags interactive,
+          earn-only currency throughout the app. */}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           style={{ filter: 'drop-shadow(0 0 3px color-mix(in srgb, var(--fp-accent) 45%, transparent))' }}>
+        <path
+          d="M3 7a1 1 0 011-1h16a1 1 0 011 1v3a2 2 0 100 4v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3a2 2 0 100-4V7z"
+          fill="currentColor" style={{ color: 'var(--fp-accent)' }}
+        />
+      </svg>
+      <span style={{
+        fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
+        color: 'var(--fp-accent)',
+      }}>
+        {Number(value || 0).toLocaleString()}
       </span>
     </div>
   );
@@ -634,6 +669,7 @@ export function Home() {
     <>
       <ArenaHeader
         coins={user?.balance ?? 0}
+        tickets={user?.tickets ?? 0}
         locale={locale}
         onJoinCode={() => setShowJoinByCode(true)}
       />

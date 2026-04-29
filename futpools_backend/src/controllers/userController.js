@@ -15,6 +15,9 @@ exports.getMe = async (req, res) => {
       displayName: req.user.displayName,
       isAdmin,
       balance: req.user.balance ?? 0,
+      // Tickets v2.4 — exposed alongside balance so clients can render the
+      // dual currency header in one round-trip.
+      tickets: req.user.tickets ?? 0,
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -34,6 +37,7 @@ exports.updateMe = async (req, res) => {
       username: req.user.username,
       displayName: req.user.displayName,
       balance: req.user.balance ?? 0,
+      tickets: req.user.tickets ?? 0,
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

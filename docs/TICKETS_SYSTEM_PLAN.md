@@ -61,7 +61,225 @@ Si cualquiera de estas se rompe → Apple recategoriza a 5.3.4 (real money gamin
 
 ---
 
-## Catálogo de mecanismos de earning de Tickets
+## Filosofía del earning — los dos loops independientes que se autoalimentan
+
+El reto económico real: **los premios se pagan con dinero que viene de IAP de Coins, pero los Tickets NO se pueden vender**. Si los Tickets se desconectan totalmente del comportamiento de gasto de Coins, no hay flujo. Si se conectan directamente, Apple recategoriza a 5.3.4 y el proyecto muere.
+
+**Solución**: dos loops desacoplados en código y UI, pero acoplados en *comportamiento del usuario*.
+
+```
+┌──────────────────────── LOOP DE COINS (revenue) ────────────────────────┐
+│                                                                         │
+│   Usuario compra Coins (IAP) ──► Coin sinks (varios) ──► Balance baja  │
+│              ▲                                                  │       │
+│              └─────────────── recompra ◄─────────────────────────       │
+└─────────────────────────────────────────────────────────────────────────┘
+                                  ║
+                                  ║  (cero conversión directa)
+                                  ║  (acoplamiento solo via actividad)
+                                  ▼
+┌──────────────────────── LOOP DE TICKETS (engagement) ───────────────────┐
+│                                                                         │
+│   Daily Pick check-in (1/día)  ──┐                                      │
+│   Rewarded ads (sin cap)        ─┼──► Tickets en wallet                 │
+│              │                                                          │
+│              └─────────► Entrada a sorteo semanal premio real (7 Tkts)  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Lo brillante**: el sistema de Tickets es completamente independiente del gasto de Coins. Aún así, el usuario que compra Coins (más quinielas, power-ups, cosmetics) tiende a abrir la app más, hacer más Daily Picks, ver más ads → genera más Tickets como subproducto natural. Apple no ve un puente; legalmente solo hay actividad.
+
+**Regla de oro**: ninguna recompensa de Tickets puede tener como condición *literal* "gastar X Coins" o "comprar Y Coins". Siempre debe ser un evento neutro (predecir, abrir, ver, alcanzar) que el usuario *puede* lograr sin gastar.
+
+---
+
+## Coin sinks — el motor de revenue (decoupled de Tickets)
+
+Para que los premios semanales se autofinancien, los Coins deben tener suficientes lugares para gastarse de forma recurrente. Catálogo propuesto, ordenado por impacto esperado en velocidad de recompra:
+
+### S1 — Sinks core (ya existen, expandir)
+
+| Sink | Mecánica | Notas |
+|---|---|---|
+| **Entry cost en pools** | Costo por entrada definido por creador (10–500 Coins) | Ya existe. Bumpear catálogo de pools premium del staff (mejores premios cosméticos para ganadores) |
+| **Multi-entrada** | Mismo pool, 3 entries con variaciones de picks (3× costo, 3× chances) | Nuevo — alta correlación con jugadores serios |
+| **Sponsor prize** | Creador paga el premio en Coins + 10% rake | Ya existe |
+
+### S2 — Power-ups por pool (nuevos, alta velocidad de drenaje)
+
+| Power-up | Costo aprox | Función |
+|---|---|---|
+| **Pick reveal** | 50 Coins | Ver % del pool que pickeó cada opción en un fixture (información estratégica) |
+| **Late edit** | 100 Coins | Editar picks hasta 5 min antes del kickoff de un fixture específico |
+| **Insurance** | 200 Coins | Si pierdes la quiniela, recibes 50% de tu entry de vuelta |
+| **Double-down** | 100 Coins | Apuesta extra en UN pick para multiplicador 1.5× si aciertas |
+| **Streak shield** | 100 Coins | Protege tu daily streak de un día perdido |
+
+### S3 — Cosmetics + status (cero impacto en gameplay)
+
+| Item | Costo aprox | Función |
+|---|---|---|
+| **Avatar frames** | 50–500 Coins | Marcos visuales en profile + leaderboard |
+| **Name colors** | 200 Coins/mes | Color del nombre en rankings |
+| **Profile badges** | 100–300 Coins | Logros comprables (separados de achievements gratuitos) |
+| **Custom pool skin** | 500 Coins | Skin/logo en una quiniela privada que tú creas |
+
+### S4 — Social tipping
+
+| Acción | Costo |
+|---|---|
+| **Tip al creador del pool** | 50/100/200 Coins (creador recibe 90%, plataforma 10% rake) |
+| **Tip al líder del leaderboard** | 50 Coins (gesto post-partido) |
+
+### S5 — Premium subscription (mensual, opcional)
+
+| Tier | Precio | Beneficios |
+|---|---|---|
+| **Pro** | 1,000 Coins/mes | Pool reveal x3/día gratis, marcos exclusivos, sin ads en home |
+
+**NO incluir**: Tickets como beneficio Pro (rompería la wall). Solo cosmetics y conveniencia.
+
+---
+
+## Sistema final v2.4 — diseño brutalmente simple
+
+Cinco iteraciones llegaron al doc. Cada una rechazada por exceso de complejidad o problema económico. La conclusión: **el sistema más fuerte es el que el usuario entiende en 30 segundos**.
+
+Solo dos formas de ganar Tickets, una sola forma de gastarlos. Cero caps complicados. Cero matemáticas mentales.
+
+### Earning (2 mecanismos al lanzamiento)
+
+| Mecanismo | Recompensa | Cap | Notas UI |
+|---|---|---|---|
+| **Daily Pick check-in** | 1 Ticket al hacer la predicción + 1 Ticket bonus si acierta | 1 predicción/día | "Hoy: Real Madrid vs Atlético — predice y gana 1 Ticket" |
+| **Rewarded ad** | 1 Ticket | sin cap diario duro | "+1 Ticket" — NUNCA "+1 entrada al sorteo" |
+
+### Spending (1 sumidero al lanzamiento)
+
+| Acción | Costo |
+|---|---|
+| **Entrada al sorteo semanal** | 7 Tickets |
+
+### Lo que el usuario ve en la UI
+
+```
+TUS TICKETS: 4
+
+[ ⚽ Daily Pick: Real Madrid vs Atlético — predice ahora ]   +1 al predecir
+[ ▶ Ver anuncio (+1 Ticket) ]                                sin límite
+
+────────────────────────────────────────────────
+SORTEO SEMANAL                          PREMIO: $250 MXN
+Necesitas 7 Tickets para entrar (te faltan 3)
+[ Entrar al sorteo ]                              (deshabilitado)
+```
+
+Mensaje legal en el footer del sorteo:
+
+> "Sin compra obligatoria. Entrada gratis: predice 7 Daily Picks (uno por día durante una semana) = 1 entrada al sorteo. Ver bases del concurso."
+
+### Earning rates por tipo de usuario
+
+| Comportamiento | Tickets/sem | Entradas al sorteo |
+|---|---|---|
+| Daily Pick puro (sin ads, sin acertar nunca) | 7 | 1 |
+| Daily Pick puro acertando ~50% | 10–11 | 1–2 |
+| Daily Pick + 1 ad/día | 14–18 | 2 |
+| Daily Pick + 3 ads/día | 28–32 | 4 |
+| Heavy (Daily Pick + 5 ads/día) | 42–49 | 6–7 |
+
+**AMOE garantizado**: aún sin acertar nunca el Daily Pick, 7 check-ins/sem = 7 Tickets = exactamente 1 entrada gratis al sorteo. **Cumple Apple Guideline 5.3 y LFJS MX perfectamente.**
+
+### Revenue del premio
+
+| Métrica | Valor |
+|---|---|
+| Usuarios activos/sem | 200 |
+| Promedio ads vistos/usuario/día | 2 |
+| Total ads/sem | 200 × 2 × 7 = 2,800 |
+| eCPM rewarded MX (AdMob avg) | $8 USD |
+| **Revenue ads/sem** | **~$22 USD** |
+| Costo premio Amazon $250 MXN | $14 USD |
+| **Margen del programa** | **~$8 USD/sem** |
+
+Coin IAP revenue (~$42 USD/sem net @ 10% paying conversion) es **revenue completamente separado** — paga infra, dev, no se cuenta para el budget de premios. Es el cushion en caso de mal mes de eCPM. Más importante: **los Coin Sinks (S1–S5 más arriba) son donde está la complejidad estratégica del producto** y donde se hace el revenue principal del negocio.
+
+### Backlog condicional (NO al lanzamiento, agregar solo si métricas lo justifican)
+
+| Mecanismo | Cuándo activarlo |
+|---|---|
+| Welcome bonus (+3 Tickets one-time) | D1 retention < 50% |
+| Streak bonus (+3 Tickets en día 7 consecutivo) | Check-in retention día 4–7 cae > 30% |
+| Referrals (+5 referidor / +3 referido) | DAU growth orgánico < 5%/sem |
+| Daily Wheel | DAU < MAU/2 (señal de falta de engagement diario más allá del Daily Pick) |
+| Misiones de actividad ("usa 1 power-up", "termina top-3", etc.) | Cuando el sistema esté validado y haya superficie para misiones |
+| Achievements one-time | Después de tener > 1k usuarios y telemetría de cohort |
+| Cap diario de ads | Solo si fraud detection detecta farming |
+| Caducidad de Tickets | Solo si > 5% de usuarios acumula > 50 Tickets sin gastar por más de 4 semanas |
+
+**Regla de oro**: cada feature adicional cuesta dev, complica el UI, y diluye el mensaje "Daily Pick + ads = entrada". No se agrega nada por intuición, solo cuando una métrica concreta lo demande.
+
+---
+
+## Política de ads — riesgo y mitigación
+
+**Lo que está permitido por AdMob (confirmado con precedentes vivos)**:
+
+Rewarded ads donde la recompensa es **virtual currency in-app** (Tickets) que el usuario *puede luego decidir* gastar en participar en sorteos. Es exactamente el modelo de **Mistplay** (App Store ID 6739352969), **Lucktastic**, **Skillz** (ID 1114214294), **JustPlay**, **Cash Carnival**. Operan abiertamente con AdMob desde hace años sin suspensión.
+
+**Lo que NO está permitido**:
+
+- UI del ad que diga "+1 entrada al sorteo Amazon" (debe decir "+1 Ticket")
+- Ser la única manera de entrar al sorteo (sin AMOE puro disponible)
+- Ad farming / bots / fake views
+- Targeting de jurisdicciones donde sorteos son ilegales
+
+**Mitigaciones obligatorias antes de lanzar**:
+
+1. **App Attest (iOS) / Play Integrity (Android)** activo en todos los endpoints de earning. Sin attestation válida no se otorga el Ticket.
+2. **SSV (Server-Side Verification)** firmado por AdMob → backend valida cada ad view antes de dar el Ticket. Sin SSV no se otorga la recompensa.
+3. **Ad mediation multi-red**: integrar AdMob como principal + Unity Ads + AppLovin como backups. Si AdMob suspende, los otros dos siguen sirviendo. **Crítico para no quedar varado.**
+4. **Bases del Concurso** explícitas con AMOE: "El daily check-in (predicción del Daily Pick) sin compra ni ver anuncios alcanza para 1 entrada al sorteo cada semana."
+5. **Apple no es patrocinador** disclaimer en bases (requisito de Apple Guideline 5.3).
+
+**Riesgo residual aceptado**: Google podría interpretar el modelo como cross-line en cualquier momento y suspender AdMob. Por eso la mediation multi-red. Skillz y Mistplay han operado años así sin suspensión, lo que sugiere que la línea está bien donde la dibujamos.
+
+---
+
+> **Versiones superseded**: v1, v2, v2.1, v2.2, v2.3 quedaron en commit history. Todas se rechazaron por complejidad innecesaria. v2.4 es la versión que se construye.
+
+---
+
+## Reglas de balance defensivas (v2.4)
+
+1. **Entry al sorteo semanal**: 7 Tickets fijos. Match exacto con 1 semana de check-in (AMOE perfecto).
+2. **Sin wallet cap** al inicio. Si telemetría detecta hoarding (> 5% de usuarios acumulando > 50 Tickets sin gastar por más de 4 semanas), agregar caducidad de 4 semanas reactivamente.
+3. **Sin max entries por sorteo** al inicio. El techo natural (~7 entradas para hardcore vs 1 para AMOE puro) ya da ratio razonable de 7:1. Solo agregar cap si data muestra abuso.
+4. **Mínimo de 20 entradas por sorteo** o el premio se rolla a la siguiente semana (declarado en bases del concurso).
+5. **Si nadie gana** (premio skill-based + nadie acierta): premio se acumula al siguiente sorteo, declarado en bases.
+6. **Ad mediation multi-red obligatoria desde lanzamiento**: AdMob principal + Unity Ads + AppLovin como backup. Sin esto, una suspensión de AdMob varia el modelo.
+7. **Auditoría mensual** del ratio paying-users/free-users, del ratio Tickets generados/gastados, y del eCPM real. Recalibrar reactivamente:
+   - gen/gasto > 1.3 → considerar más sumideros (sorteo daily mini)
+   - gen/gasto < 0.8 → activar 1 mecanismo del backlog condicional (Welcome bonus es el más barato)
+   - eCPM cae > 30% → considerar bumpear cuota mínima de paying users vía Coin Sinks promo
+
+---
+
+## Lo que esto te commita a entregar (orden sugerido)
+
+**Antes de Tickets** (3–5 sem dev) — fortalece el revenue side primero para tener budget de premios:
+1. ☐ Implementar S2 power-ups (al menos Pick reveal + Late edit + Insurance) — alta velocidad de drenaje
+2. ☐ Implementar S1 multi-entrada por pool
+3. ☐ Implementar S3 cosmetics básicos (3–5 frames + 3 name colors)
+4. ☐ Telemetría de coin sinks: dashboard admin con "coins spent / sink type / week"
+
+**Después** (siguiendo el roadmap original): tickets infra → AMOE → ads → referrals → misiones → premium pools.
+
+**Validación temprana**: con solo S2 + S3 + S5 implementados, mide 4 semanas de comportamiento de gasto. Si revenue Coins/sem ≥ $40 USD con la cohort actual, procede con Tickets. Si < $20, reforzar coin sinks antes de gastar dev time en Tickets.
+
+---
+
+## Catálogo original (v1, ahora superseded por v2 arriba)
 
 ### P0 — MVP (lanzar primero)
 
@@ -267,44 +485,41 @@ futpoolsapp/
 
 ---
 
-## Calibración económica (premio Amazon $250 MXN ≈ $14 USD)
+## Calibración económica v2.4 (premio Amazon $250 MXN ≈ $14 USD)
 
-Sorteo semanal con 100 entradas (entrada = 5 Tickets):
+Sorteo semanal con entry = 7 Tickets, 200 usuarios activos/sem:
 
-| | Estimación |
+| Métrica | Valor |
 |---|---|
-| 100 entradas × 5 Tickets = 500 Tickets/semana | costo de oportunidad |
-| eCPM rewarded ads MX: $5–15 USD | 1 ad ≈ $0.005–0.015 USD |
-| Si 30% entries vienen de ads (~450 ads) | revenue: $4.50–13.50 USD |
-| Costo del premio | $14 USD |
-| **Subsidio neto** | **~$0.50 a $9.50 USD/semana** |
+| Total ad views/sem (200 usuarios × 2 ads/día × 7) | 2,800 |
+| eCPM rewarded MX (AdMob avg) | $8 USD |
+| **Revenue ads/sem** | **~$22 USD** |
+| Costo premio Amazon $250 MXN | $14 USD |
+| **Margen del programa de Tickets** | **~$8 USD/sem** |
 
-Compensación: Coins IAP es el revenue principal. Tickets = engagement engine.
+Coin IAP revenue (~$42 USD/sem net @ 10% paying conversion) es **revenue completamente separado** — paga infra y dev, no se mezcla con budget de premios. Es el cushion en caso de mal mes de eCPM.
 
-**Reglas de negocio defensivas**:
-- Tickets caducan al cierre del sorteo correspondiente.
-- Cap absoluto de Tickets en wallet: 200.
-- Al ganar, Tickets restantes pasan a 0.
-- Sorteo necesita mínimo de participantes (ej. 20) o rolling-over a la siguiente semana (declarado en bases).
+**Si la cohort crece a 1,000 activos/sem** (5×): revenue ads ~$110 USD/sem → puedes tener premios de $50 USD semanales o varios premios en un mismo sorteo.
+
+**Insight crítico**: el programa de Tickets se autosostiene con ads. La complejidad estratégica del producto está en los **Coin Sinks** (S1–S5 más arriba: power-ups, cosmetics, Pro tier) — eso es lo que mueve la aguja del revenue real del negocio. Tickets es solo el engagement engine que lleva al usuario a abrir la app y eventualmente convertir.
+
+(Reglas de balance defensivas v2.4 ya documentadas en sección homónima más arriba.)
 
 ---
 
-## Roadmap sugerido (14–20 semanas dev + 2–6 semanas legal en paralelo)
+## Roadmap MVP v2.4 (~9–11 semanas dev + 2–6 semanas legal en paralelo)
 
 | Fase | Duración | Entregables |
 |---|---|---|
-| **0 — Legal** (paralelo) | 2–6 sem | Opinión legal MX, permiso DGJS, bases redactadas, RFC entidad |
-| **1 — Infra Tickets** | 1–2 sem | Schema DB, endpoints `/tickets/*`, `Models/Tickets.swift`, balance dual visible |
-| **2 — AMOE + Welcome** | 1 sem | Daily check-in, streak, welcome bonus, `DailyCheckinCard` |
-| **3 — Rewarded ads** | 2 sem | AdMob SDK, SSV backend, `RewardedAdButton`, App Attest |
-| **4 — Referrals** | 1–2 sem | Sistema completo, deep links, anti-self-referral |
-| **5 — Misiones** | 1–2 sem | Engine, cron jobs, `MissionsView` |
-| **6 — Pools premiados** | 2 sem | `PremiumPoolsListView`, `ContestRulesView`, KYC ganador, CFDI |
-| **7 — Age gate + país** | 1 sem | Refactor `RegisterView` (DOB 18+, country), geo-restricción Apple solo MX |
-| **8 — App Review prep** | 1 sem | Description quirúrgica, App Review Notes con precedentes |
-| **9 — Beta TestFlight** | 2 sem | Validación end-to-end con permiso SEGOB activo |
-| **10 — Lanzamiento** | — | Submit a App Store con review notes completas |
-| **11 (opcional)** | — | Rueda, trivia, achievements, eventos Mundial 2026 |
+| **0 — Legal** (paralelo) | 2–6 sem | Opinión legal MX, permiso DGJS, bases redactadas con AMOE explícito, RFC entidad organizadora |
+| **1 — Infra Tickets** | 1–2 sem | Schema DB (`tickets_balance`, `ticket_transactions`), endpoints `/tickets/*`, `Models/Tickets.swift`, dual balance visible en HomeView header |
+| **2 — Daily Pick check-in** | 1–2 sem | `daily_picks` table + cron 00:00 local, `DailyPickCard.swift` (predicción 1/X/2 + +1 Ticket inmediato + +1 bonus si acierta), backend que valida acierto al FT del fixture |
+| **3 — Rewarded ads + mediation** | 2 sem | AdMob SDK + Unity Ads + AppLovin (mediation multi-red), SSV backend firmado, App Attest (iOS) / Play Integrity (Android), `RewardedAdButton.swift` que muestra "+1 Ticket" |
+| **4 — Pools premiados** | 2 sem | `PremiumPoolsListView`, `PremiumPoolDetailView` (entry = 7 Tickets), `ContestRulesView` con bases del concurso embebidas, flujo KYC ganador, CFDI |
+| **5 — Age gate + país** | 1 sem | Refactor `RegisterView` (DOB 18+ obligatorio, country picker default MX), geo-restricción Apple solo MX al inicio |
+| **6 — App Review prep + lanzamiento** | 1 sem | Description quirúrgica, App Review Notes con precedentes Mistplay/Skillz/Lucktastic, footer "Apple no es patrocinador", submit |
+
+**Backlog condicional (vNext)** — agregar uno por uno solo cuando una métrica concreta lo justifique (criterios documentados en sección "Backlog condicional" de v2.4): Welcome bonus, Streak bonus, Referrals, Daily Wheel, Misiones de actividad, Achievements, Daily Trivia, eventos Mundial 2026.
 
 ---
 
@@ -317,15 +532,16 @@ Compensación: Coins IAP es el revenue principal. Tickets = engagement engine.
 4. ☐ Definir entidad legal organizadora (persona moral con RFC).
 5. ☐ Redactar borrador de Bases del Concurso.
 
-### Implementación técnica (en orden, una vez legal listo)
-1. ☐ **Fase 1**: Schema SQL + endpoints `/tickets/*` + `Models/Tickets.swift` + dual balance visible en HomeView header.
-2. ☐ **Fase 2**: Daily check-in (`DailyCheckinCard.swift` + `POST /users/me/rewards/checkin` + streak logic).
-3. ☐ **Fase 3**: AdMob SDK integration + SSV backend + `RewardedAdButton`.
-4. ☐ **Fase 4**: Referrals (deep link `futpools://r/<code>` + anti-fraude).
-5. ☐ **Fase 5**: Misiones engine.
-6. ☐ **Fase 6**: Premium pools UI + `ContestRulesView` embedded.
-7. ☐ **Fase 7**: `RegisterView` refactor (DOB + country + referrer_code).
-8. ☐ **Fase 8**: App Store Connect prep (categoría Sports/Entertainment, edad 17+, geo MX, description quirúrgica, App Review Notes con precedentes Mistplay/Skillz).
+### Implementación técnica (en orden, una vez legal listo) — alineada con Roadmap MVP v2.4
+
+1. ☐ **Fase 1 — Infra Tickets**: Schema SQL (`tickets_balance`, `ticket_transactions`) + endpoints `/tickets/*` + `Models/Tickets.swift` + dual balance visible en HomeView header.
+2. ☐ **Fase 2 — Daily Pick check-in**: `daily_picks` table + cron 00:00 local que elige 1 fixture popular + `DailyPickCard.swift` (predicción 1/X/2 + +1 Ticket inmediato) + backend que valida acierto al FT del fixture y otorga +1 bonus.
+3. ☐ **Fase 3 — Rewarded ads + mediation multi-red**: AdMob SDK + Unity Ads + AppLovin + SSV backend firmado + App Attest (iOS) / Play Integrity (Android) + `RewardedAdButton.swift` ("+1 Ticket", nunca "+1 entrada").
+4. ☐ **Fase 4 — Pools premiados**: `PremiumPoolsListView` + `PremiumPoolDetailView` (entry = 7 Tickets) + `ContestRulesView` con bases del concurso embebidas + flujo KYC ganador + CFDI.
+5. ☐ **Fase 5 — Age gate + país**: `RegisterView` refactor (DOB 18+ obligatorio, country picker default MX) + geo-restricción Apple solo MX.
+6. ☐ **Fase 6 — App Store Connect prep**: categoría Sports/Entertainment, edad 17+, geo MX, description quirúrgica, App Review Notes con precedentes Mistplay/Skillz/Lucktastic, footer "Apple no es patrocinador".
+
+**Backlog condicional (no implementar al MVP)**: Welcome bonus, Streak bonus, Referrals, Daily Wheel, Misiones de actividad, Achievements, Daily Trivia. Activar uno por uno cuando una métrica concreta lo demande (criterios en sección "Backlog condicional" de v2.4).
 
 ---
 

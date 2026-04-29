@@ -407,6 +407,9 @@
 "FINAL RESULTS" = "RESULTADOS FINALES";
 "TIES BROKEN BY JOIN ORDER" = "EMPATES DESEMPATADOS POR ORDEN DE REGISTRO";
 
+// Tickets v2.4
+"%lld Tickets" = "%lld Tickets";
+
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "QUINIELA";
 "VS" = "VS";

@@ -21,6 +21,7 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         ArenaHeader(
                             coins: auth.currentUser?.balanceValue ?? 0,
+                            tickets: auth.currentUser?.ticketsValue ?? 0,
                             onJoinCode: { showJoinByCode = true }
                         )
                             .padding(.horizontal, 16)
@@ -207,14 +208,15 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Header (title + real coin balance)
+// MARK: - Header (title + dual currency badges)
 
 private struct ArenaHeader: View {
     let coins: Double
+    let tickets: Int
     var onJoinCode: (() -> Void)?
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Text(String(localized: "POOLS"))
                 .font(ArenaFont.display(size: 24, weight: .heavy))
                 .tracking(3)
@@ -233,6 +235,11 @@ private struct ArenaHeader: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(NSLocalizedString("Join with code", comment: ""))
             }
+            // Dual currency: Tickets first (left), Coins second (right). The
+            // visual difference (cyan ticket vs gold coin) makes the legal
+            // wall obvious to the user — these are two separate things, not
+            // interchangeable.
+            TicketBadge(value: tickets)
             CoinBadge(value: coins)
         }
     }
@@ -269,6 +276,30 @@ private struct CoinBadge: View {
         f.numberStyle = .decimal
         f.maximumFractionDigits = 0
         return f.string(from: NSNumber(value: v)) ?? "\(Int(v))"
+    }
+}
+
+private struct TicketBadge: View {
+    let value: Int
+
+    var body: some View {
+        HStack(spacing: 5) {
+            // Ticket glyph (SF Symbol "ticket.fill") + cyan accent so the
+            // user reads "this is a different thing than the gold Coin pill".
+            Image(systemName: "ticket.fill")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.arenaAccent)
+                .shadow(color: .arenaAccent.opacity(0.45), radius: 3)
+            Text("\(value)")
+                .font(ArenaFont.mono(size: 13, weight: .bold))
+                .foregroundColor(.arenaAccent)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(HudCornerCutShape(cut: 6).fill(Color.arenaAccent.opacity(0.13)))
+        .overlay(HudCornerCutShape(cut: 6).stroke(Color.arenaAccent.opacity(0.3), lineWidth: 1))
+        .clipShape(HudCornerCutShape(cut: 6))
+        .accessibilityLabel(Text(String(format: String(localized: "%lld Tickets"), value)))
     }
 }
 

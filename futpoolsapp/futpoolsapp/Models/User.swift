@@ -13,6 +13,11 @@ struct User: Codable {
     let isAdmin: Bool?
     /// User balance (e.g. in MXN or app currency). Used to pay pool entry cost.
     let balance: Double?
+    /// Tickets v2.4 — second virtual currency, completely decoupled from
+    /// `balance`. Earn-only (Daily Pick check-in + rewarded ads). Spent on
+    /// entries to premium sweepstakes pools that pay real-world prizes.
+    /// Optional to keep older payloads decoding without error.
+    let tickets: Int?
 
     // ── FutPools Rank ─────────────────────────────────────────────────
     // All optional so existing responses that predate the rank layer keep
@@ -35,6 +40,7 @@ struct User: Codable {
         case displayName
         case isAdmin
         case balance
+        case tickets
         case rating
         case ratingPeak
         case streakCurrent
@@ -48,6 +54,7 @@ struct User: Codable {
     }
 
     var balanceValue: Double { balance ?? 0 }
+    var ticketsValue: Int { tickets ?? 0 }
     var ratingValue: Int { Int((rating ?? 1000).rounded()) }
 }
 
