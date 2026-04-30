@@ -25,32 +25,44 @@ enum ChallengeListTab: String, CaseIterable, Identifiable {
 }
 
 struct ChallengesListView: View {
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                ArenaBackground()
+                ChallengesListContent(showsHeader: true)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+        }
+    }
+}
+
+/// Tab strip + list of challenges. Lives inside a parent `NavigationStack`
+/// so the row links resolve. Set `showsHeader = false` when the parent
+/// already supplies a screen title (e.g. embedded as a segment of the
+/// Entries tab).
+struct ChallengesListContent: View {
+    var showsHeader: Bool = true
+
     @EnvironmentObject var auth: AuthService
     @StateObject private var vm = ChallengesListViewModel()
     @State private var tab: ChallengeListTab = .active
     @State private var showCreate = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                ArenaBackground()
-                VStack(spacing: 0) {
-                    header
-                    tabBar
-                    content
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .navigationDestination(isPresented: $showCreate) {
-                ChallengeCreateView()
-            }
-            .task(id: tab) {
-                await vm.load(tab: tab, token: auth.token)
-            }
-            .refreshable {
-                await vm.load(tab: tab, token: auth.token)
-            }
+        VStack(spacing: 0) {
+            if showsHeader { header }
+            tabBar
+            content
+        }
+        .navigationDestination(isPresented: $showCreate) {
+            ChallengeCreateView()
+        }
+        .task(id: tab) {
+            await vm.load(tab: tab, token: auth.token)
+        }
+        .refreshable {
+            await vm.load(tab: tab, token: auth.token)
         }
     }
 
@@ -63,56 +75,68 @@ struct ChallengesListView: View {
                 .tracking(2)
                 .foregroundColor(.arenaText)
             Spacer()
-            Button {
-                showCreate = true
-            } label: {
-                Text("＋")
-                    .font(ArenaFont.display(size: 20, weight: .heavy))
-                    .foregroundColor(.arenaPrimary)
-                    .frame(width: 36, height: 36)
-                    .background(
-                        HudCornerCutShape(cut: 6)
-                            .fill(Color.arenaPrimary.opacity(0.12))
-                    )
-                    .overlay(
-                        HudCornerCutShape(cut: 6)
-                            .stroke(Color.arenaPrimary.opacity(0.35), lineWidth: 1)
-                    )
-            }
+            newButton
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
         .padding(.bottom, 8)
     }
 
-    private var tabBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(ChallengeListTab.allCases) { t in
-                    Button {
-                        tab = t
-                    } label: {
-                        Text(t.label)
-                            .font(ArenaFont.mono(size: 10, weight: .bold))
-                            .tracking(1.5)
-                            .foregroundColor(tab == t ? .arenaOnPrimary : .arenaTextDim)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                HudCornerCutShape(cut: 6)
-                                    .fill(tab == t ? Color.arenaPrimary : Color.clear)
-                            )
-                            .overlay(
-                                HudCornerCutShape(cut: 6)
-                                    .stroke(tab == t ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 10)
+    private var newButton: some View {
+        Button {
+            showCreate = true
+        } label: {
+            Text("＋")
+                .font(ArenaFont.display(size: 20, weight: .heavy))
+                .foregroundColor(.arenaPrimary)
+                .frame(width: 36, height: 36)
+                .background(
+                    HudCornerCutShape(cut: 6)
+                        .fill(Color.arenaPrimary.opacity(0.12))
+                )
+                .overlay(
+                    HudCornerCutShape(cut: 6)
+                        .stroke(Color.arenaPrimary.opacity(0.35), lineWidth: 1)
+                )
         }
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(ChallengeListTab.allCases) { t in
+                        Button {
+                            tab = t
+                        } label: {
+                            Text(t.label)
+                                .font(ArenaFont.mono(size: 10, weight: .bold))
+                                .tracking(1.5)
+                                .foregroundColor(tab == t ? .arenaOnPrimary : .arenaTextDim)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    HudCornerCutShape(cut: 6)
+                                        .fill(tab == t ? Color.arenaPrimary : Color.clear)
+                                )
+                                .overlay(
+                                    HudCornerCutShape(cut: 6)
+                                        .stroke(tab == t ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+            // When header is suppressed (embedded mode) the "＋" button has
+            // no home, so promote it to the tab bar row.
+            if !showsHeader {
+                newButton
+                    .padding(.trailing, 16)
+            }
+        }
+        .padding(.bottom, 10)
     }
 
     @ViewBuilder

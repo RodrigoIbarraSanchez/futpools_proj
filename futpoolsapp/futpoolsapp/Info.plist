@@ -33,7 +33,7 @@
 	     LAN IP), point at staging, or build for prod. APIClient reads it
 	     at launch via FPApiBaseURL with a localhost:3000 fallback. -->
 	<key>FPApiBaseURL</key>
-	<string>http://192.168.100.5:3000</string>
+	<string>http://192.168.100.16:3000</string>
 	<!-- Allow plain HTTP to the dev server on the local LAN. App Store
 	     builds should point FPApiBaseURL at https://… so this exception
 	     becomes inert; remove it before shipping if you want stricter ATS. -->
@@ -41,7 +41,7 @@
 	<dict>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>192.168.100.5</key>
+			<key>192.168.100.16</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>

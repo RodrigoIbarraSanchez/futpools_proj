@@ -3,8 +3,7 @@
 > vite --host --strictPort
 
 
-  VITE v5.4.21  ready in 164 ms
+  VITE v5.4.21  ready in 217 ms
 
   ➜  Local:   http://localhost:5173/
-  ➜  Network: http://192.168.100.5:5173/
-  ➜  Network: http://169.254.24.125:5173/
+  ➜  Network: http://192.168.100.16:5173/

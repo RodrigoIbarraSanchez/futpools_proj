@@ -22,9 +22,39 @@ const TABS = [
 ];
 
 export function Challenges() {
-  const { token } = useAuth();
   const { locale } = useLocale();
   const navigate = useNavigate();
+
+  return (
+    <>
+      <AppBackground />
+
+      <div style={{ padding: '14px 16px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton onClick={() => navigate(-1)}>←</IconButton>
+          <div style={{
+            flex: 1, textAlign: 'center',
+            fontFamily: 'var(--fp-display)', fontSize: 12, letterSpacing: 3,
+            fontWeight: 700,
+          }}>
+            ⚔ {t(locale, 'CHALLENGES')}
+          </div>
+          <Link to="/challenges/new" style={{ textDecoration: 'none' }}>
+            <IconButton>＋</IconButton>
+          </Link>
+        </div>
+      </div>
+
+      <ChallengesContent />
+    </>
+  );
+}
+
+/// Tab strip + list of challenges. Pure body — no AppBackground or page
+/// header — so it can be embedded as a segment of the Entries tab.
+export function ChallengesContent({ showCreateLink = true } = {}) {
+  const { token } = useAuth();
+  const { locale } = useLocale();
   const [tab, setTab] = useState('active');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,24 +78,8 @@ export function Challenges() {
 
   return (
     <>
-      <AppBackground />
-
-      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--fp-stroke)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-          <IconButton onClick={() => navigate(-1)}>←</IconButton>
-          <div style={{
-            flex: 1, textAlign: 'center',
-            fontFamily: 'var(--fp-display)', fontSize: 12, letterSpacing: 3,
-            fontWeight: 700,
-          }}>
-            ⚔ {t(locale, 'CHALLENGES')}
-          </div>
-          <Link to="/challenges/new" style={{ textDecoration: 'none' }}>
-            <IconButton>＋</IconButton>
-          </Link>
-        </div>
-
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+      <div style={{ padding: '4px 16px 10px' }}>
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', alignItems: 'center' }}>
           {TABS.map((tb) => (
             <button
               key={tb.key}
@@ -83,10 +97,15 @@ export function Challenges() {
               }}
             >{locale === 'es' ? tb.es : tb.en}</button>
           ))}
+          {showCreateLink && (
+            <Link to="/challenges/new" style={{ marginLeft: 'auto', textDecoration: 'none' }}>
+              <IconButton>＋</IconButton>
+            </Link>
+          )}
         </div>
       </div>
 
-      <div style={{ padding: '14px 16px 120px' }}>
+      <div style={{ padding: '4px 16px 120px' }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)' }}>
             {t(locale, 'Loading…')}

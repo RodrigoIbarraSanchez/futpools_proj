@@ -7,12 +7,6 @@
 [33m[nodemon] watching path(s): *.*[39m
 [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
 [32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
 Server running on port 3000
 MongoDB connected
-[32m[nodemon] restarting due to changes...[39m
-[32m[nodemon] starting `node src/server.js`[39m
-Server running on port 3000
-MongoDB connected
-[Football] getFixturesByIds failed: fetch failed
-[Football] getFixturesByIds failed: terminated
-[Football] getFixturesByIds failed: fetch failed

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
-import { t, tFormat } from '../i18n/translations';
+import { t } from '../i18n/translations';
 import {
   HudFrame, HudChip, LiveDot, StatTile, StatInline,
   TeamCrest, SectionLabel, ArcadeButton,
@@ -695,8 +695,6 @@ export function Home() {
 
       <RewardedAdButton locale={locale} token={token} onTicketAwarded={fetchUser} />
 
-      <ChallengesTeaser locale={locale} token={token} />
-
       <FilterStrip
         active={activeFilter}
         onChange={setActiveFilter}
@@ -1087,62 +1085,3 @@ function RewardedAdButton({ locale, token, onTicketAwarded }) {
   );
 }
 
-// ────────────────────────────────────────────────────────────────────
-// Challenges teaser — compact banner shown between the featured pool and
-// the main pool list. Fetches the users active+pending challenges so the
-// badge can show how many incoming challenges are waiting to be accepted.
-
-function ChallengesTeaser({ locale, token }) {
-  const [pendingReceived, setPendingReceived] = useState(0);
-  useEffect(() => {
-    if (!token) return;
-    let cancel = false;
-    api.get(`/challenges/me?tab=received`, token)
-      .then((list) => {
-        if (cancel) return;
-        const count = (Array.isArray(list) ? list : []).filter((c) => c.status === "pending").length;
-        setPendingReceived(count);
-      })
-      .catch(() => {});
-    return () => { cancel = true; };
-  }, [token]);
-
-  return (
-    <div style={{ padding: "4px 16px 10px" }}>
-      <Link to="/challenges" style={{ textDecoration: "none", color: "inherit" }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "12px 14px",
-          background: "linear-gradient(135deg, color-mix(in srgb, var(--fp-hot) 18%, transparent), var(--fp-surface) 60%)",
-          border: "1px solid color-mix(in srgb, var(--fp-hot) 40%, transparent)",
-          clipPath: "var(--fp-clip-sm)",
-        }}>
-          <div style={{ fontSize: 22 }}>⚔</div>
-          <div style={{ flex: 1 }}>
-            <div style={{
-              fontFamily: "var(--fp-display)", fontSize: 13, fontWeight: 900,
-              letterSpacing: 1.5, color: "var(--fp-text)",
-            }}>{t(locale, "1V1 CHALLENGES")}</div>
-            <div style={{
-              fontFamily: "var(--fp-mono)", fontSize: 10,
-              color: "var(--fp-text-muted)",
-            }}>
-              {pendingReceived > 0
-                ? tFormat(locale, "{n} incoming · tap to review", { n: pendingReceived })
-                : t(locale, "Bet coins head-to-head on any match")}
-            </div>
-          </div>
-          {pendingReceived > 0 && (
-            <div style={{
-              background: "var(--fp-hot)", color: "#0A0F16",
-              fontFamily: "var(--fp-display)", fontSize: 11, fontWeight: 900,
-              padding: "4px 8px", minWidth: 22, textAlign: "center",
-              clipPath: "var(--fp-clip-sm)",
-            }}>{pendingReceived}</div>
-          )}
-          <div style={{ fontSize: 18, color: "var(--fp-text-muted)" }}>→</div>
-        </div>
-      </Link>
-    </div>
-  );
-}

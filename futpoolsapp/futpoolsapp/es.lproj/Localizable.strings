@@ -710,7 +710,8 @@
 "Could not load challenges" = "No se pudieron cargar los retos";
 "Could not load challenge" = "No se pudo cargar el reto";
 "Challenge not found" = "Reto no encontrado";
-// Home banner
+// Home banner / Entries tab segmented control
 "1V1 CHALLENGES" = "RETOS 1V1";
+"POOL ENTRIES" = "PARTICIPACIONES";
 "%d incoming · tap to review" = "%d entrantes · toca para revisar";
 "Bet coins head-to-head on any match" = "Apuesta monedas mano a mano en cualquier partido";

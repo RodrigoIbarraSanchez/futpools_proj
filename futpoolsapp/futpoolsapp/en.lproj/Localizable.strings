@@ -712,7 +712,8 @@
 "Could not load challenges" = "Could not load challenges";
 "Could not load challenge" = "Could not load challenge";
 "Challenge not found" = "Challenge not found";
-// Home banner
+// Home banner / Entries tab segmented control
 "1V1 CHALLENGES" = "1V1 CHALLENGES";
+"POOL ENTRIES" = "POOL ENTRIES";
 "%d incoming · tap to review" = "%d incoming · tap to review";
 "Bet coins head-to-head on any match" = "Bet coins head-to-head on any match";

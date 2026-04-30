@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
 import { HudFrame, HudChip, XpBar, ArcadeButton, TeamCrest } from '../arena-ui/primitives';
+import { ChallengesContent } from './Challenges';
 
 // ────────────────────────────────────────────────────────────────────
 // Live fixture poll — mirrors iOS MyEntriesViewModel.
@@ -18,9 +19,18 @@ function chunk(arr, size) {
   return out;
 }
 
+// Two segments inside the Entries route: pool entries (default) and 1V1
+// challenges. Both are "active stakes" — sharing the tab keeps the bottom
+// nav at 4 + FAB instead of growing to a 5th tab.
+const SECTIONS = [
+  { key: 'entries',    en: 'POOL ENTRIES',   es: 'PARTICIPACIONES' },
+  { key: 'challenges', en: '1V1 CHALLENGES', es: 'RETOS 1V1' },
+];
+
 export function MyEntries() {
   const { token } = useAuth();
   const { locale } = useLocale();
+  const [section, setSection] = useState('entries');
   const [entries, setEntries] = useState([]);
   const [liveFixtures, setLiveFixtures] = useState({});
   const [loading, setLoading] = useState(true);
@@ -94,14 +104,14 @@ export function MyEntries() {
   return (
     <>
       {/* Header */}
-      <div style={{ padding: '18px 16px 14px' }}>
+      <div style={{ padding: '18px 16px 10px' }}>
         <div style={{
           fontFamily: 'var(--fp-display)', fontSize: 28, fontWeight: 800,
           letterSpacing: 1, textTransform: 'uppercase',
         }}>
           {t(locale, 'My Entries')}
         </div>
-        {!loading && entries.length > 0 && (
+        {section === 'entries' && !loading && entries.length > 0 && (
           <div style={{
             fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 1,
             color: 'var(--fp-text-muted)', marginTop: 4,
@@ -111,6 +121,30 @@ export function MyEntries() {
         )}
       </div>
 
+      {/* Segmented control: pool entries vs 1V1 challenges */}
+      <div style={{ padding: '0 16px 12px', display: 'flex', gap: 6 }}>
+        {SECTIONS.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setSection(s.key)}
+            style={{
+              flex: 1,
+              padding: '8px 10px',
+              background: section === s.key ? 'var(--fp-primary)' : 'transparent',
+              color: section === s.key ? 'var(--fp-on-primary)' : 'var(--fp-text-dim)',
+              border: `1px solid ${section === s.key ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
+              clipPath: 'var(--fp-clip-sm)',
+              fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700, letterSpacing: 1.5,
+              cursor: 'pointer',
+            }}
+          >{locale === 'es' ? s.es : s.en}</button>
+        ))}
+      </div>
+
+      {section === 'challenges' ? (
+        <ChallengesContent />
+      ) : (
       <div style={{ padding: '0 16px 120px' }}>
         {loading && (
           <div style={{ textAlign: 'center', padding: 28, color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)' }}>
@@ -153,6 +187,7 @@ export function MyEntries() {
           </div>
         ))}
       </div>
+      )}
     </>
   );
 }
