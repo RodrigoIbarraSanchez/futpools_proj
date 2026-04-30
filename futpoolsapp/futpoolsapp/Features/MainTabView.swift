@@ -39,6 +39,7 @@ struct MainTabView: View {
     @State private var tabBarHidden: Bool = false
     @State private var showCreatePool = false
     @State private var showCreateChallenge = false
+    @State private var showCreateSweepstake = false
     @State private var showCreateChooser = false
 
     /// Binds the celebration sheet to the AuthService flag. SwiftUI `sheet`
@@ -81,6 +82,11 @@ struct MainTabView: View {
         ) {
             Button(String(localized: "New pool")) { showCreatePool = true }
             Button(String(localized: "New 1V1 challenge")) { showCreateChallenge = true }
+            // Admin-only — gated by the email allowlist in
+            // AuthService.isAdmin (mirrors backend ADMIN_EMAILS).
+            if auth.isAdmin {
+                Button(String(localized: "New real-prize pool")) { showCreateSweepstake = true }
+            }
             Button(String(localized: "Cancel"), role: .cancel) {}
         }
         .fullScreenCover(isPresented: $showCreatePool) {
@@ -96,6 +102,10 @@ struct MainTabView: View {
                         }
                     }
             }
+        }
+        .fullScreenCover(isPresented: $showCreateSweepstake) {
+            CreateSweepstakeView()
+                .environmentObject(auth)
         }
         .fullScreenCover(isPresented: showSignupBonus) {
             SignupBonusCelebrationSheet(
