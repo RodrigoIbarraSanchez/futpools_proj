@@ -18,20 +18,35 @@ final class APIClient {
     private let baseURL: String
     private let session: URLSession
 
+    /// Production base URL — public Render HTTPS endpoint. Used for
+    /// every RELEASE build regardless of what Info.plist says, so an
+    /// archived/App-Store build can never accidentally point at a LAN
+    /// IP. (A LAN IP triggers the iOS "find devices on local
+    /// networks" permission prompt — terrible first-launch UX.)
+    private static let productionBaseURL = "https://futpools-proj.onrender.com"
+
     /// Base URL resolution order:
     ///   1. Explicit constructor arg (tests).
-    ///   2. `FPApiBaseURL` in Info.plist — flip per-build (dev LAN IP,
-    ///      staging, prod) without recompiling Swift.
-    ///   3. `http://localhost:3000` fallback — works in the simulator;
-    ///      a physical device needs the Info.plist override (localhost
-    ///      on a phone is the phone, not your Mac).
+    ///   2. RELEASE builds → always `productionBaseURL`. We *ignore*
+    ///      Info.plist here so a stale dev override can't ship.
+    ///   3. DEBUG builds → `FPApiBaseURL` in Info.plist (dev LAN IP
+    ///      or staging) so the simulator + physical device can hit
+    ///      your laptop while you develop.
+    ///   4. Fallback → `http://localhost:3000` for simulator.
     init(baseURL: String? = nil, session: URLSession = .shared) {
-        if let baseURL { self.baseURL = baseURL }
-        else if let configured = Bundle.main.object(forInfoDictionaryKey: "FPApiBaseURL") as? String,
-                !configured.isEmpty {
-            self.baseURL = configured
+        if let baseURL {
+            self.baseURL = baseURL
         } else {
-            self.baseURL = "http://localhost:3000"
+            #if DEBUG
+            if let configured = Bundle.main.object(forInfoDictionaryKey: "FPApiBaseURL") as? String,
+               !configured.isEmpty {
+                self.baseURL = configured
+            } else {
+                self.baseURL = "http://localhost:3000"
+            }
+            #else
+            self.baseURL = Self.productionBaseURL
+            #endif
         }
         self.session = session
         print("[API] baseURL = \(self.baseURL)")

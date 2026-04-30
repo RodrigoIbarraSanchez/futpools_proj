@@ -34,14 +34,17 @@
 		<string>en</string>
 		<string>es</string>
 	</array>
-	<!-- Backend base URL. Edit this string when you switch networks (dev
-	     LAN IP), point at staging, or build for prod. APIClient reads it
-	     at launch via FPApiBaseURL with a localhost:3000 fallback. -->
+	<!-- Backend base URL — DEBUG builds only. RELEASE builds ignore
+	     this and use the hardcoded production URL in APIClient.swift,
+	     so an archived build can never accidentally ship pointing at
+	     a LAN IP (which would trigger the iOS Local Network prompt
+	     on first launch — a terrible first-impression). Edit this
+	     string when you switch dev networks. -->
 	<key>FPApiBaseURL</key>
 	<string>http://192.168.100.16:3000</string>
-	<!-- Allow plain HTTP to the dev server on the local LAN. App Store
-	     builds should point FPApiBaseURL at https://… so this exception
-	     becomes inert; remove it before shipping if you want stricter ATS. -->
+	<!-- Allow plain HTTP to the dev server on the local LAN. RELEASE
+	     builds talk only to the HTTPS Render URL, so this exception
+	     is inert in production. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSExceptionDomains</key>
@@ -55,6 +58,13 @@
 			</dict>
 		</dict>
 	</dict>
+	<!-- Required by iOS 14+ whenever any code path hits a private IP.
+	     RELEASE builds talk to Render (public internet) so this
+	     prompt should never fire there; DEBUG builds talking to your
+	     LAN dev server will see it once and the description below
+	     is what the user reads. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Solo usado en builds de desarrollo para conectar con tu servidor local. La app en producción se conecta a internet directamente.</string>
 	<!-- Google AdMob — production app ID. Test ad units are used in
 	     DEBUG builds (see AdMobRewardedAdService.adUnitID), so this app
 	     ID is safe even during development. -->
