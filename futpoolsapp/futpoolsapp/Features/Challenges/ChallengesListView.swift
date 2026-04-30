@@ -102,68 +102,34 @@ struct ChallengesListContent: View {
     }
 
     private var tabBar: some View {
-        HStack(alignment: .center, spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(ChallengeListTab.allCases) { t in
-                        Button {
-                            tab = t
-                        } label: {
-                            Text(t.label)
-                                .font(ArenaFont.mono(size: 10, weight: .bold))
-                                .tracking(1.5)
-                                .foregroundColor(tab == t ? .arenaOnPrimary : .arenaTextDim)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(
-                                    HudCornerCutShape(cut: 6)
-                                        .fill(tab == t ? Color.arenaPrimary : Color.clear)
-                                )
-                                .overlay(
-                                    HudCornerCutShape(cut: 6)
-                                        .stroke(tab == t ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1)
-                                )
-                        }
-                        .buttonStyle(.plain)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(ChallengeListTab.allCases) { t in
+                    Button {
+                        tab = t
+                    } label: {
+                        Text(t.label)
+                            .font(ArenaFont.mono(size: 10, weight: .bold))
+                            .tracking(1.5)
+                            .foregroundColor(tab == t ? .arenaOnPrimary : .arenaTextDim)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                HudCornerCutShape(cut: 6)
+                                    .fill(tab == t ? Color.arenaPrimary : Color.clear)
+                            )
+                            .overlay(
+                                HudCornerCutShape(cut: 6)
+                                    .stroke(tab == t ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1)
+                            )
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.leading, 16)
-                .padding(.trailing, showsHeader ? 16 : 8)
             }
-            // When the header is suppressed (embedded as a segment of the
-            // Entries tab) the "＋" button has no home, so promote it to
-            // the tab strip — sized down to match the pill height so it
-            // doesn't dominate the row.
-            if !showsHeader {
-                compactNewButton
-                    .padding(.trailing, 16)
-            }
+            .padding(.horizontal, 16)
         }
         .padding(.top, showsHeader ? 0 : 6)
         .padding(.bottom, 10)
-    }
-
-    /// Smaller variant of `newButton` for the embedded tab-strip layout
-    /// where the full 36x36 button looks oversized next to the 26pt-tall
-    /// tab pills.
-    private var compactNewButton: some View {
-        Button {
-            showCreate = true
-        } label: {
-            Text("＋")
-                .font(ArenaFont.display(size: 14, weight: .heavy))
-                .foregroundColor(.arenaPrimary)
-                .frame(width: 28, height: 26)
-                .background(
-                    HudCornerCutShape(cut: 5)
-                        .fill(Color.arenaPrimary.opacity(0.12))
-                )
-                .overlay(
-                    HudCornerCutShape(cut: 5)
-                        .stroke(Color.arenaPrimary.opacity(0.35), lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder

@@ -94,7 +94,10 @@ struct RewardedAdButton: View {
         Task {
             isShowing = true
             errorMessage = nil
-            let result = await RewardedAd.shared.showAd(token: auth.token)
+            let result = await RewardedAds.shared.showAd(
+                token: auth.token,
+                userId: auth.currentUser?.id
+            )
             isShowing = false
             switch result {
             case .earned:

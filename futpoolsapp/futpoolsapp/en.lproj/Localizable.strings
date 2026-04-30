@@ -715,5 +715,9 @@
 // Home banner / Entries tab segmented control
 "1V1 CHALLENGES" = "1V1 CHALLENGES";
 "POOL ENTRIES" = "POOL ENTRIES";
+// Center "+" tab-bar create chooser
+"What do you want to create?" = "What do you want to create?";
+"New pool" = "New pool";
+"New 1V1 challenge" = "New 1V1 challenge";
 "%d incoming · tap to review" = "%d incoming · tap to review";
 "Bet coins head-to-head on any match" = "Bet coins head-to-head on any match";

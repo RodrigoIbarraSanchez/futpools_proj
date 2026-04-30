@@ -37,7 +37,9 @@ struct MainTabView: View {
     @EnvironmentObject var auth: AuthService
     @State private var selected: ArenaTab = .pools
     @State private var tabBarHidden: Bool = false
-    @State private var showCreate = false
+    @State private var showCreatePool = false
+    @State private var showCreateChallenge = false
+    @State private var showCreateChooser = false
 
     /// Binds the celebration sheet to the AuthService flag. SwiftUI `sheet`
     /// needs a Bool binding, so we translate nil/non-nil ↔ false/true and
@@ -63,7 +65,7 @@ struct MainTabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            ArenaTabBar(selected: $selected, onCreate: { showCreate = true })
+            ArenaTabBar(selected: $selected, onCreate: { showCreateChooser = true })
                 .padding(.horizontal, 12)
                 .padding(.bottom, 10)
                 .opacity(tabBarHidden ? 0 : 1)
@@ -72,8 +74,28 @@ struct MainTabView: View {
         }
         .background(Color.arenaBg.ignoresSafeArea())
         .onPreferenceChange(ArenaTabBarHiddenKey.self) { tabBarHidden = $0 }
-        .fullScreenCover(isPresented: $showCreate) {
+        .confirmationDialog(
+            String(localized: "What do you want to create?"),
+            isPresented: $showCreateChooser,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "New pool")) { showCreatePool = true }
+            Button(String(localized: "New 1V1 challenge")) { showCreateChallenge = true }
+            Button(String(localized: "Cancel"), role: .cancel) {}
+        }
+        .fullScreenCover(isPresented: $showCreatePool) {
             CreatePoolView()
+        }
+        .fullScreenCover(isPresented: $showCreateChallenge) {
+            NavigationStack {
+                ChallengeCreateView()
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(String(localized: "Close")) { showCreateChallenge = false }
+                                .foregroundColor(.arenaTextDim)
+                        }
+                    }
+            }
         }
         .fullScreenCover(isPresented: showSignupBonus) {
             SignupBonusCelebrationSheet(
