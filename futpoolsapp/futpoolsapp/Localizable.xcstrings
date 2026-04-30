@@ -1030,6 +1030,23 @@
         }
       }
     },
+    "App restart required for the change to fully apply.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App restart required for the change to fully apply."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es necesario reiniciar la app para aplicar el cambio completo."
+          }
+        }
+      }
+    },
     "At least 6 characters": {
       "extractionState": "manual",
       "localizations": {
@@ -4423,6 +4440,23 @@
         }
       }
     },
+    "Later": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Later"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más tarde"
+          }
+        }
+      }
+    },
     "Leaderboard": {
       "extractionState": "manual",
       "localizations": {
@@ -6521,6 +6555,23 @@
         }
       }
     },
+    "Pay out a real-world prize (admin)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pay out a real-world prize (admin)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paga un premio del mundo real (admin)"
+          }
+        }
+      }
+    },
     "Pending": {
       "extractionState": "manual",
       "localizations": {
@@ -7102,6 +7153,7 @@
         }
       }
     },
+    "PrizeAmazonGift": {},
     "Pro": {
       "extractionState": "manual",
       "localizations": {
@@ -7660,6 +7712,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restablecer contraseña"
+          }
+        }
+      }
+    },
+    "Restart now": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart now"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reiniciar ahora"
+          }
+        }
+      }
+    },
+    "Restart to apply language?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart to apply language?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Reiniciar para aplicar el idioma?"
           }
         }
       }
@@ -8238,6 +8324,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Regístrate para empezar a jugar"
+          }
+        }
+      }
+    },
+    "Some text will stay in the previous language until you relaunch the app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some text will stay in the previous language until you relaunch the app."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algunos textos seguirán en el idioma anterior hasta que reinicies la app."
           }
         }
       }

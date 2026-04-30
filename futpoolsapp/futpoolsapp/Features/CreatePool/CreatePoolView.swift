@@ -9,15 +9,6 @@
 import SwiftUI
 
 struct CreatePoolView: View {
-    /// When true, the form opens with the admin "Real prize" section
-    /// pre-emphasized — used when the FAB chooser routes here from
-    /// "New real-prize pool". Has no effect for non-admins.
-    let isRealPrizeMode: Bool
-
-    init(isRealPrizeMode: Bool = false) {
-        self.isRealPrizeMode = isRealPrizeMode
-    }
-
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var auth: AuthService
     @StateObject private var vm = CreatePoolViewModel()
@@ -50,10 +41,20 @@ struct CreatePoolView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         basicsSection
-                        // Admin-only — only renders when `auth.isAdmin`
-                        // is true. Other users never see this section.
-                        if isAdmin { realPrizeSection }
-                        entryTypeSection
+                        // Admin-only toggle. When ON, reveals the
+                        // real-prize fields and bypasses the coins/
+                        // sponsor entry-type requirement. Hidden
+                        // entirely for non-admin users.
+                        if isAdmin { realPrizeToggleRow }
+                        if isAdmin && vm.isRealPrizePool {
+                            realPrizeSection
+                        }
+                        // Hide the entry-type section when admin
+                        // marks the pool as real-prize — the prize
+                        // is the real-world reward, not coins.
+                        if !(isAdmin && vm.isRealPrizePool) {
+                            entryTypeSection
+                        }
                         visibilitySection
                         fixturesSection
                         if let err = vm.errorMessage {
@@ -124,18 +125,35 @@ struct CreatePoolView: View {
                     dismiss()
                 }
             }
-            .onAppear {
-                // Pre-fill the real-prize draft when admin entered via
-                // "New real-prize pool" — gives a sensible starting
-                // template (Amazon Gift Card $250 MXN / 14 USD) so the
-                // common case is one tap away from submit.
-                if isRealPrizeMode && isAdmin && vm.realPrizeLabel.isEmpty {
-                    vm.realPrizeLabel = "Amazon Gift Card $250 MXN"
-                    vm.realPrizeUSD = "14"
-                    vm.realPrizeImageKey = "PrizeAmazonGift"
-                }
-            }
         }
+    }
+
+    /// Admin-only switch row that reveals the real-prize fields when
+    /// flipped on. Non-admin users never see this — the toggle and
+    /// the section it gates are both wrapped in `if isAdmin`.
+    private var realPrizeToggleRow: some View {
+        HStack(spacing: 12) {
+            Text("🏆")
+                .font(.system(size: 22))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(String(localized: "REAL PRIZE POOL"))
+                    .font(ArenaFont.display(size: 12, weight: .heavy))
+                    .tracking(2)
+                    .foregroundColor(.arenaText)
+                Text(String(localized: "Pay out a real-world prize (admin)"))
+                    .font(ArenaFont.mono(size: 9))
+                    .foregroundColor(.arenaTextDim)
+            }
+            Spacer()
+            Toggle("", isOn: $vm.isRealPrizePool)
+                .labelsHidden()
+                .tint(.arenaGold)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(HudCornerCutShape(cut: 8).fill(Color.arenaGold.opacity(vm.isRealPrizePool ? 0.18 : 0.08)))
+        .overlay(HudCornerCutShape(cut: 8).stroke(Color.arenaGold.opacity(vm.isRealPrizePool ? 0.55 : 0.25), lineWidth: 1))
+        .padding(.horizontal, 16)
     }
 
     // MARK: Sections

@@ -43,14 +43,28 @@ enum AppLanguage {
     }
 
     /// Override the language used by every `String(localized:)` /
-    /// `Text("key")` lookup app-wide. Pass `""` (empty) to clear the
-    /// override and fall back to the device language.
+    /// `Text("key")` lookup app-wide.
     ///
-    /// SwiftUI does not automatically re-render when the bundle
+    /// Two mechanisms run in parallel:
+    /// 1. `AppleLanguages` UserDefault — read by Foundation at every
+    ///    string-catalog lookup, the only way to force iOS 17+
+    ///    `String(localized:)` to switch language. Takes full effect
+    ///    on next launch (Bundle preferred-localizations is cached).
+    /// 2. `Bundle.main` swizzle — applies during the current session
+    ///    so SwiftUI `Text("key")` (LocalizedStringKey path) responds
+    ///    immediately when the user flips the picker.
+    ///
+    /// Pass `""` (empty) to remove the override and fall back to the
+    /// device language. SwiftUI doesn't re-render when the bundle
     /// changes, so callers should also bump a `.id(language)` on the
-    /// root view to force a rebuild.
+    /// root view to force a rebuild during the current session.
     static func setLanguage(_ language: String) {
         _ = swizzleOnce
+        if language.isEmpty {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.set([language], forKey: "AppleLanguages")
+        }
         let override: Bundle?
         if language.isEmpty {
             override = nil

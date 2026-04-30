@@ -39,7 +39,6 @@ struct MainTabView: View {
     @State private var tabBarHidden: Bool = false
     @State private var showCreatePool = false
     @State private var showCreateChallenge = false
-    @State private var showCreateRealPrizePool = false
     @State private var showCreateChooser = false
 
     /// Binds the celebration sheet to the AuthService flag. SwiftUI `sheet`
@@ -80,14 +79,12 @@ struct MainTabView: View {
             isPresented: $showCreateChooser,
             titleVisibility: .visible
         ) {
+            // Admin sees a toggle inside CreatePoolView itself to flag
+            // the pool as real-prize, so we don't need a separate FAB
+            // option. Keeps the chooser at two clean choices for all
+            // users.
             Button(String(localized: "New pool")) { showCreatePool = true }
             Button(String(localized: "New 1V1 challenge")) { showCreateChallenge = true }
-            // Admin-only — gated by AuthService.isAdmin (backend
-            // ADMIN_EMAILS check). Routes to the same pool-creator
-            // form, just with the Real Prize section pre-filled.
-            if auth.isAdmin {
-                Button(String(localized: "New real-prize pool")) { showCreateRealPrizePool = true }
-            }
             Button(String(localized: "Cancel"), role: .cancel) {}
         }
         .fullScreenCover(isPresented: $showCreatePool) {
@@ -103,10 +100,6 @@ struct MainTabView: View {
                         }
                     }
             }
-        }
-        .fullScreenCover(isPresented: $showCreateRealPrizePool) {
-            CreatePoolView(isRealPrizeMode: true)
-                .environmentObject(auth)
         }
         .fullScreenCover(isPresented: showSignupBonus) {
             SignupBonusCelebrationSheet(

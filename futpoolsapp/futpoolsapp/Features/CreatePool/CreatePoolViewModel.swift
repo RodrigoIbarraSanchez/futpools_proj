@@ -158,13 +158,15 @@ final class CreatePoolViewModel: ObservableObject {
     // when switching modes via the setter helpers below.
     @Published var draftPrizeCoins: Int = 0
 
-    // Admin-only real-world prize. Empty `realPrizeLabel` means "this
-    // is a regular pool"; setting it flips the pool into a real-prize
-    // pool with the AMOE/Apple disclaimers + hero image. Backend
-    // ignores this payload for non-admin users so it's safe to leave
-    // these fields nullable on the request.
-    @Published var realPrizeLabel: String = ""
-    @Published var realPrizeUSD: String = ""
+    // Admin-only real-world prize. Toggle gates the section; when
+    // off, payload sends realPrize=nil (regular pool). When on,
+    // payload sends the populated subdoc and the pool gets the
+    // hero image + AMOE/Apple disclaimers in detail view. Backend
+    // ignores this payload for non-admin users so it's safe to
+    // leave the request fields populated.
+    @Published var isRealPrizePool: Bool = false
+    @Published var realPrizeLabel: String = "Amazon Gift Card $250 MXN"
+    @Published var realPrizeUSD: String = "14"
     @Published var realPrizeImageKey: String = "PrizeAmazonGift"
 
     /// Switch the wizard to Sponsor mode with the given prize amount.
@@ -206,7 +208,7 @@ final class CreatePoolViewModel: ObservableObject {
         // Real-prize pools (admin) bypass the coins-or-sponsor gate —
         // the prize itself is the real-world reward, no virtual
         // currency funding needed.
-        if !realPrizeLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if isRealPrizePool && !realPrizeLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return true
         }
         // v3: every user-created pool must commit to exactly ONE economy —
@@ -325,12 +327,14 @@ final class CreatePoolViewModel: ObservableObject {
 
         let trimmedDescription = draftDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedRealPrizeLabel = realPrizeLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-        let realPrizePayload: RealPrize? = trimmedRealPrizeLabel.isEmpty ? nil : RealPrize(
-            label: trimmedRealPrizeLabel,
-            prizeUSD: Int(realPrizeUSD) ?? 0,
-            imageKey: realPrizeImageKey.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
-            deliveryNote: nil
-        )
+        let realPrizePayload: RealPrize? = (isRealPrizePool && !trimmedRealPrizeLabel.isEmpty)
+            ? RealPrize(
+                label: trimmedRealPrizeLabel,
+                prizeUSD: Int(realPrizeUSD) ?? 0,
+                imageKey: realPrizeImageKey.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+                deliveryNote: nil
+            )
+            : nil
         let body = QuinielaCreateRequest(
             name: draftName.trimmingCharacters(in: .whitespacesAndNewlines),
             description: trimmedDescription.isEmpty ? nil : trimmedDescription,
