@@ -8,7 +8,14 @@ import Combine
 
 private let kAppLanguageKey = "app_language"
 
-/// Wraps content and applies the user's chosen app language via locale environment.
+/// Wraps content and applies the user's chosen app language. Two
+/// things happen here:
+/// 1. `AppLanguage.setLanguage(...)` reroutes every `String(localized:)`
+///    lookup to the chosen language bundle (via `Bundle.main` swizzle).
+/// 2. `.environment(\.locale, …)` keeps date/number formatters in sync.
+/// 3. `.id(appLanguage)` forces SwiftUI to rebuild the entire view
+///    tree on switch — without this the on-screen text would stay in
+///    the previous language until a manual refresh.
 struct AppLanguageWrapper<Content: View>: View {
     @AppStorage(kAppLanguageKey) private var appLanguage = ""
     @ViewBuilder let content: () -> Content
@@ -21,6 +28,11 @@ struct AppLanguageWrapper<Content: View>: View {
     var body: some View {
         content()
             .environment(\.locale, effectiveLocale)
+            .id(appLanguage)
+            .onAppear { AppLanguage.setLanguage(appLanguage) }
+            .onChange(of: appLanguage) { _, newValue in
+                AppLanguage.setLanguage(newValue)
+            }
     }
 }
 
@@ -37,6 +49,15 @@ struct AppLanguageWrapper<Content: View>: View {
 struct futpoolsappApp: App {
     @StateObject private var auth = AuthService()
     @StateObject private var inviteRouter = InviteRouter()
+
+    init() {
+        // Apply the persisted language BEFORE the first view body is
+        // evaluated. Otherwise the initial render uses the device
+        // language and only rebuilds via .id(...) once the user
+        // touches a setting.
+        let saved = UserDefaults.standard.string(forKey: kAppLanguageKey) ?? ""
+        AppLanguage.setLanguage(saved)
+    }
 
     var body: some Scene {
         WindowGroup {
