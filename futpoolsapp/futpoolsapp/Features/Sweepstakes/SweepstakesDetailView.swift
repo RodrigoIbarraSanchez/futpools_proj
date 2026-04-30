@@ -59,7 +59,7 @@ struct SweepstakesDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(String(localized: "SWEEPSTAKES"))
+                Text(String(localized: "REAL PRIZE POOL"))
                     .font(ArenaFont.display(size: 13, weight: .heavy))
                     .tracking(3)
                     .foregroundColor(.arenaText)

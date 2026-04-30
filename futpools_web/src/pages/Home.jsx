@@ -84,9 +84,9 @@ function ArenaHeader({ coins, tickets, locale, onJoinCode }) {
             color: 'var(--fp-primary)',
             cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14,
+            fontSize: 16,
           }}
-        >🎟</button>
+        >#</button>
       )}
       {/* Dual currency: Tickets first (cyan), Coins second (gold). The
           visual difference makes the legal wall obvious — the user reads

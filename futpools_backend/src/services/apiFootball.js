@@ -746,6 +746,18 @@ const getFixturesByLeagueAndDate = async (leagueId, date, season) => {
   return data?.response || [];
 };
 
+/**
+ * Fetch every fixture worldwide for a given ISO date (YYYY-MM-DD). Used
+ * as the Daily Pick fallback when none of the priority leagues have a
+ * match that day (common on Thursdays — most top leagues only play
+ * weekends + UCL on Tue/Wed). Caller is responsible for filtering down
+ * to upcoming + sane kickoffs.
+ */
+const getFixturesByDate = async (date) => {
+  const data = await apiFetch('/fixtures', { date });
+  return data?.response || [];
+};
+
 module.exports = {
   fetchFixturesForMatchday,
   fetchFixturesByIds,
@@ -755,5 +767,6 @@ module.exports = {
   getLeagueFixtures,
   getFixtureEvents,
   getFixturesByLeagueAndDate,
+  getFixturesByDate,
   startLivePolling,
 };

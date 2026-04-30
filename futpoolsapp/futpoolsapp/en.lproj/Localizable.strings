@@ -425,14 +425,17 @@
 "Ticket earned" = "Ticket earned";
 "No ads available right now. Try again later." = "No ads available right now. Try again later.";
 
-// Sweepstakes (Pools premiados)
-"SWEEPSTAKES" = "SWEEPSTAKES";
-"WEEKLY SWEEPSTAKES" = "WEEKLY SWEEPSTAKES";
-"Win real prizes — pay with Tickets" = "Win real prizes — pay with Tickets";
+// Real-prize pools (formerly "sweepstakes" — copy refactored to make
+// the football-prediction nature obvious; under the hood the model
+// is still called Sweepstakes for code stability).
+"REAL PRIZE POOLS" = "REAL PRIZE POOLS";
+"REAL PRIZE POOL" = "REAL PRIZE POOL";
+"WEEKLY POOL · REAL PRIZE" = "WEEKLY POOL · REAL PRIZE";
+"Predict matches, win real prizes with Tickets" = "Predict matches, win real prizes with Tickets";
 "Win real-world prizes" = "Win real-world prizes";
-"Spend Tickets to enter. Earn Tickets via Daily Pick or watching ads." = "Spend Tickets to enter. Earn Tickets via Daily Pick or watching ads.";
-"No open sweepstakes right now" = "No open sweepstakes right now";
-"New sweepstakes appear every week." = "New sweepstakes appear every week.";
+"Predict matches with Tickets. Earn Tickets via Daily Pick or watching ads." = "Predict matches with Tickets. Earn Tickets via Daily Pick or watching ads.";
+"No real-prize pools right now" = "No real-prize pools right now";
+"A new pool with a real prize appears every week." = "A new pool with a real prize appears every week.";
 "Closes %@" = "Closes %@";
 "Prize" = "Prize";
 "Entry cost" = "Entry cost";

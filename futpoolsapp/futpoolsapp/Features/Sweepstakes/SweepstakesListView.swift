@@ -45,7 +45,7 @@ struct SweepstakesListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("⭐ " + String(localized: "SWEEPSTAKES"))
+                Text("🏆 " + String(localized: "REAL PRIZE POOLS"))
                     .font(ArenaFont.display(size: 13, weight: .heavy))
                     .tracking(3)
                     .foregroundColor(.arenaText)
@@ -59,7 +59,7 @@ struct SweepstakesListView: View {
             Text(String(localized: "Win real-world prizes"))
                 .font(ArenaFont.display(size: 18, weight: .heavy))
                 .foregroundColor(.arenaText)
-            Text(String(localized: "Spend Tickets to enter. Earn Tickets via Daily Pick or watching ads."))
+            Text(String(localized: "Predict matches with Tickets. Earn Tickets via Daily Pick or watching ads."))
                 .font(ArenaFont.mono(size: 11))
                 .foregroundColor(.arenaTextMuted)
         }
@@ -68,12 +68,12 @@ struct SweepstakesListView: View {
     private var emptyState: some View {
         HudFrame {
             VStack(spacing: 10) {
-                Text("⭐").font(.system(size: 32))
-                Text(String(localized: "No open sweepstakes right now"))
+                Text("🏆").font(.system(size: 32))
+                Text(String(localized: "No real-prize pools right now"))
                     .font(ArenaFont.display(size: 13, weight: .heavy))
                     .tracking(2)
                     .foregroundColor(.arenaText)
-                Text(String(localized: "New sweepstakes appear every week."))
+                Text(String(localized: "A new pool with a real prize appears every week."))
                     .font(ArenaFont.mono(size: 10))
                     .foregroundColor(.arenaTextDim)
             }

@@ -19,11 +19,11 @@ struct SweepstakesTeaserCard: View {
                     .font(.system(size: 28))
                     .shadow(color: .arenaGold.opacity(0.5), radius: 6)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "WEEKLY SWEEPSTAKES"))
+                    Text(String(localized: "WEEKLY POOL · REAL PRIZE"))
                         .font(ArenaFont.display(size: 13, weight: .heavy))
                         .tracking(2)
                         .foregroundColor(.arenaText)
-                    Text(String(localized: "Win real prizes — pay with Tickets"))
+                    Text(String(localized: "Predict matches, win real prizes with Tickets"))
                         .font(ArenaFont.mono(size: 10))
                         .foregroundColor(.arenaTextMuted)
                 }

@@ -242,7 +242,11 @@ private struct ArenaHeader: View {
             Spacer()
             if let onJoinCode {
                 Button(action: onJoinCode) {
-                    Image(systemName: "ticket.fill")
+                    // `qrcode` instead of the previous `ticket.fill` —
+                    // ticket glyph clashed visually with the Tickets pill
+                    // and made the header read like 3 currencies. The
+                    // qrcode icon reads unambiguously as "join via code".
+                    Image(systemName: "qrcode")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.arenaPrimary)
                         .frame(width: 32, height: 32)

@@ -1,7 +1,7 @@
 const DailyPick = require('../models/DailyPick');
 const DailyPickPrediction = require('../models/DailyPickPrediction');
 const { applyTicketDelta } = require('./ticketService');
-const { fetchFixturesByIds, getFixturesByLeagueAndDate } = require('./apiFootball');
+const { fetchFixturesByIds, getFixturesByLeagueAndDate, getFixturesByDate } = require('./apiFootball');
 
 /**
  * Daily Pick service. Two responsibilities:
@@ -18,17 +18,57 @@ const { fetchFixturesByIds, getFixturesByLeagueAndDate } = require('./apiFootbal
 // fixtures from a higher-priority league exist, we pick from there. Falls
 // through to the next league only when the current one has no fixtures
 // today. Uses API-Football league ids.
+//
+// Ampliada para cubrir mid-week — sin Europa League/Copa MX/Libertadores
+// los jueves quedaban sin Daily Pick (las top-9 leagues solo juegan
+// weekends + UCL los martes/miércoles). Cuando ninguna de estas tiene
+// partido hoy, el fallback `selectFromAnyLeague` agarra cualquier
+// fixture popular del día.
 const PRIORITY_LEAGUE_IDS = [
   262,  // Liga MX
+  263,  // Liga MX — Liga de Expansión
   39,   // Premier League
   140,  // La Liga
   2,    // UEFA Champions League
+  3,    // UEFA Europa League
+  848,  // UEFA Conference League
   135,  // Serie A
   78,   // Bundesliga
   61,   // Ligue 1
   71,   // Brasileirao
+  13,   // CONMEBOL Libertadores
+  11,   // CONMEBOL Sudamericana
   253,  // MLS
+  73,   // Brasileirao Serie B
+  144,  // Belgian Pro League (mid-week filler)
+  88,   // Eredivisie
+  94,   // Primeira Liga (Portugal)
 ];
+
+/**
+ * Last-resort fallback when no priority league has a fixture today.
+ * Hits API-Football's worldwide /fixtures?date=YYYY-MM-DD and picks the
+ * earliest upcoming match. Common scenario: Thursdays in MX — most top
+ * leagues don't play, but Liga MX Sub-20, Brasil Série C, Eredivisie
+ * Cup or similar usually have something on.
+ */
+async function selectFromAnyLeague(dateKey) {
+  let response;
+  try {
+    response = await getFixturesByDate(dateKey);
+  } catch (err) {
+    console.warn('[DailyPick] global fallback fetch failed:', err.message);
+    return null;
+  }
+  const now = Date.now();
+  const upcoming = (response || [])
+    .filter((f) => {
+      const k = f?.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
+      return k > now;
+    })
+    .sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+  return upcoming[0] || null;
+}
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN']);
 
@@ -111,7 +151,30 @@ async function selectForToday() {
     return dp;
   }
 
-  console.log(`[DailyPick] no priority-league fixtures for ${dateKey}`);
+  // No priority league has a fixture today — fall back to any worldwide
+  // upcoming match so the Daily Pick surface is never empty.
+  const fallback = await selectFromAnyLeague(dateKey);
+  if (fallback) {
+    const dp = await DailyPick.create({
+      date: dateKey,
+      fixture: {
+        fixtureId: fallback.fixture.id,
+        leagueId: fallback.league.id,
+        leagueName: fallback.league.name,
+        homeTeamId: fallback.teams.home.id,
+        awayTeamId: fallback.teams.away.id,
+        homeTeam: fallback.teams.home.name,
+        awayTeam: fallback.teams.away.name,
+        homeLogo: fallback.teams.home.logo || '',
+        awayLogo: fallback.teams.away.logo || '',
+        kickoff: new Date(fallback.fixture.date),
+      },
+    });
+    console.log(`[DailyPick] selected via fallback for ${dateKey}: ${dp.fixture.homeTeam} vs ${dp.fixture.awayTeam} (league ${fallback.league.id} ${fallback.league.name})`);
+    return dp;
+  }
+
+  console.log(`[DailyPick] no fixtures at all for ${dateKey}`);
   return null;
 }
 

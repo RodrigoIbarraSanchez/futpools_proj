@@ -425,14 +425,15 @@
 "Ticket earned" = "Ticket ganado";
 "No ads available right now. Try again later." = "No hay anuncios disponibles ahora. Intenta más tarde.";
 
-// Sweepstakes (Pools premiados)
-"SWEEPSTAKES" = "SORTEOS";
-"WEEKLY SWEEPSTAKES" = "SORTEOS SEMANALES";
-"Win real prizes — pay with Tickets" = "Gana premios reales — paga con Tickets";
+// Quinielas con premio real (antes "sorteos")
+"REAL PRIZE POOLS" = "QUINIELAS CON PREMIO REAL";
+"REAL PRIZE POOL" = "QUINIELA CON PREMIO REAL";
+"WEEKLY POOL · REAL PRIZE" = "QUINIELA SEMANAL · PREMIO REAL";
+"Predict matches, win real prizes with Tickets" = "Pronostica con Tickets, gana premios reales";
 "Win real-world prizes" = "Gana premios reales";
-"Spend Tickets to enter. Earn Tickets via Daily Pick or watching ads." = "Gasta Tickets para entrar. Gana Tickets con el Pick del Día o viendo anuncios.";
-"No open sweepstakes right now" = "No hay sorteos abiertos ahora";
-"New sweepstakes appear every week." = "Nuevos sorteos cada semana.";
+"Predict matches with Tickets. Earn Tickets via Daily Pick or watching ads." = "Pronostica con Tickets. Gana Tickets con el Pick del Día o viendo anuncios.";
+"No real-prize pools right now" = "No hay quinielas con premio real ahora";
+"A new pool with a real prize appears every week." = "Cada semana hay una nueva quiniela con premio real.";
 "Closes %@" = "Cierra %@";
 "Prize" = "Premio";
 "Entry cost" = "Costo de entrada";
