@@ -37,6 +37,11 @@ struct Quiniela: Decodable, Identifiable {
     let platformPrizeCoins: Int?
     let entryCostCoins: Int?
     let rakePercent: Int?
+    /// Real-world prize attached to admin-curated pools. When set,
+    /// the detail view renders the prize hero image + AMOE + Apple
+    /// Guideline 5.3 disclaimers, and the pool surfaces in the Home
+    /// "WEEKLY POOL · REAL PRIZE" teaser.
+    let realPrize: RealPrize?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -61,6 +66,7 @@ struct Quiniela: Decodable, Identifiable {
         case platformPrizeCoins
         case entryCostCoins
         case rakePercent
+        case realPrize
     }
 
     var startDateValue: Date? {
@@ -145,6 +151,21 @@ struct QuinielaCreateRequest: Encodable {
     let entryCostCoins: Int
     let prizeCoins: Int
     let fixtures: [QuinielaCreateFixture]
+    /// Optional admin-only real-world prize. Backend silently drops
+    /// this field for non-admin tokens, so it's safe to attach
+    /// unconditionally from the form.
+    let realPrize: RealPrize?
+}
+
+/// Real-world prize attached to a pool. Shape mirrors the backend
+/// `realPrizeSchema` subdoc on Quiniela. `imageKey` is a bundled
+/// asset identifier the iOS app resolves locally
+/// (e.g. "PrizeAmazonGift").
+struct RealPrize: Codable {
+    let label: String
+    let prizeUSD: Int
+    let imageKey: String?
+    let deliveryNote: String?
 }
 
 struct QuinielaCreateFixture: Encodable {

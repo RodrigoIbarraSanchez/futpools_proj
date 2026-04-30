@@ -82,9 +82,16 @@ struct QuinielaDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     header
-                    prizeHero
+                    if let realPrize = quiniela.realPrize {
+                        realPrizeHero(realPrize)
+                    } else {
+                        prizeHero
+                    }
                     tabStrip
                     tabContent
+                    if quiniela.realPrize != nil {
+                        realPrizeDisclaimers
+                    }
                 }
                 .padding(.bottom, 140)
             }
@@ -420,6 +427,76 @@ struct QuinielaDetailView: View {
             .padding(.horizontal, 16)
         }
         .padding(.horizontal, 16)
+    }
+
+    // MARK: Real-prize hero — replaces `prizeHero` when the pool
+    //  carries a real-world prize. Shows the prize image as the hero,
+    //  then label + USD value. The legal disclaimers (AMOE + Apple
+    //  Guideline 5.3) live below the tab content as a sibling section
+    //  so they're always visible without crowding the hero.
+
+    private func realPrizeHero(_ prize: RealPrize) -> some View {
+        HudFrame(
+            cut: 14,
+            fill: AnyShapeStyle(
+                LinearGradient(
+                    colors: [Color.arenaGold.opacity(0.18), Color.arenaBg2],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            ),
+            glow: .arenaGold
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                if let key = prize.imageKey, !key.isEmpty,
+                   UIImage(named: key) != nil {
+                    Image(key)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .frame(maxHeight: 180)
+                        .shadow(color: .arenaGold.opacity(0.5), radius: 16, y: 4)
+                }
+                HStack(spacing: 12) {
+                    Text("🏆")
+                        .font(.system(size: 30))
+                        .shadow(color: .arenaGold, radius: 10)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(localized: "REAL PRIZE"))
+                            .font(ArenaFont.mono(size: 9))
+                            .tracking(2)
+                            .foregroundColor(.arenaTextMuted)
+                        Text(prize.label)
+                            .font(ArenaFont.display(size: 18, weight: .heavy))
+                            .foregroundColor(.arenaGold)
+                    }
+                    Spacer()
+                }
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+        }
+        .padding(.horizontal, 16)
+    }
+
+    /// AMOE + Apple disclaimers — required for legal compliance on
+    /// any pool that pays a real-world prize. AMOE clarifies the
+    /// "no purchase necessary" alternative; Apple Guideline 5.3
+    /// requires the sponsor disclaimer on the same surface as the
+    /// entry CTA.
+    private var realPrizeDisclaimers: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(String(localized: "Free entry: 7 daily check-ins (one per day for a week) = 1 entry. No purchase required."))
+                .font(ArenaFont.mono(size: 9))
+                .foregroundColor(.arenaTextDim)
+                .multilineTextAlignment(.leading)
+            Text(String(localized: "This sweepstakes is in no way sponsored, endorsed, administered by, or associated with Apple Inc."))
+                .font(ArenaFont.mono(size: 8))
+                .foregroundColor(.arenaTextFaint)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
     }
 
     // MARK: Tabs

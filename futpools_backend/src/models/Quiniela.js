@@ -14,6 +14,28 @@ const fixtureSchema = new mongoose.Schema({
   status: { type: String, default: '' },
 }, { _id: false });
 
+/**
+ * Real-world prize attached to a normal pool. Distinct from the
+ * `prize` / `prizeLabel` cash-display fields — this carries the
+ * structured payload the iOS/web client needs to render the prize
+ * hero (image asset key) plus admin operational data
+ * (USD value for telemetry, free-text delivery note for fulfillment).
+ *
+ * Only set on admin-curated pools. Presence triggers AMOE + Apple
+ * Guideline 5.3 disclaimers in the detail view client-side.
+ */
+const realPrizeSchema = new mongoose.Schema({
+  label: { type: String, default: '' },
+  prizeUSD: { type: Number, default: 0 },
+  // Bundled-asset key the iOS app maps to an image catalog entry,
+  // e.g. "PrizeAmazonGift". Future flexibility: when prizes vary,
+  // we'll add a `prizeImageURL` for remote-hosted images.
+  imageKey: { type: String, default: '' },
+  // Admin paper trail for delivery (e.g. "Sent Amazon code via email
+  // 2026-05-08 to user X"). Free text, not parsed by code.
+  deliveryNote: { type: String, default: '' },
+}, { _id: false });
+
 const quinielaSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   description: { type: String, default: '' },
@@ -88,6 +110,12 @@ const quinielaSchema = new mongoose.Schema({
   },
   settledAt: { type: Date },
   winnerUserIds: { type: [mongoose.Schema.Types.ObjectId], default: [] },
+
+  // Admin-only. When set, the pool is rendered as a "real prize pool"
+  // with the bundled asset image, AMOE + Apple disclaimers in the
+  // detail view, and surfaced in the Home WEEKLY POOL · REAL PRIZE
+  // teaser. Listed via GET /quinielas?realPrize=1.
+  realPrize: { type: realPrizeSchema, default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

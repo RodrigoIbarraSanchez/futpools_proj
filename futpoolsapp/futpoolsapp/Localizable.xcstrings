@@ -3709,6 +3709,23 @@
       }
     },
     "Hello, world!": {},
+    "IMAGE KEY": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IMAGE KEY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLAVE DE IMAGEN"
+          }
+        }
+      }
+    },
     "INFO": {
       "extractionState": "manual",
       "localizations": {
@@ -4436,6 +4453,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Liga"
+          }
+        }
+      }
+    },
+    "Leave Prize label empty for a regular pool. When set, players see the prize image + AMOE + Apple disclaimers.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave Prize label empty for a regular pool. When set, players see the prize image + AMOE + Apple disclaimers."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deja la etiqueta vacía para una quiniela normal. Cuando la llenas, los jugadores ven la imagen del premio + los avisos legales (AMOE + Apple)."
           }
         }
       }
@@ -6215,6 +6249,40 @@
         }
       }
     },
+    "PRIZE COST (USD)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRIZE COST (USD)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "COSTO DEL PREMIO (USD)"
+          }
+        }
+      }
+    },
+    "PRIZE LABEL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRIZE LABEL"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ETIQUETA DEL PREMIO"
+          }
+        }
+      }
+    },
     "PRIZE LABEL (optional)": {
       "extractionState": "manual",
       "localizations": {
@@ -6930,6 +6998,23 @@
         }
       }
     },
+    "Predict matches in these pools. Highest score wins the prize.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predict matches in these pools. Highest score wins the prize."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pronostica los partidos en estas quinielas. El de más puntos se lleva el premio."
+          }
+        }
+      }
+    },
     "Predict matches with Tickets. Earn Tickets via Daily Pick or watching ads.": {
       "extractionState": "manual",
       "localizations": {
@@ -7183,6 +7268,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "LISTO"
+          }
+        }
+      }
+    },
+    "REAL PRIZE": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REAL PRIZE"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PREMIO REAL"
+          }
+        }
+      }
+    },
+    "REAL PRIZE (ADMIN)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REAL PRIZE (ADMIN)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PREMIO REAL (ADMIN)"
           }
         }
       }

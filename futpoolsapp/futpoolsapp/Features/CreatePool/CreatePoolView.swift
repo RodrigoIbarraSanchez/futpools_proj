@@ -9,6 +9,15 @@
 import SwiftUI
 
 struct CreatePoolView: View {
+    /// When true, the form opens with the admin "Real prize" section
+    /// pre-emphasized — used when the FAB chooser routes here from
+    /// "New real-prize pool". Has no effect for non-admins.
+    let isRealPrizeMode: Bool
+
+    init(isRealPrizeMode: Bool = false) {
+        self.isRealPrizeMode = isRealPrizeMode
+    }
+
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var auth: AuthService
     @StateObject private var vm = CreatePoolViewModel()
@@ -41,6 +50,9 @@ struct CreatePoolView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         basicsSection
+                        // Admin-only — only renders when `auth.isAdmin`
+                        // is true. Other users never see this section.
+                        if isAdmin { realPrizeSection }
                         entryTypeSection
                         visibilitySection
                         fixturesSection
@@ -112,6 +124,17 @@ struct CreatePoolView: View {
                     dismiss()
                 }
             }
+            .onAppear {
+                // Pre-fill the real-prize draft when admin entered via
+                // "New real-prize pool" — gives a sensible starting
+                // template (Amazon Gift Card $250 MXN / 14 USD) so the
+                // common case is one tap away from submit.
+                if isRealPrizeMode && isAdmin && vm.realPrizeLabel.isEmpty {
+                    vm.realPrizeLabel = "Amazon Gift Card $250 MXN"
+                    vm.realPrizeUSD = "14"
+                    vm.realPrizeImageKey = "PrizeAmazonGift"
+                }
+            }
         }
     }
 
@@ -132,6 +155,49 @@ struct CreatePoolView: View {
                     .lineLimit(2...4)
                     .createPoolFieldStyle()
             }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    /// Admin-only. When `realPrizeLabel` is non-empty, the pool is
+    /// flagged as a real-prize pool: it shows the prize hero + AMOE
+    /// + Apple disclaimers in the detail view, and surfaces in the
+    /// Home WEEKLY POOL · REAL PRIZE teaser. Leaving `Prize label`
+    /// blank keeps it as a regular admin pool.
+    private var realPrizeSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "REAL PRIZE (ADMIN)")
+            // Hero preview of what players will see when the asset
+            // key resolves to a bundled image. Falls back silently
+            // when the key is unknown.
+            if !vm.realPrizeImageKey.trimmingCharacters(in: .whitespaces).isEmpty,
+               UIImage(named: vm.realPrizeImageKey) != nil {
+                Image(vm.realPrizeImageKey)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 110)
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 4)
+                    .shadow(color: .arenaGold.opacity(0.4), radius: 12, y: 3)
+            }
+            labelField("PRIZE LABEL") {
+                TextField("Amazon Gift Card $250 MXN", text: $vm.realPrizeLabel)
+                    .createPoolFieldStyle()
+            }
+            HStack(spacing: 10) {
+                labelField("PRIZE COST (USD)") {
+                    TextField("14", text: $vm.realPrizeUSD)
+                        .keyboardType(.numberPad)
+                        .createPoolFieldStyle()
+                }
+                labelField("IMAGE KEY") {
+                    TextField("PrizeAmazonGift", text: $vm.realPrizeImageKey)
+                        .createPoolFieldStyle()
+                }
+            }
+            Text(String(localized: "Leave Prize label empty for a regular pool. When set, players see the prize image + AMOE + Apple disclaimers."))
+                .font(ArenaFont.mono(size: 9))
+                .foregroundColor(.arenaTextDim)
         }
         .padding(.horizontal, 16)
     }

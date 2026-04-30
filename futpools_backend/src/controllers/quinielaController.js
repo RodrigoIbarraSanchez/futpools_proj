@@ -137,7 +137,25 @@ exports.createQuiniela = async (req, res) => {
       name, description, prizeLabel, visibility, fixtures,
       entryCostCoins: rawEntryCost,
       prizeCoins: rawPrizeCoins,
+      realPrize: rawRealPrize,
     } = req.body || {};
+
+    // Real-world prize attached to a normal pool. Admin-only — non-
+    // admin payloads silently drop the field instead of 403'ing so
+    // the rest of the create flow keeps working when a client
+    // accidentally posts the field.
+    let realPrize = null;
+    if (rawRealPrize && typeof rawRealPrize === 'object' && isAdminUser(req.user)) {
+      const label = String(rawRealPrize.label || '').trim();
+      if (label) {
+        realPrize = {
+          label,
+          prizeUSD: Number(rawRealPrize.prizeUSD) || 0,
+          imageKey: String(rawRealPrize.imageKey || '').trim(),
+          deliveryNote: String(rawRealPrize.deliveryNote || '').trim(),
+        };
+      }
+    }
 
     const trimmedName = String(name || '').trim();
     if (!trimmedName) return res.status(400).json({ message: 'Name is required' });
@@ -278,6 +296,7 @@ exports.createQuiniela = async (req, res) => {
       rakePercent: 10,
       prizeLockStatus: 'pledged',
       settlementStatus: 'pending',
+      realPrize,
     });
 
     console.log(`[Quiniela] create user=${req.user._id} code=${inviteCode} fixtures=${normalizedFixtures.length}`);
@@ -353,7 +372,14 @@ exports.getQuinielas = async (req, res) => {
     if (req.user?._id) {
       visibilityClauses.push({ visibility: 'private', createdBy: req.user._id });
     }
-    const list = await Quiniela.find({ $or: visibilityClauses })
+    const filter = { $or: visibilityClauses };
+    // Optional ?realPrize=1 — surface only pools that carry a real-
+    // world prize. Used by the Home "WEEKLY POOL · REAL PRIZE" teaser
+    // and the dedicated real-prize list view.
+    if (req.query.realPrize === '1' || req.query.realPrize === 'true') {
+      filter['realPrize.label'] = { $exists: true, $ne: '' };
+    }
+    const list = await Quiniela.find(filter)
       .populate('createdBy', 'username displayName')
       .lean();
     const ids = list.map((q) => q._id);

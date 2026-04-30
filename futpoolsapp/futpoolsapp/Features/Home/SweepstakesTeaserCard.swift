@@ -12,7 +12,7 @@ import SwiftUI
 struct SweepstakesTeaserCard: View {
     var body: some View {
         NavigationLink {
-            SweepstakesListView()
+            RealPrizePoolsListView()
         } label: {
             HStack(spacing: 12) {
                 Text("🏆")
