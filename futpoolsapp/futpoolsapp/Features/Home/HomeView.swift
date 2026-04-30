@@ -151,7 +151,7 @@ struct HomeView: View {
     }
 
     private func isClosed(_ q: Quiniela) -> Bool {
-        if q.status == "completed" { return true }
+        if q.effectiveStatus == "completed" { return true }
         if let end = q.endDateValue, end < Date() { return true }
         return false
     }
@@ -537,7 +537,7 @@ struct ArenaPoolCard: View {
     let liveFixtures: [Int: LiveFixture]
 
     private var status: (label: String, color: Color) {
-        switch quiniela.status {
+        switch quiniela.effectiveStatus {
         case "live":      return ("LIVE", .arenaDanger)
         case "completed": return ("CLOSED", .arenaTextMuted)
         default:

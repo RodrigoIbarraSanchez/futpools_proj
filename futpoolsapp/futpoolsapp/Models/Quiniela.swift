@@ -76,6 +76,18 @@ struct Quiniela: Decodable, Identifiable {
     var isLive: Bool { status == "live" }
     var isCompleted: Bool { status == "completed" }
 
+    /// Backend can wedge a finished pool at `status: "live"` when the
+    /// API-Football status fetch fails (no data → fallback marks past
+    /// kickoffs as anyStarted but never as allFinished). Override the
+    /// label client-side once `endDate` is more than 6h in the past so a
+    /// 5-day-old pool stops glowing red on Home.
+    var effectiveStatus: String? {
+        if status == "live", let end = endDateValue, end < Date().addingTimeInterval(-6 * 3600) {
+            return "completed"
+        }
+        return status
+    }
+
     /// Parsed entry cost for balance checks (e.g. 35 from "35" or "$35").
     var entryCostValue: Double {
         let trimmed = cost.trimmingCharacters(in: .whitespaces)

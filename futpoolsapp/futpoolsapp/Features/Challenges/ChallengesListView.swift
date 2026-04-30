@@ -102,7 +102,7 @@ struct ChallengesListContent: View {
     }
 
     private var tabBar: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(ChallengeListTab.allCases) { t in
@@ -127,16 +127,43 @@ struct ChallengesListContent: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.leading, 16)
+                .padding(.trailing, showsHeader ? 16 : 8)
             }
-            // When header is suppressed (embedded mode) the "＋" button has
-            // no home, so promote it to the tab bar row.
+            // When the header is suppressed (embedded as a segment of the
+            // Entries tab) the "＋" button has no home, so promote it to
+            // the tab strip — sized down to match the pill height so it
+            // doesn't dominate the row.
             if !showsHeader {
-                newButton
+                compactNewButton
                     .padding(.trailing, 16)
             }
         }
+        .padding(.top, showsHeader ? 0 : 6)
         .padding(.bottom, 10)
+    }
+
+    /// Smaller variant of `newButton` for the embedded tab-strip layout
+    /// where the full 36x36 button looks oversized next to the 26pt-tall
+    /// tab pills.
+    private var compactNewButton: some View {
+        Button {
+            showCreate = true
+        } label: {
+            Text("＋")
+                .font(ArenaFont.display(size: 14, weight: .heavy))
+                .foregroundColor(.arenaPrimary)
+                .frame(width: 28, height: 26)
+                .background(
+                    HudCornerCutShape(cut: 5)
+                        .fill(Color.arenaPrimary.opacity(0.12))
+                )
+                .overlay(
+                    HudCornerCutShape(cut: 5)
+                        .stroke(Color.arenaPrimary.opacity(0.35), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

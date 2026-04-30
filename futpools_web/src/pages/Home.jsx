@@ -666,7 +666,7 @@ export function Home() {
   const morePools = filtered.filter(q => !shownIds.has(q._id));
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <ArenaHeader
         coins={user?.balance ?? 0}
         tickets={user?.tickets ?? 0}
@@ -750,7 +750,7 @@ export function Home() {
         )}
       </div>
 
-    </>
+    </div>
   );
 }
 

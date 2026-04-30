@@ -57,17 +57,24 @@ async function mintUniqueInviteCode() {
 function computePoolStatus(fixtures, liveStatusMap) {
   if (!fixtures || fixtures.length === 0) return 'scheduled';
   const now = new Date();
+  // 6h after kickoff a match is virtually always over (regulation 90' +
+  // ET 30' + PEN ~10' + buffer). When the live API stays empty past that
+  // window we treat the fixture as finished so a 5-day-old pool can't
+  // remain stuck at status='live'.
+  const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
   let allFinished = true;
   let anyStarted = false;
   for (const f of fixtures) {
     const liveShort = liveStatusMap && f.fixtureId ? liveStatusMap.get(f.fixtureId) : null;
     const short = (liveShort || String(f.status || '')).trim().toUpperCase();
-    if (FINISHED_STATUSES.has(short)) {
+    const kickoffMs = new Date(f.kickoff).getTime();
+    const stale = Number.isFinite(kickoffMs) && (now - kickoffMs) > STALE_AFTER_MS;
+    if (FINISHED_STATUSES.has(short) || (stale && (!short || short === 'NS'))) {
       anyStarted = true;
     } else {
       allFinished = false;
       if (short && short !== 'NS') anyStarted = true;
-      else if (new Date(f.kickoff) <= now) anyStarted = true;
+      else if (kickoffMs <= now) anyStarted = true;
     }
   }
   if (allFinished) return 'completed';
