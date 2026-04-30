@@ -13,13 +13,28 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [dob, setDob] = useState('');             // YYYY-MM-DD from <input type="date">
+  const [country, setCountry] = useState('MX');
   const [loading, setLoading] = useState(false);
+
+  // Block submit when computed age < 18. Backend also enforces but
+  // catching it client-side avoids a wasted round-trip.
+  const ageYears = (() => {
+    if (!dob) return null;
+    const d = new Date(dob);
+    if (isNaN(d.getTime())) return null;
+    return (Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  })();
+  const dobError = (ageYears != null && ageYears < 18)
+    ? t(locale, 'Must be 18 or older')
+    : null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    if (dobError) return;
     setLoading(true);
-    await register(email, password, username, displayName);
+    await register(email, password, username, displayName, dob, country);
     setLoading(false);
   };
 
@@ -60,6 +75,22 @@ export function Register() {
             <div>
               <ArenaLabel>{t(locale, 'Password').toUpperCase()}</ArenaLabel>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} style={arenaInputStyle} />
+            </div>
+            <div>
+              <ArenaLabel>{t(locale, 'DATE OF BIRTH')}</ArenaLabel>
+              <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} required style={arenaInputStyle} />
+              {dobError && (
+                <div style={{ color: 'var(--fp-danger)', fontSize: 11, fontFamily: 'var(--fp-mono)', marginTop: 4 }}>
+                  {dobError}
+                </div>
+              )}
+            </div>
+            <div>
+              <ArenaLabel>{t(locale, 'COUNTRY')}</ArenaLabel>
+              <select value={country} onChange={(e) => setCountry(e.target.value)} style={arenaInputStyle}>
+                <option value="MX">🇲🇽 México</option>
+                <option value="XX">🌎 {t(locale, 'Other')}</option>
+              </select>
             </div>
 
             {error && (

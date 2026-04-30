@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema({
   // economies is enforced at the service layer: `transactionService` only
   // touches `balance`, `ticketService` only touches `tickets`. Never both.
   tickets: { type: Number, default: 0 },
+  // Age gate + country (v2.4 Fase 5) — required for sweepstakes
+  // eligibility. Backend enforces 18+ on register; sweepstakes endpoint
+  // filters by allowedCountries vs `countryCode`. Both nullable so older
+  // accounts pre-Fase 5 keep working until the user updates their profile.
+  dob: { type: Date, default: null },
+  countryCode: { type: String, default: null, uppercase: true, trim: true, maxlength: 2 },
 
   // ── FutPools Rank (skill track record) ────────────────────────────────
   // Elo-lite rating: each scored pool adjusts by K × (actual - expected) / max.

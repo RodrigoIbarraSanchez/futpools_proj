@@ -150,6 +150,10 @@ export const translations = {
     'Ticket earned': 'Ticket earned',
     'No ads available right now. Try again later.': 'No ads available right now. Try again later.',
     'Rewarded ads are available in the iOS app.': 'Rewarded ads are available in the iOS app.',
+    'DATE OF BIRTH': 'DATE OF BIRTH',
+    'COUNTRY': 'COUNTRY',
+    'Other': 'Other',
+    'Must be 18 or older': 'Must be 18 or older',
     'LEADERBOARD': 'LEADERBOARD',
     // Join by code
     'Join with code': 'Join with code',
@@ -592,6 +596,10 @@ export const translations = {
     'Ticket earned': 'Ticket ganado',
     'No ads available right now. Try again later.': 'No hay anuncios disponibles ahora. Intenta más tarde.',
     'Rewarded ads are available in the iOS app.': 'Los anuncios para ganar Tickets están disponibles en la iOS app.',
+    'DATE OF BIRTH': 'FECHA DE NACIMIENTO',
+    'COUNTRY': 'PAÍS',
+    'Other': 'Otro',
+    'Must be 18 or older': 'Debes ser mayor de 18',
     'LEADERBOARD': 'TABLA',
     // Join by code
     'Join with code': 'Unirse con código',

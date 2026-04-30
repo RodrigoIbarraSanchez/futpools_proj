@@ -25,9 +25,31 @@ exports.register = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { email, password, displayName, username } = req.body;
+    const { email, password, displayName, username, dob, countryCode } = req.body;
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const normalizedUsername = String(username || '').trim().toLowerCase();
+
+    // Age gate (Fase 5) — sweepstakes require 18+. Backend enforces
+    // this so a tampered client can't bypass. dob is optional ONLY for
+    // legacy clients that haven't shipped the DOB field yet; new clients
+    // should always send it. When sweepstakes geo-MX rolls out, the
+    // sweepstakes endpoint refuses entry without dob+18+, even if
+    // register let it through.
+    let parsedDob = null;
+    if (dob) {
+      parsedDob = new Date(dob);
+      if (isNaN(parsedDob.getTime())) {
+        return res.status(400).json({ message: 'Invalid date of birth', code: 'INVALID_DOB' });
+      }
+      const ageMs = Date.now() - parsedDob.getTime();
+      const ageYears = ageMs / (365.25 * 24 * 60 * 60 * 1000);
+      if (ageYears < 18) {
+        return res.status(400).json({ message: 'Must be 18 or older', code: 'UNDERAGE' });
+      }
+    }
+    const normalizedCountry = countryCode
+      ? String(countryCode).trim().toUpperCase().slice(0, 2)
+      : null;
 
     let existing = await User.findOne({
       $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
@@ -47,6 +69,8 @@ exports.register = async (req, res) => {
       password,
       username: normalizedUsername,
       displayName: String(displayName || '').trim(),
+      dob: parsedDob,
+      countryCode: normalizedCountry,
     });
     await user.save();
 

@@ -22,9 +22,24 @@ struct RegisterView: View {
     @State private var touchedUsername = false
     @State private var touchedEmail = false
     @State private var touchedPassword = false
+    /// Defaults to today minus 25 years so the picker lands on a sensible
+    /// adult age out of the gate (vs. 0001-01-01 or today). The wheel
+    /// picker still opens on "today" — this is just the binding default.
+    @State private var dob: Date = Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date()
+    @State private var country: String = "MX"
     @FocusState private var focusedField: Field?
 
     private enum Field { case name, username, email, password }
+
+    /// Computed age from `dob`. Used both to gate the submit button and
+    /// to show the inline error if the user picks an under-18 date.
+    private var ageYears: Int {
+        Calendar.current.dateComponents([.year], from: dob, to: Date()).year ?? 0
+    }
+    private var dobError: String? {
+        if ageYears < 18 { return String(localized: "Must be 18 or older") }
+        return nil
+    }
 
     private var trimmedName: String { displayName.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var trimmedUsername: String { username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
@@ -63,6 +78,7 @@ struct RegisterView: View {
     private var canSubmit: Bool {
         !isLoading && nameError == nil && usernameError == nil
             && emailError == nil && passwordError == nil
+            && dobError == nil && !country.isEmpty
     }
 
     var body: some View {
@@ -157,6 +173,42 @@ struct RegisterView: View {
                             .onChange(of: password) { _ in touchedPassword = true }
                             if touchedPassword, let err = passwordError { errorLine(err) }
 
+                            // Age gate (Fase 5) — required for sweepstakes
+                            // eligibility. iOS DatePicker handles localization
+                            // of month/day order automatically.
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(String(localized: "DATE OF BIRTH"))
+                                    .font(ArenaFont.mono(size: 10))
+                                    .tracking(2)
+                                    .foregroundColor(.arenaTextMuted)
+                                DatePicker(
+                                    "",
+                                    selection: $dob,
+                                    in: ...Date(),
+                                    displayedComponents: .date
+                                )
+                                .labelsHidden()
+                                .colorScheme(.dark)
+                                .accentColor(.arenaPrimary)
+                            }
+                            if let err = dobError { errorLine(err) }
+
+                            // Country picker — defaults to MX (the only
+                            // country sweepstakes are available in for v2.4
+                            // launch). Fixed list to avoid showing 200+
+                            // countries the user can't pick anyway.
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(String(localized: "COUNTRY"))
+                                    .font(ArenaFont.mono(size: 10))
+                                    .tracking(2)
+                                    .foregroundColor(.arenaTextMuted)
+                                Picker("", selection: $country) {
+                                    Text("🇲🇽 México").tag("MX")
+                                    Text("🌎 " + String(localized: "Other")).tag("XX")
+                                }
+                                .pickerStyle(.segmented)
+                            }
+
                             if let msg = auth.errorMessage {
                                 Text(msg)
                                     .font(ArenaFont.mono(size: 11))
@@ -180,7 +232,9 @@ struct RegisterView: View {
                                         email: trimmedEmail,
                                         password: password,
                                         username: trimmedUsername,
-                                        displayName: trimmedName
+                                        displayName: trimmedName,
+                                        dob: dob,
+                                        countryCode: country
                                     )
                                     isLoading = false
                                 }

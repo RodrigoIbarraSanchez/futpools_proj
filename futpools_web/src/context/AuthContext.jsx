@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const register = useCallback(async (email, password, username, displayName) => {
+  const register = useCallback(async (email, password, username, displayName, dob, countryCode) => {
     setError(null);
     try {
       const { token, user: u, signupBonus } = await api.post('/auth/register', {
@@ -59,6 +59,10 @@ export function AuthProvider({ children }) {
         password,
         username: username.trim().toLowerCase(),
         displayName: (displayName || '').trim(),
+        // Fase 5 — sweepstakes eligibility. Backend rejects under-18 and
+        // missing fields; we send them when the form has them.
+        dob: dob || undefined,
+        countryCode: countryCode || undefined,
       });
       localStorage.setItem(TOKEN_KEY, token);
       setUser(u);

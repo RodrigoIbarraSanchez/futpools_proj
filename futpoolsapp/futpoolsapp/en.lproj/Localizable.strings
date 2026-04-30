@@ -425,6 +425,61 @@
 "Ticket earned" = "Ticket earned";
 "No ads available right now. Try again later." = "No ads available right now. Try again later.";
 
+// Sweepstakes (Pools premiados)
+"SWEEPSTAKES" = "SWEEPSTAKES";
+"WEEKLY SWEEPSTAKES" = "WEEKLY SWEEPSTAKES";
+"Win real prizes — pay with Tickets" = "Win real prizes — pay with Tickets";
+"Win real-world prizes" = "Win real-world prizes";
+"Spend Tickets to enter. Earn Tickets via Daily Pick or watching ads." = "Spend Tickets to enter. Earn Tickets via Daily Pick or watching ads.";
+"No open sweepstakes right now" = "No open sweepstakes right now";
+"New sweepstakes appear every week." = "New sweepstakes appear every week.";
+"Closes %@" = "Closes %@";
+"Prize" = "Prize";
+"Entry cost" = "Entry cost";
+"Tickets" = "Tickets";
+"Your entries" = "Your entries";
+"Total entries" = "Total entries";
+"min" = "min";
+"Closes" = "Closes";
+"View contest rules" = "View contest rules";
+"ENTERING…" = "ENTERING…";
+"SETTLED" = "SETTLED";
+"CANCELLED" = "CANCELLED";
+"ENTRIES CLOSED" = "ENTRIES CLOSED";
+"INSUFFICIENT TICKETS" = "INSUFFICIENT TICKETS";
+"ENTER · %lld TICKETS" = "ENTER · %lld TICKETS";
+"Need %lld more Tickets" = "Need %lld more Tickets";
+"Free entry: 7 daily check-ins (one per day for a week) = 1 entry. No purchase required." = "Free entry: 7 daily check-ins (one per day for a week) = 1 entry. No purchase required.";
+"Not enough Tickets to enter." = "Not enough Tickets to enter.";
+"Entries are closed." = "Entries are closed.";
+"This sweepstakes isn't open." = "This sweepstakes isn't open.";
+
+// Contest rules
+"CONTEST RULES" = "CONTEST RULES";
+"1. Eligibility" = "1. Eligibility";
+"Open to legal residents of Mexico aged 18 or older with a valid Futpools account. Employees of the organizing entity and their immediate families are not eligible." = "Open to legal residents of Mexico aged 18 or older with a valid Futpools account. Employees of the organizing entity and their immediate families are not eligible.";
+"2. No purchase necessary (AMOE)" = "2. No purchase necessary (AMOE)";
+"No purchase or payment is required to participate. You can earn a free entry by predicting the Daily Pick once per day for seven consecutive days (7 Tickets = 1 entry). Tickets cannot be purchased; they are earned only through Daily Pick predictions and rewarded ad views, which are also free." = "No purchase or payment is required to participate. You can earn a free entry by predicting the Daily Pick once per day for seven consecutive days (7 Tickets = 1 entry). Tickets cannot be purchased; they are earned only through Daily Pick predictions and rewarded ad views, which are also free.";
+"3. How to enter" = "3. How to enter";
+"Spend 7 Tickets to receive 1 entry. You may enter as many times as your Tickets balance allows. Each entry has equal odds of winning." = "Spend 7 Tickets to receive 1 entry. You may enter as many times as your Tickets balance allows. Each entry has equal odds of winning.";
+"4. Prize" = "4. Prize";
+"The prize for each weekly sweepstakes is described on the sweepstakes detail screen at entry time. Prize is non-transferable and has no cash equivalent unless explicitly stated. Winner is responsible for any applicable taxes per Mexican law." = "The prize for each weekly sweepstakes is described on the sweepstakes detail screen at entry time. Prize is non-transferable and has no cash equivalent unless explicitly stated. Winner is responsible for any applicable taxes per Mexican law.";
+"5. Winner selection and notification" = "5. Winner selection and notification";
+"After entries close, one winner is selected uniformly at random across all entries. The winner is notified via in-app notification and the email address on their Futpools account within 48 hours. Winner has 7 days to claim the prize; unclaimed prizes are forfeit." = "After entries close, one winner is selected uniformly at random across all entries. The winner is notified via in-app notification and the email address on their Futpools account within 48 hours. Winner has 7 days to claim the prize; unclaimed prizes are forfeit.";
+"6. Minimum participation" = "6. Minimum participation";
+"If a sweepstakes does not reach the minimum number of entries shown on its detail screen by the closing time, the sweepstakes is cancelled and all Tickets are refunded. No prize is awarded." = "If a sweepstakes does not reach the minimum number of entries shown on its detail screen by the closing time, the sweepstakes is cancelled and all Tickets are refunded. No prize is awarded.";
+"7. Apple disclaimer" = "7. Apple disclaimer";
+"This sweepstakes is in no way sponsored, endorsed, administered by, or associated with Apple Inc." = "This sweepstakes is in no way sponsored, endorsed, administered by, or associated with Apple Inc.";
+"8. Operator" = "8. Operator";
+"Sweepstakes are organized by the Futpools entity registered in Mexico. For questions or to claim a prize, contact support@futpools.com." = "Sweepstakes are organized by the Futpools entity registered in Mexico. For questions or to claim a prize, contact support@futpools.com.";
+"Version 2026-04-29 — subject to update." = "Version 2026-04-29 — subject to update.";
+
+// Age gate + country (Fase 5)
+"DATE OF BIRTH" = "DATE OF BIRTH";
+"COUNTRY" = "COUNTRY";
+"Other" = "Other";
+"Must be 18 or older" = "Must be 18 or older";
+
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "POOL";
 "VS" = "VS";

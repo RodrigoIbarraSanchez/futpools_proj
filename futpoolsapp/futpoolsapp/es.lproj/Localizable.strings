@@ -425,6 +425,61 @@
 "Ticket earned" = "Ticket ganado";
 "No ads available right now. Try again later." = "No hay anuncios disponibles ahora. Intenta más tarde.";
 
+// Sweepstakes (Pools premiados)
+"SWEEPSTAKES" = "SORTEOS";
+"WEEKLY SWEEPSTAKES" = "SORTEOS SEMANALES";
+"Win real prizes — pay with Tickets" = "Gana premios reales — paga con Tickets";
+"Win real-world prizes" = "Gana premios reales";
+"Spend Tickets to enter. Earn Tickets via Daily Pick or watching ads." = "Gasta Tickets para entrar. Gana Tickets con el Pick del Día o viendo anuncios.";
+"No open sweepstakes right now" = "No hay sorteos abiertos ahora";
+"New sweepstakes appear every week." = "Nuevos sorteos cada semana.";
+"Closes %@" = "Cierra %@";
+"Prize" = "Premio";
+"Entry cost" = "Costo de entrada";
+"Tickets" = "Tickets";
+"Your entries" = "Tus entradas";
+"Total entries" = "Entradas totales";
+"min" = "mín";
+"Closes" = "Cierra";
+"View contest rules" = "Ver bases del concurso";
+"ENTERING…" = "ENTRANDO…";
+"SETTLED" = "SORTEADO";
+"CANCELLED" = "CANCELADO";
+"ENTRIES CLOSED" = "ENTRADAS CERRADAS";
+"INSUFFICIENT TICKETS" = "TICKETS INSUFICIENTES";
+"ENTER · %lld TICKETS" = "ENTRAR · %lld TICKETS";
+"Need %lld more Tickets" = "Te faltan %lld Tickets";
+"Free entry: 7 daily check-ins (one per day for a week) = 1 entry. No purchase required." = "Entrada gratis: 7 check-ins diarios (uno por día durante una semana) = 1 entrada. Sin compra obligatoria.";
+"Not enough Tickets to enter." = "No tienes suficientes Tickets para entrar.";
+"Entries are closed." = "Las entradas están cerradas.";
+"This sweepstakes isn't open." = "Este sorteo no está abierto.";
+
+// Contest rules
+"CONTEST RULES" = "BASES DEL CONCURSO";
+"1. Eligibility" = "1. Elegibilidad";
+"Open to legal residents of Mexico aged 18 or older with a valid Futpools account. Employees of the organizing entity and their immediate families are not eligible." = "Abierto a residentes legales de México mayores de 18 años con una cuenta válida de Futpools. Los empleados de la entidad organizadora y sus familiares directos no son elegibles.";
+"2. No purchase necessary (AMOE)" = "2. Sin compra obligatoria (AMOE)";
+"No purchase or payment is required to participate. You can earn a free entry by predicting the Daily Pick once per day for seven consecutive days (7 Tickets = 1 entry). Tickets cannot be purchased; they are earned only through Daily Pick predictions and rewarded ad views, which are also free." = "No se requiere compra ni pago para participar. Puedes ganar una entrada gratis prediciendo el Pick del Día una vez al día durante siete días consecutivos (7 Tickets = 1 entrada). Los Tickets no se pueden comprar; solo se ganan con predicciones del Pick del Día y viendo anuncios premiados, que también son gratis.";
+"3. How to enter" = "3. Cómo participar";
+"Spend 7 Tickets to receive 1 entry. You may enter as many times as your Tickets balance allows. Each entry has equal odds of winning." = "Gasta 7 Tickets para recibir 1 entrada. Puedes entrar tantas veces como tu balance de Tickets lo permita. Cada entrada tiene la misma probabilidad de ganar.";
+"4. Prize" = "4. Premio";
+"The prize for each weekly sweepstakes is described on the sweepstakes detail screen at entry time. Prize is non-transferable and has no cash equivalent unless explicitly stated. Winner is responsible for any applicable taxes per Mexican law." = "El premio de cada sorteo semanal se describe en la pantalla de detalle del sorteo al momento de entrar. El premio es intransferible y no tiene equivalente en efectivo a menos que se indique explícitamente. El ganador es responsable de cualquier impuesto aplicable conforme a la ley mexicana.";
+"5. Winner selection and notification" = "5. Selección y notificación del ganador";
+"After entries close, one winner is selected uniformly at random across all entries. The winner is notified via in-app notification and the email address on their Futpools account within 48 hours. Winner has 7 days to claim the prize; unclaimed prizes are forfeit." = "Después de cerradas las entradas, se selecciona un ganador de manera uniformemente aleatoria entre todas las entradas. El ganador es notificado por notificación en la app y por el correo electrónico de su cuenta Futpools en un plazo de 48 horas. El ganador tiene 7 días para reclamar el premio; los premios no reclamados se pierden.";
+"6. Minimum participation" = "6. Participación mínima";
+"If a sweepstakes does not reach the minimum number of entries shown on its detail screen by the closing time, the sweepstakes is cancelled and all Tickets are refunded. No prize is awarded." = "Si un sorteo no alcanza el número mínimo de entradas mostrado en su pantalla de detalle al momento del cierre, el sorteo se cancela y todos los Tickets son reembolsados. No se otorga premio.";
+"7. Apple disclaimer" = "7. Aviso sobre Apple";
+"This sweepstakes is in no way sponsored, endorsed, administered by, or associated with Apple Inc." = "Este sorteo no está patrocinado, respaldado, administrado ni asociado de ninguna manera con Apple Inc.";
+"8. Operator" = "8. Operador";
+"Sweepstakes are organized by the Futpools entity registered in Mexico. For questions or to claim a prize, contact support@futpools.com." = "Los sorteos son organizados por la entidad Futpools registrada en México. Para preguntas o para reclamar un premio, contacta support@futpools.com.";
+"Version 2026-04-29 — subject to update." = "Versión 2026-04-29 — sujeto a actualización.";
+
+// Age gate + country (Fase 5)
+"DATE OF BIRTH" = "FECHA DE NACIMIENTO";
+"COUNTRY" = "PAÍS";
+"Other" = "Otro";
+"Must be 18 or older" = "Debes ser mayor de 18";
+
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "QUINIELA";
 "VS" = "VS";
