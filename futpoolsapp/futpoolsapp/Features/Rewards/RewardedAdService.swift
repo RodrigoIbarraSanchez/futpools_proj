@@ -121,7 +121,13 @@ final class AdMobRewardedAdService: NSObject, RewardedAdService {
     private static let prodAdUnitID    = "ca-app-pub-8119374439004718/1966942538"
 
     private static var adUnitID: String {
-        #if DEBUG
+        // Test ad units don't reliably trigger SSV. To validate the SSV
+        // flow end-to-end during development, add `-DFP_USE_PROD_ADS` in
+        // Xcode → Build Settings → Other Swift Flags (Debug). Remove the
+        // flag for normal dev so you don't burn real ad inventory.
+        #if FP_USE_PROD_ADS
+        return prodAdUnitID
+        #elseif DEBUG
         return testAdUnitID
         #else
         return prodAdUnitID

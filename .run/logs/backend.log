@@ -15,3 +15,4 @@ MongoDB connected
 [DailyPick] scheduler started (1-minute tick)
 Server running on port 3000
 MongoDB connected
+[Football] getFixturesByIds failed: fetch failed
