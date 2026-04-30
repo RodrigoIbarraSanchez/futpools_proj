@@ -167,6 +167,14 @@ struct SweepstakesDetailView: View {
                 .foregroundColor(.arenaTextDim)
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
+            // Apple Guideline 5.3 disclaimer — must appear on the same
+            // surface as the entry CTA, not buried in rules. Hairline
+            // text style keeps it unobtrusive but always present.
+            Text(String(localized: "This sweepstakes is in no way sponsored, endorsed, administered by, or associated with Apple Inc."))
+                .font(ArenaFont.mono(size: 8))
+                .foregroundColor(.arenaTextFaint)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 10)
         }
     }
 
