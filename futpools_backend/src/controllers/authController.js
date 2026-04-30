@@ -4,7 +4,7 @@ const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const { applyDelta } = require('../services/transactionService');
 
-const ADMIN_EMAILS = new Set(['demo@futpools.app', 'admin@futpools.app']);
+const { ADMIN_EMAILS } = require('../middleware/auth');
 const RESET_CODE_EXPIRY_MINUTES = 15;
 // v3: every new account gets seeded coins so the first Sponsored pool they
 // create doesn't require an IAP. Defaulting to 100 (enough for a 50-coin

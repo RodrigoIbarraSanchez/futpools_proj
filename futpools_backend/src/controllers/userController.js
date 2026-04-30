@@ -2,8 +2,7 @@ const User = require('../models/User');
 const ProcessedIAPTransaction = require('../models/ProcessedIAPTransaction');
 const { decodeJWSPayload, getTransactionIds, getAmountForProductId } = require('../services/iapService');
 const { applyDelta } = require('../services/transactionService');
-
-const ADMIN_EMAILS = new Set(['demo@futpools.app', 'admin@futpools.app']);
+const { ADMIN_EMAILS } = require('../middleware/auth');
 
 exports.getMe = async (req, res) => {
   try {

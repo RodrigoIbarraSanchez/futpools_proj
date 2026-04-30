@@ -87,3 +87,9 @@ module.exports.optionalAuth = optionalAuth;
 module.exports.requireAdmin = requireAdmin;
 module.exports.requireOwnerOrAdmin = requireOwnerOrAdmin;
 module.exports.isAdminUser = isAdminUser;
+// Single source of truth — every other controller used to keep its own
+// hand-edited copy and they drifted: userController didn't include
+// rodrigoibarrasanchez@gmail.com so /users/me returned isAdmin=false
+// even though /auth/login returned isAdmin=true. Import this set
+// instead of redeclaring.
+module.exports.ADMIN_EMAILS = ADMIN_EMAILS;

@@ -67,15 +67,11 @@ struct SettingsView: View {
                 isPresented: $showRestartPrompt
             ) {
                 Button(String(localized: "Restart now"), role: .destructive) {
-                    // Hard-quit. iOS will show the splash + relaunch
-                    // immediately; on relaunch Foundation reads the
-                    // new AppleLanguages UserDefault we wrote in
-                    // AppLanguage.setLanguage and every
-                    // String(localized:) call resolves to the picked
-                    // language. The system loses the foreground state
-                    // briefly but it's the standard pattern Telegram /
-                    // Twitter / Notion all use for in-app language
-                    // switching.
+                    // Belt-and-suspenders: re-apply + force-flush
+                    // UserDefaults to disk before exit(0) so the
+                    // AppleLanguages write actually persists.
+                    AppLanguage.setLanguage(appLanguage)
+                    UserDefaults.standard.synchronize()
                     exit(0)
                 }
                 Button(String(localized: "Later"), role: .cancel) {}

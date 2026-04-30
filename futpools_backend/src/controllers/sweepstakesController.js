@@ -8,11 +8,7 @@ const { buyEntry, settleSweepstakes, cancelSweepstakes } = require('../services/
  * (mirrored from quinielas admin actions).
  */
 
-const ADMIN_EMAILS = new Set([
-  'demo@futpools.app',
-  'admin@futpools.app',
-  'rodrigoibarrasanchez@gmail.com',
-]);
+const { ADMIN_EMAILS } = require('../middleware/auth');
 const isAdmin = (user) => ADMIN_EMAILS.has((user?.email || '').toLowerCase());
 
 /**

@@ -60,11 +60,22 @@ enum AppLanguage {
     /// root view to force a rebuild during the current session.
     static func setLanguage(_ language: String) {
         _ = swizzleOnce
+        // Foundation reads AppleLanguages once at launch to compute
+        // Bundle.main.preferredLocalizations — that's the only knob
+        // that affects iOS 17+ String(localized:). UserDefaults
+        // writes are normally async; force synchronization so the
+        // value is on disk before the user taps the restart button
+        // (otherwise switching es→en wrote AppleLanguages=["en"] in
+        // memory but exit(0) fired before the write hit disk and the
+        // next launch read the previous "es" value back).
+        let defaults = UserDefaults.standard
         if language.isEmpty {
-            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+            defaults.removeObject(forKey: "AppleLanguages")
         } else {
-            UserDefaults.standard.set([language], forKey: "AppleLanguages")
+            defaults.set([language], forKey: "AppleLanguages")
         }
+        defaults.synchronize()
+
         let override: Bundle?
         if language.isEmpty {
             override = nil
