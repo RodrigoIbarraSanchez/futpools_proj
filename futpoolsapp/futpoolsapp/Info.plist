@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Source language for the bundle. Required so iOS knows what to
+	     fall back to when a localization key is missing. Without this,
+	     the device language may be ignored and English is used. -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
