@@ -23,7 +23,10 @@ struct PrimaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
+            // LocalizedStringKey wrap so callers can pass an English key
+            // ("Make my picks") and Spanish users get "Hacer mi quiniela"
+            // — without forcing every call site into String(localized:).
+            Text(LocalizedStringKey(title))
                 .font(AppFont.headline())
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)

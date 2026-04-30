@@ -101,14 +101,16 @@ struct Challenge: Codable, Identifiable {
         return Int((Double(stakeCoins * 2) * (100.0 - Double(rake)) / 100.0).rounded(.down))
     }
 
-    /// Human-facing pick label — e.g. '1' → "HOME", 'X' → "DRAW".
+    /// Human-facing pick label — e.g. '1' → "HOME", 'X' → "DRAW". Goes
+    /// through `String(localized:)` so Spanish users see "LOCAL / EMPATE
+    /// / VISITA" instead of the English keys.
     static func pickLabel(_ pick: String?, market: ChallengeMarketType) -> String {
         guard let pick = pick else { return "—" }
         if market == .match1X2 {
             switch pick {
-            case "1": return "HOME"
-            case "X": return "DRAW"
-            case "2": return "AWAY"
+            case "1": return String(localized: "HOME")
+            case "X": return String(localized: "DRAW")
+            case "2": return String(localized: "AWAY")
             default:  return pick
             }
         }

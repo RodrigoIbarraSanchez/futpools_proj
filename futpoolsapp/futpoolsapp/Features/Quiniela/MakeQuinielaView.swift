@@ -71,7 +71,7 @@ struct MakeQuinielaView: View {
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
-        .alert("Quiniela guardada", isPresented: $showSuccessAlert) {
+        .alert("Picks saved", isPresented: $showSuccessAlert) {
             Button("OK") {
                 print("[Quiniela] Usuario cerró alerta — volviendo atrás")
                 showSuccessAlert = false

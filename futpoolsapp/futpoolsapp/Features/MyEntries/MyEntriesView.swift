@@ -48,6 +48,12 @@ struct MyEntriesView: View {
                         ChallengesListContent(showsHeader: false)
                     }
                 }
+                // Anchor content to the top of the screen. Without this,
+                // ZStack's default `.center` alignment would float the
+                // collapsed VStack vertically (visible whenever the
+                // challenges list is empty and content doesn't fill the
+                // available height).
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -491,10 +497,10 @@ private struct PickRow: View {
 
     private var pickLabel: String {
         switch pick {
-        case "1": return "YOUR PICK · HOME"
-        case "X": return "YOUR PICK · DRAW"
-        case "2": return "YOUR PICK · AWAY"
-        default:  return "NO PICK"
+        case "1": return String(localized: "YOUR PICK · HOME")
+        case "X": return String(localized: "YOUR PICK · DRAW")
+        case "2": return String(localized: "YOUR PICK · AWAY")
+        default:  return String(localized: "NO PICK")
         }
     }
 

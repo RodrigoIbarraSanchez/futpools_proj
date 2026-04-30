@@ -139,7 +139,12 @@ struct QuinielaPickView: View {
                     .foregroundColor(.arenaTextMuted)
                 XpBar(value: Double(count), max: Double(max(total, 1)), color: complete ? .arenaPrimary : .arenaAccent, segments: max(total, 1), height: 6)
             }
-            HudChip(text: complete ? "READY" : "\(total - count) LEFT", color: complete ? .arenaPrimary : .arenaTextMuted)
+            HudChip(
+                text: complete
+                    ? String(localized: "READY")
+                    : String(format: String(localized: "%lld LEFT"), total - count),
+                color: complete ? .arenaPrimary : .arenaTextMuted
+            )
         }
         .padding(.horizontal, 16)
     }
@@ -323,14 +328,14 @@ private struct PicksLockedOverlay: View {
                     .shadow(color: .arenaPrimary, radius: 20)
                     .scaleEffect(appeared ? 1 : 0.3)
                     .opacity(appeared ? 1 : 0)
-                Text("PICKS LOCKED!")
+                Text(String(localized: "PICKS LOCKED!"))
                     .font(ArenaFont.display(size: 28, weight: .black))
                     .tracking(3)
                     .foregroundColor(.arenaPrimary)
-                Text("¡Buena suerte, jugador!")
+                Text(String(localized: "Good luck, player!"))
                     .font(ArenaFont.body(size: 13))
                     .foregroundColor(.arenaTextDim)
-                ArcadeButton(title: "▶ CONTINUE", action: onDismiss)
+                ArcadeButton(title: "▶ " + String(localized: "CONTINUE"), action: onDismiss)
                     .padding(.top, 10)
             }
             .padding(28)

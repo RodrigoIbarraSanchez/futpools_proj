@@ -46,7 +46,7 @@ struct MatchdayDetailView: View {
                         .padding(.horizontal)
 
                         if !matches.isEmpty && (matchdayWithMatches?.status == "open" || matchdayWithMatches?.status == "upcoming") {
-                            PrimaryButton("Hacer mi quiniela", style: .green) {
+                            PrimaryButton("Make my picks", style: .green) {
                                 navigateToQuiniela = true
                             }
                             .padding(.horizontal)

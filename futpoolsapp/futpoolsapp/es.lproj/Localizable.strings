@@ -719,3 +719,20 @@
 "New 1V1 challenge" = "Nuevo reto 1V1";
 "%d incoming · tap to review" = "%d entrantes · toca para revisar";
 "Bet coins head-to-head on any match" = "Apuesta monedas mano a mano en cualquier partido";
+// QuinielaPickView — picks-locked celebration + progress chip
+"PICKS LOCKED!" = "¡QUINIELA TRABADA!";
+"Good luck, player!" = "¡Buena suerte, jugador!";
+"CONTINUE" = "CONTINUAR";
+"READY" = "LISTO";
+"%lld LEFT" = "FALTAN %lld";
+// MyEntries pick row
+"YOUR PICK · HOME" = "TU PICK · LOCAL";
+"YOUR PICK · DRAW" = "TU PICK · EMPATE";
+"YOUR PICK · AWAY" = "TU PICK · VISITA";
+// 1X2 outcomes (Challenge.pickLabel)
+"HOME" = "LOCAL";
+"AWAY" = "VISITA";
+// Pool detail admin alerts
+"Update failed" = "Error al actualizar";
+"OK" = "OK";
+"Hacer mi quiniela" = "Hacer mi quiniela";
