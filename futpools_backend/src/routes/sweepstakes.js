@@ -11,5 +11,6 @@ router.post('/:id/enter', auth, sweepstakesController.enter);
 // Admin-only
 router.post('/', auth, sweepstakesController.create);
 router.post('/:id/settle', auth, sweepstakesController.settle);
+router.delete('/:id', auth, sweepstakesController.remove);
 
 module.exports = router;

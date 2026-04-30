@@ -945,7 +945,6 @@
         }
       }
     },
-    "Allowed country": {},
     "Amateur": {
       "extractionState": "manual",
       "localizations": {
@@ -993,6 +992,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Amazon Gift Card $250 MXN"
+          }
+        }
+      }
+    },
+    "Any entries already paid will be refunded.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Any entries already paid will be refunded."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cualquier participación ya pagada será reembolsada."
           }
         }
       }
@@ -2497,6 +2513,23 @@
         }
       }
     },
+    "Delete this sweepstake?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this sweepstake?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar este sorteo?"
+          }
+        }
+      }
+    },
     "Description": {},
     "Direct challenge: this user will see it in their inbox.": {
       "extractionState": "manual",
@@ -3505,7 +3538,6 @@
         }
       }
     },
-    "Geography": {},
     "Good luck, player!": {
       "extractionState": "manual",
       "localizations": {
@@ -5689,7 +5721,6 @@
         }
       }
     },
-    "Opens": {},
     "Opens immediately. Closes in 7 days. Open to everyone — no country restriction.": {
       "extractionState": "manual",
       "localizations": {
@@ -10246,7 +10277,6 @@
     "⬢": {},
     "＋": {},
     "🇲🇽 México": {},
-    "🇺🇸 USA": {},
     "🎁": {},
     "🎯": {},
     "🏆": {},

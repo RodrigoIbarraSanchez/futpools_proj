@@ -15,8 +15,10 @@ import Combine
 struct SweepstakesDetailView: View {
     let sweepstakesId: String
     @EnvironmentObject var auth: AuthService
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = SweepstakesDetailViewModel()
     @State private var showRules = false
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         ZStack {
@@ -64,6 +66,30 @@ struct SweepstakesDetailView: View {
                     .tracking(3)
                     .foregroundColor(.arenaText)
             }
+            // Admin-only trash button. Backend re-checks isAdmin on
+            // DELETE /sweepstakes/:id, so non-admins can't reach it
+            // even with a forged build.
+            if auth.isAdmin {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showDeleteConfirm = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.arenaDanger)
+                    }
+                }
+            }
+        }
+        .alert(String(localized: "Delete this sweepstake?"), isPresented: $showDeleteConfirm) {
+            Button(String(localized: "Cancel"), role: .cancel) {}
+            Button(String(localized: "Delete"), role: .destructive) {
+                Task {
+                    await vm.delete(id: sweepstakesId, token: auth.token)
+                    if vm.errorMessage == nil { dismiss() }
+                }
+            }
+        } message: {
+            Text(String(localized: "Any entries already paid will be refunded."))
         }
         .sheet(isPresented: $showRules) {
             NavigationStack {
@@ -279,6 +305,21 @@ final class SweepstakesDetailViewModel: ObservableObject {
             } else {
                 errorMessage = desc
             }
+        }
+    }
+
+    func delete(id: String, token: String?) async {
+        errorMessage = nil
+        struct EmptyBody: Encodable {}
+        struct DeleteResponse: Decodable { let ok: Bool }
+        do {
+            let _: DeleteResponse = try await APIClient.shared.request(
+                method: "DELETE",
+                path: "/sweepstakes/\(id)",
+                token: token
+            )
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 }

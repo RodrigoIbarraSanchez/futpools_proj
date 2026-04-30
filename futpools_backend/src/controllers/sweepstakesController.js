@@ -1,6 +1,6 @@
 const Sweepstakes = require('../models/Sweepstakes');
 const SweepstakesEntry = require('../models/SweepstakesEntry');
-const { buyEntry, settleSweepstakes } = require('../services/sweepstakesService');
+const { buyEntry, settleSweepstakes, cancelSweepstakes } = require('../services/sweepstakesService');
 
 /**
  * Sweepstakes endpoints. List/detail are public to authed users; admin
@@ -184,6 +184,24 @@ exports.create = async (req, res) => {
     res.status(201).json(serialize(s, req.user._id));
   } catch (err) {
     console.error('[Sweepstakes] create error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * DELETE /sweepstakes/:id — admin only. Soft-cancels: refunds every
+ * paid entry, marks status='cancelled', keeps the row for audit. The
+ * row drops out of `?status=open` queries so it disappears from the
+ * user-facing list immediately.
+ */
+exports.remove = async (req, res) => {
+  try {
+    if (!isAdmin(req.user)) return res.status(403).json({ message: 'Admin only' });
+    const s = await cancelSweepstakes(req.params.id, { note: 'Admin deleted via UI' });
+    if (!s) return res.status(404).json({ message: 'Sweepstakes not found' });
+    res.json({ ok: true, sweepstakes: serialize(s, req.user._id) });
+  } catch (err) {
+    console.error('[Sweepstakes] delete error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };

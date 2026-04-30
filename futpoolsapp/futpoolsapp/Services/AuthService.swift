@@ -31,18 +31,13 @@ final class AuthService: ObservableObject {
         KeychainHelper.getToken()
     }
 
-    /// Mirrors the backend `ADMIN_EMAILS` allowlist. Used to gate
-    /// admin-only UI (e.g. "New real-prize pool"). Backend re-checks
-    /// on the route handler, so this is a UX gate only — not a
-    /// security boundary.
-    private static let adminEmails: Set<String> = [
-        "demo@futpools.app",
-        "admin@futpools.app",
-        "rodrigoibarrasanchez@gmail.com",
-    ]
+    /// Backend computes `isAdmin` from its own ADMIN_EMAILS allowlist
+    /// and ships it on the User payload, so we just trust that flag
+    /// instead of duplicating the email list client-side. Backend
+    /// re-checks on every admin route, so this is a UX gate only —
+    /// not a security boundary.
     var isAdmin: Bool {
-        guard let email = currentUser?.email else { return false }
-        return Self.adminEmails.contains(email.lowercased())
+        currentUser?.isAdmin == true
     }
 
     func register(

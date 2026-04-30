@@ -140,7 +140,40 @@ async function settleSweepstakes(sweepstakesId) {
   return s;
 }
 
+/**
+ * Admin-only cancellation. Refunds every paid entry, marks the
+ * sweepstakes `cancelled`. Idempotent — if it's already cancelled or
+ * settled, returns the doc unchanged.
+ */
+async function cancelSweepstakes(sweepstakesId, { note } = {}) {
+  const s = await Sweepstakes.findById(sweepstakesId);
+  if (!s) return null;
+  if (s.status === 'settled' || s.status === 'cancelled') return s;
+
+  const entries = await SweepstakesEntry.find({ sweepstakes: s._id });
+  for (const e of entries) {
+    if (e.refunded) continue;
+    const refundKey = `ticket:sweepstakes-cancel:${s._id}:${e.user}:${e.entryNumber}`;
+    await applyTicketDelta({
+      userId: e.user,
+      amount: e.ticketsSpent,
+      kind: 'refund_credit',
+      idempotencyKey: refundKey,
+      sweepstakes: s._id,
+      note: note || 'Sweepstakes cancelled by admin',
+    });
+    e.refunded = true;
+    e.refundedAt = new Date();
+    await e.save();
+  }
+  s.status = 'cancelled';
+  s.settledAt = new Date();
+  await s.save();
+  return s;
+}
+
 module.exports = {
   buyEntry,
   settleSweepstakes,
+  cancelSweepstakes,
 };
