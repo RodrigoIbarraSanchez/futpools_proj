@@ -145,6 +145,11 @@ export const translations = {
     'WAITING FOR FT': 'WAITING FOR FT',
     'Kickoff already happened. Come back tomorrow.': 'Kickoff already happened. Come back tomorrow.',
     'Invalid pick.': 'Invalid pick.',
+    'Watch ad · +1 Ticket': 'Watch ad · +1 Ticket',
+    'Loading ad…': 'Loading ad…',
+    'Ticket earned': 'Ticket earned',
+    'No ads available right now. Try again later.': 'No ads available right now. Try again later.',
+    'Rewarded ads are available in the iOS app.': 'Rewarded ads are available in the iOS app.',
     'LEADERBOARD': 'LEADERBOARD',
     // Join by code
     'Join with code': 'Join with code',
@@ -582,6 +587,11 @@ export const translations = {
     'WAITING FOR FT': 'ESPERANDO FINAL',
     'Kickoff already happened. Come back tomorrow.': 'El partido ya empezó. Vuelve mañana.',
     'Invalid pick.': 'Pick inválido.',
+    'Watch ad · +1 Ticket': 'Ver anuncio · +1 Ticket',
+    'Loading ad…': 'Cargando anuncio…',
+    'Ticket earned': 'Ticket ganado',
+    'No ads available right now. Try again later.': 'No hay anuncios disponibles ahora. Intenta más tarde.',
+    'Rewarded ads are available in the iOS app.': 'Los anuncios para ganar Tickets están disponibles en la iOS app.',
     'LEADERBOARD': 'TABLA',
     // Join by code
     'Join with code': 'Unirse con código',

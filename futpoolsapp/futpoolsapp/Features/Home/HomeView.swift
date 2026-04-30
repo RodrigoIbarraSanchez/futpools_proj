@@ -47,6 +47,12 @@ struct HomeView: View {
                         DailyPickCard()
                             .padding(.horizontal, 16)
 
+                        // Rewarded ad — second Tickets faucet. Stub in
+                        // DEBUG, real AdMob when SDK is wired (see
+                        // Features/Rewards/RewardedAdService.swift).
+                        RewardedAdButton()
+                            .padding(.horizontal, 16)
+
                         ChallengesTeaserCard()
                             .padding(.horizontal, 16)
 

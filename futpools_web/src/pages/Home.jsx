@@ -693,6 +693,8 @@ export function Home() {
 
       <DailyPickCard locale={locale} token={token} onTicketAwarded={fetchUser} />
 
+      <RewardedAdButton locale={locale} token={token} onTicketAwarded={fetchUser} />
+
       <ChallengesTeaser locale={locale} token={token} />
 
       <FilterStrip
@@ -978,6 +980,111 @@ function DailyPickCard({ locale, token, onTicketAwarded }) {
 function kickoffTime(iso) {
   if (!iso) return '';
   return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Rewarded Ad button — Tickets earning path. In dev (NODE_ENV !== prod
+// on backend) calls the dev-credit endpoint; in prod the backend ignores
+// dev-credit (403) and only the AdMob SSV flow can credit. Web doesn't
+// run a real ad SDK at MVP — see backlog: web rewarded ads are unusual,
+// most dual-currency apps skip them.
+// ────────────────────────────────────────────────────────────────────
+
+function RewardedAdButton({ locale, token, onTicketAwarded }) {
+  const [state, setState] = useState('idle'); // idle | loading | earned | error
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  const tap = async () => {
+    if (state === 'loading') return;
+    setState('loading');
+    setErrorMsg(null);
+    // Simulated 3s ad watch — matches iOS stub behavior. Replace with a
+    // real ad SDK render path once web ad mediation is decided.
+    await new Promise((r) => setTimeout(r, 3000));
+    try {
+      const txId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+      const res = await api.post('/ads/ticket-rewarded/dev-credit', { transactionId: txId }, token);
+      if (res?.ok) {
+        setState('earned');
+        onTicketAwarded?.();
+        setTimeout(() => setState('idle'), 1500);
+      } else {
+        setState('error');
+        setErrorMsg(t(locale, 'No ads available right now. Try again later.'));
+        setTimeout(() => { setState('idle'); setErrorMsg(null); }, 2500);
+      }
+    } catch (e) {
+      setState('error');
+      const msg = e?.message || '';
+      // 403 in production = dev endpoint disabled; surface friendly copy
+      // instead of the raw "Forbidden" so the web user understands ads
+      // are an iOS feature for now.
+      if (/Dev endpoint disabled in production/i.test(msg)) {
+        setErrorMsg(t(locale, 'Rewarded ads are available in the iOS app.'));
+      } else {
+        setErrorMsg(msg || t(locale, 'No ads available right now. Try again later.'));
+      }
+      setTimeout(() => { setState('idle'); setErrorMsg(null); }, 2500);
+    }
+  };
+
+  const isLoading = state === 'loading';
+  const isEarned = state === 'earned';
+
+  return (
+    <div style={{ padding: '0 16px', marginTop: 12 }}>
+      <button
+        type="button"
+        onClick={tap}
+        disabled={isLoading}
+        style={{
+          width: '100%',
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: 14,
+          background: isEarned
+            ? 'color-mix(in srgb, var(--fp-primary) 18%, var(--fp-surface) 82%)'
+            : 'var(--fp-surface)',
+          border: `1px solid ${
+            isEarned
+              ? 'color-mix(in srgb, var(--fp-primary) 60%, transparent)'
+              : 'color-mix(in srgb, var(--fp-accent) 40%, transparent)'
+          }`,
+          clipPath: 'var(--fp-clip-sm)',
+          color: 'var(--fp-text)',
+          fontFamily: 'var(--fp-display)',
+          cursor: isLoading ? 'default' : 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        {isLoading
+          ? <span style={{ color: 'var(--fp-text-dim)' }}>{t(locale, 'Loading ad…')}</span>
+          : isEarned
+            ? <span style={{ color: 'var(--fp-primary)', fontWeight: 800 }}>✓ +1 {t(locale, 'Ticket earned')}</span>
+            : <>
+                <span style={{ color: 'var(--fp-accent)', fontSize: 14, fontWeight: 800 }}>▶</span>
+                <span style={{ flex: 1, fontWeight: 700 }}>{t(locale, 'Watch ad · +1 Ticket')}</span>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 3,
+                  padding: '3px 7px',
+                  background: 'color-mix(in srgb, var(--fp-accent) 13%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--fp-accent) 30%, transparent)',
+                  clipPath: 'var(--fp-clip-sm)',
+                  color: 'var(--fp-accent)',
+                  fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+                }}>🎟 +1</span>
+              </>
+        }
+      </button>
+      {errorMsg && (
+        <div style={{
+          marginTop: 6, fontFamily: 'var(--fp-mono)', fontSize: 10,
+          color: 'var(--fp-danger)',
+        }}>{errorMsg}</div>
+      )}
+    </div>
+  );
 }
 
 // ────────────────────────────────────────────────────────────────────

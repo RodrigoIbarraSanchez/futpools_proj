@@ -419,6 +419,12 @@
 "Kickoff already happened. Come back tomorrow." = "Kickoff already happened. Come back tomorrow.";
 "Invalid pick." = "Invalid pick.";
 
+// Rewarded ads (Tickets earning)
+"Watch ad · +1 Ticket" = "Watch ad · +1 Ticket";
+"Loading ad…" = "Loading ad…";
+"Ticket earned" = "Ticket earned";
+"No ads available right now. Try again later." = "No ads available right now. Try again later.";
+
 // Pool detail (QuinielaDetailView edit form, modals, fixture row)
 "POOL" = "POOL";
 "VS" = "VS";
