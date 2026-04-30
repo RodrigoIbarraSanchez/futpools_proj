@@ -45,6 +45,20 @@ struct SettingsView: View {
                     } footer: {
                         Text(String(localized: "App restart required for the change to fully apply."))
                     }
+                    #if DEBUG
+                    Section {
+                        Button(role: .destructive) {
+                            UserDefaults.standard.set(false, forKey: "hasSeenOnboarding")
+                            UserDefaults.standard.set("", forKey: "onboardingGoal")
+                            UserDefaults.standard.synchronize()
+                            exit(0)
+                        } label: {
+                            Text("DEBUG · Reset onboarding")
+                        }
+                    } footer: {
+                        Text("Clears hasSeenOnboarding and relaunches so QA can replay the 6-screen flow without reinstalling.")
+                    }
+                    #endif
                 }
                 .scrollContentBackground(.hidden)
             }

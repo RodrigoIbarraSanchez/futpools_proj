@@ -396,6 +396,23 @@
       }
     },
     "-": {},
+    "1 click on the Daily Pick = 1 Ticket. 7 = 1 entry. No purchase.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 click on the Daily Pick = 1 Ticket. 7 = 1 entry. No purchase."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 click al Daily Pick = 1 Ticket. 7 = 1 entrada. Sin pagar."
+          }
+        }
+      }
+    },
     "1. Eligibility": {
       "extractionState": "manual",
       "localizations": {
@@ -894,6 +911,23 @@
         }
       }
     },
+    "Active players this week": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active players this week"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jugadores activos esta semana"
+          }
+        }
+      }
+    },
     "Add a name to continue": {
       "extractionState": "manual",
       "localizations": {
@@ -1060,6 +1094,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mínimo 6 caracteres"
+          }
+        }
+      }
+    },
+    "Average player rating": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Average player rating"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rating promedio"
           }
         }
       }
@@ -1287,6 +1338,23 @@
         }
       }
     },
+    "Bet coins head-to-head on any match. You pick the stake.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bet coins head-to-head on any match. You pick the stake."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mano a mano en cualquier partido. Tú eliges la apuesta."
+          }
+        }
+      }
+    },
     "Bragging rights + rank points": {
       "extractionState": "manual",
       "localizations": {
@@ -1402,6 +1470,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "TOMA ESTE RETO"
+          }
+        }
+      }
+    },
+    "CLAIM YOUR SPOT": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLAIM YOUR SPOT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RECLAMA TU LUGAR"
           }
         }
       }
@@ -1661,6 +1746,23 @@
         }
       }
     },
+    "CREATE FREE ACCOUNT": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CREATE FREE ACCOUNT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CREAR CUENTA GRATIS"
+          }
+        }
+      }
+    },
     "CREATE PLATFORM EVENT": {
       "extractionState": "manual",
       "localizations": {
@@ -1844,6 +1946,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Los cambios se aplican al instante."
+          }
+        }
+      }
+    },
+    "Chasing your friends": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chasing your friends"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cobrar a tus amigos"
           }
         }
       }
@@ -3283,6 +3402,23 @@
         }
       }
     },
+    "FOR FUN AND STREAKS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FOR FUN AND STREAKS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "POR DIVERSIÓN Y RACHAS"
+          }
+        }
+      }
+    },
     "FORGOT PASSWORD?": {
       "extractionState": "manual",
       "localizations": {
@@ -3313,6 +3449,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "GRATIS"
+          }
+        }
+      }
+    },
+    "FREE TICKETS DAILY": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FREE TICKETS DAILY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TICKETS GRATIS CADA DÍA"
           }
         }
       }
@@ -3521,6 +3674,23 @@
         }
       }
     },
+    "GET STARTED": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GET STARTED"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EMPEZAR"
+          }
+        }
+      }
+    },
     "GLOBAL RANK": {
       "extractionState": "manual",
       "localizations": {
@@ -3534,6 +3704,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "RANGO GLOBAL"
+          }
+        }
+      }
+    },
+    "GO 1 vs 1": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GO 1 vs 1"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RÉTATE 1 CONTRA 1"
           }
         }
       }
@@ -3691,6 +3878,23 @@
         }
       }
     },
+    "HOW DO YOU SEE YOURSELF PLAYING?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HOW DO YOU SEE YOURSELF PLAYING?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿CÓMO TE VES JUGANDO?"
+          }
+        }
+      }
+    },
     "Hacer mi quiniela": {
       "extractionState": "manual",
       "localizations": {
@@ -3726,6 +3930,40 @@
       }
     },
     "Hello, world!": {},
+    "I ALREADY HAVE AN ACCOUNT": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I ALREADY HAVE AN ACCOUNT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YA TENGO CUENTA"
+          }
+        }
+      }
+    },
+    "I already have an account": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already have an account"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya tengo cuenta"
+          }
+        }
+      }
+    },
     "IMAGE KEY": {
       "extractionState": "manual",
       "localizations": {
@@ -4011,6 +4249,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "UNIRSE A LA QUINIELA"
+          }
+        }
+      }
+    },
+    "JOIN THE GRID": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JOIN THE GRID"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÚNETE A LA RED"
           }
         }
       }
@@ -5023,6 +5278,23 @@
         }
       }
     },
+    "NEXT": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEXT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIGUIENTE"
+          }
+        }
+      }
+    },
     "NO ENTRIES YET": {
       "extractionState": "manual",
       "localizations": {
@@ -5585,6 +5857,23 @@
         }
       }
     },
+    "Numbers updated at launch.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numbers updated at launch."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos actualizados al lanzamiento."
+          }
+        }
+      }
+    },
     "OK": {
       "extractionState": "manual",
       "localizations": {
@@ -5734,6 +6023,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cortesía de la casa — suficiente para patrocinar tu primera quiniela."
+          }
+        }
+      }
+    },
+    "One tap and you're in.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One tap and you're in."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un tap y estás dentro."
           }
         }
       }
@@ -6436,6 +6742,23 @@
         }
       }
     },
+    "Paid out in gift cards": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paid out in gift cards"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repartidos en gift cards"
+          }
+        }
+      }
+    },
     "Password": {
       "extractionState": "manual",
       "localizations": {
@@ -6722,6 +7045,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Debes elegir distinto al retador."
+          }
+        }
+      }
+    },
+    "Pick one — there's no wrong answer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick one — there's no wrong answer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una, no hay respuesta incorrecta."
           }
         }
       }
@@ -7032,6 +7372,40 @@
         }
       }
     },
+    "Pools in WhatsApp groups": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pools in WhatsApp groups"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quinielas en grupos de WhatsApp"
+          }
+        }
+      }
+    },
+    "Pools with Amazon gift cards. Best score takes it home.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pools with Amazon gift cards. Best score takes it home."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quinielas con gift cards Amazon. El que más le atine, gana."
+          }
+        }
+      }
+    },
     "Predict & earn 1 Ticket": {
       "extractionState": "manual",
       "localizations": {
@@ -7045,6 +7419,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Predice y gana 1 Ticket"
+          }
+        }
+      }
+    },
+    "Predict football. The highest score wins the prize.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predict football. The highest score wins the prize."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predice fútbol. El de más puntos se lleva el premio."
           }
         }
       }
@@ -7388,6 +7779,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "QUINIELAS CON PREMIO REAL"
+          }
+        }
+      }
+    },
+    "REAL PRIZES EVERY WEEK": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REAL PRIZES EVERY WEEK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PREMIOS REALES CADA SEMANA"
           }
         }
       }
@@ -7937,6 +8345,23 @@
         }
       }
     },
+    "SOUND FAMILIAR?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOUND FAMILIAR?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿TE SUENA FAMILIAR?"
+          }
+        }
+      }
+    },
     "SPONSOR PRIZE": {
       "extractionState": "manual",
       "localizations": {
@@ -8328,6 +8753,23 @@
         }
       }
     },
+    "Skip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saltar"
+          }
+        }
+      }
+    },
     "Some text will stay in the previous language until you relaunch the app.": {
       "extractionState": "manual",
       "localizations": {
@@ -8392,6 +8834,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gasta 7 Tickets para recibir 1 entrada. Puedes entrar tantas veces como tu balance de Tickets lo permita. Cada entrada tiene la misma probabilidad de ganar."
+          }
+        }
+      }
+    },
+    "Spreadsheets by hand": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spreadsheets by hand"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spreadsheets a mano"
           }
         }
       }
@@ -8631,6 +9090,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "EMPATES DESEMPATADOS POR ORDEN DE REGISTRO"
+          }
+        }
+      }
+    },
+    "TO WIN REAL PRIZES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TO WIN REAL PRIZES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A GANAR PREMIOS REALES"
           }
         }
       }
@@ -9383,6 +9859,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "% ACIERTOS"
+          }
+        }
+      }
+    },
+    "WIN REAL PRIZES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WIN REAL PRIZES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GANA PREMIOS REALES"
+          }
+        }
+      }
+    },
+    "WITH MY FRIENDS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WITH MY FRIENDS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CON MIS AMIGOS"
           }
         }
       }
@@ -10149,6 +10659,23 @@
         }
       }
     },
+    "that always end in arguments": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "that always end in arguments"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "que terminan en discusión"
+          }
+        }
+      }
+    },
     "there are 2 or fewer goals": {
       "extractionState": "manual",
       "localizations": {
@@ -10179,6 +10706,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "hay 3 goles o más"
+          }
+        }
+      }
+    },
+    "to actually pay what they owe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "to actually pay what they owe"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "por Venmo / OXXO / nadie"
+          }
+        }
+      }
+    },
+    "to keep track of everyone's picks": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "to keep track of everyone's picks"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "para llevar la cuenta"
           }
         }
       }
@@ -10494,6 +11055,57 @@
     "✎ EDIT": {},
     "✓": {},
     "✓ +1 %@": {},
+    "✓ 100 welcome coins": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ 100 welcome coins"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ 100 monedas de bienvenida"
+          }
+        }
+      }
+    },
+    "✓ Cancel anytime": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Cancel anytime"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Cancela cuando quieras"
+          }
+        }
+      }
+    },
+    "✓ No credit card · No commitment": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ No credit card · No commitment"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Sin tarjeta · Sin compromiso"
+          }
+        }
+      }
+    },
     "✕": {},
     "✗ %@": {},
     "⬢": {},
