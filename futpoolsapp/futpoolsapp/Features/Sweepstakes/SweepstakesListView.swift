@@ -88,7 +88,15 @@ private struct SweepstakesRow: View {
 
     var body: some View {
         HudFrame {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 10) {
+                if let imageName = prizeImageName {
+                    Image(imageName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .frame(maxHeight: 110)
+                        .shadow(color: .arenaGold.opacity(0.35), radius: 10, y: 3)
+                }
                 HStack {
                     Text(item.title.uppercased())
                         .font(ArenaFont.display(size: 14, weight: .heavy))
@@ -117,6 +125,14 @@ private struct SweepstakesRow: View {
             }
             .padding(14)
         }
+    }
+
+    private var prizeImageName: String? {
+        let label = item.prizeLabel.lowercased()
+        if label.contains("amazon") || label.contains("gift card") {
+            return "PrizeAmazonGift"
+        }
+        return nil
     }
 
     static let dateFmt: DateFormatter = {

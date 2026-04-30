@@ -3,14 +3,17 @@
 //  futpoolsapp
 //
 //  Admin-only form to seed a real-prize weekly sweepstake. Mirrors the
-//  fields exposed by `POST /sweepstakes` (sweepstakesController.create):
-//  title, description, prizeLabel, prizeUSD, entryCostTickets,
-//  minEntries, entryOpensAt, entryClosesAt, allowedCountries.
+//  fields exposed by `POST /sweepstakes` (sweepstakesController.create).
 //
 //  Visibility is gated client-side via `AuthService.isAdmin` (email
 //  allowlist mirroring the backend), and server-side via the same
 //  allowlist on the route handler — so even if the UI leaks, a non-
 //  admin token gets a 403.
+//
+//  By design the admin only chooses the title/description/prize/cost.
+//  Open/close timestamps are auto-derived (now → now+7 days) and the
+//  pool is open globally (no country gate). Tweak via curl if you ever
+//  need to override.
 //
 
 import SwiftUI
@@ -21,13 +24,10 @@ struct CreateSweepstakeView: View {
 
     @State private var title: String = ""
     @State private var description: String = ""
-    @State private var prizeLabel: String = "Gift card Amazon $250 MXN"
+    @State private var prizeLabel: String = "Amazon Gift Card $250 MXN"
     @State private var prizeUSD: String = "14"
     @State private var entryCostTickets: String = "7"
     @State private var minEntries: String = "20"
-    @State private var entryOpensAt: Date = Date()
-    @State private var entryClosesAt: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
-    @State private var country: String = "MX"
 
     @State private var isSubmitting = false
     @State private var errorMessage: String?
@@ -36,10 +36,10 @@ struct CreateSweepstakeView: View {
     var body: some View {
         NavigationStack {
             Form {
+                prizePreviewSection
                 basicsSection
                 prizeSection
                 entrySection
-                geoSection
                 if let err = errorMessage {
                     Section {
                         Text(err).foregroundColor(.red).font(.footnote)
@@ -70,6 +70,27 @@ struct CreateSweepstakeView: View {
         }
     }
 
+    // The hero image users will see when browsing the pool. Hardcoded
+    // to the Amazon Gift Card asset for now since that's the only
+    // prize SKU at launch — when the backend grows a `prizeImageURL`
+    // field this becomes a remote AsyncImage with the bundled asset
+    // as fallback.
+    private var prizePreviewSection: some View {
+        Section {
+            Image("PrizeAmazonGift")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxHeight: 160)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+        } header: {
+            Text(String(localized: "Prize preview"))
+        } footer: {
+            Text(String(localized: "Players will see this image as the prize."))
+                .font(.footnote)
+        }
+    }
+
     private var basicsSection: some View {
         Section(String(localized: "Basics")) {
             TextField(String(localized: "Title"), text: $title)
@@ -93,7 +114,7 @@ struct CreateSweepstakeView: View {
     }
 
     private var entrySection: some View {
-        Section(String(localized: "Entry rules")) {
+        Section {
             HStack {
                 Text(String(localized: "Entry cost (Tickets)"))
                 Spacer()
@@ -110,17 +131,11 @@ struct CreateSweepstakeView: View {
                     .multilineTextAlignment(.trailing)
                     .frame(width: 60)
             }
-            DatePicker(String(localized: "Opens"), selection: $entryOpensAt)
-            DatePicker(String(localized: "Closes"), selection: $entryClosesAt)
-        }
-    }
-
-    private var geoSection: some View {
-        Section(String(localized: "Geography")) {
-            Picker(String(localized: "Allowed country"), selection: $country) {
-                Text("🇲🇽 México").tag("MX")
-                Text("🇺🇸 USA").tag("US")
-            }
+        } header: {
+            Text(String(localized: "Entry rules"))
+        } footer: {
+            Text(String(localized: "Opens immediately. Closes in 7 days. Open to everyone — no country restriction."))
+                .font(.footnote)
         }
     }
 
@@ -145,8 +160,7 @@ struct CreateSweepstakeView: View {
 
     private var canSubmit: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !prizeLabel.trimmingCharacters(in: .whitespaces).isEmpty &&
-        entryClosesAt > entryOpensAt
+        !prizeLabel.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func submit() async {
@@ -155,6 +169,8 @@ struct CreateSweepstakeView: View {
         defer { isSubmitting = false }
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let now = Date()
+        let inAWeek = Calendar.current.date(byAdding: .day, value: 7, to: now) ?? now
         let payload = CreatePayload(
             title: title,
             description: description,
@@ -162,9 +178,13 @@ struct CreateSweepstakeView: View {
             prizeUSD: Int(prizeUSD) ?? 0,
             entryCostTickets: Int(entryCostTickets) ?? 7,
             minEntries: Int(minEntries) ?? 20,
-            entryOpensAt: iso.string(from: entryOpensAt),
-            entryClosesAt: iso.string(from: entryClosesAt),
-            allowedCountries: [country]
+            entryOpensAt: iso.string(from: now),
+            entryClosesAt: iso.string(from: inAWeek),
+            // Empty array = no country restriction (global). Backend
+            // serializes Sweepstakes with `allowedCountries: []` and
+            // skips the country gate at /enter time when the array is
+            // empty (sweepstakesController.canEnter logic).
+            allowedCountries: []
         )
         do {
             let s: Sweepstakes = try await APIClient.shared.request(

@@ -81,7 +81,19 @@ struct SweepstakesDetailView: View {
 
     private func prizeCard(_ s: Sweepstakes) -> some View {
         HudFrame(glow: .arenaGold) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Hero prize image — for Amazon-prize sweepstakes we
+                // render the bundled Gift Card asset so users see what
+                // they're playing for the moment they open the screen.
+                // Gracefully hidden when the prize doesn't match.
+                if prizeImageName(for: s) != nil {
+                    Image(prizeImageName(for: s)!)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .frame(maxHeight: 200)
+                        .shadow(color: .arenaGold.opacity(0.4), radius: 14, y: 4)
+                }
                 Text(s.title.uppercased())
                     .font(ArenaFont.display(size: 18, weight: .heavy))
                     .tracking(1)
@@ -108,6 +120,18 @@ struct SweepstakesDetailView: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// Best-effort match from the prize label to a bundled hero image.
+    /// Pre-Backend-prizeImageURL stopgap: keyword-detect "amazon" /
+    /// "gift card" and return the asset name. Returns nil for prizes
+    /// without a matching asset so the section just collapses.
+    private func prizeImageName(for s: Sweepstakes) -> String? {
+        let label = s.prizeLabel.lowercased()
+        if label.contains("amazon") || label.contains("gift card") {
+            return "PrizeAmazonGift"
+        }
+        return nil
     }
 
     private func statsCard(_ s: Sweepstakes) -> some View {
