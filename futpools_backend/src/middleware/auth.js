@@ -37,7 +37,11 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
-const ADMIN_EMAILS = new Set(['demo@futpools.app', 'admin@futpools.app']);
+const ADMIN_EMAILS = new Set([
+  'demo@futpools.app',
+  'admin@futpools.app',
+  'rodrigoibarrasanchez@gmail.com',
+]);
 
 const isAdminUser = (user) =>
   !!user && ADMIN_EMAILS.has((user.email || '').toLowerCase());
