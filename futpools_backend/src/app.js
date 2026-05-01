@@ -20,6 +20,7 @@ const challengeRoutes = require('./routes/challenges');
 const ticketsRoutes = require('./routes/tickets');
 const dailyPickRoutes = require('./routes/dailyPick');
 const sweepstakesRoutes = require('./routes/sweepstakes');
+const publicRoutes = require('./routes/public');
 const ogRoutes = require('./routes/og');
 
 const app = express();
@@ -59,6 +60,9 @@ app.use('/challenges', challengeRoutes);
 app.use('/tickets', ticketsRoutes);
 app.use('/daily-pick', dailyPickRoutes);
 app.use('/sweepstakes', sweepstakesRoutes);
+// Unauthenticated read-only endpoints used by the iOS onboarding
+// "App Demo" screen (real fixtures before signup).
+app.use('/public', publicRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });

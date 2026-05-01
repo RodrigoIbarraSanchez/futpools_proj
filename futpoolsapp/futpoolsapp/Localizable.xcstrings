@@ -2,6 +2,40 @@
   "sourceLanguage": "en",
   "strings": {
     "": {},
+    "\"At last, no fights with my buddies over weekend points. I won a $250 gift card.\"": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"At last, no fights with my buddies over weekend points. I won a $250 gift card.\""
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Por fin no peleo con mis cuates por los puntos del fin. Me llevé una gift card de $250.\""
+          }
+        }
+      }
+    },
+    "\"Daily Pick is my morning vice. 14-day streak going.\"": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Daily Pick is my morning vice. 14-day streak going.\""
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"El Daily Pick es mi vicio matutino. Llevo 14 días seguidos.\""
+          }
+        }
+      }
+    },
     "#%@": {},
     "#%lld": {},
     "$": {},
@@ -254,6 +288,23 @@
         }
       }
     },
+    "%lld picks. 0 / %lld until first kickoff.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld picks. 0 / %lld until first kickoff."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld picks. 0 / %lld hasta el primer kickoff."
+          }
+        }
+      }
+    },
     "%lld prize + %lld platform fee. If pool doesn't reach min players, you get a full refund.": {
       "localizations": {
         "en": {
@@ -396,6 +447,23 @@
       }
     },
     "-": {},
+    "1 LOCAL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 LOCAL"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 LOCAL"
+          }
+        }
+      }
+    },
     "1 click on the Daily Pick = 1 Ticket. 7 = 1 entry. No purchase.": {
       "extractionState": "manual",
       "localizations": {
@@ -478,6 +546,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "RETOS 1V1"
+          }
+        }
+      }
+    },
+    "2 AWAY": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 AWAY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 VISITA"
           }
         }
       }
@@ -1013,6 +1098,23 @@
         }
       }
     },
+    "Amazon $250 MXN gift cards every week": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amazon $250 MXN gift cards every week"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gift cards Amazon de $250 MXN cada semana"
+          }
+        }
+      }
+    },
     "Amazon Gift Card $250 MXN": {
       "extractionState": "manual",
       "localizations": {
@@ -1368,6 +1470,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Presume + puntos de ranking"
+          }
+        }
+      }
+    },
+    "Build a pool in under 30 seconds, share by link": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build a pool in under 30 seconds, share by link"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea quinielas en menos de 30 segundos y comparte con un link"
           }
         }
       }
@@ -1899,6 +2018,23 @@
         }
       }
     },
+    "Challenge anyone 1v1": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Challenge anyone 1v1"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retarme 1V1 con cualquiera"
+          }
+        }
+      }
+    },
     "Challenge not found": {
       "extractionState": "manual",
       "localizations": {
@@ -2052,6 +2188,7 @@
         }
       }
     },
+    "Clears hasSeenOnboarding and relaunches so QA can replay the 6-screen flow without reinstalling.": {},
     "Close": {
       "extractionState": "manual",
       "localizations": {
@@ -2444,6 +2581,7 @@
         }
       }
     },
+    "DEBUG · Reset onboarding": {},
     "DECLINE": {
       "extractionState": "manual",
       "localizations": {
@@ -3317,6 +3455,23 @@
         }
       }
     },
+    "Excel + WhatsApp is chaos": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excel + WhatsApp is chaos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excel + WhatsApp es un caos"
+          }
+        }
+      }
+    },
     "FEATURED": {
       "extractionState": "manual",
       "localizations": {
@@ -3521,6 +3676,23 @@
         }
       }
     },
+    "Filtering leagues you follow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtering leagues you follow"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrando ligas que sigues"
+          }
+        }
+      }
+    },
     "Final": {
       "extractionState": "manual",
       "localizations": {
@@ -3619,6 +3791,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Partidos"
+          }
+        }
+      }
+    },
+    "For each thing you said:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For each thing you said:"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para cada cosa que dijiste:"
           }
         }
       }
@@ -3793,6 +3982,23 @@
         }
       }
     },
+    "HERE'S HOW FUTPOOLS FIXES IT": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HERE'S HOW FUTPOOLS FIXES IT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ASÍ TE LO RESUELVE FUTPOOLS"
+          }
+        }
+      }
+    },
     "HIDE PICKS": {
       "extractionState": "manual",
       "localizations": {
@@ -3912,6 +4118,23 @@
         }
       }
     },
+    "Half my group never pays": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Half my group never pays"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Que medio grupo nunca pague lo prometido"
+          }
+        }
+      }
+    },
     "Have an invite code?": {
       "extractionState": "manual",
       "localizations": {
@@ -3960,6 +4183,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ya tengo cuenta"
+          }
+        }
+      }
+    },
+    "I want to throw a quick prediction without joining a whole league": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I want to throw a quick prediction without joining a whole league"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiero meter una predicción rápida sin meterme a una liga entera"
+          }
+        }
+      }
+    },
+    "I'm always the one who ends up building the bracket": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm always the one who ends up building the bracket"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soy el que SIEMPRE acaba armando el bracket"
+          }
+        }
+      }
+    },
+    "I'm playing my first futpools mini-pool. Pick yours: https://futpools.com": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm playing my first futpools mini-pool. Pick yours: https://futpools.com"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estoy jugando mi primera quiniela en futpools. Mete la tuya: https://futpools.com"
+          }
+        }
+      }
+    },
+    "I've been chasing 3 pools that still owe me money": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I've been chasing 3 pools that still owe me money"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Llevo cobrando 3 quinielas que NO me han pagado"
           }
         }
       }
@@ -4351,6 +4642,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unirse con código"
+          }
+        }
+      }
+    },
+    "Just honor, nothing tangible": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just honor, nothing tangible"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puro ganar honor, nada tangible"
+          }
+        }
+      }
+    },
+    "Just looking around": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just looking around"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo quiero curiosear"
           }
         }
       }
@@ -4797,6 +5122,23 @@
         }
       }
     },
+    "Live automatic scoring — every goal moves your score instantly": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live automatic scoring — every goal moves your score instantly"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scoring automático en vivo — cada gol mueve tu puntaje al instante"
+          }
+        }
+      }
+    },
     "Load more": {
       "extractionState": "manual",
       "localizations": {
@@ -4865,6 +5207,23 @@
         }
       }
     },
+    "Loading upcoming matches": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading upcoming matches"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando partidos próximos"
+          }
+        }
+      }
+    },
     "Loading…": {
       "extractionState": "manual",
       "localizations": {
@@ -4929,6 +5288,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "PARTIDO"
+          }
+        }
+      }
+    },
+    "MATCH %1$lld OF %2$lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MATCH %1$lld OF %2$lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PARTIDO %1$lld DE %2$lld"
           }
         }
       }
@@ -5205,6 +5581,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mis entradas"
+          }
+        }
+      }
+    },
+    "My group wins $200 and nobody collects it": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My group wins $200 and nobody collects it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi grupo gana $200 y nadie cobra el premio"
           }
         }
       }
@@ -5806,6 +6199,40 @@
         }
       }
     },
+    "Nobody pays anything — the prize is funded by ads": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nobody pays anything — the prize is funded by ads"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin que nadie pague nada — el premio lo financiamos con AdMob"
+          }
+        }
+      }
+    },
+    "Nobody respects pick deadlines": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nobody respects pick deadlines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nadie respeta los plazos para meter picks"
+          }
+        }
+      }
+    },
     "Not enough Tickets to enter.": {
       "extractionState": "manual",
       "localizations": {
@@ -6023,6 +6450,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cortesía de la casa — suficiente para patrocinar tu primera quiniela."
+          }
+        }
+      }
+    },
+    "One answer. No wrong choice.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One answer. No wrong choice."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una sola respuesta. Sin equivocaciones."
           }
         }
       }
@@ -6368,6 +6812,23 @@
       }
     },
     "PLATFORM EVENT": {},
+    "PLAYERS LIKE YOU ARE ALREADY IN": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PLAYERS LIKE YOU ARE ALREADY IN"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JUGADORES COMO TÚ YA ENTRARON"
+          }
+        }
+      }
+    },
     "POOL": {
       "extractionState": "manual",
       "localizations": {
@@ -6929,6 +7390,23 @@
         }
       }
     },
+    "Personalizing your matches…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizing your matches…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizando tus partidos…"
+          }
+        }
+      }
+    },
     "Pick 1 (home), X (draw) or 2 (away) for each match": {
       "extractionState": "manual",
       "localizations": {
@@ -6959,6 +7437,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Elige 1 (local), X (empate) o 2 (visitante) para cada partido de la quiniela."
+          }
+        }
+      }
+    },
+    "Pick 3 matches. Best score wins.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick 3 matches. Best score wins."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pica 3 partidos. El que más le atine, gana."
           }
         }
       }
@@ -7062,6 +7557,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Elige una, no hay respuesta incorrecta."
+          }
+        }
+      }
+    },
+    "Picks lock automatically at the first kickoff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Picks lock automatically at the first kickoff"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los picks se cierran solos al primer kickoff"
           }
         }
       }
@@ -7215,6 +7727,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Juega una quiniela para entrar al ranking."
+          }
+        }
+      }
+    },
+    "Play pools with my friends": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play pools with my friends"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jugar quinielas con mis amigos"
           }
         }
       }
@@ -7406,6 +7935,23 @@
         }
       }
     },
+    "Pools with friends. No spreadsheets. Nobody to chase for money.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pools with friends. No spreadsheets. Nobody to chase for money."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quinielas con amigos. Sin Excel. Sin cobrar a nadie."
+          }
+        }
+      }
+    },
     "Predict & earn 1 Ticket": {
       "extractionState": "manual",
       "localizations": {
@@ -7487,6 +8033,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pronostica con Tickets, gana premios reales"
+          }
+        }
+      }
+    },
+    "Predict solo and rank up": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predict solo and rank up"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predecir solo y subir de rank"
           }
         }
       }
@@ -8107,6 +8670,23 @@
         }
       }
     },
+    "Representative reviews. More on App Store.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Representative reviews. More on App Store."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reseñas representativas. Más en App Store."
+          }
+        }
+      }
+    },
     "Reset password": {
       "extractionState": "manual",
       "localizations": {
@@ -8188,6 +8768,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Novato"
+          }
+        }
+      }
+    },
+    "SAVE & COMPETE": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SAVE & COMPETE"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GUARDAR Y COMPETIR"
+          }
+        }
+      }
+    },
+    "SAVE YOUR PICKS AND PLAY": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SAVE YOUR PICKS AND PLAY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GUARDA TUS PICKS Y JUEGA"
+          }
+        }
+      }
+    },
+    "SEE YOUR PICKS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SEE YOUR PICKS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VER MIS PICKS"
           }
         }
       }
@@ -8498,6 +9129,23 @@
         }
       }
     },
+    "Score": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Score"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puntaje"
+          }
+        }
+      }
+    },
     "Score: correct predictions per finished match": {
       "extractionState": "manual",
       "localizations": {
@@ -8651,6 +9299,23 @@
         }
       }
     },
+    "Share with friends": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share with friends"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compartir con amigos"
+          }
+        }
+      }
+    },
     "Show in everyone's Home": {
       "extractionState": "manual",
       "localizations": {
@@ -8760,6 +9425,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skip"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saltar"
+          }
+        }
+      }
+    },
+    "Skip ahead": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip ahead"
           }
         },
         "es": {
@@ -8975,6 +9657,23 @@
         }
       }
     },
+    "Swipe → if it's you. ← if not.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe → if it's you. ← if not."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe → si te late. ← si no."
+          }
+        }
+      }
+    },
     "System Default": {
       "extractionState": "manual",
       "localizations": {
@@ -9179,6 +9878,40 @@
         }
       }
     },
+    "TRY YOUR FIRST POOL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRY YOUR FIRST POOL"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRUEBA TU PRIMERA QUINIELA"
+          }
+        }
+      }
+    },
+    "Tangible prize guaranteed for the winner": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tangible prize guaranteed for the winner"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premio tangible garantizado para el ganador"
+          }
+        }
+      }
+    },
     "Tap + to create one.": {
       "extractionState": "manual",
       "localizations": {
@@ -9209,6 +9942,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Toca una participación para ver sus picks."
+          }
+        }
+      }
+    },
+    "Tap everything that hits home.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap everything that hits home."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca todo lo que aplique."
           }
         }
       }
@@ -9418,6 +10168,23 @@
         }
       }
     },
+    "Tiny prizes that aren't worth it": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiny prizes that aren't worth it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premios chicos que no valen el lío"
+          }
+        }
+      }
+    },
     "Title": {},
     "Total entries": {
       "extractionState": "manual",
@@ -9432,6 +10199,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Entradas totales"
+          }
+        }
+      }
+    },
+    "Tracking points by hand": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracking points by hand"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Llevar la cuenta de los puntos a mano"
           }
         }
       }
@@ -9846,6 +10630,74 @@
         }
       }
     },
+    "WHAT BRINGS YOU TO FUTPOOLS?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHAT BRINGS YOU TO FUTPOOLS?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿QUÉ TE TRAE A FUTPOOLS?"
+          }
+        }
+      }
+    },
+    "WHAT FOOTBALL DO YOU FOLLOW?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHAT FOOTBALL DO YOU FOLLOW?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿QUÉ FÚTBOL SIGUES?"
+          }
+        }
+      }
+    },
+    "WHAT FRUSTRATES YOU ABOUT POOLS TODAY?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHAT FRUSTRATES YOU ABOUT POOLS TODAY?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿QUÉ TE FRUSTRA HOY DE LAS QUINIELAS?"
+          }
+        }
+      }
+    },
+    "WHICH ONE IS YOU?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHICH ONE IS YOU?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿CUÁL DE ESTAS ES TÚ?"
+          }
+        }
+      }
+    },
     "WIN RATE": {
       "extractionState": "manual",
       "localizations": {
@@ -9880,6 +10732,23 @@
         }
       }
     },
+    "WIN REAL PRIZES BY PREDICTING FOOTBALL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WIN REAL PRIZES BY PREDICTING FOOTBALL"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GANA PREMIOS REALES POR PREDECIR FÚTBOL"
+          }
+        }
+      }
+    },
     "WITH MY FRIENDS": {
       "extractionState": "manual",
       "localizations": {
@@ -9910,6 +10779,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ver anuncio · +1 Ticket"
+          }
+        }
+      }
+    },
+    "We'll filter the next step's matches.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We'll filter the next step's matches."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtramos los partidos en el siguiente paso."
           }
         }
       }
@@ -10016,6 +10902,23 @@
         }
       }
     },
+    "Win real prizes for free": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Win real prizes for free"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ganar premios reales gratis"
+          }
+        }
+      }
+    },
     "Win real-world prizes": {
       "extractionState": "manual",
       "localizations": {
@@ -10118,6 +11021,23 @@
         }
       }
     },
+    "X DRAW": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X DRAW"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X EMPATE"
+          }
+        }
+      }
+    },
     "YELLOW CARD": {
       "extractionState": "manual",
       "localizations": {
@@ -10182,6 +11102,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "GANASTE · +%d MONEDAS"
+          }
+        }
+      }
+    },
+    "YOUR FIRST POOL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR FIRST POOL"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TU PRIMERA QUINIELA"
+          }
+        }
+      }
+    },
+    "YOUR MINI-POOL IS READY": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR MINI-POOL IS READY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TU MINI-QUINIELA ESTÁ LISTA"
           }
         }
       }
@@ -10454,6 +11408,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tu pick"
+          }
+        }
+      }
+    },
+    "Your picks stay saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your picks stay saved"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus picks se quedan"
           }
         }
       }
@@ -10801,6 +11772,40 @@
     "· PAST": {},
     "–": {},
     "—": {},
+    "— Carlos M., 32, runs his neighborhood pool": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Carlos M., 32, runs his neighborhood pool"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Carlos M., 32, organiza la quiniela del barrio"
+          }
+        }
+      }
+    },
+    "— Laura S., 27, América fan": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Laura S., 27, América fan"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Laura S., 27, fan del América"
+          }
+        }
+      }
+    },
     "›": {},
     "←": {},
     "← BACK": {},
@@ -11072,6 +12077,40 @@
         }
       }
     },
+    "✓ Access to weekly real-prize sweepstake": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Access to weekly real-prize sweepstake"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Acceso al sweepstake semanal con premio real"
+          }
+        }
+      }
+    },
+    "✓ All picks locked in": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ All picks locked in"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Picks listos"
+          }
+        }
+      }
+    },
     "✓ Cancel anytime": {
       "extractionState": "manual",
       "localizations": {
@@ -11106,12 +12145,30 @@
         }
       }
     },
+    "✓ Your picks stay saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Your picks stay saved"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Tus picks se quedan"
+          }
+        }
+      }
+    },
     "✕": {},
     "✗ %@": {},
     "⬢": {},
     "＋": {},
     "🇲🇽 México": {},
     "🎁": {},
+    "🎮": {},
     "🎯": {},
     "🏆": {},
     "💀": {},

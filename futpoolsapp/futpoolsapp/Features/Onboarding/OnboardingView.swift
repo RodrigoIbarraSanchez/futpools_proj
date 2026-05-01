@@ -2,36 +2,38 @@
 //  OnboardingView.swift
 //  futpoolsapp
 //
-//  Pre-login onboarding: 6 paged screens that sell wins (premios reales,
-//  retos 1V1, tickets gratis) and gate signup. Shown ONCE per install
-//  via @AppStorage("hasSeenOnboarding"). Skip/login shortcut both mark
-//  the flag so the user never sees these screens twice.
+//  Skill v2 — 11-screen onboarding container. Drives the
+//  OnboardingState through Welcome → Goal → Pain → Social → Tinder →
+//  Solution → Prefs → Processing → Demo → Value → AccountGate.
+//
+//  Persists captured state (goal/pain/leagues/picks) to UserDefaults
+//  on exit so post-signup screens can use it.
 //
 
 import SwiftUI
 
-private let kHasSeenOnboardingKey = "hasSeenOnboarding"
-private let kOnboardingGoalKey = "onboardingGoal"
-
 struct OnboardingView: View {
-    @AppStorage(kHasSeenOnboardingKey) private var hasSeenOnboarding = false
-    @AppStorage(kOnboardingGoalKey) private var onboardingGoal = ""
-    @State private var page: Int = 0
-    @State private var goalSelection: OnboardingGoal?
+    @StateObject private var state = OnboardingState()
     @State private var presentLogin = false
     @State private var presentSignup = false
+    @State private var shareSheet: ShareItem?
 
-    private let totalPages = 6
+    private var demoFixturesByID: [Int: OnbDemoFixture] {
+        // Snapshot the picks → fixture map for the value delivery
+        // screen. Pulled from a temporary VM the demo screen owns,
+        // but for the value screen we just match by id from picks
+        // since the fixture metadata is bundled into each pick row
+        // through the demoVM.
+        [:]
+    }
 
     var body: some View {
         NavigationStack {
-            ZStack {
+            ZStack(alignment: .top) {
                 ArenaBackground()
-                pages
+                content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                if page < totalPages - 1 {
-                    skipButton
-                }
+                topBar
             }
             .navigationDestination(isPresented: $presentSignup) {
                 RegisterView()
@@ -39,97 +41,108 @@ struct OnboardingView: View {
             .navigationDestination(isPresented: $presentLogin) {
                 LoginView()
             }
-        }
-        .onChange(of: goalSelection) { _, newValue in
-            if let g = newValue { onboardingGoal = g.rawValue }
+            .sheet(item: $shareSheet) { item in
+                ActivityViewController(activityItems: [item.text])
+            }
         }
     }
 
+    // MARK: - Routing
+
     @ViewBuilder
-    private var pages: some View {
-        switch page {
-        case 0:
-            OnboardingWelcomeScreen(
-                onStart: { advance() },
+    private var content: some View {
+        switch state.step {
+        case .welcome:
+            OnbWelcomeScreen(state: state, onLogin: { goLogin() })
+                .transition(.opacity)
+        case .goal:
+            OnbGoalScreen(state: state).transition(.opacity)
+        case .pain:
+            OnbPainScreen(state: state).transition(.opacity)
+        case .social:
+            OnbSocialProofScreen(state: state).transition(.opacity)
+        case .tinder:
+            OnbTinderScreen(state: state).transition(.opacity)
+        case .solution:
+            OnbSolutionScreen(state: state).transition(.opacity)
+        case .prefs:
+            OnbPrefsScreen(state: state).transition(.opacity)
+        case .processing:
+            OnbProcessingScreen(state: state).transition(.opacity)
+        case .demo:
+            OnbDemoScreen(state: state).transition(.opacity)
+        case .value:
+            OnbValueDeliveryScreen(
+                state: state,
+                fixturesByID: [:],
+                onShare: {
+                    let txt = String(localized: "I'm playing my first futpools mini-pool. Pick yours: https://futpools.com")
+                    shareSheet = ShareItem(text: txt)
+                }
+            )
+            .transition(.opacity)
+        case .gate:
+            OnbAccountGateScreen(
+                state: state,
+                onSignup: { goSignup() },
                 onLogin: { goLogin() }
             )
             .transition(.opacity)
-        case 1:
-            OnboardingPainPointsScreen(onNext: { advance() })
-                .transition(.opacity)
-        case 2:
-            OnboardingWinsCarouselScreen(onNext: { advance() })
-                .transition(.opacity)
-        case 3:
-            OnboardingSocialProofScreen(onNext: { advance() })
-                .transition(.opacity)
-        case 4:
-            OnboardingGoalAskScreen(
-                selected: $goalSelection,
-                onSelect: { _ in
-                    // Auto-advance after selection — feels snappier than
-                    // showing a NEXT button below already-tapped pills.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                        withAnimation { advance() }
-                    }
-                }
-            )
-            .transition(.opacity)
-        default:
-            OnboardingAccountGateScreen(
-                onSignup: {
-                    hasSeenOnboarding = true
-                    presentSignup = true
-                },
-                onLogin: {
-                    hasSeenOnboarding = true
-                    presentLogin = true
-                }
-            )
-            .transition(.opacity)
-            .onAppear { hasSeenOnboarding = true }
         }
     }
 
-    private var skipButton: some View {
-        VStack {
-            HStack {
-                Spacer()
+    // MARK: - Top bar (progress + skip)
+
+    private var topBar: some View {
+        HStack(spacing: 12) {
+            ProgressView(value: state.step.progress)
+                .progressViewStyle(.linear)
+                .tint(.arenaPrimary)
+                .frame(maxWidth: .infinity)
+            if state.step != .gate {
                 Button {
-                    withAnimation { page = totalPages - 1 }
+                    state.jumpToGate()
                 } label: {
                     Text(String(localized: "Skip"))
                         .font(ArenaFont.mono(size: 11, weight: .bold))
                         .tracking(1.5)
                         .foregroundColor(.arenaTextDim)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            HudCornerCutShape(cut: 5)
-                                .fill(Color.arenaSurface.opacity(0.6))
-                        )
-                        .overlay(
-                            HudCornerCutShape(cut: 5)
-                                .stroke(Color.arenaStroke, lineWidth: 1)
-                        )
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(HudCornerCutShape(cut: 5).fill(Color.arenaSurface.opacity(0.6)))
+                        .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            Spacer()
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
     }
 
-    private func advance() {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            page = min(page + 1, totalPages - 1)
-        }
-    }
+    // MARK: - Actions
 
+    private func goSignup() {
+        state.persist()
+        presentSignup = true
+    }
     private func goLogin() {
-        hasSeenOnboarding = true
+        state.persist()
         presentLogin = true
     }
+}
+
+// MARK: - Share sheet helpers
+
+private struct ShareItem: Identifiable {
+    let id = UUID()
+    let text: String
+}
+
+private struct ActivityViewController: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {
