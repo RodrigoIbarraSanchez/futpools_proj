@@ -341,17 +341,20 @@ struct OnbTinderScreen: View {
                 }
             }
             .buttonStyle(.plain)
-            ArcadeButton(
-                title: index >= statements.count ? "▶ " + String(localized: "NEXT") : String(localized: "Skip ahead"),
-                variant: index >= statements.count ? .primary : .ghost,
-                size: .lg,
-                fullWidth: true,
-                action: {
-                    if index >= statements.count { state.advance() } else { state.advance() }
-                }
-            )
-            .padding(.horizontal, 24)
-            .padding(.bottom, 18)
+            // NEXT only appears once the user has swiped (or button-
+            // tapped) through all 4 cards — keeps the screen
+            // mandatory in line with the no-skip onboarding policy.
+            if index >= statements.count {
+                ArcadeButton(
+                    title: "▶ " + String(localized: "NEXT"),
+                    size: .lg,
+                    fullWidth: true,
+                    action: { state.advance() }
+                )
+                .padding(.horizontal, 24)
+                .padding(.bottom, 18)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
     }
 

@@ -151,10 +151,6 @@ final class OnboardingState: ObservableObject {
         }
     }
 
-    func jumpToGate() {
-        withAnimation(.easeInOut(duration: 0.25)) { step = .gate }
-    }
-
     /// Persist the captured state so post-signup screens can use it
     /// (e.g. preselect leagues on Home, prefill the first Pool create
     /// with the demo picks).

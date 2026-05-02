@@ -94,28 +94,15 @@ struct OnboardingView: View {
     // MARK: - Top bar (progress + skip)
 
     private var topBar: some View {
-        HStack(spacing: 12) {
-            ProgressView(value: state.step.progress)
-                .progressViewStyle(.linear)
-                .tint(.arenaPrimary)
-                .frame(maxWidth: .infinity)
-            if state.step != .gate {
-                Button {
-                    state.jumpToGate()
-                } label: {
-                    Text(String(localized: "Skip"))
-                        .font(ArenaFont.mono(size: 11, weight: .bold))
-                        .tracking(1.5)
-                        .foregroundColor(.arenaTextDim)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(HudCornerCutShape(cut: 5).fill(Color.arenaSurface.opacity(0.6)))
-                        .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        // Progress-only — onboarding is mandatory, no skip path. The
+        // "I already have an account" link on Welcome (and the same
+        // option in the Account Gate) cover the case where an
+        // existing user reinstalls.
+        ProgressView(value: state.step.progress)
+            .progressViewStyle(.linear)
+            .tint(.arenaPrimary)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
     }
 
     // MARK: - Actions
