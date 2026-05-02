@@ -30,11 +30,20 @@ struct OnboardingView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
+            ZStack {
+                // Background fills the whole screen (under everything)
                 OnbBackground()
-                content
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                topBar
+                // Foreground stack — topBar takes its intrinsic
+                // height first, content fills the remaining space
+                // below. (Previously this was a ZStack with topBar
+                // overlaid on top of content, which caused the
+                // header/eyebrow to render under the progress bar
+                // and language toggle.)
+                VStack(spacing: 0) {
+                    topBar
+                    content
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
             // Bundle.main returns localized strings via the override
             // installed by AppLanguage.setLanguage. SwiftUI doesn't
