@@ -4,17 +4,21 @@
 //
 //  11-screen onboarding REDESIGN — pixel-faithful port of the
 //  Claude Design HTML prototype (futpools-onboarding/project/
-//  FutPools Onboarding.html). Same layout pattern on every screen:
+//  FutPools Onboarding.html).
 //
-//      ┌── header (eyebrow + title + subtitle) ──┐
+//  Layout pattern (matches the design's `ScreenLayout`):
+//
+//      ┌── header (intrinsic, anchored top) ──────┐
 //      │                                          │
-//      │  body (flex:1, justify center)           │
+//      │  body (.frame max .infinity, alignment   │
+//      │   .center → vertically centered in the   │
+//      │   remaining space — same as flex:1 +     │
+//      │   justify-content:center in the HTML)    │
 //      │                                          │
-//      └── footer (primary button anchored) ──────┘
+//      └── footer (intrinsic, anchored bottom) ───┘
 //
 //  Copy goes through `L("...")` (NSLocalizedString with explicit
-//  bundle) so the in-app EN/ES toggle works mid-session — see
-//  BundleLanguageOverride.swift for the rationale.
+//  bundle) so the in-app EN/ES toggle works mid-session.
 //
 
 import SwiftUI
@@ -28,16 +32,16 @@ struct OnbWelcomeScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Body — everything from BrandMark to badges centered
+            // vertically in the remaining space.
             VStack(spacing: 28) {
-                Spacer(minLength: 12)
                 VStack(spacing: 18) {
                     OnbBrandMark(size: 12)
                     ZStack {
                         Circle()
                             .fill(RadialGradient(
                                 colors: [Color.arenaGold.opacity(0.32), .clear],
-                                center: .center,
-                                startRadius: 0, endRadius: 120
+                                center: .center, startRadius: 0, endRadius: 120
                             ))
                             .frame(width: 240, height: 240)
                             .blur(radius: 8)
@@ -67,8 +71,11 @@ struct OnbWelcomeScreen: View {
                     OnbBadge(text: L("Live scoring"))
                     OnbBadge(text: L("Real prizes"))
                 }
-                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+
+            // Footer
             VStack(spacing: 12) {
                 OnbPrimaryButton(label: L("GET STARTED")) { state.advance() }
                 Button(action: onLogin) {
@@ -92,42 +99,39 @@ struct OnbGoalScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 24) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 02 — \(L("Pick all that apply."))",
-                    title: L("WHAT BRINGS YOU TO FUTPOOLS?"),
-                    size: .lg
-                )
-                VStack(spacing: 10) {
-                    ForEach(OnboardingGoalChoice.allCases) { g in
-                        rowFilled(
-                            emoji: g.emoji,
-                            label: g.label,
-                            active: state.goals.contains(g),
-                            toggle: {
-                                if state.goals.contains(g) { state.goals.remove(g) }
-                                else { state.goals.insert(g) }
-                            }
-                        )
-                    }
-                }
-                .padding(.horizontal, 24)
-                Spacer(minLength: 0)
-            }
-            footer
-        }
-    }
+            // Header (anchored to top of body area)
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 02 — \(L("Pick all that apply."))",
+                title: L("WHAT BRINGS YOU TO FUTPOOLS?"),
+                size: .lg
+            )
+            .padding(.top, 24)
 
-    @ViewBuilder
-    private var footer: some View {
-        VStack {
+            // Body — options vertically centered in remaining space
+            VStack(spacing: 10) {
+                ForEach(OnboardingGoalChoice.allCases) { g in
+                    rowFilled(
+                        emoji: g.emoji,
+                        label: g.label,
+                        active: state.goals.contains(g),
+                        toggle: {
+                            if state.goals.contains(g) { state.goals.remove(g) }
+                            else { state.goals.insert(g) }
+                        }
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+
+            // Footer
             OnbPrimaryButton(label: L("NEXT"), disabled: state.goals.isEmpty) {
                 state.advance()
             }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .padding(.bottom, 28)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 28)
     }
 
     private func rowFilled(emoji: String, label: String, active: Bool, toggle: @escaping () -> Void) -> some View {
@@ -169,39 +173,34 @@ struct OnbPainScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 24) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 03 — \(L("Tap everything that hits home."))",
-                    title: L("WHAT FRUSTRATES YOU ABOUT POOLS TODAY?"),
-                    size: .md
-                )
-                VStack(spacing: 8) {
-                    ForEach(OnboardingPain.allCases) { p in
-                        rowChecklist(
-                            emoji: p.emoji,
-                            label: p.label,
-                            active: state.pains.contains(p),
-                            toggle: {
-                                if state.pains.contains(p) { state.pains.remove(p) }
-                                else { state.pains.insert(p) }
-                            }
-                        )
-                    }
-                }
-                .padding(.horizontal, 24)
-                Spacer(minLength: 0)
-            }
-            footer
-        }
-    }
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 03 — \(L("Tap everything that hits home."))",
+                title: L("WHAT FRUSTRATES YOU ABOUT POOLS TODAY?"),
+                size: .md
+            )
+            .padding(.top, 24)
 
-    private var footer: some View {
-        VStack {
+            VStack(spacing: 8) {
+                ForEach(OnboardingPain.allCases) { p in
+                    rowChecklist(
+                        emoji: p.emoji,
+                        label: p.label,
+                        active: state.pains.contains(p),
+                        toggle: {
+                            if state.pains.contains(p) { state.pains.remove(p) }
+                            else { state.pains.insert(p) }
+                        }
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+
             OnbPrimaryButton(label: L("NEXT")) { state.advance() }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 28)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 28)
     }
 
     private func rowChecklist(emoji: String, label: String, active: Bool, toggle: @escaping () -> Void) -> some View {
@@ -245,40 +244,39 @@ struct OnbSocialProofScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 22) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 04",
-                    title: L("PLAYERS LIKE YOU ARE ALREADY IN"),
-                    size: .md
-                )
-                HStack(spacing: 8) {
-                    OnbStatCard(value: "47K", label: L("active players this week"))
-                    OnbStatCard(value: "$12K", label: L("in prizes paid"))
-                    OnbStatCard(value: "4.8★", label: L("avg rating"))
-                }
-                .padding(.horizontal, 24)
-                VStack(spacing: 12) {
-                    quoteCard(quote: L("social.q1"), author: L("social.a1"))
-                    quoteCard(quote: L("social.q2"), author: L("social.a2"))
-                    Text(L("Representative reviews. More on App Store."))
-                        .font(ArenaFont.mono(size: 9))
-                        .foregroundColor(.arenaTextFaint)
-                        .padding(.top, 4)
-                }
-                .padding(.horizontal, 24)
-                Spacer(minLength: 0)
-            }
-            footer
-        }
-    }
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 04",
+                title: L("PLAYERS LIKE YOU ARE ALREADY IN"),
+                size: .md
+            )
+            .padding(.top, 24)
 
-    private var footer: some View {
-        VStack {
+            // Stats strip sits just under the title (small gap, not centered)
+            HStack(spacing: 8) {
+                OnbStatCard(value: "47K", label: L("active players this week"))
+                OnbStatCard(value: "$12K", label: L("in prizes paid"))
+                OnbStatCard(value: "4.8★", label: L("avg rating"))
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 22)
+
+            // Body — quote cards centered in remaining space
+            VStack(spacing: 12) {
+                quoteCard(quote: L("social.q1"), author: L("social.a1"))
+                quoteCard(quote: L("social.q2"), author: L("social.a2"))
+                Text(L("Representative reviews. More on App Store."))
+                    .font(ArenaFont.mono(size: 9))
+                    .foregroundColor(.arenaTextFaint)
+                    .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+
             OnbPrimaryButton(label: L("NEXT")) { state.advance() }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 28)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 28)
     }
 
     private func quoteCard(quote: String, author: String) -> some View {
@@ -316,14 +314,16 @@ struct OnbTinderScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 16) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 05 — \(String(format: "%02d / %02d", min(index + 1, statementKeys.count), statementKeys.count))",
-                    title: L("WHICH ONE IS YOU?"),
-                    subtitle: L("Swipe → if it's you. ← if not."),
-                    size: .lg
-                )
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 05 — \(String(format: "%02d / %02d", min(index + 1, statementKeys.count), statementKeys.count))",
+                title: L("WHICH ONE IS YOU?"),
+                subtitle: L("Swipe → if it's you. ← if not."),
+                size: .lg
+            )
+            .padding(.top, 24)
+
+            // Body — cards centered in remaining space
+            VStack(spacing: 18) {
                 ZStack {
                     if index < statementKeys.count - 2 {
                         cardSilhouette(offset: 8, rotation: -3, indent: 24)
@@ -350,6 +350,9 @@ struct OnbTinderScreen: View {
                 .padding(.horizontal, 24)
                 actionRow
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
+            // Footer — NEXT only after all 4 swiped
             footer
         }
     }
@@ -396,7 +399,6 @@ struct OnbTinderScreen: View {
                 resolveSwipe(.agree)
             }
         }
-        .padding(.top, 8)
     }
 
     private func actionButton(symbol: String, color: Color, label: String, glow: Bool = false, action: @escaping () -> Void) -> some View {
@@ -423,12 +425,11 @@ struct OnbTinderScreen: View {
     @ViewBuilder
     private var footer: some View {
         if index >= statementKeys.count {
-            VStack {
-                OnbPrimaryButton(label: L("NEXT")) { state.advance() }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 28)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
+            OnbPrimaryButton(label: L("NEXT")) { state.advance() }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 28)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
             Spacer().frame(height: 28)
         }
@@ -469,27 +470,26 @@ struct OnbSolutionScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 24) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 06 — \(L("For each thing you said:"))",
-                    title: L("HERE'S HOW FUTPOOLS FIXES IT"),
-                    size: .md,
-                    titleColor: .arenaPrimary
-                )
-                VStack(spacing: 12) {
-                    ForEach(resolvedPains) { p in
-                        solutionCard(pain: p)
-                    }
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 06 — \(L("For each thing you said:"))",
+                title: L("HERE'S HOW FUTPOOLS FIXES IT"),
+                size: .md,
+                titleColor: .arenaPrimary
+            )
+            .padding(.top, 24)
+
+            VStack(spacing: 12) {
+                ForEach(resolvedPains) { p in
+                    solutionCard(pain: p)
                 }
-                .padding(.horizontal, 24)
-                Spacer(minLength: 0)
             }
-            VStack {
-                OnbPrimaryButton(label: L("NEXT")) { state.advance() }
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.horizontal, 24)
-            .padding(.bottom, 28)
+
+            OnbPrimaryButton(label: L("NEXT")) { state.advance() }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 28)
         }
     }
 
@@ -554,29 +554,28 @@ struct OnbPrefsScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 24) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 07",
-                    title: L("WHAT FOOTBALL DO YOU FOLLOW?"),
-                    subtitle: L("We'll filter the next step's matches."),
-                    size: .md
-                )
-                LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(OnboardingLeague.allCases) { l in
-                        leagueCell(l)
-                    }
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 07",
+                title: L("WHAT FOOTBALL DO YOU FOLLOW?"),
+                subtitle: L("We'll filter the next step's matches."),
+                size: .md
+            )
+            .padding(.top, 24)
+
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(OnboardingLeague.allCases) { l in
+                    leagueCell(l)
                 }
-                .padding(.horizontal, 24)
-                Spacer(minLength: 0)
             }
-            VStack {
-                OnbPrimaryButton(label: L("NEXT")) {
-                    if state.leagues.isEmpty { state.leagues = [.ligaMX] }
-                    state.advance()
-                }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+
+            OnbPrimaryButton(label: L("NEXT")) {
+                if state.leagues.isEmpty { state.leagues = [.ligaMX] }
+                state.advance()
             }
             .padding(.horizontal, 24)
+            .padding(.top, 16)
             .padding(.bottom, 28)
         }
     }
@@ -625,8 +624,8 @@ struct OnbProcessingScreen: View {
     ]
 
     var body: some View {
+        // Whole screen is one body — content centered vertically.
         VStack(spacing: 32) {
-            Spacer()
             ZStack {
                 Circle()
                     .stroke(Color.arenaPrimary.opacity(0.12), lineWidth: 3)
@@ -670,12 +669,11 @@ struct OnbProcessingScreen: View {
                 }
             }
             .padding(.horizontal, 32)
-            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .padding(.bottom, 28)
         .onAppear {
             spin = true
-            // Animate the percentage from 8 → 100 over 1.6s while
-            // the checklist ticks through.
             for i in 0..<lines.count {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 * Double(i + 1)) {
                     withAnimation { step = i }
@@ -701,34 +699,38 @@ struct OnbDemoScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 14) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 09",
-                    title: L("TRY YOUR FIRST POOL"),
-                    subtitle: L("Pick 3 matches. Best score wins."),
-                    size: .md
-                )
-                progressDots
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 09",
+                title: L("TRY YOUR FIRST POOL"),
+                subtitle: L("Pick 3 matches. Best score wins."),
+                size: .md
+            )
+            .padding(.top, 24)
+
+            // Progress dots sit just under the title
+            progressDots
+                .padding(.top, 14)
+
+            // Body — fixture card centered in remaining space
+            Group {
                 if vm.isLoading {
-                    Spacer()
                     ProgressView().tint(.arenaPrimary)
-                    Spacer()
                 } else if let fx = vm.currentFixture {
-                    fixtureCard(fx).padding(.horizontal, 24)
+                    fixtureCard(fx)
                 }
-                Spacer(minLength: 0)
             }
-            VStack {
-                OnbPrimaryButton(
-                    label: vm.didFinish ? L("SEE YOUR PICKS") : L("NEXT"),
-                    disabled: !vm.didFinish
-                ) {
-                    state.demoPicks = vm.picksOut
-                    state.advance()
-                }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+
+            OnbPrimaryButton(
+                label: vm.didFinish ? L("SEE YOUR PICKS") : L("NEXT"),
+                disabled: !vm.didFinish
+            ) {
+                state.demoPicks = vm.picksOut
+                state.advance()
             }
             .padding(.horizontal, 24)
+            .padding(.top, 16)
             .padding(.bottom, 28)
         }
         .task { await vm.load(leagues: Array(state.leagues)) }
@@ -959,19 +961,19 @@ struct OnbValueDeliveryScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 22) {
-                Spacer(minLength: 8)
-                OnbTitleBlock(
-                    eyebrow: "\(L("Step")) 10",
-                    title: L("YOUR MINI-POOL IS READY"),
-                    subtitle: String(format: L("value.subtitle"), state.demoPicks.count),
-                    size: .md,
-                    titleColor: .arenaPrimary
-                )
-                summaryCard
-                    .padding(.horizontal, 24)
-                Spacer(minLength: 0)
-            }
+            OnbTitleBlock(
+                eyebrow: "\(L("Step")) 10",
+                title: L("YOUR MINI-POOL IS READY"),
+                subtitle: String(format: L("value.subtitle"), state.demoPicks.count),
+                size: .md,
+                titleColor: .arenaPrimary
+            )
+            .padding(.top, 24)
+
+            summaryCard
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .padding(.horizontal, 24)
+
             VStack(spacing: 12) {
                 OnbPrimaryButton(label: L("SAVE & COMPETE")) { state.advance() }
                 Button(action: onShare) {
@@ -1062,8 +1064,10 @@ struct OnbAccountGateScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Whole screen content centered vertically (no separate
+            // top-anchored header on this screen — the design puts
+            // hero + headline + bullets all as one centered block).
             VStack(spacing: 28) {
-                Spacer(minLength: 12)
                 heroIcon
                 VStack(spacing: 10) {
                     Text(L("SAVE YOUR PICKS AND PLAY"))
@@ -1076,9 +1080,10 @@ struct OnbAccountGateScreen: View {
                         .foregroundColor(.arenaTextDim)
                 }
                 bulletCard
-                    .padding(.horizontal, 24)
-                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+
             VStack(spacing: 12) {
                 OnbPrimaryButton(label: L("CREATE FREE ACCOUNT")) {
                     state.persist(); onSignup()
