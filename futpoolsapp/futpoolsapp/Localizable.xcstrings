@@ -1218,6 +1218,23 @@
         }
       }
     },
+    "BACK": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BACK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ATRÁS"
+          }
+        }
+      }
+    },
     "BALANCE": {
       "extractionState": "manual",
       "localizations": {
@@ -3847,6 +3864,23 @@
         }
       }
     },
+    "Free to play": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free to play"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gratis"
+          }
+        }
+      }
+    },
     "GAME RULES": {
       "extractionState": "manual",
       "localizations": {
@@ -5140,6 +5174,23 @@
         }
       }
     },
+    "Live scoring": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live scoring"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcador en vivo"
+          }
+        }
+      }
+    },
     "Load more": {
       "extractionState": "manual",
       "localizations": {
@@ -6247,6 +6298,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "No tienes suficientes Tickets para entrar."
+          }
+        }
+      }
+    },
+    "Not me": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not me"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No soy yo"
           }
         }
       }
@@ -8602,6 +8670,23 @@
         }
       }
     },
+    "Real prizes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Real prizes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premios reales"
+          }
+        }
+      }
+    },
     "Recharge": {
       "extractionState": "manual",
       "localizations": {
@@ -9555,6 +9640,23 @@
         }
       }
     },
+    "Step": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paso"
+          }
+        }
+      }
+    },
     "Streak 10": {
       "extractionState": "manual",
       "localizations": {
@@ -9998,6 +10100,23 @@
         }
       }
     },
+    "Tap your prediction": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap your prediction"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca tu pronóstico"
+          }
+        }
+      }
+    },
     "That user does not exist.": {
       "extractionState": "manual",
       "localizations": {
@@ -10011,6 +10130,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ese usuario no existe."
+          }
+        }
+      }
+    },
+    "That's me": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That's me"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soy yo"
           }
         }
       }
@@ -11491,6 +11627,40 @@
         }
       }
     },
+    "active players this week": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "active players this week"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "jugadores activos esta semana"
+          }
+        }
+      }
+    },
+    "avg rating": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "avg rating"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "calificación promedio"
+          }
+        }
+      }
+    },
     "away wins": {
       "extractionState": "manual",
       "localizations": {
@@ -11562,6 +11732,23 @@
       }
     },
     "home/draw/away": {},
+    "in prizes paid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in prizes paid"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "en premios pagados"
+          }
+        }
+      }
+    },
     "it ends in a draw": {
       "extractionState": "manual",
       "localizations": {
@@ -11592,6 +11779,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "mín"
+          }
+        }
+      }
+    },
+    "of": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "of"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "de"
           }
         }
       }
@@ -11648,6 +11852,176 @@
         }
       }
     },
+    "social.a1": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Carlos M., 32, runs his neighborhood pool"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Carlos M., 32, organiza la quiniela del barrio"
+          }
+        }
+      }
+    },
+    "social.a2": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Laura S., 27, América fan"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Laura S., 27, fan del América"
+          }
+        }
+      }
+    },
+    "social.q1": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“At last, no fights with my buddies over weekend points. I won a $250 gift card.”"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Por fin, sin peleas con mis cuates por los puntos del fin. Gané una tarjeta de $250.»"
+          }
+        }
+      }
+    },
+    "social.q2": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Daily Pick is my morning vice. 14-day streak going.”"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«El Pick del Día es mi vicio mañanero. Llevo 14 días seguidos.»"
+          }
+        }
+      }
+    },
+    "sol.excelChaos": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build a pool in under 30 seconds, share by link"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arma una quiniela en menos de 30 segundos y compártela por link"
+          }
+        }
+      }
+    },
+    "sol.friendsDontPay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nobody pays anything — the prize is funded by ads"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nadie paga nada: el premio se financia con anuncios"
+          }
+        }
+      }
+    },
+    "sol.honorOnly": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tangible prize guaranteed for the winner"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premio tangible garantizado para el ganador"
+          }
+        }
+      }
+    },
+    "sol.manualScoring": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live automatic scoring — every goal moves your score instantly"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcador en vivo automático: cada gol mueve tu score al instante"
+          }
+        }
+      }
+    },
+    "sol.missedDeadlines": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Picks lock automatically at the first kickoff"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los pronósticos se bloquean al primer silbatazo"
+          }
+        }
+      }
+    },
+    "sol.smallPrizes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amazon $250 MXN gift cards every week"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjetas Amazon de $250 MXN cada semana"
+          }
+        }
+      }
+    },
     "that always end in arguments": {
       "extractionState": "manual",
       "localizations": {
@@ -11699,6 +12073,74 @@
         }
       }
     },
+    "tinder.1": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm always the one who ends up building the bracket"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siempre soy yo el que termina armando la quiniela"
+          }
+        }
+      }
+    },
+    "tinder.2": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I've been chasing 3 pools that still owe me money"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Llevo persiguiendo 3 quinielas que aún me deben dinero"
+          }
+        }
+      }
+    },
+    "tinder.3": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My group wins $200 and nobody collects it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi grupo gana $200 y nadie los cobra"
+          }
+        }
+      }
+    },
+    "tinder.4": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I want to throw a quick prediction without joining a whole league"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiero pronosticar rápido sin meterme a una liga entera"
+          }
+        }
+      }
+    },
     "to actually pay what they owe": {
       "extractionState": "manual",
       "localizations": {
@@ -11729,6 +12171,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "para llevar la cuenta"
+          }
+        }
+      }
+    },
+    "value.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld picks locked. First kickoff in 2h 14m."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pronósticos listos. Primer silbatazo en 2h 14m."
           }
         }
       }

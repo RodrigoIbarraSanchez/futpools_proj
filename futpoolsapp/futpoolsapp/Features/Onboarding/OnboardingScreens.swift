@@ -2,16 +2,19 @@
 //  OnboardingScreens.swift
 //  futpoolsapp
 //
-//  11 screens implementing the adamlyttleapps onboarding-questionnaire
-//  skill blueprint, mapped to futpools (see memory/onboarding_blueprint).
+//  11-screen onboarding REDESIGN — pixel-faithful port of the
+//  Claude Design HTML prototype (futpools-onboarding/project/
+//  FutPools Onboarding.html). Same layout pattern on every screen:
 //
-//  Each screen is a stateless View that reads + mutates the shared
-//  `OnboardingState`. Navigation lives in `OnboardingView`. All copy
-//  goes through the `L("...")` helper (NSLocalizedString with explicit
-//  bundle) instead of `String(localized:)` so the in-app EN/ES toggle
-//  switches text mid-session — iOS 17+'s `String(localized:)` caches
-//  the bundle's preferredLocalizations at launch and ignores Bundle
-//  swizzles.
+//      ┌── header (eyebrow + title + subtitle) ──┐
+//      │                                          │
+//      │  body (flex:1, justify center)           │
+//      │                                          │
+//      └── footer (primary button anchored) ──────┘
+//
+//  Copy goes through `L("...")` (NSLocalizedString with explicit
+//  bundle) so the in-app EN/ES toggle works mid-session — see
+//  BundleLanguageOverride.swift for the rationale.
 //
 
 import SwiftUI
@@ -24,178 +27,203 @@ struct OnbWelcomeScreen: View {
     let onLogin: () -> Void
 
     var body: some View {
-        VStack(spacing: 22) {
-            Spacer(minLength: 24)
-            Image("PrizeAmazonGift")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(maxHeight: 200)
-                .shadow(color: .arenaGold.opacity(0.5), radius: 24, y: 6)
-                .padding(.horizontal, 24)
-            VStack(spacing: 10) {
-                Text(L("WIN REAL PRIZES BY PREDICTING FOOTBALL"))
-                    .font(ArenaFont.display(size: 26, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaGold)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                Text(L("Pools with friends. No spreadsheets. Nobody to chase for money."))
-                    .font(ArenaFont.body(size: 14))
-                    .foregroundColor(.arenaTextDim)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+        VStack(spacing: 0) {
+            VStack(spacing: 28) {
+                Spacer(minLength: 12)
+                VStack(spacing: 18) {
+                    OnbBrandMark(size: 12)
+                    ZStack {
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [Color.arenaGold.opacity(0.32), .clear],
+                                center: .center,
+                                startRadius: 0, endRadius: 120
+                            ))
+                            .frame(width: 240, height: 240)
+                            .blur(radius: 8)
+                        Image("PrizeAmazonGift")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 200, height: 200)
+                    }
+                }
+                VStack(spacing: 12) {
+                    Text(L("WIN REAL PRIZES BY PREDICTING FOOTBALL"))
+                        .font(ArenaFont.display(size: 26, weight: .heavy))
+                        .tracking(2.1)
+                        .lineSpacing(2)
+                        .foregroundColor(.arenaGold)
+                        .shadow(color: .arenaGold.opacity(0.35), radius: 24)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                    Text(L("Pools with friends. No spreadsheets. Nobody to chase for money."))
+                        .font(ArenaFont.body(size: 14))
+                        .foregroundColor(.arenaTextDim)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 300)
+                }
+                HStack(spacing: 8) {
+                    OnbBadge(text: L("Free to play"))
+                    OnbBadge(text: L("Live scoring"))
+                    OnbBadge(text: L("Real prizes"))
+                }
+                Spacer(minLength: 0)
             }
-            Spacer()
             VStack(spacing: 12) {
-                ArcadeButton(
-                    title: "▶ " + L("GET STARTED"),
-                    size: .lg,
-                    fullWidth: true,
-                    action: { state.advance() }
-                )
+                OnbPrimaryButton(label: L("GET STARTED")) { state.advance() }
                 Button(action: onLogin) {
                     Text(L("I already have an account"))
                         .font(ArenaFont.mono(size: 11, weight: .bold))
-                        .tracking(1.5)
+                        .tracking(1.4)
                         .foregroundColor(.arenaTextDim)
+                        .padding(8)
                 }
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 12)
+            .padding(.bottom, 28)
         }
-        .padding(.top, 30)
     }
 }
 
-// MARK: - Screen 2: Goal question (single-select)
+// MARK: - Screen 2: Goal (multi-select cards)
 
 struct OnbGoalScreen: View {
     @ObservedObject var state: OnboardingState
 
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 30)
-            VStack(spacing: 8) {
-                Text(L("WHAT BRINGS YOU TO FUTPOOLS?"))
-                    .font(ArenaFont.display(size: 22, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                Text(L("Pick all that apply."))
-                    .font(ArenaFont.mono(size: 11))
-                    .foregroundColor(.arenaTextDim)
-            }
-            VStack(spacing: 10) {
-                ForEach(OnboardingGoalChoice.allCases) { g in
-                    optionRow(g)
-                }
-            }
-            .padding(.horizontal, 20)
-            Spacer()
-            if !state.goals.isEmpty {
-                ArcadeButton(
-                    title: "▶ " + L("NEXT"),
-                    size: .lg,
-                    fullWidth: true,
-                    action: { state.advance() }
+        VStack(spacing: 0) {
+            VStack(spacing: 24) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 02 — \(L("Pick all that apply."))",
+                    title: L("WHAT BRINGS YOU TO FUTPOOLS?"),
+                    size: .lg
                 )
+                VStack(spacing: 10) {
+                    ForEach(OnboardingGoalChoice.allCases) { g in
+                        rowFilled(
+                            emoji: g.emoji,
+                            label: g.label,
+                            active: state.goals.contains(g),
+                            toggle: {
+                                if state.goals.contains(g) { state.goals.remove(g) }
+                                else { state.goals.insert(g) }
+                            }
+                        )
+                    }
+                }
                 .padding(.horizontal, 24)
-                .padding(.bottom, 18)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                Spacer(minLength: 0)
             }
+            footer
         }
-        .animation(.easeInOut(duration: 0.2), value: state.goals)
     }
 
-    private func optionRow(_ g: OnboardingGoalChoice) -> some View {
-        let active = state.goals.contains(g)
-        return Button {
-            if active { state.goals.remove(g) } else { state.goals.insert(g) }
-        } label: {
+    @ViewBuilder
+    private var footer: some View {
+        VStack {
+            OnbPrimaryButton(label: L("NEXT"), disabled: state.goals.isEmpty) {
+                state.advance()
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 28)
+    }
+
+    private func rowFilled(emoji: String, label: String, active: Bool, toggle: @escaping () -> Void) -> some View {
+        Button(action: toggle) {
             HStack(spacing: 14) {
-                Text(g.emoji).font(.system(size: 26))
-                Text(g.label)
+                Text(emoji).font(.system(size: 24))
+                Text(label)
                     .font(ArenaFont.display(size: 13, weight: .heavy))
-                    .tracking(1)
+                    .tracking(0.5)
                     .foregroundColor(active ? .arenaOnPrimary : .arenaText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer()
                 if active {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.arenaOnPrimary)
+                    ZStack {
+                        Circle().fill(Color.arenaOnPrimary).frame(width: 22, height: 22)
+                        Text("✓")
+                            .font(.system(size: 13, weight: .black))
+                            .foregroundColor(.arenaPrimary)
+                    }
                 }
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(HudCornerCutShape(cut: 8).fill(active ? Color.arenaPrimary : Color.arenaSurface))
             .overlay(HudCornerCutShape(cut: 8).stroke(active ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1))
+            .shadow(color: active ? .arenaPrimary.opacity(0.25) : .clear, radius: 16)
             .clipShape(HudCornerCutShape(cut: 8))
         }
         .buttonStyle(.plain)
     }
 }
 
-// MARK: - Screen 3: Pain points (multi-select)
+// MARK: - Screen 3: Pain points (HUD checkbox list)
 
 struct OnbPainScreen: View {
     @ObservedObject var state: OnboardingState
 
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 30)
-            VStack(spacing: 8) {
-                Text(L("WHAT FRUSTRATES YOU ABOUT POOLS TODAY?"))
-                    .font(ArenaFont.display(size: 20, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                Text(L("Tap everything that hits home."))
-                    .font(ArenaFont.mono(size: 11))
-                    .foregroundColor(.arenaTextDim)
-            }
-            ScrollView {
+        VStack(spacing: 0) {
+            VStack(spacing: 24) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 03 — \(L("Tap everything that hits home."))",
+                    title: L("WHAT FRUSTRATES YOU ABOUT POOLS TODAY?"),
+                    size: .md
+                )
                 VStack(spacing: 8) {
                     ForEach(OnboardingPain.allCases) { p in
-                        painRow(p)
+                        rowChecklist(
+                            emoji: p.emoji,
+                            label: p.label,
+                            active: state.pains.contains(p),
+                            toggle: {
+                                if state.pains.contains(p) { state.pains.remove(p) }
+                                else { state.pains.insert(p) }
+                            }
+                        )
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
+                Spacer(minLength: 0)
             }
-            ArcadeButton(
-                title: "▶ " + L("NEXT"),
-                size: .lg,
-                fullWidth: true,
-                action: { state.advance() }
-            )
-            .padding(.horizontal, 24)
-            .padding(.bottom, 18)
+            footer
         }
     }
 
-    private func painRow(_ p: OnboardingPain) -> some View {
-        let active = state.pains.contains(p)
-        return Button {
-            if active { state.pains.remove(p) } else { state.pains.insert(p) }
-        } label: {
+    private var footer: some View {
+        VStack {
+            OnbPrimaryButton(label: L("NEXT")) { state.advance() }
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 28)
+    }
+
+    private func rowChecklist(emoji: String, label: String, active: Bool, toggle: @escaping () -> Void) -> some View {
+        Button(action: toggle) {
             HStack(spacing: 12) {
-                Text(p.emoji).font(.system(size: 22))
-                Text(p.label)
-                    .font(ArenaFont.body(size: 13, weight: .regular))
+                Text(emoji).font(.system(size: 20))
+                Text(label)
+                    .font(ArenaFont.body(size: 13))
                     .foregroundColor(active ? .arenaText : .arenaTextDim)
                     .lineLimit(2)
                 Spacer()
                 ZStack {
                     HudCornerCutShape(cut: 4)
-                        .stroke(active ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1.5)
+                        .stroke(active ? Color.arenaPrimary : Color.arenaStrokeStrong, lineWidth: 1.5)
                         .frame(width: 22, height: 22)
                     if active {
                         HudCornerCutShape(cut: 4)
                             .fill(Color.arenaPrimary)
-                            .frame(width: 14, height: 14)
+                            .frame(width: 22, height: 22)
+                        Text("✓")
+                            .font(.system(size: 12, weight: .black))
+                            .foregroundColor(.arenaOnPrimary)
                     }
                 }
             }
@@ -210,174 +238,199 @@ struct OnbPainScreen: View {
     }
 }
 
-// MARK: - Screen 4: Social proof
+// MARK: - Screen 4: Social proof (stats strip + 2 quote cards)
 
 struct OnbSocialProofScreen: View {
     @ObservedObject var state: OnboardingState
 
-    private struct Quote: Identifiable {
-        let id = UUID()
-        let stars: Int
-        let body: String
-        let author: String
-    }
-    private var quotes: [Quote] {
-        [
-            Quote(stars: 5,
-                  body: L("\"At last, no fights with my buddies over weekend points. I won a $250 gift card.\""),
-                  author: L("— Carlos M., 32, runs his neighborhood pool")),
-            Quote(stars: 5,
-                  body: L("\"Daily Pick is my morning vice. 14-day streak going.\""),
-                  author: L("— Laura S., 27, América fan")),
-        ]
-    }
-
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 30)
-            Text(L("PLAYERS LIKE YOU ARE ALREADY IN"))
-                .font(ArenaFont.display(size: 20, weight: .black))
-                .tracking(2)
-                .foregroundColor(.arenaText)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-            VStack(spacing: 12) {
-                ForEach(quotes) { q in
-                    quoteCard(q)
+        VStack(spacing: 0) {
+            VStack(spacing: 22) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 04",
+                    title: L("PLAYERS LIKE YOU ARE ALREADY IN"),
+                    size: .md
+                )
+                HStack(spacing: 8) {
+                    OnbStatCard(value: "47K", label: L("active players this week"))
+                    OnbStatCard(value: "$12K", label: L("in prizes paid"))
+                    OnbStatCard(value: "4.8★", label: L("avg rating"))
                 }
+                .padding(.horizontal, 24)
+                VStack(spacing: 12) {
+                    quoteCard(quote: L("social.q1"), author: L("social.a1"))
+                    quoteCard(quote: L("social.q2"), author: L("social.a2"))
+                    Text(L("Representative reviews. More on App Store."))
+                        .font(ArenaFont.mono(size: 9))
+                        .foregroundColor(.arenaTextFaint)
+                        .padding(.top, 4)
+                }
+                .padding(.horizontal, 24)
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 20)
-            Spacer()
-            Text(L("Representative reviews. More on App Store."))
-                .font(ArenaFont.mono(size: 9))
-                .foregroundColor(.arenaTextFaint)
-            ArcadeButton(
-                title: "▶ " + L("NEXT"),
-                size: .lg,
-                fullWidth: true,
-                action: { state.advance() }
-            )
-            .padding(.horizontal, 24)
-            .padding(.bottom, 18)
+            footer
         }
     }
 
-    private func quoteCard(_ q: Quote) -> some View {
-        HudFrame(cut: 10) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(String(repeating: "⭐", count: q.stars))
-                    .font(.system(size: 14))
-                Text(q.body)
-                    .font(ArenaFont.body(size: 13))
-                    .foregroundColor(.arenaText)
-                Text(q.author)
-                    .font(ArenaFont.mono(size: 10, weight: .bold))
-                    .foregroundColor(.arenaTextDim)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
+    private var footer: some View {
+        VStack {
+            OnbPrimaryButton(label: L("NEXT")) { state.advance() }
         }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 28)
+    }
+
+    private func quoteCard(quote: String, author: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("★★★★★")
+                .font(.system(size: 13))
+                .tracking(1.3)
+                .foregroundColor(.arenaGold)
+            Text(quote)
+                .font(ArenaFont.body(size: 13))
+                .foregroundColor(.arenaText)
+                .lineSpacing(2)
+            Text(author)
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .foregroundColor(.arenaTextDim)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(HudCornerCutShape(cut: 10).fill(Color.arenaSurface))
+        .overlay(HudCornerCutShape(cut: 10).stroke(Color.arenaStroke, lineWidth: 1))
+        .clipShape(HudCornerCutShape(cut: 10))
     }
 }
 
-// MARK: - Screen 5: Tinder cards (4 swipe statements)
+// MARK: - Screen 5: Tinder swipe (stacked cards)
 
 struct OnbTinderScreen: View {
     @ObservedObject var state: OnboardingState
     @State private var index: Int = 0
     @State private var dragOffset: CGSize = .zero
 
-    private let statements: [String] = [
-        L("I'm always the one who ends up building the bracket"),
-        L("I've been chasing 3 pools that still owe me money"),
-        L("My group wins $200 and nobody collects it"),
-        L("I want to throw a quick prediction without joining a whole league"),
-    ]
+    private var statementKeys: [String] {
+        ["tinder.1", "tinder.2", "tinder.3", "tinder.4"]
+    }
 
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 24)
-            VStack(spacing: 6) {
-                Text(L("WHICH ONE IS YOU?"))
-                    .font(ArenaFont.display(size: 22, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaText)
-                Text(L("Swipe → if it's you. ← if not."))
-                    .font(ArenaFont.mono(size: 11))
-                    .foregroundColor(.arenaTextDim)
-            }
-            ZStack {
-                if index < statements.count {
-                    cardView(statements[index])
-                        .offset(x: dragOffset.width, y: dragOffset.height * 0.2)
-                        .rotationEffect(.degrees(Double(dragOffset.width / 18)))
-                        .gesture(
-                            DragGesture()
-                                .onChanged { value in dragOffset = value.translation }
-                                .onEnded { value in handleSwipe(value.translation.width) }
-                        )
-                        .transition(.scale.combined(with: .opacity))
-                } else {
-                    Text("✓")
-                        .font(.system(size: 64, weight: .bold))
-                        .foregroundColor(.arenaPrimary)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, 24)
-            HStack(spacing: 28) {
-                Button { resolveSwipe(.dismiss) } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.arenaDanger)
-                        .frame(width: 56, height: 56)
-                        .background(HudCornerCutShape(cut: 8).fill(Color.arenaSurface))
-                        .overlay(HudCornerCutShape(cut: 8).stroke(Color.arenaDanger.opacity(0.6), lineWidth: 1))
-                }
-                Button { resolveSwipe(.agree) } label: {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.arenaPrimary)
-                        .frame(width: 56, height: 56)
-                        .background(HudCornerCutShape(cut: 8).fill(Color.arenaSurface))
-                        .overlay(HudCornerCutShape(cut: 8).stroke(Color.arenaPrimary.opacity(0.6), lineWidth: 1))
-                }
-            }
-            .buttonStyle(.plain)
-            // NEXT only appears once the user has swiped (or button-
-            // tapped) through all 4 cards — keeps the screen
-            // mandatory in line with the no-skip onboarding policy.
-            if index >= statements.count {
-                ArcadeButton(
-                    title: "▶ " + L("NEXT"),
-                    size: .lg,
-                    fullWidth: true,
-                    action: { state.advance() }
+        VStack(spacing: 0) {
+            VStack(spacing: 16) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 05 — \(String(format: "%02d / %02d", min(index + 1, statementKeys.count), statementKeys.count))",
+                    title: L("WHICH ONE IS YOU?"),
+                    subtitle: L("Swipe → if it's you. ← if not."),
+                    size: .lg
                 )
+                ZStack {
+                    if index < statementKeys.count - 2 {
+                        cardSilhouette(offset: 8, rotation: -3, indent: 24)
+                    }
+                    if index < statementKeys.count - 1 {
+                        cardSilhouette(offset: 4, rotation: 2, indent: 12)
+                    }
+                    if index < statementKeys.count {
+                        topCard(text: L(statementKeys[index]))
+                            .offset(x: dragOffset.width, y: dragOffset.height * 0.2)
+                            .rotationEffect(.degrees(Double(dragOffset.width / 18)))
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { v in dragOffset = v.translation }
+                                    .onEnded { v in handleSwipe(v.translation.width) }
+                            )
+                    } else {
+                        Text("✓")
+                            .font(.system(size: 64, weight: .bold))
+                            .foregroundColor(.arenaPrimary)
+                    }
+                }
+                .frame(height: 320)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 18)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                actionRow
             }
+            footer
         }
     }
 
-    private func cardView(_ text: String) -> some View {
-        HudFrame(cut: 14, glow: .arenaAccent) {
-            VStack(spacing: 18) {
-                Text("\u{201C}")
-                    .font(.system(size: 60, weight: .black))
-                    .foregroundColor(.arenaAccent)
-                Text(text)
-                    .font(ArenaFont.display(size: 18, weight: .heavy))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.arenaText)
-                Text("\(index + 1) / \(statements.count)")
-                    .font(ArenaFont.mono(size: 10, weight: .bold))
-                    .tracking(2)
-                    .foregroundColor(.arenaTextDim)
+    private func cardSilhouette(offset: CGFloat, rotation: Double, indent: CGFloat) -> some View {
+        HudCornerCutShape(cut: 14)
+            .fill(Color.arenaSurface)
+            .overlay(HudCornerCutShape(cut: 14).stroke(Color.arenaStroke, lineWidth: 1))
+            .padding(.horizontal, indent)
+            .offset(y: offset)
+            .rotationEffect(.degrees(rotation))
+    }
+
+    private func topCard(text: String) -> some View {
+        VStack(spacing: 16) {
+            Text("\u{201C}")
+                .font(.system(size: 64, weight: .black))
+                .foregroundColor(.arenaAccent)
+                .padding(.top, -8)
+            Text(text)
+                .font(ArenaFont.display(size: 18, weight: .heavy))
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+                .foregroundColor(.arenaText)
+            Text("\(index + 1) / \(statementKeys.count)")
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .tracking(1.8)
+                .foregroundColor(.arenaTextDim)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(HudCornerCutShape(cut: 14).fill(Color.arenaSurface))
+        .overlay(HudCornerCutShape(cut: 14).stroke(Color.arenaAccent.opacity(0.4), lineWidth: 1))
+        .shadow(color: .arenaAccent.opacity(0.22), radius: 30)
+        .clipShape(HudCornerCutShape(cut: 14))
+    }
+
+    private var actionRow: some View {
+        HStack(spacing: 24) {
+            actionButton(symbol: "✕", color: .arenaDanger, label: L("Not me")) {
+                resolveSwipe(.dismiss)
             }
-            .padding(28)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            actionButton(symbol: "✓", color: .arenaPrimary, label: L("That's me"), glow: true) {
+                resolveSwipe(.agree)
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    private func actionButton(symbol: String, color: Color, label: String, glow: Bool = false, action: @escaping () -> Void) -> some View {
+        VStack(spacing: 6) {
+            Button(action: action) {
+                Text(symbol)
+                    .font(.system(size: 26, weight: .black))
+                    .foregroundColor(color)
+                    .frame(width: 64, height: 64)
+                    .background(HudCornerCutShape(cut: 8).fill(Color.arenaSurface))
+                    .overlay(HudCornerCutShape(cut: 8).stroke(color.opacity(0.6), lineWidth: 1))
+                    .shadow(color: glow ? color.opacity(0.3) : .clear, radius: 16)
+                    .clipShape(HudCornerCutShape(cut: 8))
+            }
+            .buttonStyle(.plain)
+            .disabled(index >= statementKeys.count)
+            Text(label.uppercased())
+                .font(ArenaFont.mono(size: 9, weight: .bold))
+                .tracking(1.6)
+                .foregroundColor(glow ? color : .arenaTextMuted)
+        }
+    }
+
+    @ViewBuilder
+    private var footer: some View {
+        if index >= statementKeys.count {
+            VStack {
+                OnbPrimaryButton(label: L("NEXT")) { state.advance() }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 28)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        } else {
+            Spacer().frame(height: 28)
         }
     }
 
@@ -388,11 +441,12 @@ struct OnbTinderScreen: View {
     }
 
     private func resolveSwipe(_ r: OnboardingTinderResponse) {
+        guard index < statementKeys.count else { return }
         state.swipes.append(r)
-        withAnimation(.easeOut(duration: 0.25)) {
+        withAnimation(.easeOut(duration: 0.22)) {
             dragOffset = CGSize(width: r == .agree ? 500 : -500, height: 0)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                 index += 1
                 dragOffset = .zero
@@ -401,146 +455,169 @@ struct OnbTinderScreen: View {
     }
 }
 
-// MARK: - Screen 6: Personalised solution
+// MARK: - Screen 6: Personalised solution (mirror)
 
 struct OnbSolutionScreen: View {
     @ObservedObject var state: OnboardingState
 
-    /// Falls back to the top 3 solutions when the user picked no
-    /// pains, so the screen never shows an empty state.
     private var resolvedPains: [OnboardingPain] {
         if state.pains.isEmpty {
-            return [.manualScoring, .friendsDontPay, .smallPrizes]
+            return [.manualScoring, .friendsDontPay, .excelChaos]
         }
-        return OnboardingPain.allCases.filter { state.pains.contains($0) }
+        return Array(OnboardingPain.allCases.filter { state.pains.contains($0) }.prefix(4))
     }
 
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 24)
-            VStack(spacing: 8) {
-                Text(L("HERE'S HOW FUTPOOLS FIXES IT"))
-                    .font(ArenaFont.display(size: 22, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaPrimary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                Text(L("For each thing you said:"))
-                    .font(ArenaFont.mono(size: 11))
-                    .foregroundColor(.arenaTextDim)
-            }
-            ScrollView {
-                VStack(spacing: 10) {
+        VStack(spacing: 0) {
+            VStack(spacing: 24) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 06 — \(L("For each thing you said:"))",
+                    title: L("HERE'S HOW FUTPOOLS FIXES IT"),
+                    size: .md,
+                    titleColor: .arenaPrimary
+                )
+                VStack(spacing: 12) {
                     ForEach(resolvedPains) { p in
-                        solutionRow(pain: p)
+                        solutionCard(pain: p)
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 24)
+                Spacer(minLength: 0)
             }
-            ArcadeButton(
-                title: "▶ " + L("NEXT"),
-                size: .lg,
-                fullWidth: true,
-                action: { state.advance() }
-            )
+            VStack {
+                OnbPrimaryButton(label: L("NEXT")) { state.advance() }
+            }
             .padding(.horizontal, 24)
-            .padding(.bottom, 18)
+            .padding(.bottom, 28)
         }
     }
 
-    private func solutionRow(pain p: OnboardingPain) -> some View {
-        let s = p.solution
-        return HudFrame(cut: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(p.emoji).font(.system(size: 14))
-                    Text(p.label)
-                        .font(ArenaFont.mono(size: 10))
-                        .foregroundColor(.arenaTextDim)
-                        .lineLimit(1)
-                }
-                HStack(alignment: .top, spacing: 10) {
-                    Text(s.emoji).font(.system(size: 22))
-                    Text(s.headline)
-                        .font(ArenaFont.display(size: 13, weight: .heavy))
-                        .foregroundColor(.arenaText)
-                        .lineLimit(3)
-                }
+    private func solutionCard(pain p: OnboardingPain) -> some View {
+        let solutionKey: String = {
+            switch p {
+            case .manualScoring:    return "sol.manualScoring"
+            case .friendsDontPay:   return "sol.friendsDontPay"
+            case .smallPrizes:      return "sol.smallPrizes"
+            case .excelChaos:       return "sol.excelChaos"
+            case .missedDeadlines:  return "sol.missedDeadlines"
+            case .honorOnly:        return "sol.honorOnly"
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        }()
+        let solutionEmoji: String = {
+            switch p {
+            case .manualScoring:    return "⚡"
+            case .friendsDontPay:   return "🎁"
+            case .smallPrizes:      return "🏆"
+            case .excelChaos:       return "🚀"
+            case .missedDeadlines:  return "🔒"
+            case .honorOnly:        return "💰"
+            }
+        }()
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(p.emoji).font(.system(size: 12))
+                Text(p.label.uppercased())
+                    .font(ArenaFont.mono(size: 10))
+                    .tracking(1)
+                    .foregroundColor(.arenaTextDim)
+                    .lineLimit(1)
+            }
+            .opacity(0.7)
+            HStack(alignment: .top, spacing: 12) {
+                Text(solutionEmoji)
+                    .font(.system(size: 18))
+                    .frame(width: 36, height: 36)
+                    .background(HudCornerCutShape(cut: 5).fill(Color.arenaPrimary.opacity(0.12)))
+                    .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaPrimary.opacity(0.4), lineWidth: 1))
+                    .clipShape(HudCornerCutShape(cut: 5))
+                Text(L(solutionKey))
+                    .font(ArenaFont.display(size: 13, weight: .heavy))
+                    .lineSpacing(2)
+                    .foregroundColor(.arenaText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(HudCornerCutShape(cut: 10).fill(Color.arenaSurface))
+        .overlay(HudCornerCutShape(cut: 10).stroke(Color.arenaStroke, lineWidth: 1))
+        .clipShape(HudCornerCutShape(cut: 10))
     }
 }
 
-// MARK: - Screen 7: Preferences (multi-select league grid)
+// MARK: - Screen 7: League prefs (2x3 grid)
 
 struct OnbPrefsScreen: View {
     @ObservedObject var state: OnboardingState
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 30)
-            VStack(spacing: 8) {
-                Text(L("WHAT FOOTBALL DO YOU FOLLOW?"))
-                    .font(ArenaFont.display(size: 22, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaText)
-                    .multilineTextAlignment(.center)
-                Text(L("We'll filter the next step's matches."))
-                    .font(ArenaFont.mono(size: 11))
-                    .foregroundColor(.arenaTextDim)
-            }
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(OnboardingLeague.allCases) { l in
-                    leagueButton(l)
+        VStack(spacing: 0) {
+            VStack(spacing: 24) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 07",
+                    title: L("WHAT FOOTBALL DO YOU FOLLOW?"),
+                    subtitle: L("We'll filter the next step's matches."),
+                    size: .md
+                )
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(OnboardingLeague.allCases) { l in
+                        leagueCell(l)
+                    }
                 }
+                .padding(.horizontal, 24)
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 20)
-            Spacer()
-            ArcadeButton(
-                title: "▶ " + L("NEXT"),
-                size: .lg,
-                fullWidth: true,
-                action: {
+            VStack {
+                OnbPrimaryButton(label: L("NEXT")) {
                     if state.leagues.isEmpty { state.leagues = [.ligaMX] }
                     state.advance()
                 }
-            )
+            }
             .padding(.horizontal, 24)
-            .padding(.bottom, 18)
+            .padding(.bottom, 28)
         }
     }
 
-    private func leagueButton(_ l: OnboardingLeague) -> some View {
+    private func leagueCell(_ l: OnboardingLeague) -> some View {
         let active = state.leagues.contains(l)
+        let parts = l.label.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        let flag = parts.first.map(String.init) ?? ""
+        let name = parts.count > 1 ? String(parts[1]) : l.label
         return Button {
             if active { state.leagues.remove(l) } else { state.leagues.insert(l) }
         } label: {
-            VStack(spacing: 6) {
-                Text(l.label)
+            VStack(spacing: 8) {
+                Text(flag).font(.system(size: 28))
+                Text(name)
                     .font(ArenaFont.display(size: 12, weight: .heavy))
+                    .tracking(0.5)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.85)
                     .foregroundColor(active ? .arenaOnPrimary : .arenaText)
             }
-            .padding(.vertical, 18)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 92)
+            .padding(.vertical, 8)
             .background(HudCornerCutShape(cut: 8).fill(active ? Color.arenaPrimary : Color.arenaSurface))
             .overlay(HudCornerCutShape(cut: 8).stroke(active ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1))
+            .shadow(color: active ? .arenaPrimary.opacity(0.25) : .clear, radius: 16)
             .clipShape(HudCornerCutShape(cut: 8))
         }
         .buttonStyle(.plain)
     }
 }
 
-// MARK: - Screen 8: Processing moment (1.5s auto-advance)
+// MARK: - Screen 8: Processing (spinner with %)
 
 struct OnbProcessingScreen: View {
     @ObservedObject var state: OnboardingState
     @State private var step = 0
+    @State private var spin = false
+    @State private var pct: Int = 8
+
     private let lines: [String] = [
         L("Filtering leagues you follow"),
         L("Loading upcoming matches"),
@@ -548,174 +625,227 @@ struct OnbProcessingScreen: View {
     ]
 
     var body: some View {
-        VStack(spacing: 26) {
+        VStack(spacing: 32) {
             Spacer()
-            ProgressView()
-                .scaleEffect(2)
-                .tint(.arenaPrimary)
+            ZStack {
+                Circle()
+                    .stroke(Color.arenaPrimary.opacity(0.12), lineWidth: 3)
+                    .frame(width: 96, height: 96)
+                Circle()
+                    .trim(from: 0, to: 0.5)
+                    .stroke(Color.arenaPrimary, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .frame(width: 96, height: 96)
+                    .rotationEffect(.degrees(spin ? 360 : 0))
+                    .shadow(color: .arenaPrimary.opacity(0.4), radius: 16)
+                    .animation(.linear(duration: 1.2).repeatForever(autoreverses: false), value: spin)
+                Text("\(pct)%")
+                    .font(ArenaFont.display(size: 22, weight: .heavy))
+                    .foregroundColor(.arenaPrimary)
+                    .monospacedDigit()
+            }
             Text(L("Personalizing your matches…"))
-                .font(ArenaFont.display(size: 16, weight: .heavy))
-                .tracking(1.5)
+                .font(ArenaFont.display(size: 18, weight: .heavy))
+                .tracking(1.1)
                 .foregroundColor(.arenaText)
-            VStack(alignment: .leading, spacing: 8) {
+                .multilineTextAlignment(.center)
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(0..<lines.count, id: \.self) { i in
-                    HStack(spacing: 10) {
-                        Image(systemName: i <= step ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(i <= step ? .arenaPrimary : .arenaTextFaint)
-                        Text(lines[i])
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .stroke(i <= step ? Color.clear : Color.arenaTextFaint, lineWidth: 1.5)
+                                .frame(width: 20, height: 20)
+                            if i <= step {
+                                Circle().fill(Color.arenaPrimary).frame(width: 20, height: 20)
+                                Text("✓")
+                                    .font(.system(size: 11, weight: .black))
+                                    .foregroundColor(.arenaOnPrimary)
+                            }
+                        }
+                        Text(lines[i] + (i == step + 1 ? "…" : ""))
                             .font(ArenaFont.mono(size: 12))
                             .foregroundColor(i <= step ? .arenaText : .arenaTextDim)
+                            .opacity(i <= step + 1 ? 1 : 0.3)
                     }
-                    .opacity(i <= step ? 1 : 0.3)
                 }
             }
+            .padding(.horizontal, 32)
             Spacer()
         }
         .onAppear {
+            spin = true
+            // Animate the percentage from 8 → 100 over 1.6s while
+            // the checklist ticks through.
             for i in 0..<lines.count {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45 * Double(i + 1)) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 * Double(i + 1)) {
                     withAnimation { step = i }
                 }
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+            for n in stride(from: 12, through: 100, by: 4) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05 * Double(n / 4)) {
+                    pct = n
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
                 state.advance()
             }
         }
     }
 }
 
-// MARK: - Screen 9: App demo (predict 3 fixtures)
+// MARK: - Screen 9: Demo (predict 3 fixtures)
 
 struct OnbDemoScreen: View {
     @ObservedObject var state: OnboardingState
     @StateObject private var vm = OnbDemoViewModel()
 
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 24)
-            VStack(spacing: 6) {
-                Text(L("TRY YOUR FIRST POOL"))
-                    .font(ArenaFont.display(size: 22, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaText)
-                Text(L("Pick 3 matches. Best score wins."))
-                    .font(ArenaFont.mono(size: 11))
-                    .foregroundColor(.arenaTextDim)
-            }
-            if vm.isLoading {
-                Spacer()
-                ProgressView().tint(.arenaPrimary)
-                Spacer()
-            } else if let fx = vm.currentFixture {
-                fixtureCard(fx)
-                    .padding(.horizontal, 18)
-                progressLabel
-            } else {
-                Spacer()
-                Text(L("✓ All picks locked in"))
-                    .font(ArenaFont.display(size: 18, weight: .heavy))
-                    .foregroundColor(.arenaPrimary)
-                Spacer()
-            }
-            Spacer(minLength: 8)
-            if vm.didFinish {
-                ArcadeButton(
-                    title: "▶ " + L("SEE YOUR PICKS"),
-                    size: .lg,
-                    fullWidth: true,
-                    action: {
-                        state.demoPicks = vm.picksOut
-                        state.advance()
-                    }
+        VStack(spacing: 0) {
+            VStack(spacing: 14) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 09",
+                    title: L("TRY YOUR FIRST POOL"),
+                    subtitle: L("Pick 3 matches. Best score wins."),
+                    size: .md
                 )
-                .padding(.horizontal, 24)
-                .padding(.bottom, 18)
+                progressDots
+                if vm.isLoading {
+                    Spacer()
+                    ProgressView().tint(.arenaPrimary)
+                    Spacer()
+                } else if let fx = vm.currentFixture {
+                    fixtureCard(fx).padding(.horizontal, 24)
+                }
+                Spacer(minLength: 0)
             }
+            VStack {
+                OnbPrimaryButton(
+                    label: vm.didFinish ? L("SEE YOUR PICKS") : L("NEXT"),
+                    disabled: !vm.didFinish
+                ) {
+                    state.demoPicks = vm.picksOut
+                    state.advance()
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 28)
         }
         .task { await vm.load(leagues: Array(state.leagues)) }
     }
 
-    private var progressLabel: some View {
-        Text("\(vm.completedCount) / \(vm.totalCount)")
-            .font(ArenaFont.mono(size: 12, weight: .bold))
-            .tracking(1.5)
-            .foregroundColor(.arenaTextDim)
+    private var progressDots: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<vm.totalCount, id: \.self) { i in
+                Capsule()
+                    .fill(i < vm.completedCount + (i == vm.currentIndex ? 1 : 0) ? Color.arenaPrimary : Color.white.opacity(0.1))
+                    .frame(width: i == vm.currentIndex ? 28 : 8, height: 4)
+                    .shadow(color: i == vm.currentIndex ? .arenaPrimary.opacity(0.6) : .clear, radius: 6)
+                    .animation(.easeInOut(duration: 0.2), value: vm.currentIndex)
+            }
+        }
     }
 
     private func fixtureCard(_ fx: OnbDemoFixture) -> some View {
-        HudFrame(cut: 14, glow: .arenaAccent) {
-            VStack(spacing: 14) {
-                Text(String(format: L("MATCH %1$lld OF %2$lld"), vm.currentIndex + 1, vm.totalCount))
-                    .font(ArenaFont.mono(size: 10, weight: .bold))
-                    .tracking(2)
+        VStack(spacing: 14) {
+            HStack {
+                Text((fx.leagueName ?? "").uppercased())
+                    .font(ArenaFont.mono(size: 9, weight: .bold))
+                    .tracking(1.8)
+                    .foregroundColor(.arenaAccent)
+                Spacer()
+                Text("\(L("MATCH")) \(String(format: "%02d / %02d", vm.currentIndex + 1, vm.totalCount))")
+                    .font(ArenaFont.mono(size: 9, weight: .bold))
+                    .tracking(1.6)
                     .foregroundColor(.arenaTextMuted)
-                HStack(spacing: 10) {
-                    teamBlock(name: fx.homeTeam, logo: fx.homeLogo)
-                    Text("vs")
-                        .font(ArenaFont.display(size: 14, weight: .heavy))
-                        .foregroundColor(.arenaTextDim)
-                    teamBlock(name: fx.awayTeam, logo: fx.awayLogo)
-                }
+            }
+            HStack(spacing: 12) {
+                teamBlock(name: fx.homeTeam, logo: fx.homeLogo, gradientA: .arenaGold, gradientB: .arenaBronze)
+                Text("VS")
+                    .font(ArenaFont.display(size: 14, weight: .heavy))
+                    .tracking(1.4)
+                    .foregroundColor(.arenaTextDim)
+                teamBlock(name: fx.awayTeam, logo: fx.awayLogo, gradientA: .arenaPrimary, gradientB: .arenaAccent)
+            }
+            VStack(spacing: 2) {
                 Text(fx.kickoffShort)
                     .font(ArenaFont.mono(size: 10))
                     .foregroundColor(.arenaTextDim)
-                if let lg = fx.leagueName {
-                    Text(lg.uppercased())
-                        .font(ArenaFont.mono(size: 9, weight: .bold))
-                        .tracking(1.2)
-                        .foregroundColor(.arenaAccent)
-                }
-                HStack(spacing: 8) {
-                    pickButton(label: L("1 LOCAL"), code: "1")
-                    pickButton(label: L("X DRAW"), code: "X")
-                    pickButton(label: L("2 AWAY"), code: "2")
-                }
-                .padding(.top, 4)
+                Text(L("Tap your prediction").uppercased())
+                    .font(ArenaFont.mono(size: 9))
+                    .tracking(1)
+                    .foregroundColor(.arenaTextMuted)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity)
+            HStack(spacing: 8) {
+                pickButton(label: L("1 LOCAL"), code: "1")
+                pickButton(label: L("X DRAW"), code: "X")
+                pickButton(label: L("2 AWAY"), code: "2")
+            }
         }
+        .padding(20)
+        .frame(maxWidth: .infinity)
+        .background(HudCornerCutShape(cut: 14).fill(Color.arenaSurface))
+        .overlay(HudCornerCutShape(cut: 14).stroke(Color.arenaAccent.opacity(0.3), lineWidth: 1))
+        .shadow(color: .arenaAccent.opacity(0.16), radius: 24)
+        .clipShape(HudCornerCutShape(cut: 14))
     }
 
-    private func teamBlock(name: String, logo: String?) -> some View {
-        VStack(spacing: 6) {
-            if let urlString = logo, let url = URL(string: urlString) {
-                AsyncImage(url: url) { img in
-                    img.resizable().scaledToFit()
-                } placeholder: {
-                    Color.clear
+    private func teamBlock(name: String, logo: String?, gradientA: Color, gradientB: Color) -> some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(colors: [gradientA, gradientB], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 56, height: 56)
+                if let url = logo.flatMap({ URL(string: $0) }) {
+                    AsyncImage(url: url) { img in
+                        img.resizable().scaledToFit()
+                    } placeholder: {
+                        Text(initials(from: name))
+                            .font(ArenaFont.display(size: 16, weight: .black))
+                            .foregroundColor(.arenaOnPrimary)
+                    }
+                    .frame(width: 44, height: 44)
+                } else {
+                    Text(initials(from: name))
+                        .font(ArenaFont.display(size: 16, weight: .black))
+                        .foregroundColor(.arenaOnPrimary)
                 }
-                .frame(width: 50, height: 50)
             }
             Text(name)
-                .font(ArenaFont.display(size: 11, weight: .heavy))
+                .font(ArenaFont.display(size: 12, weight: .heavy))
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .foregroundColor(.arenaText)
-                .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func initials(from name: String) -> String {
+        String(name.prefix(3)).uppercased()
     }
 
     private func pickButton(label: String, code: String) -> some View {
-        Button {
+        let active = vm.currentFixture.map { vm.picks[$0.fixtureId] == code } ?? false
+        return Button {
             vm.pick(code)
         } label: {
             Text(label)
                 .font(ArenaFont.display(size: 11, weight: .heavy))
-                .tracking(1.5)
-                .foregroundColor(.arenaText)
+                .tracking(1.4)
+                .foregroundColor(active ? .arenaOnPrimary : .arenaText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(HudCornerCutShape(cut: 6).fill(Color.arenaSurfaceAlt))
-                .overlay(HudCornerCutShape(cut: 6).stroke(Color.arenaPrimary.opacity(0.4), lineWidth: 1))
-                .clipShape(HudCornerCutShape(cut: 6))
+                .background(HudCornerCutShape(cut: 5).fill(active ? Color.arenaPrimary : Color.arenaSurfaceAlt))
+                .overlay(HudCornerCutShape(cut: 5).stroke(active ? Color.arenaPrimary : Color.arenaPrimary.opacity(0.4), lineWidth: 1))
+                .shadow(color: active ? .arenaPrimary.opacity(0.4) : .clear, radius: 12)
+                .clipShape(HudCornerCutShape(cut: 5))
         }
         .buttonStyle(.plain)
     }
 }
 
-// MARK: - Demo view model + fixture model
+// MARK: - Demo VM + fixture model
 
 struct OnbDemoFixture: Identifiable, Decodable {
     let fixtureId: Int
@@ -744,26 +874,15 @@ struct OnbDemoFixture: Identifiable, Decodable {
     }
 }
 
-/// Public-endpoint payload uses `date` and nested `teams` shape; we
-/// flatten it into `OnbDemoFixture` so the SwiftUI side stays simple.
 private struct PublicFixturePayload: Decodable {
     let fixtureId: Int
     let date: String?
     let status: String?
     let league: LeagueBlock?
     let teams: TeamsBlock
-
-    struct LeagueBlock: Decodable {
-        let id: Int?
-        let name: String?
-        let logo: String?
-    }
+    struct LeagueBlock: Decodable { let id: Int?; let name: String?; let logo: String? }
     struct TeamsBlock: Decodable {
-        struct Team: Decodable {
-            let id: Int?
-            let name: String?
-            let logo: String?
-        }
+        struct Team: Decodable { let id: Int?; let name: String?; let logo: String? }
         let home: Team
         let away: Team
     }
@@ -812,8 +931,6 @@ final class OnbDemoViewModel: ObservableObject {
                 )
             }
         } catch {
-            // Demo is non-critical — show a curated fallback so the
-            // user can still complete the flow when offline / API down.
             fixtures = OnbDemoViewModel.fallbackFixtures
         }
     }
@@ -827,9 +944,9 @@ final class OnbDemoViewModel: ObservableObject {
     }
 
     private static let fallbackFixtures: [OnbDemoFixture] = [
-        OnbDemoFixture(fixtureId: -1, homeTeam: "Real Madrid", awayTeam: "Atlético", homeLogo: nil, awayLogo: nil, kickoff: nil, leagueName: "LaLiga"),
-        OnbDemoFixture(fixtureId: -2, homeTeam: "Barcelona", awayTeam: "Valencia", homeLogo: nil, awayLogo: nil, kickoff: nil, leagueName: "LaLiga"),
-        OnbDemoFixture(fixtureId: -3, homeTeam: "PSG", awayTeam: "Marseille", homeLogo: nil, awayLogo: nil, kickoff: nil, leagueName: "Ligue 1"),
+        OnbDemoFixture(fixtureId: -1, homeTeam: "América", awayTeam: "Chivas",   homeLogo: nil, awayLogo: nil, kickoff: nil, leagueName: "Liga MX"),
+        OnbDemoFixture(fixtureId: -2, homeTeam: "Real Madrid", awayTeam: "Atlético", homeLogo: nil, awayLogo: nil, kickoff: nil, leagueName: "LaLiga"),
+        OnbDemoFixture(fixtureId: -3, homeTeam: "Barcelona", awayTeam: "Valencia",  homeLogo: nil, awayLogo: nil, kickoff: nil, leagueName: "LaLiga"),
     ]
 }
 
@@ -841,63 +958,72 @@ struct OnbValueDeliveryScreen: View {
     let onShare: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
-            Spacer(minLength: 24)
-            VStack(spacing: 6) {
-                Text(L("YOUR MINI-POOL IS READY"))
-                    .font(ArenaFont.display(size: 22, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaPrimary)
-                Text(String(format: L("%lld picks. 0 / %lld until first kickoff."), state.demoPicks.count, state.demoPicks.count))
-                    .font(ArenaFont.mono(size: 11))
-                    .foregroundColor(.arenaTextDim)
-            }
-            HudFrame(cut: 14, glow: .arenaGold) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(L("YOUR FIRST POOL"))
-                        .font(ArenaFont.mono(size: 10, weight: .bold))
-                        .tracking(2)
-                        .foregroundColor(.arenaTextMuted)
-                    Divider().background(Color.arenaStroke)
-                    ForEach(state.demoPicks) { p in
-                        pickRow(p)
-                    }
-                    Divider().background(Color.arenaStroke)
-                    HStack {
-                        Text(L("Score"))
-                            .font(ArenaFont.mono(size: 10))
-                            .foregroundColor(.arenaTextDim)
-                        Spacer()
-                        Text("0 / \(state.demoPicks.count)")
-                            .font(ArenaFont.display(size: 14, weight: .heavy))
-                            .foregroundColor(.arenaGold)
-                    }
-                }
-                .padding(14)
-            }
-            .padding(.horizontal, 20)
-            Spacer()
-            VStack(spacing: 10) {
-                ArcadeButton(
-                    title: "▶ " + L("SAVE & COMPETE"),
-                    variant: .primary,
-                    size: .lg,
-                    fullWidth: true,
-                    action: { state.advance() }
+        VStack(spacing: 0) {
+            VStack(spacing: 22) {
+                Spacer(minLength: 8)
+                OnbTitleBlock(
+                    eyebrow: "\(L("Step")) 10",
+                    title: L("YOUR MINI-POOL IS READY"),
+                    subtitle: String(format: L("value.subtitle"), state.demoPicks.count),
+                    size: .md,
+                    titleColor: .arenaPrimary
                 )
+                summaryCard
+                    .padding(.horizontal, 24)
+                Spacer(minLength: 0)
+            }
+            VStack(spacing: 12) {
+                OnbPrimaryButton(label: L("SAVE & COMPETE")) { state.advance() }
                 Button(action: onShare) {
                     HStack(spacing: 8) {
                         Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 12, weight: .bold))
                         Text(L("Share with friends"))
+                            .font(ArenaFont.mono(size: 11, weight: .bold))
+                            .tracking(1.4)
                     }
-                    .font(ArenaFont.mono(size: 12, weight: .bold))
-                    .tracking(1.2)
                     .foregroundColor(.arenaTextDim)
+                    .padding(8)
                 }
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 18)
+            .padding(.bottom, 28)
         }
+    }
+
+    private var summaryCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(L("YOUR FIRST POOL"))
+                    .font(ArenaFont.mono(size: 10, weight: .bold))
+                    .tracking(1.8)
+                    .foregroundColor(.arenaGold)
+                Spacer()
+                Text("2H 14M")
+                    .font(ArenaFont.mono(size: 9))
+                    .foregroundColor(.arenaTextMuted)
+            }
+            Divider().background(Color.arenaStroke)
+            ForEach(state.demoPicks) { p in
+                pickRow(p)
+            }
+            Divider().background(Color.arenaStroke)
+            HStack {
+                Text(L("Score").uppercased())
+                    .font(ArenaFont.mono(size: 10))
+                    .tracking(1.4)
+                    .foregroundColor(.arenaTextDim)
+                Spacer()
+                Text("0 / \(state.demoPicks.count)")
+                    .font(ArenaFont.display(size: 18, weight: .heavy))
+                    .foregroundColor(.arenaGold)
+            }
+        }
+        .padding(16)
+        .background(HudCornerCutShape(cut: 14).fill(Color.arenaSurface))
+        .overlay(HudCornerCutShape(cut: 14).stroke(Color.arenaGold.opacity(0.3), lineWidth: 1))
+        .shadow(color: .arenaGold.opacity(0.18), radius: 28)
+        .clipShape(HudCornerCutShape(cut: 14))
     }
 
     private func pickRow(_ p: OnboardingDemoPick) -> some View {
@@ -912,13 +1038,14 @@ struct OnbValueDeliveryScreen: View {
             Text(p.pick)
                 .font(ArenaFont.display(size: 14, weight: .heavy))
                 .foregroundColor(.arenaPrimary)
-                .frame(width: 28, height: 24)
-                .background(HudCornerCutShape(cut: 4).fill(Color.arenaPrimary.opacity(0.18)))
+                .frame(width: 32, height: 26)
+                .background(HudCornerCutShape(cut: 5).fill(Color.arenaPrimary.opacity(0.18)))
+                .clipShape(HudCornerCutShape(cut: 5))
         }
     }
 }
 
-// MARK: - Screen 11: Account gate
+// MARK: - Screen 11: Account gate (hero icon)
 
 struct OnbAccountGateScreen: View {
     @ObservedObject var state: OnboardingState
@@ -927,56 +1054,84 @@ struct OnbAccountGateScreen: View {
 
     private var bullets: [String] {
         [
-            L("✓ Your picks stay saved"),
-            L("✓ 100 welcome coins"),
-            L("✓ Access to weekly real-prize sweepstake"),
+            L("Your picks stay saved"),
+            L("100 welcome coins"),
+            L("Access to weekly real-prize sweepstake"),
         ]
     }
 
     var body: some View {
-        VStack(spacing: 22) {
-            Spacer(minLength: 24)
-            Text("🎮")
-                .font(.system(size: 64))
-                .shadow(color: .arenaPrimary.opacity(0.6), radius: 18)
-            VStack(spacing: 10) {
-                Text(L("SAVE YOUR PICKS AND PLAY"))
-                    .font(ArenaFont.display(size: 24, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.arenaText)
-                    .multilineTextAlignment(.center)
-                Text(L("One tap and you're in."))
-                    .font(ArenaFont.body(size: 14))
-                    .foregroundColor(.arenaTextDim)
-            }
-            Spacer()
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(bullets, id: \.self) { b in
-                    Text(b)
-                        .font(ArenaFont.mono(size: 11))
+        VStack(spacing: 0) {
+            VStack(spacing: 28) {
+                Spacer(minLength: 12)
+                heroIcon
+                VStack(spacing: 10) {
+                    Text(L("SAVE YOUR PICKS AND PLAY"))
+                        .font(ArenaFont.display(size: 24, weight: .heavy))
+                        .tracking(1.4)
+                        .foregroundColor(.arenaText)
+                        .multilineTextAlignment(.center)
+                    Text(L("One tap and you're in."))
+                        .font(ArenaFont.body(size: 14))
                         .foregroundColor(.arenaTextDim)
                 }
+                bulletCard
+                    .padding(.horizontal, 24)
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 28)
-            VStack(spacing: 10) {
-                ArcadeButton(
-                    title: "▶ " + L("CREATE FREE ACCOUNT"),
-                    variant: .primary,
-                    size: .lg,
-                    fullWidth: true,
-                    action: { state.persist(); onSignup() }
-                )
-                ArcadeButton(
-                    title: L("I ALREADY HAVE AN ACCOUNT"),
-                    variant: .ghost,
-                    size: .lg,
-                    fullWidth: true,
-                    action: { state.persist(); onLogin() }
-                )
+            VStack(spacing: 12) {
+                OnbPrimaryButton(label: L("CREATE FREE ACCOUNT")) {
+                    state.persist(); onSignup()
+                }
+                OnbPrimaryButton(label: L("I ALREADY HAVE AN ACCOUNT"), variant: .ghost) {
+                    state.persist(); onLogin()
+                }
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 18)
+            .padding(.bottom, 28)
         }
+    }
+
+    private var heroIcon: some View {
+        ZStack {
+            Circle()
+                .fill(RadialGradient(
+                    colors: [Color.arenaPrimary.opacity(0.4), .clear],
+                    center: .center, startRadius: 0, endRadius: 90
+                ))
+                .frame(width: 160, height: 160)
+                .blur(radius: 12)
+            HudCornerCutShape(cut: 14)
+                .fill(LinearGradient(colors: [.arenaPrimary, .arenaAccent], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: 96, height: 96)
+                .shadow(color: .arenaPrimary.opacity(0.6), radius: 40)
+            Image(systemName: "person.fill")
+                .font(.system(size: 48, weight: .bold))
+                .foregroundColor(Color(red: 0.024, green: 0.063, blue: 0.094))
+        }
+    }
+
+    private var bulletCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(bullets, id: \.self) { b in
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle().fill(Color.arenaPrimary).frame(width: 18, height: 18)
+                        Text("✓")
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundColor(.arenaOnPrimary)
+                    }
+                    Text(b)
+                        .font(ArenaFont.body(size: 13))
+                        .foregroundColor(.arenaText)
+                    Spacer()
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(HudCornerCutShape(cut: 8).fill(Color.arenaPrimary.opacity(0.04)))
+        .overlay(HudCornerCutShape(cut: 8).stroke(Color.arenaPrimary.opacity(0.18), lineWidth: 1))
+        .clipShape(HudCornerCutShape(cut: 8))
     }
 }

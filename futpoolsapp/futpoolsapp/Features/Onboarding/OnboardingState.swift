@@ -151,6 +151,12 @@ final class OnboardingState: ObservableObject {
         }
     }
 
+    func back() {
+        if let prev = Step(rawValue: step.rawValue - 1) {
+            withAnimation(.easeInOut(duration: 0.25)) { step = prev }
+        }
+    }
+
     /// Persist the captured state so post-signup screens can use it
     /// (e.g. preselect leagues on Home, prefill the first Pool create
     /// with the demo picks).

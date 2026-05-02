@@ -31,7 +31,7 @@ struct OnboardingView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
-                ArenaBackground()
+                OnbBackground()
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 topBar
@@ -103,10 +103,14 @@ struct OnboardingView: View {
 
     private var topBar: some View {
         HStack(spacing: 12) {
-            ProgressView(value: state.step.progress)
-                .progressViewStyle(.linear)
-                .tint(.arenaPrimary)
-                .frame(maxWidth: .infinity)
+            OnbBackButton(disabled: state.step == .welcome) {
+                state.back()
+            }
+            OnbStepIndicator(
+                current: state.step.rawValue + 1,
+                total: OnboardingState.Step.allCases.count
+            )
+            .frame(maxWidth: .infinity)
             languageToggle
         }
         .padding(.horizontal, 16)
@@ -123,7 +127,7 @@ struct OnboardingView: View {
             languagePill(code: "en", label: "EN")
             languagePill(code: "es", label: "ES")
         }
-        .background(HudCornerCutShape(cut: 5).fill(Color.arenaSurface.opacity(0.6)))
+        .background(HudCornerCutShape(cut: 5).fill(Color.white.opacity(0.04)))
         .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
         .clipShape(HudCornerCutShape(cut: 5))
     }
@@ -135,15 +139,12 @@ struct OnboardingView: View {
             AppLanguage.setLanguage(code)
         } label: {
             Text(label)
-                .font(ArenaFont.mono(size: 11, weight: .bold))
-                .tracking(1.5)
+                .font(ArenaFont.mono(size: 10, weight: .bold))
+                .tracking(1.4)
                 .foregroundColor(active ? .arenaOnPrimary : .arenaTextDim)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(
-                    HudCornerCutShape(cut: 5)
-                        .fill(active ? Color.arenaPrimary : Color.clear)
-                )
+                .background(active ? Color.arenaPrimary : Color.clear)
         }
         .buttonStyle(.plain)
     }
