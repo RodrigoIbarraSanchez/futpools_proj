@@ -447,6 +447,7 @@
       }
     },
     "-": {},
+    "0 / %lld": {},
     "1 LOCAL": {
       "extractionState": "manual",
       "localizations": {
@@ -7492,6 +7493,23 @@
         }
       }
     },
+    "Pick all that apply.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick all that apply."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca todas las que apliquen."
+          }
+        }
+      }
+    },
     "Pick at least one fixture": {
       "extractionState": "manual",
       "localizations": {
@@ -11806,6 +11824,7 @@
         }
       }
     },
+    "“": {},
     "›": {},
     "←": {},
     "← BACK": {},

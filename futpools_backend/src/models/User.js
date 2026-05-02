@@ -67,6 +67,28 @@ const userSchema = new mongoose.Schema({
     default: [],
   },
 
+  // Onboarding answers captured by the iOS skill-driven flow before
+  // signup. Persisted to the user record so we can:
+  //   - personalize Home / Daily Pick by their preferred leagues
+  //   - prefill the first Quiniela create with their demo picks
+  //   - segment cohorts by goal/pain for marketing analytics
+  // All fields optional — older accounts that signed up before
+  // onboarding v2 simply leave this null.
+  onboarding: {
+    goals:    { type: [String], default: [] },   // OnboardingGoalChoice raws
+    pains:    { type: [String], default: [] },   // OnboardingPain raws
+    leagues:  { type: [String], default: [] },   // OnboardingLeague raws
+    demoPicks: {
+      type: [{
+        fixtureId: Number,
+        pick: String,  // "1" | "X" | "2"
+        _id: false,
+      }],
+      default: [],
+    },
+    completedAt: { type: Date, default: null },
+  },
+
   passwordResetCode: { type: String, select: false },
   passwordResetExpiresAt: { type: Date, select: false },
   createdAt: {

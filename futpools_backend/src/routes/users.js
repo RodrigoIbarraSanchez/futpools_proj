@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get('/me', auth, userController.getMe);
 router.put('/me', auth, userController.updateMe);
+router.put('/me/onboarding', auth, userController.updateOnboarding);
 router.post('/me/balance/recharge', auth, userController.rechargeBalance);
 
 module.exports = router;

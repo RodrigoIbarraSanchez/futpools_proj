@@ -23,6 +23,40 @@ exports.getMe = async (req, res) => {
   }
 };
 
+/**
+ * PUT /users/me/onboarding — persist the answers captured during the
+ * iOS pre-signup onboarding flow. Body shape:
+ *   { goals: [string], pains: [string], leagues: [string],
+ *     demoPicks: [{fixtureId, pick}] }
+ *
+ * Idempotent: re-posting overwrites the previous payload. Stamps
+ * `completedAt` only the first time. Field-level: fields missing
+ * from the body keep their previous value.
+ */
+exports.updateOnboarding = async (req, res) => {
+  try {
+    const { goals, pains, leagues, demoPicks } = req.body || {};
+    req.user.onboarding = req.user.onboarding || {};
+    if (Array.isArray(goals))     req.user.onboarding.goals    = goals.map(String);
+    if (Array.isArray(pains))     req.user.onboarding.pains    = pains.map(String);
+    if (Array.isArray(leagues))   req.user.onboarding.leagues  = leagues.map(String);
+    if (Array.isArray(demoPicks)) {
+      req.user.onboarding.demoPicks = demoPicks
+        .filter((p) => p && Number.isFinite(Number(p.fixtureId)) && ['1', 'X', '2'].includes(String(p.pick)))
+        .map((p) => ({ fixtureId: Number(p.fixtureId), pick: String(p.pick) }));
+    }
+    if (!req.user.onboarding.completedAt) {
+      req.user.onboarding.completedAt = new Date();
+    }
+    req.user.markModified('onboarding');
+    await req.user.save();
+    res.json({ ok: true, onboarding: req.user.onboarding });
+  } catch (err) {
+    console.error('[Users] updateOnboarding error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.updateMe = async (req, res) => {
   try {
     const { displayName } = req.body;

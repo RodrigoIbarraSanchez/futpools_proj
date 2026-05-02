@@ -14,6 +14,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     @StateObject private var state = OnboardingState()
+    @AppStorage("app_language") private var appLanguage = ""
     @State private var presentLogin = false
     @State private var presentSignup = false
     @State private var shareSheet: ShareItem?
@@ -35,6 +36,13 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 topBar
             }
+            // Bundle.main returns localized strings via the override
+            // installed by AppLanguage.setLanguage. SwiftUI doesn't
+            // re-evaluate Text() bodies on its own when the bundle
+            // changes — bumping .id() here forces the entire
+            // onboarding tree to rebuild, picking up the new
+            // language without an app restart.
+            .id(appLanguage)
             .navigationDestination(isPresented: $presentSignup) {
                 RegisterView()
             }
@@ -94,15 +102,58 @@ struct OnboardingView: View {
     // MARK: - Top bar (progress + skip)
 
     private var topBar: some View {
-        // Progress-only — onboarding is mandatory, no skip path. The
-        // "I already have an account" link on Welcome (and the same
-        // option in the Account Gate) cover the case where an
-        // existing user reinstalls.
-        ProgressView(value: state.step.progress)
-            .progressViewStyle(.linear)
-            .tint(.arenaPrimary)
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+        HStack(spacing: 12) {
+            ProgressView(value: state.step.progress)
+                .progressViewStyle(.linear)
+                .tint(.arenaPrimary)
+                .frame(maxWidth: .infinity)
+            languageToggle
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+    }
+
+    /// Tiny EN/ES segmented control — written into @AppStorage and
+    /// applied immediately via AppLanguage so the Bundle override
+    /// switches mid-onboarding. The .id(appLanguage) on the root
+    /// rebuilds the tree so every Text re-resolves against the new
+    /// language without an app restart.
+    private var languageToggle: some View {
+        HStack(spacing: 0) {
+            languagePill(code: "en", label: "EN")
+            languagePill(code: "es", label: "ES")
+        }
+        .background(HudCornerCutShape(cut: 5).fill(Color.arenaSurface.opacity(0.6)))
+        .overlay(HudCornerCutShape(cut: 5).stroke(Color.arenaStroke, lineWidth: 1))
+        .clipShape(HudCornerCutShape(cut: 5))
+    }
+
+    private func languagePill(code: String, label: String) -> some View {
+        let active = (appLanguage.isEmpty && code == fallbackCode) || appLanguage == code
+        return Button {
+            appLanguage = code
+            AppLanguage.setLanguage(code)
+        } label: {
+            Text(label)
+                .font(ArenaFont.mono(size: 11, weight: .bold))
+                .tracking(1.5)
+                .foregroundColor(active ? .arenaOnPrimary : .arenaTextDim)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    HudCornerCutShape(cut: 5)
+                        .fill(active ? Color.arenaPrimary : Color.clear)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Used to highlight whichever pill matches the device language
+    /// when the user hasn't picked one yet — so the toggle never
+    /// looks "neither side selected".
+    private var fallbackCode: String {
+        let pref = Locale.preferredLanguages.first?.lowercased() ?? "en"
+        return pref.hasPrefix("es") ? "es" : "en"
     }
 
     // MARK: - Actions

@@ -139,7 +139,7 @@ final class OnboardingState: ObservableObject {
     }
 
     @Published var step: Step = .welcome
-    @Published var goal: OnboardingGoalChoice?
+    @Published var goals: Set<OnboardingGoalChoice> = []
     @Published var pains: Set<OnboardingPain> = []
     @Published var swipes: [OnboardingTinderResponse] = []
     @Published var leagues: Set<OnboardingLeague> = [.ligaMX]
@@ -157,7 +157,7 @@ final class OnboardingState: ObservableObject {
     func persist() {
         let d = UserDefaults.standard
         d.set(true, forKey: "hasSeenOnboarding")
-        d.set(goal?.rawValue ?? "", forKey: "onboardingGoal")
+        d.set(goals.map(\.rawValue), forKey: "onboardingGoals")
         d.set(pains.map(\.rawValue), forKey: "onboardingPains")
         d.set(leagues.map(\.rawValue), forKey: "onboardingLeagues")
         if let data = try? JSONEncoder().encode(demoPicks) {

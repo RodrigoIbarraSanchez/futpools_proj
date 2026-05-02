@@ -79,7 +79,7 @@ struct OnbGoalScreen: View {
                     .foregroundColor(.arenaText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                Text(String(localized: "One answer. No wrong choice."))
+                Text(String(localized: "Pick all that apply."))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
@@ -90,7 +90,7 @@ struct OnbGoalScreen: View {
             }
             .padding(.horizontal, 20)
             Spacer()
-            if state.goal != nil {
+            if !state.goals.isEmpty {
                 ArcadeButton(
                     title: "▶ " + String(localized: "NEXT"),
                     size: .lg,
@@ -102,13 +102,13 @@ struct OnbGoalScreen: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: state.goal)
+        .animation(.easeInOut(duration: 0.2), value: state.goals)
     }
 
     private func optionRow(_ g: OnboardingGoalChoice) -> some View {
-        let active = state.goal == g
+        let active = state.goals.contains(g)
         return Button {
-            state.goal = g
+            if active { state.goals.remove(g) } else { state.goals.insert(g) }
         } label: {
             HStack(spacing: 14) {
                 Text(g.emoji).font(.system(size: 26))

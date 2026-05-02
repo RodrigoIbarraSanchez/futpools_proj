@@ -84,6 +84,7 @@ final class AuthService: ObservableObject {
                 pendingSignupBonus = bonus
             }
             isAuthenticated = true
+            await syncPendingOnboarding()
         } catch {
             handleError(error)
         }
@@ -110,6 +111,7 @@ final class AuthService: ObservableObject {
             currentUser = res.user
             isAuthenticated = true
             await fetchUser()
+            await syncPendingOnboarding()
         } catch {
             handleError(error)
         }
@@ -122,6 +124,51 @@ final class AuthService: ObservableObject {
             currentUser = user
         } catch {
             logout()
+        }
+    }
+
+    /// Push the answers captured during pre-signup onboarding (saved
+    /// to UserDefaults by `OnboardingState.persist()`) up to the
+    /// user's backend record. Best-effort — failure is silent so a
+    /// transient network blip after signup doesn't trip up the user.
+    /// Call after both register and login so the very first session
+    /// after onboarding gets the data on the server side.
+    func syncPendingOnboarding() async {
+        guard let t = token else { return }
+        let d = UserDefaults.standard
+        let goals    = d.stringArray(forKey: "onboardingGoals") ?? []
+        let pains    = d.stringArray(forKey: "onboardingPains") ?? []
+        let leagues  = d.stringArray(forKey: "onboardingLeagues") ?? []
+        let picksData = d.data(forKey: "onboardingDemoPicks")
+        struct PickPayload: Encodable {
+            let fixtureId: Int
+            let pick: String
+        }
+        struct Body: Encodable {
+            let goals: [String]
+            let pains: [String]
+            let leagues: [String]
+            let demoPicks: [PickPayload]
+        }
+        struct PickStored: Decodable { let fixtureId: Int; let pick: String }
+        let picks: [PickPayload] = {
+            guard let data = picksData,
+                  let stored = try? JSONDecoder().decode([PickStored].self, from: data) else { return [] }
+            return stored.map { PickPayload(fixtureId: $0.fixtureId, pick: $0.pick) }
+        }()
+        // Skip the round-trip if the user signed up directly (never
+        // ran the onboarding) — there's nothing to sync.
+        guard !goals.isEmpty || !pains.isEmpty || !leagues.isEmpty || !picks.isEmpty else { return }
+        struct Resp: Decodable { let ok: Bool }
+        do {
+            let _: Resp = try await client.request(
+                method: "PUT",
+                path: "/users/me/onboarding",
+                body: Body(goals: goals, pains: pains, leagues: leagues, demoPicks: picks),
+                token: t
+            )
+        } catch {
+            // Silent — local state remains, can resync on next launch.
         }
     }
 
