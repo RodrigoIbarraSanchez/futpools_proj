@@ -29,11 +29,11 @@ enum OnboardingGoalChoice: String, CaseIterable, Identifiable, Codable {
     }
     var label: String {
         switch self {
-        case .withFriends:   return String(localized: "Play pools with my friends")
-        case .realPrizes:    return String(localized: "Win real prizes for free")
-        case .oneVOne:       return String(localized: "Challenge anyone 1v1")
-        case .predictRank:   return String(localized: "Predict solo and rank up")
-        case .justBrowsing:  return String(localized: "Just looking around")
+        case .withFriends:   return L("Play pools with my friends")
+        case .realPrizes:    return L("Win real prizes for free")
+        case .oneVOne:       return L("Challenge anyone 1v1")
+        case .predictRank:   return L("Predict solo and rank up")
+        case .justBrowsing:  return L("Just looking around")
         }
     }
 }
@@ -55,29 +55,29 @@ enum OnboardingPain: String, CaseIterable, Identifiable, Codable {
     }
     var label: String {
         switch self {
-        case .manualScoring:    return String(localized: "Tracking points by hand")
-        case .friendsDontPay:   return String(localized: "Half my group never pays")
-        case .smallPrizes:      return String(localized: "Tiny prizes that aren't worth it")
-        case .excelChaos:       return String(localized: "Excel + WhatsApp is chaos")
-        case .missedDeadlines:  return String(localized: "Nobody respects pick deadlines")
-        case .honorOnly:        return String(localized: "Just honor, nothing tangible")
+        case .manualScoring:    return L("Tracking points by hand")
+        case .friendsDontPay:   return L("Half my group never pays")
+        case .smallPrizes:      return L("Tiny prizes that aren't worth it")
+        case .excelChaos:       return L("Excel + WhatsApp is chaos")
+        case .missedDeadlines:  return L("Nobody respects pick deadlines")
+        case .honorOnly:        return L("Just honor, nothing tangible")
         }
     }
     /// The "solution" copy shown back on the Personalised Solution screen.
     var solution: (emoji: String, headline: String) {
         switch self {
         case .manualScoring:
-            return ("⚡", String(localized: "Live automatic scoring — every goal moves your score instantly"))
+            return ("⚡", L("Live automatic scoring — every goal moves your score instantly"))
         case .friendsDontPay:
-            return ("🎁", String(localized: "Nobody pays anything — the prize is funded by ads"))
+            return ("🎁", L("Nobody pays anything — the prize is funded by ads"))
         case .smallPrizes:
-            return ("🏆", String(localized: "Amazon $250 MXN gift cards every week"))
+            return ("🏆", L("Amazon $250 MXN gift cards every week"))
         case .excelChaos:
-            return ("🚀", String(localized: "Build a pool in under 30 seconds, share by link"))
+            return ("🚀", L("Build a pool in under 30 seconds, share by link"))
         case .missedDeadlines:
-            return ("🔒", String(localized: "Picks lock automatically at the first kickoff"))
+            return ("🔒", L("Picks lock automatically at the first kickoff"))
         case .honorOnly:
-            return ("💰", String(localized: "Tangible prize guaranteed for the winner"))
+            return ("💰", L("Tangible prize guaranteed for the winner"))
         }
     }
 }

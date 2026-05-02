@@ -42,6 +42,27 @@ enum AppLanguage {
         _ = swizzleOnce
     }
 
+    /// Bundle to look up localized strings against. Returns the
+    /// language-specific lproj bundle when the in-app picker is set,
+    /// otherwise Bundle.main (which honors AppleLanguages → device
+    /// language fallback).
+    ///
+    /// Use this with `NSLocalizedString(_:bundle:value:comment:)` to
+    /// look up strings reliably mid-session — iOS 17+
+    /// `String(localized:)` ignores Bundle.main subclasses and reads
+    /// preferredLocalizations cached at launch, which is why we need
+    /// an explicit-bundle helper (`L()`) for any text that should
+    /// respond to in-app language changes without an app restart.
+    static var currentBundle: Bundle {
+        let lang = UserDefaults.standard.string(forKey: "app_language") ?? ""
+        if !lang.isEmpty,
+           let path = Bundle.main.path(forResource: lang, ofType: "lproj"),
+           let bundle = Bundle(path: path) {
+            return bundle
+        }
+        return Bundle.main
+    }
+
     /// Override the language used by every `String(localized:)` /
     /// `Text("key")` lookup app-wide.
     ///
@@ -91,4 +112,26 @@ enum AppLanguage {
     private static let swizzleOnce: Void = {
         object_setClass(Bundle.main, LanguageOverrideBundle.self)
     }()
+}
+
+/// Reliable localized-string lookup that respects the in-app
+/// language picker mid-session.
+///
+/// `String(localized: "key")` looks great but in iOS 17+ it caches
+/// the source bundle's `preferredLocalizations` at launch — so even
+/// with our Bundle.main swizzle, switching language without an app
+/// restart leaves text in the previous language. `NSLocalizedString`
+/// with an EXPLICIT bundle parameter, by contrast, looks up against
+/// the bundle you hand it every time. Combined with
+/// `AppLanguage.currentBundle` returning the user-selected lproj,
+/// this gives instant in-session language switching for any caller
+/// that uses `L("key")` instead of `String(localized: "key")`.
+///
+/// Drop-in replacement: every `String(localized: "X")` becomes
+/// `L("X")`. `String(format:)` callers stay the same — wrap the
+/// format string with `L()`:
+///   `String(format: L("Win %lld coins"), n)`
+@MainActor
+func L(_ key: String) -> String {
+    NSLocalizedString(key, tableName: nil, bundle: AppLanguage.currentBundle, value: key, comment: "")
 }

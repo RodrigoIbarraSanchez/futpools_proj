@@ -7,8 +7,11 @@
 //
 //  Each screen is a stateless View that reads + mutates the shared
 //  `OnboardingState`. Navigation lives in `OnboardingView`. All copy
-//  goes through `String(localized:)` so it switches with the in-app
-//  language picker.
+//  goes through the `L("...")` helper (NSLocalizedString with explicit
+//  bundle) instead of `String(localized:)` so the in-app EN/ES toggle
+//  switches text mid-session — iOS 17+'s `String(localized:)` caches
+//  the bundle's preferredLocalizations at launch and ignores Bundle
+//  swizzles.
 //
 
 import SwiftUI
@@ -30,13 +33,13 @@ struct OnbWelcomeScreen: View {
                 .shadow(color: .arenaGold.opacity(0.5), radius: 24, y: 6)
                 .padding(.horizontal, 24)
             VStack(spacing: 10) {
-                Text(String(localized: "WIN REAL PRIZES BY PREDICTING FOOTBALL"))
+                Text(L("WIN REAL PRIZES BY PREDICTING FOOTBALL"))
                     .font(ArenaFont.display(size: 26, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaGold)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                Text(String(localized: "Pools with friends. No spreadsheets. Nobody to chase for money."))
+                Text(L("Pools with friends. No spreadsheets. Nobody to chase for money."))
                     .font(ArenaFont.body(size: 14))
                     .foregroundColor(.arenaTextDim)
                     .multilineTextAlignment(.center)
@@ -45,13 +48,13 @@ struct OnbWelcomeScreen: View {
             Spacer()
             VStack(spacing: 12) {
                 ArcadeButton(
-                    title: "▶ " + String(localized: "GET STARTED"),
+                    title: "▶ " + L("GET STARTED"),
                     size: .lg,
                     fullWidth: true,
                     action: { state.advance() }
                 )
                 Button(action: onLogin) {
-                    Text(String(localized: "I already have an account"))
+                    Text(L("I already have an account"))
                         .font(ArenaFont.mono(size: 11, weight: .bold))
                         .tracking(1.5)
                         .foregroundColor(.arenaTextDim)
@@ -73,13 +76,13 @@ struct OnbGoalScreen: View {
         VStack(spacing: 18) {
             Spacer(minLength: 30)
             VStack(spacing: 8) {
-                Text(String(localized: "WHAT BRINGS YOU TO FUTPOOLS?"))
+                Text(L("WHAT BRINGS YOU TO FUTPOOLS?"))
                     .font(ArenaFont.display(size: 22, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                Text(String(localized: "Pick all that apply."))
+                Text(L("Pick all that apply."))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
@@ -92,7 +95,7 @@ struct OnbGoalScreen: View {
             Spacer()
             if !state.goals.isEmpty {
                 ArcadeButton(
-                    title: "▶ " + String(localized: "NEXT"),
+                    title: "▶ " + L("NEXT"),
                     size: .lg,
                     fullWidth: true,
                     action: { state.advance() }
@@ -144,13 +147,13 @@ struct OnbPainScreen: View {
         VStack(spacing: 18) {
             Spacer(minLength: 30)
             VStack(spacing: 8) {
-                Text(String(localized: "WHAT FRUSTRATES YOU ABOUT POOLS TODAY?"))
+                Text(L("WHAT FRUSTRATES YOU ABOUT POOLS TODAY?"))
                     .font(ArenaFont.display(size: 20, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                Text(String(localized: "Tap everything that hits home."))
+                Text(L("Tap everything that hits home."))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
@@ -163,7 +166,7 @@ struct OnbPainScreen: View {
                 .padding(.horizontal, 20)
             }
             ArcadeButton(
-                title: "▶ " + String(localized: "NEXT"),
+                title: "▶ " + L("NEXT"),
                 size: .lg,
                 fullWidth: true,
                 action: { state.advance() }
@@ -221,18 +224,18 @@ struct OnbSocialProofScreen: View {
     private var quotes: [Quote] {
         [
             Quote(stars: 5,
-                  body: String(localized: "\"At last, no fights with my buddies over weekend points. I won a $250 gift card.\""),
-                  author: String(localized: "— Carlos M., 32, runs his neighborhood pool")),
+                  body: L("\"At last, no fights with my buddies over weekend points. I won a $250 gift card.\""),
+                  author: L("— Carlos M., 32, runs his neighborhood pool")),
             Quote(stars: 5,
-                  body: String(localized: "\"Daily Pick is my morning vice. 14-day streak going.\""),
-                  author: String(localized: "— Laura S., 27, América fan")),
+                  body: L("\"Daily Pick is my morning vice. 14-day streak going.\""),
+                  author: L("— Laura S., 27, América fan")),
         ]
     }
 
     var body: some View {
         VStack(spacing: 18) {
             Spacer(minLength: 30)
-            Text(String(localized: "PLAYERS LIKE YOU ARE ALREADY IN"))
+            Text(L("PLAYERS LIKE YOU ARE ALREADY IN"))
                 .font(ArenaFont.display(size: 20, weight: .black))
                 .tracking(2)
                 .foregroundColor(.arenaText)
@@ -245,11 +248,11 @@ struct OnbSocialProofScreen: View {
             }
             .padding(.horizontal, 20)
             Spacer()
-            Text(String(localized: "Representative reviews. More on App Store."))
+            Text(L("Representative reviews. More on App Store."))
                 .font(ArenaFont.mono(size: 9))
                 .foregroundColor(.arenaTextFaint)
             ArcadeButton(
-                title: "▶ " + String(localized: "NEXT"),
+                title: "▶ " + L("NEXT"),
                 size: .lg,
                 fullWidth: true,
                 action: { state.advance() }
@@ -285,21 +288,21 @@ struct OnbTinderScreen: View {
     @State private var dragOffset: CGSize = .zero
 
     private let statements: [String] = [
-        String(localized: "I'm always the one who ends up building the bracket"),
-        String(localized: "I've been chasing 3 pools that still owe me money"),
-        String(localized: "My group wins $200 and nobody collects it"),
-        String(localized: "I want to throw a quick prediction without joining a whole league"),
+        L("I'm always the one who ends up building the bracket"),
+        L("I've been chasing 3 pools that still owe me money"),
+        L("My group wins $200 and nobody collects it"),
+        L("I want to throw a quick prediction without joining a whole league"),
     ]
 
     var body: some View {
         VStack(spacing: 18) {
             Spacer(minLength: 24)
             VStack(spacing: 6) {
-                Text(String(localized: "WHICH ONE IS YOU?"))
+                Text(L("WHICH ONE IS YOU?"))
                     .font(ArenaFont.display(size: 22, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaText)
-                Text(String(localized: "Swipe → if it's you. ← if not."))
+                Text(L("Swipe → if it's you. ← if not."))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
@@ -346,7 +349,7 @@ struct OnbTinderScreen: View {
             // mandatory in line with the no-skip onboarding policy.
             if index >= statements.count {
                 ArcadeButton(
-                    title: "▶ " + String(localized: "NEXT"),
+                    title: "▶ " + L("NEXT"),
                     size: .lg,
                     fullWidth: true,
                     action: { state.advance() }
@@ -416,13 +419,13 @@ struct OnbSolutionScreen: View {
         VStack(spacing: 18) {
             Spacer(minLength: 24)
             VStack(spacing: 8) {
-                Text(String(localized: "HERE'S HOW FUTPOOLS FIXES IT"))
+                Text(L("HERE'S HOW FUTPOOLS FIXES IT"))
                     .font(ArenaFont.display(size: 22, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaPrimary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-                Text(String(localized: "For each thing you said:"))
+                Text(L("For each thing you said:"))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
@@ -435,7 +438,7 @@ struct OnbSolutionScreen: View {
                 .padding(.horizontal, 20)
             }
             ArcadeButton(
-                title: "▶ " + String(localized: "NEXT"),
+                title: "▶ " + L("NEXT"),
                 size: .lg,
                 fullWidth: true,
                 action: { state.advance() }
@@ -480,12 +483,12 @@ struct OnbPrefsScreen: View {
         VStack(spacing: 18) {
             Spacer(minLength: 30)
             VStack(spacing: 8) {
-                Text(String(localized: "WHAT FOOTBALL DO YOU FOLLOW?"))
+                Text(L("WHAT FOOTBALL DO YOU FOLLOW?"))
                     .font(ArenaFont.display(size: 22, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaText)
                     .multilineTextAlignment(.center)
-                Text(String(localized: "We'll filter the next step's matches."))
+                Text(L("We'll filter the next step's matches."))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
@@ -497,7 +500,7 @@ struct OnbPrefsScreen: View {
             .padding(.horizontal, 20)
             Spacer()
             ArcadeButton(
-                title: "▶ " + String(localized: "NEXT"),
+                title: "▶ " + L("NEXT"),
                 size: .lg,
                 fullWidth: true,
                 action: {
@@ -539,9 +542,9 @@ struct OnbProcessingScreen: View {
     @ObservedObject var state: OnboardingState
     @State private var step = 0
     private let lines: [String] = [
-        String(localized: "Filtering leagues you follow"),
-        String(localized: "Loading upcoming matches"),
-        String(localized: "Done"),
+        L("Filtering leagues you follow"),
+        L("Loading upcoming matches"),
+        L("Done"),
     ]
 
     var body: some View {
@@ -550,7 +553,7 @@ struct OnbProcessingScreen: View {
             ProgressView()
                 .scaleEffect(2)
                 .tint(.arenaPrimary)
-            Text(String(localized: "Personalizing your matches…"))
+            Text(L("Personalizing your matches…"))
                 .font(ArenaFont.display(size: 16, weight: .heavy))
                 .tracking(1.5)
                 .foregroundColor(.arenaText)
@@ -591,11 +594,11 @@ struct OnbDemoScreen: View {
         VStack(spacing: 18) {
             Spacer(minLength: 24)
             VStack(spacing: 6) {
-                Text(String(localized: "TRY YOUR FIRST POOL"))
+                Text(L("TRY YOUR FIRST POOL"))
                     .font(ArenaFont.display(size: 22, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaText)
-                Text(String(localized: "Pick 3 matches. Best score wins."))
+                Text(L("Pick 3 matches. Best score wins."))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
@@ -609,7 +612,7 @@ struct OnbDemoScreen: View {
                 progressLabel
             } else {
                 Spacer()
-                Text(String(localized: "✓ All picks locked in"))
+                Text(L("✓ All picks locked in"))
                     .font(ArenaFont.display(size: 18, weight: .heavy))
                     .foregroundColor(.arenaPrimary)
                 Spacer()
@@ -617,7 +620,7 @@ struct OnbDemoScreen: View {
             Spacer(minLength: 8)
             if vm.didFinish {
                 ArcadeButton(
-                    title: "▶ " + String(localized: "SEE YOUR PICKS"),
+                    title: "▶ " + L("SEE YOUR PICKS"),
                     size: .lg,
                     fullWidth: true,
                     action: {
@@ -642,7 +645,7 @@ struct OnbDemoScreen: View {
     private func fixtureCard(_ fx: OnbDemoFixture) -> some View {
         HudFrame(cut: 14, glow: .arenaAccent) {
             VStack(spacing: 14) {
-                Text(String(format: String(localized: "MATCH %1$lld OF %2$lld"), vm.currentIndex + 1, vm.totalCount))
+                Text(String(format: L("MATCH %1$lld OF %2$lld"), vm.currentIndex + 1, vm.totalCount))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .tracking(2)
                     .foregroundColor(.arenaTextMuted)
@@ -663,9 +666,9 @@ struct OnbDemoScreen: View {
                         .foregroundColor(.arenaAccent)
                 }
                 HStack(spacing: 8) {
-                    pickButton(label: String(localized: "1 LOCAL"), code: "1")
-                    pickButton(label: String(localized: "X DRAW"), code: "X")
-                    pickButton(label: String(localized: "2 AWAY"), code: "2")
+                    pickButton(label: L("1 LOCAL"), code: "1")
+                    pickButton(label: L("X DRAW"), code: "X")
+                    pickButton(label: L("2 AWAY"), code: "2")
                 }
                 .padding(.top, 4)
             }
@@ -841,17 +844,17 @@ struct OnbValueDeliveryScreen: View {
         VStack(spacing: 18) {
             Spacer(minLength: 24)
             VStack(spacing: 6) {
-                Text(String(localized: "YOUR MINI-POOL IS READY"))
+                Text(L("YOUR MINI-POOL IS READY"))
                     .font(ArenaFont.display(size: 22, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaPrimary)
-                Text(String(format: String(localized: "%lld picks. 0 / %lld until first kickoff."), state.demoPicks.count, state.demoPicks.count))
+                Text(String(format: L("%lld picks. 0 / %lld until first kickoff."), state.demoPicks.count, state.demoPicks.count))
                     .font(ArenaFont.mono(size: 11))
                     .foregroundColor(.arenaTextDim)
             }
             HudFrame(cut: 14, glow: .arenaGold) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(String(localized: "YOUR FIRST POOL"))
+                    Text(L("YOUR FIRST POOL"))
                         .font(ArenaFont.mono(size: 10, weight: .bold))
                         .tracking(2)
                         .foregroundColor(.arenaTextMuted)
@@ -861,7 +864,7 @@ struct OnbValueDeliveryScreen: View {
                     }
                     Divider().background(Color.arenaStroke)
                     HStack {
-                        Text(String(localized: "Score"))
+                        Text(L("Score"))
                             .font(ArenaFont.mono(size: 10))
                             .foregroundColor(.arenaTextDim)
                         Spacer()
@@ -876,7 +879,7 @@ struct OnbValueDeliveryScreen: View {
             Spacer()
             VStack(spacing: 10) {
                 ArcadeButton(
-                    title: "▶ " + String(localized: "SAVE & COMPETE"),
+                    title: "▶ " + L("SAVE & COMPETE"),
                     variant: .primary,
                     size: .lg,
                     fullWidth: true,
@@ -885,7 +888,7 @@ struct OnbValueDeliveryScreen: View {
                 Button(action: onShare) {
                     HStack(spacing: 8) {
                         Image(systemName: "square.and.arrow.up")
-                        Text(String(localized: "Share with friends"))
+                        Text(L("Share with friends"))
                     }
                     .font(ArenaFont.mono(size: 12, weight: .bold))
                     .tracking(1.2)
@@ -924,9 +927,9 @@ struct OnbAccountGateScreen: View {
 
     private var bullets: [String] {
         [
-            String(localized: "✓ Your picks stay saved"),
-            String(localized: "✓ 100 welcome coins"),
-            String(localized: "✓ Access to weekly real-prize sweepstake"),
+            L("✓ Your picks stay saved"),
+            L("✓ 100 welcome coins"),
+            L("✓ Access to weekly real-prize sweepstake"),
         ]
     }
 
@@ -937,12 +940,12 @@ struct OnbAccountGateScreen: View {
                 .font(.system(size: 64))
                 .shadow(color: .arenaPrimary.opacity(0.6), radius: 18)
             VStack(spacing: 10) {
-                Text(String(localized: "SAVE YOUR PICKS AND PLAY"))
+                Text(L("SAVE YOUR PICKS AND PLAY"))
                     .font(ArenaFont.display(size: 24, weight: .black))
                     .tracking(2)
                     .foregroundColor(.arenaText)
                     .multilineTextAlignment(.center)
-                Text(String(localized: "One tap and you're in."))
+                Text(L("One tap and you're in."))
                     .font(ArenaFont.body(size: 14))
                     .foregroundColor(.arenaTextDim)
             }
@@ -958,14 +961,14 @@ struct OnbAccountGateScreen: View {
             .padding(.horizontal, 28)
             VStack(spacing: 10) {
                 ArcadeButton(
-                    title: "▶ " + String(localized: "CREATE FREE ACCOUNT"),
+                    title: "▶ " + L("CREATE FREE ACCOUNT"),
                     variant: .primary,
                     size: .lg,
                     fullWidth: true,
                     action: { state.persist(); onSignup() }
                 )
                 ArcadeButton(
-                    title: String(localized: "I ALREADY HAVE AN ACCOUNT"),
+                    title: L("I ALREADY HAVE AN ACCOUNT"),
                     variant: .ghost,
                     size: .lg,
                     fullWidth: true,

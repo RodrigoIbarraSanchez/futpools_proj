@@ -84,7 +84,7 @@ struct OnboardingView: View {
                 state: state,
                 fixturesByID: [:],
                 onShare: {
-                    let txt = String(localized: "I'm playing my first futpools mini-pool. Pick yours: https://futpools.com")
+                    let txt = L("I'm playing my first futpools mini-pool. Pick yours: https://futpools.com")
                     shareSheet = ShareItem(text: txt)
                 }
             )
