@@ -23,7 +23,7 @@ final class APIClient {
     /// archived/App-Store build can never accidentally point at a LAN
     /// IP. (A LAN IP triggers the iOS "find devices on local
     /// networks" permission prompt — terrible first-launch UX.)
-    private static let productionBaseURL = "https://futpools-proj.onrender.com"
+    private static let productionBaseURL = "https://api.futpools.com"
 
     /// Base URL resolution order:
     ///   1. Explicit constructor arg (tests).
