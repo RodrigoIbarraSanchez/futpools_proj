@@ -94,16 +94,12 @@ export function ChallengeDetail() {
 
   const handleShare = async () => {
     if (!c?.code) return;
-    // Route the share URL through the backend host so /c/:code hits the og.js
-    // route that renders OG meta tags + a fixture-card image — that's what
-    // WhatsApp/Telegram scrape to build a rich preview. Falling back to the
-    // current origin keeps dev (localhost:5173) usable; in prod the static
-    // frontend doesn't render OG tags, so the link must point at the API.
-    // Identical strategy to PoolDetail.ShareButton.
-    const apiBase = import.meta.env.VITE_API_URL || '';
-    const shareOrigin = apiBase.startsWith('http')
-      ? apiBase.replace(/\/$/, '')
-      : (typeof window !== 'undefined' ? window.location.origin : '');
+    // Use the bare branded origin (futpools.com in prod, localhost:5173 in
+    // dev). The static-site `_redirects` file proxies /c/* to the backend's
+    // og.js route, so WhatsApp/Telegram still scrape rich previews while the
+    // visible URL stays on futpools.com. Identical strategy to
+    // PoolDetail.ShareButton.
+    const shareOrigin = typeof window !== 'undefined' ? window.location.origin : '';
     const url = `${shareOrigin}/c/${c.code}`;
     // Mobile-only native share; pass ONLY `url` so no target can concat a
     // `title`/`text` field onto it and produce a mangled link. Desktop always
