@@ -573,9 +573,17 @@ exports.getMyEntriesForQuiniela = async (req, res) => {
 
 exports.getMyEntries = async (req, res) => {
   try {
-    const entries = await QuinielaEntry.find({ user: req.user._id })
+    const rawEntries = await QuinielaEntry.find({ user: req.user._id })
       .sort({ createdAt: -1 })
       .populate('quiniela');
+    // Drop orphan entries whose pool was deleted — populate() returns null
+    // for those, and shipping `quiniela: null` in the payload breaks strict
+    // clients (the iOS decoder fails the whole array on the first null).
+    const entries = rawEntries.filter((e) => e.quiniela);
+    const dropped = rawEntries.length - entries.length;
+    if (dropped > 0) {
+      console.warn(`[Quiniela] getMyEntries: dropped ${dropped} orphan entry/entries (pool deleted) for user ${req.user._id}`);
+    }
     const allFixtureIds = [...new Set(entries.flatMap((e) => (e.quiniela?.fixtures || []).map((f) => f.fixtureId).filter(Boolean)))];
     let liveFixtures = [];
     try {

@@ -29,7 +29,17 @@ final class MyEntriesViewModel: ObservableObject {
                     isLoading = false
                     return
                 }
-                entries = try await client.request(path: "/quinielas/entries/me", token: token) as [QuinielaEntry]
+                // Decode each entry in isolation so a single broken row
+                // (e.g. `quiniela: null` for an entry whose pool was deleted)
+                // doesn't kill the whole list. Failed rows are silently dropped.
+                let raw: [FailableQuinielaEntry] = try await client.request(
+                    path: "/quinielas/entries/me", token: token
+                )
+                let dropped = raw.count - raw.compactMap({ $0.value }).count
+                if dropped > 0 {
+                    print("[Mis entradas] Descartadas \(dropped) entrada(s) con quiniela nula")
+                }
+                entries = raw.compactMap { $0.value }
                 print("[Mis entradas] Cargadas \(entries.count) quiniela(s)")
                 await refreshLiveFixtures()
                 isLoading = false

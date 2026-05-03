@@ -227,6 +227,17 @@ struct QuinielaPickResponse: Decodable {
     let pick: String
 }
 
+/// Wrapper used when decoding arrays of entries from the backend so a
+/// single malformed row (e.g. `quiniela: null` left behind by a deleted
+/// pool) doesn't fail the entire response. Decode succeeds for every
+/// row; `value` is nil for rows that didn't satisfy `QuinielaEntry`.
+struct FailableQuinielaEntry: Decodable {
+    let value: QuinielaEntry?
+    init(from decoder: Decoder) throws {
+        value = try? QuinielaEntry(from: decoder)
+    }
+}
+
 /// Response shape for `GET /quinielas/:id/participants` — creator-only admin
 /// view. Picks are bundled per entry once the pool starts (status !=
 /// "scheduled"); during the scheduled phase the backend strips them and
