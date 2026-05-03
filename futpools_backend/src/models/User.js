@@ -78,6 +78,7 @@ const userSchema = new mongoose.Schema({
     goals:    { type: [String], default: [] },   // OnboardingGoalChoice raws
     pains:    { type: [String], default: [] },   // OnboardingPain raws
     leagues:  { type: [String], default: [] },   // OnboardingLeague raws
+    teams:    { type: [String], default: [] },   // OnbTeam raws (e.g. "america")
     demoPicks: {
       type: [{
         fixtureId: Number,

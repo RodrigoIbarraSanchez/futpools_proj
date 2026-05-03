@@ -145,6 +145,7 @@ final class AuthService: ObservableObject {
         let goals    = d.stringArray(forKey: "onboardingGoals") ?? []
         let pains    = d.stringArray(forKey: "onboardingPains") ?? []
         let leagues  = d.stringArray(forKey: "onboardingLeagues") ?? []
+        let teams    = d.stringArray(forKey: "onboardingTeams") ?? []
         let picksData = d.data(forKey: "onboardingDemoPicks")
         struct PickPayload: Encodable {
             let fixtureId: Int
@@ -154,6 +155,7 @@ final class AuthService: ObservableObject {
             let goals: [String]
             let pains: [String]
             let leagues: [String]
+            let teams: [String]
             let demoPicks: [PickPayload]
         }
         struct PickStored: Decodable { let fixtureId: Int; let pick: String }
@@ -164,13 +166,13 @@ final class AuthService: ObservableObject {
         }()
         // Skip the round-trip if the user signed up directly (never
         // ran the onboarding) — there's nothing to sync.
-        guard !goals.isEmpty || !pains.isEmpty || !leagues.isEmpty || !picks.isEmpty else { return }
+        guard !goals.isEmpty || !pains.isEmpty || !leagues.isEmpty || !teams.isEmpty || !picks.isEmpty else { return }
         struct Resp: Decodable { let ok: Bool }
         do {
             let _: Resp = try await client.request(
                 method: "PUT",
                 path: "/users/me/onboarding",
-                body: Body(goals: goals, pains: pains, leagues: leagues, demoPicks: picks),
+                body: Body(goals: goals, pains: pains, leagues: leagues, teams: teams, demoPicks: picks),
                 token: t
             )
         } catch {

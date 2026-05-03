@@ -260,21 +260,31 @@ struct OnbSocialProofScreen: View {
             .padding(.horizontal, 24)
             .padding(.top, 22)
 
-            // Body — quote cards centered in remaining space
-            VStack(spacing: 12) {
-                quoteCard(quote: L("social.q1"), author: L("social.a1"))
-                quoteCard(quote: L("social.q2"), author: L("social.a2"))
-                Text(L("Representative reviews. More on App Store."))
-                    .font(ArenaFont.mono(size: 9))
-                    .foregroundColor(.arenaTextFaint)
-                    .padding(.top, 4)
+            // Body — 5 quote cards. Wrapped in a ScrollView so small
+            // devices don't clip; GeometryReader+minHeight pushes the
+            // stack to fill the available area so when the cards fit
+            // without scrolling they end up vertically centered between
+            // the stats strip and the NEXT button (matches the rest of
+            // the onboarding's "centered body" rule).
+            GeometryReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 12) {
+                        quoteCard(quote: L("social.q1"), author: L("social.a1"))
+                        quoteCard(quote: L("social.q2"), author: L("social.a2"))
+                        quoteCard(quote: L("social.q3"), author: L("social.a3"))
+                        quoteCard(quote: L("social.q4"), author: L("social.a4"))
+                        quoteCard(quote: L("social.q5"), author: L("social.a5"))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: proxy.size.height, alignment: .center)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .padding(.horizontal, 24)
 
             OnbPrimaryButton(label: L("NEXT")) { state.advance() }
                 .padding(.horizontal, 24)
-                .padding(.top, 16)
+                .padding(.top, 12)
                 .padding(.bottom, 28)
         }
     }
@@ -331,6 +341,8 @@ struct OnbTinderScreen: View {
                     if index < statementKeys.count - 1 {
                         cardSilhouette(offset: 4, rotation: 2, indent: 12)
                     }
+                    // No terminal "✓" state — last swipe auto-advances to
+                    // the next onboarding step (resolveSwipe handles it).
                     if index < statementKeys.count {
                         topCard(text: L(statementKeys[index]))
                             .offset(x: dragOffset.width, y: dragOffset.height * 0.2)
@@ -340,10 +352,6 @@ struct OnbTinderScreen: View {
                                     .onChanged { v in dragOffset = v.translation }
                                     .onEnded { v in handleSwipe(v.translation.width) }
                             )
-                    } else {
-                        Text("✓")
-                            .font(.system(size: 64, weight: .bold))
-                            .foregroundColor(.arenaPrimary)
                     }
                 }
                 .frame(height: 320)
@@ -352,8 +360,9 @@ struct OnbTinderScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 
-            // Footer — NEXT only after all 4 swiped
-            footer
+            // Bottom safe-area padding (footer NEXT button removed —
+            // last swipe auto-advances).
+            Spacer().frame(height: 28)
         }
     }
 
@@ -422,19 +431,6 @@ struct OnbTinderScreen: View {
         }
     }
 
-    @ViewBuilder
-    private var footer: some View {
-        if index >= statementKeys.count {
-            OnbPrimaryButton(label: L("NEXT")) { state.advance() }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-                .padding(.bottom, 28)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-        } else {
-            Spacer().frame(height: 28)
-        }
-    }
-
     private func handleSwipe(_ x: CGFloat) {
         if x > 80 { resolveSwipe(.agree) }
         else if x < -80 { resolveSwipe(.dismiss) }
@@ -444,13 +440,22 @@ struct OnbTinderScreen: View {
     private func resolveSwipe(_ r: OnboardingTinderResponse) {
         guard index < statementKeys.count else { return }
         state.swipes.append(r)
+        let isLast = index == statementKeys.count - 1
         withAnimation(.easeOut(duration: 0.22)) {
             dragOffset = CGSize(width: r == .agree ? 500 : -500, height: 0)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                index += 1
-                dragOffset = .zero
+            if isLast {
+                // Skip the dead-end "✓ + NEXT" terminal screen — once the
+                // user has answered every statement, advance to the next
+                // onboarding step automatically. Better UX: no extra tap
+                // for a state that has no decision to make.
+                state.advance()
+            } else {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    index += 1
+                    dragOffset = .zero
+                }
             }
         }
     }
@@ -461,17 +466,34 @@ struct OnbTinderScreen: View {
 struct OnbSolutionScreen: View {
     @ObservedObject var state: OnboardingState
 
-    private var resolvedPains: [OnboardingPain] {
-        if state.pains.isEmpty {
-            return [.manualScoring, .friendsDontPay, .excelChaos]
-        }
-        return Array(OnboardingPain.allCases.filter { state.pains.contains($0) }.prefix(4))
+    private struct ResolvedSolution: Identifiable {
+        let pain: OnboardingPain
+        let matched: Bool
+        var id: OnboardingPain { pain }
+    }
+
+    /// Always returns exactly `displayCount` cards so the screen never
+    /// looks hollow (1 lonely card looked broken). Strategy:
+    ///   • Matched pains (the ones the user swiped right on) come first
+    ///     with a "PARA TI" badge — keeps the personalization signal.
+    ///   • Remaining slots fill with the rest of the pains in canonical
+    ///     order, no badge — they read as additional value.
+    /// Result: 0 swipes → 4 generic benefits, full-looking screen.
+    /// 1-3 swipes → matched on top, padded below. 4+ swipes → all 4 badged.
+    private var resolvedSolutions: [ResolvedSolution] {
+        let displayCount = 4
+        let matched   = OnboardingPain.allCases.filter {  state.pains.contains($0) }
+        let unmatched = OnboardingPain.allCases.filter { !state.pains.contains($0) }
+        let combined =
+            matched.map   { ResolvedSolution(pain: $0, matched: true) } +
+            unmatched.map { ResolvedSolution(pain: $0, matched: false) }
+        return Array(combined.prefix(displayCount))
     }
 
     var body: some View {
         VStack(spacing: 0) {
             OnbTitleBlock(
-                eyebrow: "\(L("Step")) 06 — \(L("For each thing you said:"))",
+                eyebrow: "\(L("Step")) 06",
                 title: L("HERE'S HOW FUTPOOLS FIXES IT"),
                 size: .md,
                 titleColor: .arenaPrimary
@@ -479,8 +501,8 @@ struct OnbSolutionScreen: View {
             .padding(.top, 24)
 
             VStack(spacing: 12) {
-                ForEach(resolvedPains) { p in
-                    solutionCard(pain: p)
+                ForEach(resolvedSolutions) { item in
+                    solutionCard(pain: item.pain, matched: item.matched)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -493,7 +515,7 @@ struct OnbSolutionScreen: View {
         }
     }
 
-    private func solutionCard(pain p: OnboardingPain) -> some View {
+    private func solutionCard(pain p: OnboardingPain, matched: Bool) -> some View {
         let solutionKey: String = {
             switch p {
             case .manualScoring:    return "sol.manualScoring"
@@ -515,15 +537,37 @@ struct OnbSolutionScreen: View {
             }
         }()
         return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Text(p.emoji).font(.system(size: 12))
+            // Header row: emoji + pain label + optional PARA TI badge.
+            // Label is allowed to wrap to 2 lines (was truncated with "…"
+            // for any pain whose Spanish label was longer than ~25 chars).
+            // Aligning to .top keeps the emoji and badge stuck to the
+            // first line when the label wraps.
+            HStack(alignment: .top, spacing: 8) {
+                Text(p.emoji)
+                    .font(.system(size: 12))
+                    .padding(.top, 1)
                 Text(p.label.uppercased())
                     .font(ArenaFont.mono(size: 10))
-                    .tracking(1)
+                    .tracking(0.6)
                     .foregroundColor(.arenaTextDim)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if matched {
+                    Text(L("FOR YOU"))
+                        .font(ArenaFont.mono(size: 9, weight: .bold))
+                        .tracking(1.4)
+                        .foregroundColor(.arenaPrimary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(HudCornerCutShape(cut: 3).fill(Color.arenaPrimary.opacity(0.14)))
+                        .overlay(HudCornerCutShape(cut: 3).stroke(Color.arenaPrimary.opacity(0.5), lineWidth: 1))
+                        .clipShape(HudCornerCutShape(cut: 3))
+                        .fixedSize()
+                }
             }
-            .opacity(0.7)
+            .opacity(matched ? 1 : 0.7)
             HStack(alignment: .top, spacing: 12) {
                 Text(solutionEmoji)
                     .font(.system(size: 18))
@@ -541,16 +585,42 @@ struct OnbSolutionScreen: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(HudCornerCutShape(cut: 10).fill(Color.arenaSurface))
-        .overlay(HudCornerCutShape(cut: 10).stroke(Color.arenaStroke, lineWidth: 1))
+        .overlay(
+            HudCornerCutShape(cut: 10)
+                .stroke(matched ? Color.arenaPrimary.opacity(0.5) : Color.arenaStroke,
+                        lineWidth: 1)
+        )
         .clipShape(HudCornerCutShape(cut: 10))
     }
 }
 
-// MARK: - Screen 7: League prefs (2x3 grid)
+// MARK: - Screen 7: Teams + leagues prefs (search + 3-col grid)
 
 struct OnbPrefsScreen: View {
     @ObservedObject var state: OnboardingState
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    @State private var searchQuery: String = ""
+    private let columns = [
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
+    ]
+
+    /// Match by case-insensitive substring on the visible label. The
+    /// league label includes a flag emoji prefix — we match the whole
+    /// label so a query like "MX" or "Liga MX" both work.
+    private func matches(_ haystack: String) -> Bool {
+        let q = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return true }
+        return haystack.localizedCaseInsensitiveContains(q)
+    }
+
+    private var filteredTeams: [OnbTeam] {
+        OnbTeam.allCases.filter { matches($0.label) }
+    }
+
+    private var filteredLeagues: [OnboardingLeague] {
+        OnboardingLeague.allCases.filter { matches($0.label) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -562,50 +632,167 @@ struct OnbPrefsScreen: View {
             )
             .padding(.top, 24)
 
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(OnboardingLeague.allCases) { l in
-                    leagueCell(l)
+            searchField
+                .padding(.horizontal, 24)
+                .padding(.top, 14)
+
+            // Body — search-filtered grids inside a ScrollView so adding
+            // more teams/leagues later doesn't blow up the screen on
+            // smaller devices.
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    if !filteredTeams.isEmpty {
+                        sectionHeader(L("POPULAR TEAMS"))
+                        LazyVGrid(columns: columns, spacing: 8) {
+                            ForEach(filteredTeams) { t in teamCell(t) }
+                        }
+                    }
+                    if !filteredLeagues.isEmpty {
+                        sectionHeader(L("LEAGUES"))
+                        LazyVGrid(columns: columns, spacing: 8) {
+                            ForEach(filteredLeagues) { l in leagueCell(l) }
+                        }
+                    }
+                    if filteredTeams.isEmpty && filteredLeagues.isEmpty {
+                        emptyState
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .padding(.horizontal, 24)
+            .frame(maxHeight: .infinity)
 
             OnbPrimaryButton(label: L("NEXT")) {
-                if state.leagues.isEmpty { state.leagues = [.ligaMX] }
+                // Default to Liga MX only when the user picked nothing at
+                // all (no league AND no team) — keeps the demo screen
+                // from showing an empty fixture list.
+                if state.leagues.isEmpty && state.teams.isEmpty {
+                    state.leagues = [.ligaMX]
+                }
                 state.advance()
             }
             .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .padding(.top, 8)
             .padding(.bottom, 28)
+        }
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.arenaTextDim)
+            TextField("", text: $searchQuery, prompt:
+                Text(L("Search teams or leagues"))
+                    .foregroundColor(.arenaTextFaint)
+            )
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .foregroundColor(.arenaText)
+            .font(ArenaFont.body(size: 14))
+            if !searchQuery.isEmpty {
+                Button {
+                    searchQuery = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.arenaTextDim)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(HudCornerCutShape(cut: 6).fill(Color.arenaSurface))
+        .overlay(HudCornerCutShape(cut: 6).stroke(Color.arenaStroke, lineWidth: 1))
+        .clipShape(HudCornerCutShape(cut: 6))
+    }
+
+    private func sectionHeader(_ text: String) -> some View {
+        Text(text)
+            .font(ArenaFont.mono(size: 10, weight: .bold))
+            .tracking(2)
+            .foregroundColor(.arenaTextDim)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 6) {
+            Text(L("No matches"))
+                .font(ArenaFont.display(size: 14, weight: .heavy))
+                .foregroundColor(.arenaText)
+            Text(L("Try a different team or league name."))
+                .font(ArenaFont.mono(size: 11))
+                .foregroundColor(.arenaTextDim)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 36)
+    }
+
+    /// Compact chip: logo on top, name below. Logo is loaded async from
+    /// api-sports' media CDN (same source the rest of the app uses for
+    /// team/league art). While loading or if the request fails we show a
+    /// muted ⚽ fallback so the chip layout doesn't jump.
+    private func chip(logoURL: URL?, label: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    if let url = logoURL {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let img):
+                                img.resizable()
+                                    .renderingMode(.original)
+                                    .aspectRatio(contentMode: .fit)
+                            default:
+                                Text("⚽")
+                                    .font(.system(size: 18))
+                                    .opacity(0.5)
+                            }
+                        }
+                    } else {
+                        Text("⚽")
+                            .font(.system(size: 18))
+                            .opacity(0.5)
+                    }
+                }
+                .frame(width: 28, height: 28)
+
+                Text(label)
+                    .font(ArenaFont.display(size: 10, weight: .heavy))
+                    .tracking(0.3)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
+                    .foregroundColor(active ? .arenaOnPrimary : .arenaText)
+            }
+            .frame(maxWidth: .infinity, minHeight: 76)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 8)
+            .background(HudCornerCutShape(cut: 6).fill(active ? Color.arenaPrimary : Color.arenaSurface))
+            .overlay(HudCornerCutShape(cut: 6).stroke(active ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1))
+            .shadow(color: active ? .arenaPrimary.opacity(0.22) : .clear, radius: 10)
+            .clipShape(HudCornerCutShape(cut: 6))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func teamCell(_ t: OnbTeam) -> some View {
+        let active = state.teams.contains(t)
+        return chip(logoURL: t.logoURL, label: t.label, active: active) {
+            if active { state.teams.remove(t) } else { state.teams.insert(t) }
         }
     }
 
     private func leagueCell(_ l: OnboardingLeague) -> some View {
         let active = state.leagues.contains(l)
+        // Drop the leading flag emoji from the league label so the logo
+        // does the visual heavy lifting — keeps the chip consistent with
+        // the team chips above.
         let parts = l.label.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
-        let flag = parts.first.map(String.init) ?? ""
-        let name = parts.count > 1 ? String(parts[1]) : l.label
-        return Button {
+        let nameOnly = parts.count > 1 ? String(parts[1]) : l.label
+        return chip(logoURL: l.logoURL, label: nameOnly, active: active) {
             if active { state.leagues.remove(l) } else { state.leagues.insert(l) }
-        } label: {
-            VStack(spacing: 8) {
-                Text(flag).font(.system(size: 28))
-                Text(name)
-                    .font(ArenaFont.display(size: 12, weight: .heavy))
-                    .tracking(0.5)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
-                    .foregroundColor(active ? .arenaOnPrimary : .arenaText)
-            }
-            .frame(maxWidth: .infinity, minHeight: 92)
-            .padding(.vertical, 8)
-            .background(HudCornerCutShape(cut: 8).fill(active ? Color.arenaPrimary : Color.arenaSurface))
-            .overlay(HudCornerCutShape(cut: 8).stroke(active ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1))
-            .shadow(color: active ? .arenaPrimary.opacity(0.25) : .clear, radius: 16)
-            .clipShape(HudCornerCutShape(cut: 8))
         }
-        .buttonStyle(.plain)
     }
 }
 

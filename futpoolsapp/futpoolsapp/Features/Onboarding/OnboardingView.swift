@@ -39,11 +39,17 @@ struct OnboardingView: View {
                 // overlaid on top of content, which caused the
                 // header/eyebrow to render under the progress bar
                 // and language toggle.)
+                // Single wrapper so the horizontal gutter applies uniformly
+                // to BOTH the topBar and every onboarding sub-view. Sub-views
+                // can opt out with negative margin if a hero ever needs full
+                // bleed; default keeps progress bar, language toggle, titles,
+                // CTAs and chips off the device edge.
                 VStack(spacing: 0) {
                     topBar
                     content
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .padding(.horizontal, 24)
             }
             // Bundle.main returns localized strings via the override
             // installed by AppLanguage.setLanguage. SwiftUI doesn't
@@ -122,7 +128,8 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity)
             languageToggle
         }
-        .padding(.horizontal, 16)
+        // Horizontal gutter is owned by the parent VStack so the rule lives
+        // in a single place — only top spacing is set here.
         .padding(.top, 8)
     }
 

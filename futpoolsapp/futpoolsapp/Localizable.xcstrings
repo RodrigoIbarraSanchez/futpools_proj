@@ -4554,6 +4554,23 @@
         }
       }
     },
+    "FOR YOU" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FOR YOU"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARA TI"
+          }
+        }
+      }
+    },
     "FOR FUN AND STREAKS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8908,6 +8925,74 @@
         }
       }
     },
+    "POPULAR TEAMS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "POPULAR TEAMS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EQUIPOS POPULARES"
+          }
+        }
+      }
+    },
+    "LEAGUES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LEAGUES"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LIGAS"
+          }
+        }
+      }
+    },
+    "Search teams or leagues" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search teams or leagues"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca equipos o ligas"
+          }
+        }
+      }
+    },
+    "Try a different team or league name." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try a different team or league name."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba con otro nombre de equipo o liga."
+          }
+        }
+      }
+    },
     "PRIVATE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -10473,13 +10558,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "— Carlos M., 32, runs his neighborhood pool"
+            "value" : "— Carlos M., 32, runs the office pool"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "— Carlos M., 32, organiza la quiniela del barrio"
+            "value" : "— Carlos M., 32, organiza la quiniela de la oficina"
           }
         }
       }
@@ -10496,7 +10581,58 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "— Laura S., 27, fan del América"
+            "value" : "— Laura S., 27, aficionada del América"
+          }
+        }
+      }
+    },
+    "social.a3" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "— Diego R., 35, Cruz Azul fan"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "— Diego R., 35, aficionado del Cruz Azul"
+          }
+        }
+      }
+    },
+    "social.a4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "— Andrea P., 24, day-one player"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "— Andrea P., 24, juega desde el lanzamiento"
+          }
+        }
+      }
+    },
+    "social.a5" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "— Mauricio L., 41, ex-pool organizer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "— Mauricio L., 41, antes organizaba pollas"
           }
         }
       }
@@ -10507,13 +10643,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“At last, no fights with my buddies over weekend points. I won a $250 gift card.”"
+            "value" : "“Way better than the WhatsApp group chat. Zero arguments over points. We're 3 pools in with the work crew already.”"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«Por fin, sin peleas con mis cuates por los puntos del fin. Gané una tarjeta de $250.»"
+            "value" : "«Por fin algo mejor que el grupo de WhatsApp. Cero discusiones por puntos. Llevo 3 quinielas con el equipo del trabajo.»"
           }
         }
       }
@@ -10524,13 +10660,64 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“Daily Pick is my morning vice. 14-day streak going.”"
+            "value" : "“Got hooked on the Daily Pick. Morning coffee, my forecast, and that's the day. 14-day streak going.”"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«El Pick del Día es mi vicio mañanero. Llevo 14 días seguidos.»"
+            "value" : "«Me enganché al Pick del Día. Café de la mañana, mi pronóstico, y arranca el día. Llevo 14 días seguidos.»"
+          }
+        }
+      }
+    },
+    "social.q3" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“The best part: nobody has to chase anyone for $50. The app charges, tracks the score, and pays the winner.”"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Lo mejor: ya nadie tiene que andar cobrando los $50. La app cobra, lleva la cuenta y le paga al que gana.»"
+          }
+        }
+      }
+    },
+    "social.q4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Challenged my brother in the Clásico, beat him, gift card landed the next day. No funny business.”"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Reté a mi hermano en el Clásico, le gané y la gift card me llegó al día siguiente. Sin trampas.»"
+          }
+        }
+      }
+    },
+    "social.q5" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Clean interface, the rules click on the first read. Way better than running pools in an Excel sheet.”"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«La interfaz está limpia y las reglas se entienden a la primera. Mucho mejor que llevar la quiniela en un Excel.»"
           }
         }
       }
@@ -11516,13 +11703,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I'm always the one who ends up building the bracket"
+            "value" : "I always end up running the pool because nobody else will"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Siempre soy yo el que termina armando la quiniela"
+            "value" : "Termino armando yo la quiniela porque nadie más quiere"
           }
         }
       }
@@ -11533,13 +11720,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I've been chasing 3 pools that still owe me money"
+            "value" : "Asking my friends to pay every week feels awkward"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Llevo persiguiendo 3 quinielas que aún me deben dinero"
+            "value" : "Me incomoda andarle cobrando a mis amigos cada semana"
           }
         }
       }
@@ -11550,13 +11737,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "My group wins $200 and nobody collects it"
+            "value" : "When we win, nobody really knows who got how much"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mi grupo gana $200 y nadie los cobra"
+            "value" : "Cuando hay premio nadie sabe bien quién ganó ni cuánto"
           }
         }
       }
@@ -11567,13 +11754,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I want to throw a quick prediction without joining a whole league"
+            "value" : "I want to bet on one match without committing to a whole season"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quiero pronosticar rápido sin meterme a una liga entera"
+            "value" : "Quiero apostar a un solo partido sin meterme a una liga entera"
           }
         }
       }

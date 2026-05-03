@@ -115,6 +115,76 @@ enum OnboardingLeague: String, CaseIterable, Identifiable, Codable {
         case .mls:       return 253
         }
     }
+
+    /// Public CDN URL for the league logo from api-sports' media bucket.
+    /// Same source as team crests; PNG with transparent background.
+    var logoURL: URL? {
+        URL(string: "https://media.api-sports.io/football/leagues/\(apiFootballID).png")
+    }
+}
+
+// MARK: - Team preference (screen 7, alongside leagues)
+
+/// Popular teams shown on the prefs screen alongside leagues. The list is
+/// hand-curated for Mexico-first audience: 6 Liga MX + 8 European powerhouses
+/// covers the bulk of likely fandoms without overwhelming the grid. New
+/// teams can be added without touching the screen — the grid is data-driven.
+enum OnbTeam: String, CaseIterable, Identifiable, Codable {
+    // Liga MX (Mexico-first audience)
+    case america, cruzAzul, chivas, pumas, monterrey, tigres
+    // Europe — global names users recognize even without following the league
+    case realMadrid, barcelona, manCity, manUnited, liverpool, psg, bayern, juventus
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .america:    return "Club América"
+        case .cruzAzul:   return "Cruz Azul"
+        case .chivas:     return "Chivas"
+        case .pumas:      return "Pumas"
+        case .monterrey:  return "Monterrey"
+        case .tigres:     return "Tigres"
+        case .realMadrid: return "Real Madrid"
+        case .barcelona:  return "Barcelona"
+        case .manCity:    return "Manchester City"
+        case .manUnited:  return "Manchester United"
+        case .liverpool:  return "Liverpool"
+        case .psg:        return "PSG"
+        case .bayern:     return "Bayern Munich"
+        case .juventus:   return "Juventus"
+        }
+    }
+
+    /// API-Football team IDs. These are the same IDs the public fixtures
+    /// endpoint uses, so a logo fetched via this id matches the crest the
+    /// rest of the app shows. If a logo 404s on the CDN, double-check the
+    /// id at https://www.api-football.com/documentation-v3#tag/Teams.
+    var apiFootballID: Int {
+        switch self {
+        case .america:    return 2287
+        case .cruzAzul:   return 2289
+        case .chivas:     return 2295
+        case .pumas:      return 2293
+        case .monterrey:  return 2282
+        case .tigres:     return 2283
+        case .realMadrid: return 541
+        case .barcelona:  return 529
+        case .manCity:    return 50
+        case .manUnited:  return 33
+        case .liverpool:  return 40
+        case .psg:        return 85
+        case .bayern:     return 157
+        case .juventus:   return 496
+        }
+    }
+
+    /// Public CDN URL for the team crest. No auth needed — the assets
+    /// live on api-sports' media bucket and are served directly. PNG with
+    /// transparent background, ~150x150 typical, sometimes larger.
+    var logoURL: URL? {
+        URL(string: "https://media.api-sports.io/football/teams/\(apiFootballID).png")
+    }
 }
 
 // MARK: - Pick (screen 9)
@@ -143,6 +213,7 @@ final class OnboardingState: ObservableObject {
     @Published var pains: Set<OnboardingPain> = []
     @Published var swipes: [OnboardingTinderResponse] = []
     @Published var leagues: Set<OnboardingLeague> = [.ligaMX]
+    @Published var teams: Set<OnbTeam> = []
     @Published var demoPicks: [OnboardingDemoPick] = []
 
     func advance() {
@@ -166,6 +237,7 @@ final class OnboardingState: ObservableObject {
         d.set(goals.map(\.rawValue), forKey: "onboardingGoals")
         d.set(pains.map(\.rawValue), forKey: "onboardingPains")
         d.set(leagues.map(\.rawValue), forKey: "onboardingLeagues")
+        d.set(teams.map(\.rawValue), forKey: "onboardingTeams")
         if let data = try? JSONEncoder().encode(demoPicks) {
             d.set(data, forKey: "onboardingDemoPicks")
         }
