@@ -473,9 +473,14 @@ final class ChallengeDetailViewModel: ObservableObject {
 
     /// Copy the `/c/<code>` universal link to clipboard. Flag toggles for 1.5s
     /// so the UI can show "LINK COPIED ✓" feedback.
+    ///
+    /// Uses `api.futpools.com` (backend host) instead of `futpools.com`
+    /// because the og.js routes that serve link previews for WhatsApp /
+    /// Telegram / iMessage live on the backend. A link to the web SPA
+    /// would render no preview — the bot-scrape sees an empty React shell.
     func copyShareLink(code: String) {
         #if canImport(UIKit)
-        UIPasteboard.general.string = "https://futpools.com/c/\(code)"
+        UIPasteboard.general.string = "https://api.futpools.com/c/\(code)"
         copied = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.copied = false
