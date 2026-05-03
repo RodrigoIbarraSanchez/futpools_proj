@@ -27,3 +27,118 @@ MongoDB connected
 [DailyPick] scheduler started (1-minute tick)
 Server running on port 3000
 MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[Quiniela] create user=69e833d4497af8109ea3fed9 code=DLNV9RAY fixtures=12
+[Quiniela] submit entry — quiniela=69f4d54660a953e36e7f3fbe user=69e833d4497af8109ea3fed9 picks=12
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-01.m4eqg.mongodb.net
+[API-Football] Poll error fetch failed
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-02.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-02.m4eqg.mongodb.net
+[DailyPick] selectForToday error: getaddrinfo ENOTFOUND cluster0-shard-00-02.m4eqg.mongodb.net
