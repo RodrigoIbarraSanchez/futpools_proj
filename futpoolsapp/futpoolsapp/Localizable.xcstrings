@@ -902,6 +902,9 @@
     "⚠" : {
 
     },
+    "⚽" : {
+
+    },
     "✎" : {
 
     },
@@ -4554,23 +4557,6 @@
         }
       }
     },
-    "FOR YOU" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FOR YOU"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PARA TI"
-          }
-        }
-      }
-    },
     "FOR FUN AND STREAKS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4584,6 +4570,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "POR DIVERSIÓN Y RACHAS"
+          }
+        }
+      }
+    },
+    "FOR YOU" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FOR YOU"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARA TI"
           }
         }
       }
@@ -5749,6 +5752,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "LIGA"
+          }
+        }
+      }
+    },
+    "LEAGUES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LEAGUES"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LIGAS"
           }
         }
       }
@@ -8823,6 +8843,23 @@
         }
       }
     },
+    "POPULAR TEAMS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "POPULAR TEAMS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EQUIPOS POPULARES"
+          }
+        }
+      }
+    },
     "Predict & earn 1 Ticket" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8921,74 +8958,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Predecir solo y subir de rank"
-          }
-        }
-      }
-    },
-    "POPULAR TEAMS" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "POPULAR TEAMS"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "EQUIPOS POPULARES"
-          }
-        }
-      }
-    },
-    "LEAGUES" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "LEAGUES"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "LIGAS"
-          }
-        }
-      }
-    },
-    "Search teams or leagues" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search teams or leagues"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Busca equipos o ligas"
-          }
-        }
-      }
-    },
-    "Try a different team or league name." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Try a different team or league name."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prueba con otro nombre de equipo o liga."
           }
         }
       }
@@ -10123,6 +10092,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar países"
+          }
+        }
+      }
+    },
+    "Search teams or leagues" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search teams or leagues"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca equipos o ligas"
           }
         }
       }
@@ -11934,6 +11920,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "VA PERDIENDO · 0 PTOS SI AGUANTA"
+          }
+        }
+      }
+    },
+    "Try a different team or league name." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try a different team or league name."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba con otro nombre de equipo o liga."
           }
         }
       }

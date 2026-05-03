@@ -130,29 +130,25 @@ enum OnboardingLeague: String, CaseIterable, Identifiable, Codable {
 /// covers the bulk of likely fandoms without overwhelming the grid. New
 /// teams can be added without touching the screen — the grid is data-driven.
 enum OnbTeam: String, CaseIterable, Identifiable, Codable {
-    // Liga MX (Mexico-first audience)
-    case america, cruzAzul, chivas, pumas, monterrey, tigres
-    // Europe — global names users recognize even without following the league
-    case realMadrid, barcelona, manCity, manUnited, liverpool, psg, bayern, juventus
+    // Top 9 globally popular clubs — ordered by global popularity so the
+    // grid surfaces the most recognized ones first. Liga MX teams are
+    // covered indirectly via the Liga MX league chip; if we ever need a
+    // dedicated regional row we can add it as a separate section.
+    case realMadrid, barcelona, manUnited, psg, manCity, liverpool, bayern, juventus, chelsea
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .america:    return "Club América"
-        case .cruzAzul:   return "Cruz Azul"
-        case .chivas:     return "Chivas"
-        case .pumas:      return "Pumas"
-        case .monterrey:  return "Monterrey"
-        case .tigres:     return "Tigres"
         case .realMadrid: return "Real Madrid"
         case .barcelona:  return "Barcelona"
-        case .manCity:    return "Manchester City"
         case .manUnited:  return "Manchester United"
-        case .liverpool:  return "Liverpool"
         case .psg:        return "PSG"
+        case .manCity:    return "Manchester City"
+        case .liverpool:  return "Liverpool"
         case .bayern:     return "Bayern Munich"
         case .juventus:   return "Juventus"
+        case .chelsea:    return "Chelsea"
         }
     }
 
@@ -162,20 +158,15 @@ enum OnbTeam: String, CaseIterable, Identifiable, Codable {
     /// id at https://www.api-football.com/documentation-v3#tag/Teams.
     var apiFootballID: Int {
         switch self {
-        case .america:    return 2287
-        case .cruzAzul:   return 2289
-        case .chivas:     return 2295
-        case .pumas:      return 2293
-        case .monterrey:  return 2282
-        case .tigres:     return 2283
         case .realMadrid: return 541
         case .barcelona:  return 529
-        case .manCity:    return 50
         case .manUnited:  return 33
-        case .liverpool:  return 40
         case .psg:        return 85
+        case .manCity:    return 50
+        case .liverpool:  return 40
         case .bayern:     return 157
         case .juventus:   return 496
+        case .chelsea:    return 49
         }
     }
 
