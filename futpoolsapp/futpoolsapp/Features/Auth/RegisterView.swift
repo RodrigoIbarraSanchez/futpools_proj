@@ -27,6 +27,7 @@ struct RegisterView: View {
     /// picker still opens on "today" — this is just the binding default.
     @State private var dob: Date = Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date()
     @State private var country: String = "MX"
+    @State private var showCountryPicker: Bool = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case name, username, email, password }
@@ -193,20 +194,36 @@ struct RegisterView: View {
                             }
                             if let err = dobError { errorLine(err) }
 
-                            // Country picker — defaults to MX (the only
-                            // country sweepstakes are available in for v2.4
-                            // launch). Fixed list to avoid showing 200+
-                            // countries the user can't pick anyway.
+                            // Country picker — full ISO 3166-1 list with
+                            // a search bar inside the sheet so any user
+                            // worldwide can pick. Sweepstakes are still
+                            // gated per-pool by `allowedCountries` on
+                            // the backend, independent of registration.
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(String(localized: "COUNTRY"))
                                     .font(ArenaFont.mono(size: 10))
                                     .tracking(2)
                                     .foregroundColor(.arenaTextMuted)
-                                Picker("", selection: $country) {
-                                    Text("🇲🇽 México").tag("MX")
-                                    Text("🌎 " + String(localized: "Other")).tag("XX")
+                                Button {
+                                    showCountryPicker = true
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Text(CountryCatalog.flagEmoji(from: country))
+                                            .font(.system(size: 22))
+                                        Text(CountryCatalog.name(for: country))
+                                            .font(ArenaFont.mono(size: 14))
+                                            .foregroundColor(.arenaText)
+                                        Spacer()
+                                        Image(systemName: "chevron.down")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.arenaTextDim)
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 10)
+                                    .background(Color.arenaBg)
+                                    .overlay(Rectangle().stroke(Color.arenaStroke, lineWidth: 1))
                                 }
-                                .pickerStyle(.segmented)
+                                .buttonStyle(.plain)
                             }
 
                             if let msg = auth.errorMessage {
@@ -275,6 +292,10 @@ struct RegisterView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .sheet(isPresented: $showCountryPicker) {
+            CountryPickerSheet(selected: $country)
+                .preferredColorScheme(.dark)
+        }
     }
 
     private func errorLine(_ msg: String) -> some View {

@@ -73,6 +73,16 @@
         }
       }
     },
+    "%@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
     "%@ COINS": {
       "extractionState": "manual",
       "localizations": {
@@ -315,6 +325,7 @@
         }
       }
     },
+    "%lld%%": {},
     "%lld'": {},
     "%lld/%lld": {
       "localizations": {
@@ -586,6 +597,7 @@
       }
     },
     "20": {},
+    "2H 14M": {},
     "3. How to enter": {
       "extractionState": "manual",
       "localizations": {
@@ -2479,6 +2491,23 @@
         }
       }
     },
+    "Country": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Country"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "País"
+          }
+        }
+      }
+    },
     "Create Another Entry": {
       "extractionState": "manual",
       "localizations": {
@@ -3643,6 +3672,7 @@
         }
       }
     },
+    "FUTPOOLS": {},
     "Falló": {
       "extractionState": "manual",
       "localizations": {
@@ -9300,6 +9330,23 @@
         }
       }
     },
+    "Search countries": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search countries"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar países"
+          }
+        }
+      }
+    },
     "See full leaderboard": {
       "extractionState": "manual",
       "localizations": {
@@ -12530,6 +12577,7 @@
         }
       }
     },
+    "★★★★★": {},
     "⚔": {},
     "⚔ %@": {},
     "⚙": {},
@@ -12646,7 +12694,6 @@
     "＋": {},
     "🇲🇽 México": {},
     "🎁": {},
-    "🎮": {},
     "🎯": {},
     "🏆": {},
     "💀": {},

@@ -5,6 +5,7 @@ import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
 import { AppBackground } from '../arena-ui/AppBackground';
 import { HudFrame, ArcadeButton, ArenaLabel, arenaInputStyle } from '../arena-ui/primitives';
+import { CountryPicker, countryName, flagEmoji } from '../components/CountryPicker';
 
 export function Register() {
   const { register, error, setError } = useAuth();
@@ -15,6 +16,7 @@ export function Register() {
   const [displayName, setDisplayName] = useState('');
   const [dob, setDob] = useState('');             // YYYY-MM-DD from <input type="date">
   const [country, setCountry] = useState('MX');
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Block submit when computed age < 18. Backend also enforces but
@@ -87,10 +89,19 @@ export function Register() {
             </div>
             <div>
               <ArenaLabel>{t(locale, 'COUNTRY')}</ArenaLabel>
-              <select value={country} onChange={(e) => setCountry(e.target.value)} style={arenaInputStyle}>
-                <option value="MX">🇲🇽 México</option>
-                <option value="XX">🌎 {t(locale, 'Other')}</option>
-              </select>
+              <button
+                type="button"
+                onClick={() => setShowCountryPicker(true)}
+                style={{
+                  ...arenaInputStyle,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  cursor: 'pointer', textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 22 }}>{flagEmoji(country)}</span>
+                <span style={{ flex: 1 }}>{countryName(country, locale)}</span>
+                <span style={{ color: 'var(--fp-text-dim)', fontSize: 12 }}>▾</span>
+              </button>
             </div>
 
             {error && (
@@ -112,6 +123,15 @@ export function Register() {
           </Link>
         </div>
       </div>
+      {showCountryPicker && (
+        <CountryPicker
+          value={country}
+          onChange={setCountry}
+          onClose={() => setShowCountryPicker(false)}
+          locale={locale}
+          t={t}
+        />
+      )}
     </>
   );
 }
