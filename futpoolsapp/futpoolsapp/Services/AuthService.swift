@@ -11,6 +11,12 @@ final class AuthService: ObservableObject {
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     @Published var errorMessage: String?
+    /// Stable code from the backend (e.g. "EMAIL_EXISTS"). The UI
+    /// uses this to localize the error and highlight the offending
+    /// field. Cleared whenever a new auth call starts.
+    @Published var errorCode: String?
+    /// Field on the form the error refers to (e.g. "username").
+    @Published var errorField: String?
     /// Coin amount granted at registration. Non-nil only for the one-shot
     /// celebration sheet right after register — cleared when the user
     /// acknowledges it. Not persisted (deliberate — we only want to show the
@@ -48,7 +54,7 @@ final class AuthService: ObservableObject {
         dob: Date,
         countryCode: String
     ) async {
-        errorMessage = nil
+        clearError()
         struct Body: Encodable {
             let email: String
             let password: String
@@ -96,7 +102,7 @@ final class AuthService: ObservableObject {
     }
 
     func login(email: String, password: String) async {
-        errorMessage = nil
+        clearError()
         struct Body: Encodable {
             let email: String
             let password: String
@@ -196,10 +202,6 @@ final class AuthService: ObservableObject {
         isAuthenticated = false
     }
 
-    func clearError() {
-        errorMessage = nil
-    }
-
     /// Submit IAP signed transaction to backend; on success refreshes user (balance updated).
     func rechargeBalance(signedTransaction: String) async throws {
         struct Body: Encodable { let signedTransaction: String }
@@ -215,7 +217,7 @@ final class AuthService: ObservableObject {
 
     /// Request a password reset code for the given email. Returns true if the request succeeded (we always return success for privacy).
     func forgotPassword(email: String) async -> Bool {
-        errorMessage = nil
+        clearError()
         struct Body: Encodable { let email: String }
         struct Response: Decodable { let message: String? }
         do {
@@ -229,7 +231,7 @@ final class AuthService: ObservableObject {
 
     /// Reset password with email + code from email. On success, signs the user in.
     func resetPassword(email: String, code: String, newPassword: String) async {
-        errorMessage = nil
+        clearError()
         struct Body: Encodable {
             let email: String
             let code: String
@@ -251,23 +253,39 @@ final class AuthService: ObservableObject {
     }
 
     private func handleError(_ error: Error) {
-        if case .server(let msg) = error as? APIError {
-            if let data = msg.data(using: .utf8),
+        // Default — overridden below when we can extract structured
+        // data from the server payload.
+        errorMessage = error.localizedDescription
+        errorCode = nil
+        errorField = nil
+
+        if case .server(let raw) = error as? APIError {
+            errorMessage = raw  // safe fallback
+            if let data = raw.data(using: .utf8),
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                if let message = json["message"] as? String {
-                    errorMessage = message
-                    return
-                }
-                if let errors = json["errors"] as? [[String: Any]],
-                   let first = errors.first,
-                   let msg = first["msg"] as? String {
-                    errorMessage = msg
-                    return
+                if let m = json["message"] as? String { errorMessage = m }
+                if let c = json["code"] as? String { errorCode = c }
+                if let f = json["field"] as? String { errorField = f }
+                // Legacy validator-array shape — pick the first error
+                // and synthesize a code from its `path`.
+                if errorCode == nil,
+                   let errs = json["errors"] as? [[String: Any]],
+                   let first = errs.first {
+                    if let m = first["msg"] as? String { errorMessage = m }
+                    if let path = first["path"] as? String {
+                        errorField = path
+                        errorCode = "INVALID_\(path.uppercased())"
+                    }
                 }
             }
-            errorMessage = msg
-            return
         }
-        errorMessage = error.localizedDescription
+    }
+
+    /// Clear all error state — used by Login/Register views when
+    /// the user re-types in a field.
+    func clearError() {
+        errorMessage = nil
+        errorCode = nil
+        errorField = nil
     }
 }

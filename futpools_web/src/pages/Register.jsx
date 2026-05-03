@@ -7,8 +7,37 @@ import { AppBackground } from '../arena-ui/AppBackground';
 import { HudFrame, ArcadeButton, ArenaLabel, arenaInputStyle } from '../arena-ui/primitives';
 import { CountryPicker, countryName, flagEmoji } from '../components/CountryPicker';
 
+// Map a backend error `code` to a localized friendly message. Falls
+// back to the raw backend `message` (already English-or-Spanish-aware
+// on the server side) if the code isn't recognized.
+function localizedRegisterError(locale, code, fallbackMessage) {
+  const dict = {
+    EMAIL_EXISTS:     { en: 'An account with this email already exists. Try signing in instead.',
+                        es: 'Ya existe una cuenta con ese correo. Inicia sesión.' },
+    USERNAME_TAKEN:   { en: 'That username is already taken. Pick another one.',
+                        es: 'Ese nombre de usuario ya está ocupado. Elige otro.' },
+    INVALID_EMAIL:    { en: 'That doesn’t look like a valid email address.',
+                        es: 'Ese correo no parece válido.' },
+    WEAK_PASSWORD:    { en: 'Password must be at least 6 characters.',
+                        es: 'La contraseña debe tener al menos 6 caracteres.' },
+    INVALID_USERNAME: { en: 'Username must be 3–20 chars: letters, numbers, dot or underscore.',
+                        es: 'El usuario debe tener 3–20 caracteres: letras, números, punto o guión bajo.' },
+    NAME_TOO_SHORT:   { en: 'Name must be at least 2 characters.',
+                        es: 'El nombre debe tener al menos 2 caracteres.' },
+    INVALID_DOB:      { en: 'Please pick a valid date of birth.',
+                        es: 'Elige una fecha de nacimiento válida.' },
+    UNDERAGE:         { en: 'You must be 18 or older to sign up.',
+                        es: 'Debes tener 18 años o más para registrarte.' },
+    SERVER_ERROR:     { en: 'Couldn’t create your account. Please try again in a moment.',
+                        es: 'No pudimos crear tu cuenta. Intenta de nuevo en un momento.' },
+  };
+  const entry = code && dict[code];
+  if (entry) return entry[locale] || entry.en;
+  return fallbackMessage || (locale === 'es' ? 'No pudimos crear tu cuenta.' : 'Could not create your account.');
+}
+
 export function Register() {
-  const { register, error, setError } = useAuth();
+  const { register, error, errorCode, errorField, setError } = useAuth();
   const { locale } = useLocale();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,7 +134,20 @@ export function Register() {
             </div>
 
             {error && (
-              <div style={{ color: 'var(--fp-danger)', fontSize: 12, fontFamily: 'var(--fp-mono)' }}>{error}</div>
+              <div role="alert" style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                padding: '12px 14px',
+                background: 'rgba(255,59,92,0.08)',
+                border: '1px solid rgba(255,59,92,0.45)',
+                borderRadius: 6,
+                color: 'var(--fp-text)',
+                fontFamily: 'var(--fp-body)', fontSize: 13, lineHeight: 1.4,
+              }}>
+                <span style={{ color: 'var(--fp-danger)', fontSize: 16, lineHeight: 1, fontWeight: 800 }}>!</span>
+                <span style={{ flex: 1 }}>
+                  {localizedRegisterError(locale, errorCode, error)}
+                </span>
+              </div>
             )}
 
             <ArcadeButton type="submit" size="lg" fullWidth disabled={loading}>

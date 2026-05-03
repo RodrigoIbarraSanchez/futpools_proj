@@ -19,11 +19,34 @@ const generateToken = (userId) => {
   );
 };
 
+/**
+ * Validator → structured error mapper. express-validator returns an
+ * array of `{ msg, path, value, ... }` objects. We pick the first one
+ * and map its `path` to a stable `code` the client can localize. The
+ * raw `msg` is also returned as a sane fallback for any client that
+ * doesn't recognize the code yet.
+ */
+function firstValidatorError(errors) {
+  const e = errors[0];
+  if (!e) return { message: 'Invalid request', code: 'INVALID_REQUEST' };
+  const codeByPath = {
+    email:       'INVALID_EMAIL',
+    password:    'WEAK_PASSWORD',
+    username:    'INVALID_USERNAME',
+    displayName: 'NAME_TOO_SHORT',
+  };
+  return {
+    message: e.msg || 'Invalid request',
+    code: codeByPath[e.path] || 'INVALID_REQUEST',
+    field: e.path || null,
+  };
+}
+
 exports.register = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json(firstValidatorError(errors.array()));
     }
     const { email, password, displayName, username, dob, countryCode } = req.body;
     const normalizedEmail = String(email || '').trim().toLowerCase();
@@ -39,12 +62,20 @@ exports.register = async (req, res) => {
     if (dob) {
       parsedDob = new Date(dob);
       if (isNaN(parsedDob.getTime())) {
-        return res.status(400).json({ message: 'Invalid date of birth', code: 'INVALID_DOB' });
+        return res.status(400).json({
+          message: 'Invalid date of birth',
+          code: 'INVALID_DOB',
+          field: 'dob',
+        });
       }
       const ageMs = Date.now() - parsedDob.getTime();
       const ageYears = ageMs / (365.25 * 24 * 60 * 60 * 1000);
       if (ageYears < 18) {
-        return res.status(400).json({ message: 'Must be 18 or older', code: 'UNDERAGE' });
+        return res.status(400).json({
+          message: 'You must be 18 or older to sign up',
+          code: 'UNDERAGE',
+          field: 'dob',
+        });
       }
     }
     const normalizedCountry = countryCode
@@ -57,10 +88,18 @@ exports.register = async (req, res) => {
 
     if (existing) {
       if (existing.email === normalizedEmail) {
-        return res.status(400).json({ message: 'User already exists with this email' });
+        return res.status(400).json({
+          message: 'An account with this email already exists',
+          code: 'EMAIL_EXISTS',
+          field: 'email',
+        });
       }
       if (existing.username === normalizedUsername) {
-        return res.status(400).json({ message: 'Username is already taken' });
+        return res.status(400).json({
+          message: 'That username is already taken',
+          code: 'USERNAME_TAKEN',
+          field: 'username',
+        });
       }
     }
 
@@ -114,12 +153,38 @@ exports.register = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err);
+    console.error('[Auth] register error:', err);
     if (err?.code === 11000) {
-      if (err?.keyPattern?.email) return res.status(400).json({ message: 'User already exists with this email' });
-      if (err?.keyPattern?.username) return res.status(400).json({ message: 'Username is already taken' });
+      if (err?.keyPattern?.email) {
+        return res.status(400).json({
+          message: 'An account with this email already exists',
+          code: 'EMAIL_EXISTS',
+          field: 'email',
+        });
+      }
+      if (err?.keyPattern?.username) {
+        return res.status(400).json({
+          message: 'That username is already taken',
+          code: 'USERNAME_TAKEN',
+          field: 'username',
+        });
+      }
     }
-    res.status(500).json({ message: 'Server error' });
+    // Mongoose validation (e.g. corrupt input that bypassed the
+    // express-validator layer) — surface the first invalid path so
+    // the client can highlight the right field.
+    if (err?.name === 'ValidationError' && err.errors) {
+      const firstField = Object.keys(err.errors)[0];
+      return res.status(400).json({
+        message: err.errors[firstField]?.message || 'Validation error',
+        code: 'VALIDATION_ERROR',
+        field: firstField,
+      });
+    }
+    res.status(500).json({
+      message: "Couldn't create your account. Please try again in a moment.",
+      code: 'SERVER_ERROR',
+    });
   }
 };
 

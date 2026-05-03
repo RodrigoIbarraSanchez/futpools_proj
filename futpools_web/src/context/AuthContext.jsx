@@ -8,6 +8,8 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
+  const [errorCode, setErrorCode] = useState(null);
+  const [errorField, setErrorField] = useState(null);
   const [ready, setReady] = useState(false);
   // One-shot signup celebration state — set by register() when the server
   // grants a bonus, cleared by acknowledgeSignupBonus() after the modal is
@@ -73,7 +75,13 @@ export function AuthProvider({ children }) {
       }
       return true;
     } catch (e) {
+      // Keep `error` as a plain string so existing consumers
+      // (`{error}` in JSX) keep working. `errorCode` and
+      // `errorField` carry the structured info the Register form
+      // uses to localize the message and highlight the right input.
       setError(e.message || 'Registration failed');
+      setErrorCode(e.code || null);
+      setErrorField(e.field || null);
       return false;
     }
   }, []);
@@ -99,12 +107,24 @@ export function AuthProvider({ children }) {
     }
   }, [getToken]);
 
+  // Wrap setError so consumers can also clear errorCode + errorField
+  // in one call. Backwards-compatible — `setError(null)` still works.
+  const setErrorAll = useCallback((value) => {
+    setError(value);
+    if (value == null) {
+      setErrorCode(null);
+      setErrorField(null);
+    }
+  }, []);
+
   const value = {
     user,
     token: getToken(),
     isAuthenticated: !!user,
     error,
-    setError,
+    errorCode,
+    errorField,
+    setError: setErrorAll,
     login,
     register,
     logout,

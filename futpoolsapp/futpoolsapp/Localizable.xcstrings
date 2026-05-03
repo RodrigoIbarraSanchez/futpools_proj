@@ -1145,6 +1145,23 @@
         }
       }
     },
+    "An account with this email already exists. Try signing in instead.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An account with this email already exists. Try signing in instead."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya existe una cuenta con ese correo. Inicia sesión."
+          }
+        }
+      }
+    },
     "Any entries already paid will be refunded.": {
       "extractionState": "manual",
       "localizations": {
@@ -2406,6 +2423,23 @@
         }
       }
     },
+    "Could not create your account.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not create your account."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos crear tu cuenta."
+          }
+        }
+      }
+    },
     "Could not load challenge": {
       "extractionState": "manual",
       "localizations": {
@@ -2487,6 +2521,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "No se pudo guardar. Intenta de nuevo."
+          }
+        }
+      }
+    },
+    "Couldn't create your account. Please try again in a moment.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't create your account. Please try again in a moment."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos crear tu cuenta. Intenta de nuevo en un momento."
           }
         }
       }
@@ -5957,6 +6008,23 @@
         }
       }
     },
+    "Name must be at least 2 characters.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name must be at least 2 characters."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El nombre debe tener al menos 2 caracteres."
+          }
+        }
+      }
+    },
     "Need %lld more Tickets": {
       "extractionState": "manual",
       "localizations": {
@@ -7370,6 +7438,23 @@
         }
       }
     },
+    "Password must be at least 6 characters.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password must be at least 6 characters."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La contraseña debe tener al menos 6 caracteres."
+          }
+        }
+      }
+    },
     "Password recovery will be available soon.": {
       "extractionState": "manual",
       "localizations": {
@@ -7928,6 +8013,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Los jugadores verán esta imagen como el premio."
+          }
+        }
+      }
+    },
+    "Please pick a valid date of birth.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please pick a valid date of birth."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una fecha de nacimiento válida."
           }
         }
       }
@@ -10164,6 +10266,23 @@
         }
       }
     },
+    "That doesn't look like a valid email address.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That doesn't look like a valid email address."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ese correo no parece válido."
+          }
+        }
+      }
+    },
     "That user does not exist.": {
       "extractionState": "manual",
       "localizations": {
@@ -10177,6 +10296,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ese usuario no existe."
+          }
+        }
+      }
+    },
+    "That username is already taken. Pick another one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That username is already taken. Pick another one."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ese nombre de usuario ya está ocupado. Elige otro."
           }
         }
       }
@@ -10571,6 +10707,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "El usuario es obligatorio"
+          }
+        }
+      }
+    },
+    "Username must be 3–20 chars: letters, numbers, dot or underscore.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Username must be 3–20 chars: letters, numbers, dot or underscore."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El usuario debe tener 3–20 caracteres: letras, números, punto o guión bajo."
           }
         }
       }
@@ -11473,6 +11626,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "No tienes retos entrantes."
+          }
+        }
+      }
+    },
+    "You must be 18 or older to sign up.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You must be 18 or older to sign up."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Debes tener 18 años o más para registrarte."
           }
         }
       }

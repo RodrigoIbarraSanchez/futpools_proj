@@ -226,12 +226,8 @@ struct RegisterView: View {
                                 .buttonStyle(.plain)
                             }
 
-                            if let msg = auth.errorMessage {
-                                Text(msg)
-                                    .font(ArenaFont.mono(size: 11))
-                                    .foregroundColor(.arenaDanger)
-                                    .multilineTextAlignment(.leading)
-                                    .padding(.top, 2)
+                            if auth.errorMessage != nil {
+                                serverErrorBanner
                             }
 
                             ArcadeButton(
@@ -304,6 +300,62 @@ struct RegisterView: View {
             .foregroundColor(.arenaDanger)
             .padding(.leading, 2)
             .padding(.top, -8)
+    }
+
+    /// Visible red banner with icon — replaces the previous one-line
+    /// gray text so the user can't miss why their submit was
+    /// rejected. The copy maps known backend codes to localized
+    /// friendly strings; unknown codes fall back to whatever message
+    /// the server returned.
+    private var serverErrorBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("!")
+                .font(.system(size: 16, weight: .black))
+                .foregroundColor(.arenaDanger)
+                .frame(width: 22, height: 22)
+                .background(HudCornerCutShape(cut: 4).fill(Color.arenaDanger.opacity(0.15)))
+                .overlay(HudCornerCutShape(cut: 4).stroke(Color.arenaDanger.opacity(0.6), lineWidth: 1))
+                .clipShape(HudCornerCutShape(cut: 4))
+            Text(friendlyError)
+                .font(ArenaFont.body(size: 13))
+                .foregroundColor(.arenaText)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(HudCornerCutShape(cut: 6).fill(Color.arenaDanger.opacity(0.08)))
+        .overlay(HudCornerCutShape(cut: 6).stroke(Color.arenaDanger.opacity(0.45), lineWidth: 1))
+        .clipShape(HudCornerCutShape(cut: 6))
+    }
+
+    /// Map a stable backend `code` to a localized friendly message.
+    /// Falls back to the raw backend message when the code isn't
+    /// recognized (covers future backend additions without forcing
+    /// an iOS update).
+    private var friendlyError: String {
+        switch auth.errorCode {
+        case "EMAIL_EXISTS":
+            return String(localized: "An account with this email already exists. Try signing in instead.")
+        case "USERNAME_TAKEN":
+            return String(localized: "That username is already taken. Pick another one.")
+        case "INVALID_EMAIL":
+            return String(localized: "That doesn't look like a valid email address.")
+        case "WEAK_PASSWORD":
+            return String(localized: "Password must be at least 6 characters.")
+        case "INVALID_USERNAME":
+            return String(localized: "Username must be 3–20 chars: letters, numbers, dot or underscore.")
+        case "NAME_TOO_SHORT":
+            return String(localized: "Name must be at least 2 characters.")
+        case "INVALID_DOB":
+            return String(localized: "Please pick a valid date of birth.")
+        case "UNDERAGE":
+            return String(localized: "You must be 18 or older to sign up.")
+        case "SERVER_ERROR":
+            return String(localized: "Couldn't create your account. Please try again in a moment.")
+        default:
+            return auth.errorMessage ?? String(localized: "Could not create your account.")
+        }
     }
 }
 

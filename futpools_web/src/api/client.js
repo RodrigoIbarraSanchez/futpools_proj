@@ -16,8 +16,23 @@ async function request(method, path, body = null, token = null) {
 
   const data = await res.json().catch(() => ({}));
   if (res.status >= 400) {
-    const msg = data.message || data.msg || res.statusText;
-    throw new Error(msg);
+    // Pick the first usable message in this order:
+    //   1. structured `{ message, code, field }`
+    //   2. legacy `{ msg }`
+    //   3. validator-array `{ errors: [{ msg, path }] }`
+    //   4. HTTP status text
+    let msg = data.message || data.msg;
+    if (!msg && Array.isArray(data.errors) && data.errors.length) {
+      msg = data.errors[0].msg || data.errors[0].message;
+    }
+    if (!msg) msg = res.statusText || `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.code = data.code || (Array.isArray(data.errors) && data.errors[0]?.path
+      ? `INVALID_${String(data.errors[0].path).toUpperCase()}`
+      : null);
+    err.field = data.field || (Array.isArray(data.errors) ? data.errors[0]?.path : null);
+    err.status = res.status;
+    throw err;
   }
   return data;
 }
