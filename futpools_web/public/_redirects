@@ -1,12 +1,7 @@
-# 301-redirect share-preview paths to the backend so WhatsApp/Telegram/iMessage
-# follow the redirect at scrape time, land on api.futpools.com/c/:code, and
-# read the og.js meta tags + fixture-card image. The shared link text stays
-# branded as futpools.com/c/CODE in chat messages. `200!` rewrite would be
-# nicer (URL stays branded after click) but Render Static Sites silently
-# ignores external destinations on 200 rewrites — only 3xx redirects to
-# external URLs are honored.
-/c/*    https://api.futpools.com/c/:splat   301
-/p/*    https://api.futpools.com/p/:splat   301
-
-# SPA fallback for any other path the React Router needs to handle.
+# SPA fallback so React Router can handle deep-links client-side.
+# Note: Render Static Sites silently ignores external URLs in _redirects
+# (neither 200! nor 3xx work). Share-preview routes /c/* and /p/* are
+# served directly by api.futpools.com — see APIClient.swift / share helpers.
+/p/*    /index.html   200
+/c/*    /index.html   200
 /*      /index.html   200

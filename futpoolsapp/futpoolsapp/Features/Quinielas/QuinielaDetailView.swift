@@ -124,7 +124,7 @@ struct QuinielaDetailView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             // Share button is visible to anyone who can see the pool (needs an inviteCode).
-            if let code = quiniela.inviteCode, let url = URL(string: "https://futpools.com/p/\(code)") {
+            if let code = quiniela.inviteCode, let url = URL(string: "https://api.futpools.com/p/\(code)") {
                 ToolbarItem(placement: .primaryAction) {
                     ShareLink(item: url) {
                         Image(systemName: "square.and.arrow.up")

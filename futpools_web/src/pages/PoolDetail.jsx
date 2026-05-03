@@ -16,11 +16,16 @@ function ShareButton({ pool }) {
   // subtree into a blank screen whenever the share button tried to render.
   const { locale } = useLocale();
   const [copied, setCopied] = useState(false);
-  // Use the bare branded origin (futpools.com in prod, localhost:5173 in
-  // dev). The static-site `_redirects` file proxies /p/* to the backend's
-  // og.js route, so WhatsApp/Telegram still scrape rich previews while the
-  // visible URL stays on futpools.com.
-  const shareOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  // Route share links through the backend so WhatsApp / Telegram bots
+  // receive a server-rendered page with og: meta tags and a fixture-card
+  // image. VITE_API_URL must be an absolute URL (https://…) for this to
+  // work; if it's relative or unset we fall back to the current origin.
+  // (Render Static Sites doesn't support external proxies in _redirects,
+  // so we can't keep the branded host without a CF Worker or Web Service.)
+  const apiBase = import.meta.env.VITE_API_URL || '';
+  const shareOrigin = apiBase.startsWith('http')
+    ? apiBase.replace(/\/$/, '')
+    : (typeof window !== 'undefined' ? window.location.origin : '');
   const url = pool.inviteCode ? `${shareOrigin}/p/${pool.inviteCode}` : '';
 
   /// Use native share ONLY on mobile devices — desktop share sheets (Chrome,

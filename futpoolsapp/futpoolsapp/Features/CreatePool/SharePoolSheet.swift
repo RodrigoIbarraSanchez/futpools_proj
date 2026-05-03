@@ -13,7 +13,7 @@ struct SharePoolSheet: View {
 
     private var shareURL: URL? {
         guard let code = pool.inviteCode else { return nil }
-        return URL(string: "https://futpools.com/p/\(code)")
+        return URL(string: "https://api.futpools.com/p/\(code)")
     }
 
     var body: some View {
