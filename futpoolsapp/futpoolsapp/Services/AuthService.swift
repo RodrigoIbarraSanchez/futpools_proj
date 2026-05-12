@@ -144,8 +144,15 @@ final class AuthService: ObservableObject {
         let d = UserDefaults.standard
         let goals    = d.stringArray(forKey: "onboardingGoals") ?? []
         let pains    = d.stringArray(forKey: "onboardingPains") ?? []
-        let leagues  = d.stringArray(forKey: "onboardingLeagues") ?? []
-        let teams    = d.stringArray(forKey: "onboardingTeams") ?? []
+        let popularLeagues = d.stringArray(forKey: "onboardingLeagues") ?? []
+        let popularTeams   = d.stringArray(forKey: "onboardingTeams") ?? []
+        // API-search-selected items get an "api:<id>" prefix so the
+        // backend can disambiguate them from the curated enum rawValues
+        // ("realMadrid", "ligaMX") that the popular-section taps emit.
+        let customTeamIDs    = (d.array(forKey: "onboardingCustomTeamIDs")    as? [Int]) ?? []
+        let customLeagueIDs  = (d.array(forKey: "onboardingCustomLeagueIDs")  as? [Int]) ?? []
+        let teams   = popularTeams   + customTeamIDs.map   { "api:\($0)" }
+        let leagues = popularLeagues + customLeagueIDs.map { "api:\($0)" }
         let picksData = d.data(forKey: "onboardingDemoPicks")
         struct PickPayload: Encodable {
             let fixtureId: Int

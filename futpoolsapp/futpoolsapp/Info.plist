@@ -41,7 +41,7 @@
 	     on first launch — a terrible first-impression). Edit this
 	     string when you switch dev networks. -->
 	<key>FPApiBaseURL</key>
-	<string>http://192.168.100.16:3000</string>
+	<string>http://192.168.100.13:3000</string>
 	<!-- Allow plain HTTP to the dev server on the local LAN. RELEASE
 	     builds talk only to the HTTPS Render URL, so this exception
 	     is inert in production. -->
@@ -49,7 +49,7 @@
 	<dict>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>192.168.100.16</key>
+			<key>192.168.100.13</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>

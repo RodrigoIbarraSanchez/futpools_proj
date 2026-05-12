@@ -205,6 +205,13 @@ final class OnboardingState: ObservableObject {
     @Published var swipes: [OnboardingTinderResponse] = []
     @Published var leagues: Set<OnboardingLeague> = [.ligaMX]
     @Published var teams: Set<OnbTeam> = []
+    /// Teams selected from API search results — keyed by API-Football
+    /// team id. Stored as a dict so the lookup keeps the picker
+    /// metadata (name, logo, country) needed to render a chip without
+    /// re-hitting the API. Persists to UserDefaults as the bare IDs and
+    /// ships up to the backend prefixed with "api:".
+    @Published var customTeams: [Int: PickerTeam] = [:]
+    @Published var customLeagues: [Int: PickerLeague] = [:]
     @Published var demoPicks: [OnboardingDemoPick] = []
 
     func advance() {
@@ -229,6 +236,8 @@ final class OnboardingState: ObservableObject {
         d.set(pains.map(\.rawValue), forKey: "onboardingPains")
         d.set(leagues.map(\.rawValue), forKey: "onboardingLeagues")
         d.set(teams.map(\.rawValue), forKey: "onboardingTeams")
+        d.set(Array(customTeams.keys), forKey: "onboardingCustomTeamIDs")
+        d.set(Array(customLeagues.keys), forKey: "onboardingCustomLeagueIDs")
         if let data = try? JSONEncoder().encode(demoPicks) {
             d.set(data, forKey: "onboardingDemoPicks")
         }

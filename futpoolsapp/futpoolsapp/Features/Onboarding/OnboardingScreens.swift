@@ -594,32 +594,74 @@ struct OnbSolutionScreen: View {
     }
 }
 
-// MARK: - Screen 7: Teams + leagues prefs (search + 3-col grid)
+// MARK: - Screen 7: Teams + leagues prefs (debounced API search)
+
+@MainActor
+final class OnbPrefsSearchVM: ObservableObject {
+    @Published var query: String = ""
+    @Published var teamResults: [PickerTeam] = []
+    @Published var leagueResults: [PickerLeague] = []
+    @Published var isSearching = false
+
+    private let client = APIClient.shared
+    private var task: Task<Void, Never>?
+
+    /// Debounce 350ms then hit /football/{teams,leagues}/search in
+    /// parallel. Mirrors CreatePoolViewModel.runSearch — same backend
+    /// contract, same dedup pattern (cancel in-flight on every keystroke).
+    func onQueryChange() {
+        task?.cancel()
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard q.count >= 2 else {
+            teamResults = []
+            leagueResults = []
+            isSearching = false
+            return
+        }
+        task = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            if Task.isCancelled { return }
+            await self?.run(query: q)
+        }
+    }
+
+    private func run(query: String) async {
+        isSearching = true
+        defer { isSearching = false }
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        do {
+            async let teamsCall: [PickerTeam] = client.request(
+                method: "GET",
+                path: "/football/teams/search?query=\(encoded)"
+            )
+            async let leaguesCall: [PickerLeague] = client.request(
+                method: "GET",
+                path: "/football/leagues/search?query=\(encoded)"
+            )
+            let (teams, leagues) = try await (teamsCall, leaguesCall)
+            self.teamResults = Array(teams.prefix(20))
+            self.leagueResults = Array(leagues.prefix(10))
+        } catch {
+            self.teamResults = []
+            self.leagueResults = []
+        }
+    }
+}
 
 struct OnbPrefsScreen: View {
     @ObservedObject var state: OnboardingState
-    @State private var searchQuery: String = ""
+    @StateObject private var searchVM = OnbPrefsSearchVM()
+    @FocusState private var searchFocused: Bool
     private let columns = [
         GridItem(.flexible(), spacing: 8),
         GridItem(.flexible(), spacing: 8),
         GridItem(.flexible(), spacing: 8)
     ]
 
-    /// Match by case-insensitive substring on the visible label. The
-    /// league label includes a flag emoji prefix — we match the whole
-    /// label so a query like "MX" or "Liga MX" both work.
-    private func matches(_ haystack: String) -> Bool {
-        let q = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else { return true }
-        return haystack.localizedCaseInsensitiveContains(q)
-    }
-
-    private var filteredTeams: [OnbTeam] {
-        OnbTeam.allCases.filter { matches($0.label) }
-    }
-
-    private var filteredLeagues: [OnboardingLeague] {
-        OnboardingLeague.allCases.filter { matches($0.label) }
+    /// True when the user has typed enough to expect API results — keeps
+    /// the conditional rendering predicate in one place.
+    private var hasQuery: Bool {
+        searchVM.query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
     }
 
     var body: some View {
@@ -636,25 +678,12 @@ struct OnbPrefsScreen: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 14)
 
-            // Body — search-filtered grids inside a ScrollView so adding
-            // more teams/leagues later doesn't blow up the screen on
-            // smaller devices.
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
-                    if !filteredTeams.isEmpty {
-                        sectionHeader(L("POPULAR TEAMS"))
-                        LazyVGrid(columns: columns, spacing: 8) {
-                            ForEach(filteredTeams) { t in teamCell(t) }
-                        }
-                    }
-                    if !filteredLeagues.isEmpty {
-                        sectionHeader(L("LEAGUES"))
-                        LazyVGrid(columns: columns, spacing: 8) {
-                            ForEach(filteredLeagues) { l in leagueCell(l) }
-                        }
-                    }
-                    if filteredTeams.isEmpty && filteredLeagues.isEmpty {
-                        emptyState
+                    if hasQuery {
+                        searchResultsSection
+                    } else {
+                        popularSections
                     }
                 }
                 .padding(.horizontal, 24)
@@ -663,10 +692,8 @@ struct OnbPrefsScreen: View {
             .frame(maxHeight: .infinity)
 
             OnbPrimaryButton(label: L("NEXT")) {
-                // Default to Liga MX only when the user picked nothing at
-                // all (no league AND no team) — keeps the demo screen
-                // from showing an empty fixture list.
-                if state.leagues.isEmpty && state.teams.isEmpty {
+                if state.leagues.isEmpty && state.teams.isEmpty
+                   && state.customTeams.isEmpty && state.customLeagues.isEmpty {
                     state.leagues = [.ligaMX]
                 }
                 state.advance()
@@ -677,22 +704,74 @@ struct OnbPrefsScreen: View {
         }
     }
 
+    // MARK: Sections
+
+    @ViewBuilder
+    private var popularSections: some View {
+        sectionHeader(L("POPULAR TEAMS"))
+        LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(OnbTeam.allCases) { t in teamCell(t) }
+        }
+        sectionHeader(L("LEAGUES"))
+        LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(OnboardingLeague.allCases) { l in leagueCell(l) }
+        }
+    }
+
+    @ViewBuilder
+    private var searchResultsSection: some View {
+        if searchVM.isSearching && searchVM.teamResults.isEmpty && searchVM.leagueResults.isEmpty {
+            HStack(spacing: 10) {
+                ProgressView().tint(.arenaPrimary).scaleEffect(0.8)
+                Text(L("Searching…"))
+                    .font(ArenaFont.mono(size: 11))
+                    .foregroundColor(.arenaTextDim)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24)
+        } else if searchVM.teamResults.isEmpty && searchVM.leagueResults.isEmpty {
+            emptyState
+        } else {
+            if !searchVM.teamResults.isEmpty {
+                sectionHeader(L("TEAMS"))
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(searchVM.teamResults) { t in apiTeamCell(t) }
+                }
+            }
+            if !searchVM.leagueResults.isEmpty {
+                sectionHeader(L("LEAGUES"))
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(searchVM.leagueResults) { l in apiLeagueCell(l) }
+                }
+            }
+        }
+    }
+
     private var searchField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.arenaTextDim)
-            TextField("", text: $searchQuery, prompt:
-                Text(L("Search teams or leagues"))
-                    .foregroundColor(.arenaTextFaint)
-            )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .foregroundColor(.arenaText)
-            .font(ArenaFont.body(size: 14))
-            if !searchQuery.isEmpty {
+            TextField(L("Search teams or leagues"), text: $searchVM.query)
+                .focused($searchFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .foregroundColor(.arenaText)
+                .font(ArenaFont.body(size: 14))
+                // onChange triggers the debounce → API call. Two-arg
+                // closure syntax keeps us iOS 17+ which is the floor.
+                .onChange(of: searchVM.query) { _, _ in
+                    searchVM.onQueryChange()
+                }
+            if searchVM.isSearching {
+                ProgressView().tint(.arenaPrimary).scaleEffect(0.7)
+            }
+            if !searchVM.query.isEmpty {
                 Button {
-                    searchQuery = ""
+                    searchVM.query = ""
+                    searchVM.onQueryChange()
+                    searchFocused = false
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 14))
@@ -702,10 +781,12 @@ struct OnbPrefsScreen: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .background(HudCornerCutShape(cut: 6).fill(Color.arenaSurface))
-        .overlay(HudCornerCutShape(cut: 6).stroke(Color.arenaStroke, lineWidth: 1))
+        .overlay(HudCornerCutShape(cut: 6).stroke(searchFocused ? Color.arenaPrimary.opacity(0.6) : Color.arenaStroke, lineWidth: 1))
         .clipShape(HudCornerCutShape(cut: 6))
+        .contentShape(Rectangle())
+        .onTapGesture { searchFocused = true }
     }
 
     private func sectionHeader(_ text: String) -> some View {
@@ -723,6 +804,7 @@ struct OnbPrefsScreen: View {
             Text(L("Try a different team or league name."))
                 .font(ArenaFont.mono(size: 11))
                 .foregroundColor(.arenaTextDim)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 36)
@@ -792,6 +874,46 @@ struct OnbPrefsScreen: View {
         let nameOnly = parts.count > 1 ? String(parts[1]) : l.label
         return chip(logoURL: l.logoURL, label: nameOnly, active: active) {
             if active { state.leagues.remove(l) } else { state.leagues.insert(l) }
+        }
+    }
+
+    /// API search result cell for a team. Active state checks both the
+    /// curated popular set (in case a search hit overlaps a popular team
+    /// e.g. "Real Madrid") AND the custom dict — toggling either keeps
+    /// the chip in sync.
+    private func apiTeamCell(_ t: PickerTeam) -> some View {
+        let inPopular = OnbTeam.allCases.first(where: { $0.apiFootballID == t.id })
+        let active: Bool = {
+            if let p = inPopular { return state.teams.contains(p) }
+            return state.customTeams[t.id] != nil
+        }()
+        let logo = (t.logo.flatMap { URL(string: $0) })
+            ?? URL(string: "https://media.api-sports.io/football/teams/\(t.id).png")
+        return chip(logoURL: logo, label: t.name, active: active) {
+            if let p = inPopular {
+                if active { state.teams.remove(p) } else { state.teams.insert(p) }
+            } else {
+                if active { state.customTeams.removeValue(forKey: t.id) }
+                else { state.customTeams[t.id] = t }
+            }
+        }
+    }
+
+    private func apiLeagueCell(_ l: PickerLeague) -> some View {
+        let inPopular = OnboardingLeague.allCases.first(where: { $0.apiFootballID == l.id })
+        let active: Bool = {
+            if let p = inPopular { return state.leagues.contains(p) }
+            return state.customLeagues[l.id] != nil
+        }()
+        let logo = (l.logo.flatMap { URL(string: $0) })
+            ?? URL(string: "https://media.api-sports.io/football/leagues/\(l.id).png")
+        return chip(logoURL: logo, label: l.name, active: active) {
+            if let p = inPopular {
+                if active { state.leagues.remove(p) } else { state.leagues.insert(p) }
+            } else {
+                if active { state.customLeagues.removeValue(forKey: l.id) }
+                else { state.customLeagues[l.id] = l }
+            }
         }
     }
 }
