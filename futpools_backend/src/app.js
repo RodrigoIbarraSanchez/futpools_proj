@@ -22,6 +22,7 @@ const challengeRoutes = require('./routes/challenges');
 const ticketsRoutes = require('./routes/tickets');
 const dailyPickRoutes = require('./routes/dailyPick');
 const sweepstakesRoutes = require('./routes/sweepstakes');
+const poolPaymentsRoutes = require('./routes/poolPayments');
 const publicRoutes = require('./routes/public');
 const ogRoutes = require('./routes/og');
 
@@ -34,16 +35,15 @@ app.use(cors());
 // on the exact bytes Stripe signed. Any body-parsing in between invalidates
 // the signature.
 //
-// In simple_version the legacy coin-shop webhook is silenced (no /payments
-// routes mounted at all), but the per-pool webhook lives at /pools/webhook
-// and is registered here in Phase 2. The order constraint is the same.
-if (!isSimpleMode()) {
-  app.post(
-    '/payments/webhook',
-    express.raw({ type: 'application/json' }),
-    paymentsController.handleWebhook
-  );
-}
+// One webhook URL serves BOTH flows (coin packs + pool entries). The
+// handler dispatches by session.metadata: poolId → poolPaymentService,
+// packId → coin-pack credit. This means we mount the webhook in both
+// modes — simple_version still needs it for pool entry creation.
+app.post(
+  '/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  paymentsController.handleWebhook
+);
 
 app.use(express.json());
 
@@ -75,6 +75,14 @@ if (!isSimpleMode()) {
   app.use('/tickets', ticketsRoutes);
   app.use('/daily-pick', dailyPickRoutes);
   app.use('/sweepstakes', sweepstakesRoutes);
+}
+
+// Per-pool Stripe Checkout (simple_version only). Lives under /pools to
+// avoid namespace collision with /payments which is coin-pack territory.
+// The companion webhook handler is the shared /payments/webhook above —
+// dispatch happens by session.metadata.poolId vs metadata.packId.
+if (isSimpleMode()) {
+  app.use('/pools', poolPaymentsRoutes);
 }
 
 // Unauthenticated read-only endpoints used by the iOS onboarding

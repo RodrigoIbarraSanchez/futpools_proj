@@ -2,6 +2,7 @@ const Stripe = require('stripe');
 const { listPacks, getPack, isConfigured } = require('../config/stripePacks');
 const { applyDelta } = require('../services/transactionService');
 const BalanceTransaction = require('../models/BalanceTransaction');
+const poolPaymentService = require('./../services/poolPaymentService');
 
 // Lazily initialize Stripe so the backend still boots when the secret isn't
 // set yet (dev environments without billing configured). We 503 the payments
@@ -122,38 +123,19 @@ exports.handleWebhook = async (req, res) => {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const userId = session.client_reference_id || session.metadata?.userId;
-      const packId = session.metadata?.packId;
-      const coinAmount = Number(session.metadata?.coinAmount);
 
-      if (!userId || !packId || !Number.isFinite(coinAmount) || coinAmount <= 0) {
-        console.warn('[payments] completed session missing metadata:', session.id);
-        return res.status(200).send('ok'); // ACK so Stripe doesn't retry
+      // Dispatch by metadata. The same Stripe webhook URL serves two
+      // distinct flows: legacy coin-pack purchases (master) and
+      // simple_version pool entries. Both modes can coexist on master,
+      // so the dispatch is keyed off metadata rather than the env mode
+      // flag — this keeps simple_version verifiable on master infra.
+      if (session.metadata?.poolId) {
+        await poolPaymentService.handleCheckoutCompleted(session);
+      } else if (session.metadata?.packId) {
+        await handleCoinPackCompleted(session);
+      } else {
+        console.warn('[payments] completed session missing dispatch metadata:', session.id);
       }
-
-      // Second layer of defense: look up the pack again on our side. If
-      // someone spoofed metadata.coinAmount, we reject.
-      const pack = getPack(packId);
-      if (!pack || pack.totalCoins !== coinAmount) {
-        console.warn('[payments] pack/amount mismatch for session', session.id, packId, coinAmount);
-        return res.status(200).send('ok');
-      }
-
-      const idempotencyKey = `stripe:${session.id}`;
-      const existing = await BalanceTransaction.findOne({ idempotencyKey }).lean();
-      if (existing) {
-        console.log('[payments] duplicate session, ignored:', session.id);
-        return res.status(200).send('ok');
-      }
-
-      await applyDelta({
-        userId,
-        amount: coinAmount,
-        kind: 'iap_credit',
-        idempotencyKey,
-        note: `stripe:${packId}:${session.id}`,
-      });
-      console.log(`[payments] credited ${coinAmount} coins to user ${userId} (pack=${packId}, session=${session.id})`);
     }
     // Other events (payment_intent.*, charge.*) we ignore for now.
     res.status(200).send('ok');
@@ -163,3 +145,42 @@ exports.handleWebhook = async (req, res) => {
     res.status(500).send('Handler error');
   }
 };
+
+// Coin-pack credit path — extracted from the inline webhook handler so the
+// dispatcher above stays readable. Behaviour identical to the pre-Phase-2
+// version: re-validate pack metadata server-side, idempotency via
+// BalanceTransaction.idempotencyKey, credit via applyDelta.
+async function handleCoinPackCompleted(session) {
+  const userId = session.client_reference_id || session.metadata?.userId;
+  const packId = session.metadata?.packId;
+  const coinAmount = Number(session.metadata?.coinAmount);
+
+  if (!userId || !packId || !Number.isFinite(coinAmount) || coinAmount <= 0) {
+    console.warn('[payments] coin-pack session missing metadata:', session.id);
+    return;
+  }
+
+  // Second layer of defense: look up the pack again on our side. If
+  // someone spoofed metadata.coinAmount, we reject.
+  const pack = getPack(packId);
+  if (!pack || pack.totalCoins !== coinAmount) {
+    console.warn('[payments] pack/amount mismatch for session', session.id, packId, coinAmount);
+    return;
+  }
+
+  const idempotencyKey = `stripe:${session.id}`;
+  const existing = await BalanceTransaction.findOne({ idempotencyKey }).lean();
+  if (existing) {
+    console.log('[payments] duplicate coin-pack session, ignored:', session.id);
+    return;
+  }
+
+  await applyDelta({
+    userId,
+    amount: coinAmount,
+    kind: 'iap_credit',
+    idempotencyKey,
+    note: `stripe:${packId}:${session.id}`,
+  });
+  console.log(`[payments] credited ${coinAmount} coins to user ${userId} (pack=${packId}, session=${session.id})`);
+}
