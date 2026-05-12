@@ -3,21 +3,29 @@ const ProcessedIAPTransaction = require('../models/ProcessedIAPTransaction');
 const { decodeJWSPayload, getTransactionIds, getAmountForProductId } = require('../services/iapService');
 const { applyDelta } = require('../services/transactionService');
 const { ADMIN_EMAILS } = require('../middleware/auth');
+const { isSimpleMode } = require('../config/mode');
 
 exports.getMe = async (req, res) => {
   try {
     const isAdmin = ADMIN_EMAILS.has((req.user.email || '').toLowerCase());
-    res.json({
+    const payload = {
       id: req.user._id,
       email: req.user.email,
       username: req.user.username,
       displayName: req.user.displayName,
       isAdmin,
-      balance: req.user.balance ?? 0,
+    };
+    // simple_version drops the dual-currency UI entirely. The schema still
+    // carries balance/tickets so legacy data stays intact (rollback-safe),
+    // but exposing them would cause iOS/web clients in simple mode to
+    // render dormant data they can't act on.
+    if (!isSimpleMode()) {
+      payload.balance = req.user.balance ?? 0;
       // Tickets v2.4 — exposed alongside balance so clients can render the
       // dual currency header in one round-trip.
-      tickets: req.user.tickets ?? 0,
-    });
+      payload.tickets = req.user.tickets ?? 0;
+    }
+    res.json(payload);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

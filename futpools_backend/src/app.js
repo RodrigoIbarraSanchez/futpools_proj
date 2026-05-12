@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+const { isSimpleMode } = require('./config/mode');
+
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const leagueRoutes = require('./routes/leagues');
@@ -31,11 +33,17 @@ app.use(cors());
 // request body stays a raw Buffer — the SDK's signature verification relies
 // on the exact bytes Stripe signed. Any body-parsing in between invalidates
 // the signature.
-app.post(
-  '/payments/webhook',
-  express.raw({ type: 'application/json' }),
-  paymentsController.handleWebhook
-);
+//
+// In simple_version the legacy coin-shop webhook is silenced (no /payments
+// routes mounted at all), but the per-pool webhook lives at /pools/webhook
+// and is registered here in Phase 2. The order constraint is the same.
+if (!isSimpleMode()) {
+  app.post(
+    '/payments/webhook',
+    express.raw({ type: 'application/json' }),
+    paymentsController.handleWebhook
+  );
+}
 
 app.use(express.json());
 
@@ -54,18 +62,27 @@ app.use('/quinielas', quinielaRoutes);
 app.use('/settings', settingsRoutes);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/admin', adminRoutes);
-app.use('/ads', adsRoutes);
-app.use('/payments', paymentsRoutes);
-app.use('/challenges', challengeRoutes);
-app.use('/tickets', ticketsRoutes);
-app.use('/daily-pick', dailyPickRoutes);
-app.use('/sweepstakes', sweepstakesRoutes);
+
+// In simple_version we don't expose the legacy coin/ticket/challenge/
+// sweepstakes/dailyPick/IAP economy. Schema and controllers stay on disk
+// so a rollback to master is just a flag flip — no migration. Hiding the
+// routes at the edge gives clients a clean 404 instead of half-functional
+// surface.
+if (!isSimpleMode()) {
+  app.use('/ads', adsRoutes);
+  app.use('/payments', paymentsRoutes);
+  app.use('/challenges', challengeRoutes);
+  app.use('/tickets', ticketsRoutes);
+  app.use('/daily-pick', dailyPickRoutes);
+  app.use('/sweepstakes', sweepstakesRoutes);
+}
+
 // Unauthenticated read-only endpoints used by the iOS onboarding
 // "App Demo" screen (real fixtures before signup).
 app.use('/public', publicRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ ok: true });
+  res.json({ ok: true, mode: isSimpleMode() ? 'simple' : 'master' });
 });
 
 module.exports = app;

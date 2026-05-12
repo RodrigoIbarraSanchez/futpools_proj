@@ -90,6 +90,47 @@ const userSchema = new mongoose.Schema({
     completedAt: { type: Date, default: null },
   },
 
+  // ── Push notifications (simple_version Phase 1) ──────────────────────
+  // APNs device tokens registered by iOS clients. Multiple per user (one
+  // per device they install on). Cap to 5 tokens; evict oldest on
+  // overflow inside the registerDevice controller. The bounce path
+  // (APNs returns 410 Gone) finds the user by token via the index below.
+  deviceTokens: {
+    type: [{
+      token: { type: String, required: true },
+      platform: { type: String, default: 'ios' },
+      bundleId: { type: String, default: '' },
+      // Locale at registration time, e.g. "en", "es". Backend templeta
+      // push copy with this so users get notifications in the language
+      // their app is currently set to (which may differ from device
+      // locale because of the in-app override).
+      locale: { type: String, default: 'en' },
+      appVersion: { type: String, default: '' },
+      osVersion: { type: String, default: '' },
+      // sandbox = TestFlight + DEBUG builds; production = App Store
+      // builds. APNs gateway differs, so we have to pick the right one
+      // per send.
+      environment: { type: String, enum: ['sandbox', 'production'], default: 'production' },
+      lastSeenAt: { type: Date, default: Date.now },
+      createdAt: { type: Date, default: Date.now },
+      _id: false,
+    }],
+    default: [],
+  },
+  // User-controlled notification preferences. globalEnabled is the
+  // master kill switch; the muted lists are surgical opt-outs. We
+  // deliberately keep it coarse — no per-event-type toggles per pool /
+  // team because the surface area explodes and the value is low.
+  notificationPrefs: {
+    globalEnabled: { type: Boolean, default: true },
+    // API-Football team ids the user has muted (push-wise; team can
+    // still appear in the favorites list for live scores).
+    mutedTeams: { type: [Number], default: [] },
+    // Quiniela ids the user has muted. Used for the rare case a user
+    // joined a pool but doesn't want kickoff/finalized pings about it.
+    mutedPools: { type: [mongoose.Schema.Types.ObjectId], default: [] },
+  },
+
   passwordResetCode: { type: String, select: false },
   passwordResetExpiresAt: { type: Date, select: false },
   createdAt: {
@@ -97,6 +138,16 @@ const userSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Bounce path: APNs returns 410 Gone for an evicted token. We need to
+// find which user owns that token to pull it from their array. Without
+// this index every bounce is a collection scan.
+userSchema.index({ 'deviceTokens.token': 1 });
+// Push fan-out by favorite team: pushNotificationService queries
+// `User.find({ 'onboarding.teams': { $in: [String(teamId)] } })`. The
+// teams array is small per user but the user collection isn't, so the
+// index keeps fan-out bounded.
+userSchema.index({ 'onboarding.teams': 1 });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
