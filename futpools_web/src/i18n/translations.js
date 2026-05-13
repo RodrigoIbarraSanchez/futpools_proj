@@ -93,6 +93,24 @@ export const translations = {
     'ENTRIES': 'ENTRIES',
     'SHOP': 'SHOP',
     'PROFILE': 'PROFILE',
+    // Scores tab — mirrors iOS LiveScoresView
+    'SCORES': 'SCORES',
+    'LIVE SCORES': 'LIVE SCORES',
+    'TODAY': 'TODAY',
+    'TOMORROW': 'TOMORROW',
+    'FAVORITES': 'FAVORITES',
+    'MY ACTIVE POOLS': 'MY ACTIVE POOLS',
+    'LOADING FIXTURES…': 'LOADING FIXTURES…',
+    'NO LIVE GAMES': 'NO LIVE GAMES',
+    'Nothing kicking off worldwide right now. Check TODAY for upcoming.':
+      'Nothing kicking off worldwide right now. Check TODAY for upcoming.',
+    'NO FIXTURES': 'NO FIXTURES',
+    'PICK YOUR FAVORITES': 'PICK YOUR FAVORITES',
+    'Nothing scheduled in your leagues today. Try TOMORROW.':
+      'Nothing scheduled in your leagues today. Try TOMORROW.',
+    'Add favorite teams or leagues from your profile to see live scores.':
+      'Add favorite teams or leagues from your profile to see live scores.',
+    'PICK FAVORITES': 'PICK FAVORITES',
     'MY CREATED POOLS': 'MY CREATED POOLS',
     'POT': 'POT',
     'ENTRY': 'ENTRY',
@@ -558,6 +576,24 @@ export const translations = {
     'ENTRIES': 'ENTRADAS',
     'SHOP': 'TIENDA',
     'PROFILE': 'PERFIL',
+    // Scores tab — mirrors iOS LiveScoresView (Spanish localization)
+    'SCORES': 'MARCADORES',
+    'LIVE SCORES': 'MARCADORES EN VIVO',
+    'TODAY': 'HOY',
+    'TOMORROW': 'MAÑANA',
+    'FAVORITES': 'FAVORITOS',
+    'MY ACTIVE POOLS': 'MIS QUINIELAS ACTIVAS',
+    'LOADING FIXTURES…': 'CARGANDO PARTIDOS…',
+    'NO LIVE GAMES': 'SIN PARTIDOS EN VIVO',
+    'Nothing kicking off worldwide right now. Check TODAY for upcoming.':
+      'Nada en juego ahora mismo. Checa HOY para los próximos partidos.',
+    'NO FIXTURES': 'SIN PARTIDOS',
+    'PICK YOUR FAVORITES': 'ELIGE TUS FAVORITOS',
+    'Nothing scheduled in your leagues today. Try TOMORROW.':
+      'Nada programado hoy en tus ligas. Prueba con MAÑANA.',
+    'Add favorite teams or leagues from your profile to see live scores.':
+      'Agrega equipos o ligas favoritas desde tu perfil para ver marcadores en vivo.',
+    'PICK FAVORITES': 'ELEGIR FAVORITOS',
     'MY CREATED POOLS': 'MIS QUINIELAS CREADAS',
     'POT': 'PREMIO',
     'ENTRY': 'ENTRADA',

@@ -22,12 +22,14 @@ export function ArenaTabBar() {
   const location = useLocation();
   const { locale } = useLocale();
 
-  // Strictly 2 tabs — Quinielas + Perfil. Admins reach /admin/pools/new
-  // and /admin/payouts via the link tiles inside Account.jsx, not via a
-  // visible tab. Per product spec the web should look identical for
-  // everyone in the bottom nav.
+  // 3 tabs — Pools + Scores + Profile. The SCORES tab mirrors the iOS
+  // LIVE SCORES surface (LIVE/TODAY/TOMORROW/FAVORITES sub-strip) so a
+  // user with web-first signup has the same scores feed iOS users get.
+  // Admins reach /admin/pools/new and /admin/payouts via link tiles in
+  // Account.jsx, not via a visible tab.
   const tabs = [
     { path: '/',        key: 'POOLS',    icon: '◆' },
+    { path: '/scores',  key: 'SCORES',   icon: '⚽' },
     { path: '/account', key: 'PROFILE',  icon: '◉' },
   ];
 
