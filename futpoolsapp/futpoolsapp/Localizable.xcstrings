@@ -13678,6 +13678,23 @@
           }
         }
       }
+    },
+    "TU PICK": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TU PICK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TU PICK"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

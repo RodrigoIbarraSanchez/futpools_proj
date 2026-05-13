@@ -516,8 +516,12 @@ struct QuinielaDetailView: View {
                     NavigationLink {
                         LiveMatchView(fixture: fx, userPick: myPicks[fx.fixtureId])
                     } label: {
-                        ArenaFixtureRow(fixture: fx, live: liveFixtures[fx.fixtureId])
-                            .padding(.horizontal, 16)
+                        ArenaFixtureRow(
+                            fixture: fx,
+                            live: liveFixtures[fx.fixtureId],
+                            userPick: myPicks[fx.fixtureId]
+                        )
+                        .padding(.horizontal, 16)
                     }
                     .buttonStyle(.plain)
                 }
@@ -882,6 +886,10 @@ private extension View {
 struct ArenaFixtureRow: View {
     let fixture: QuinielaFixture
     let live: LiveFixture?
+    /// User's pick for THIS fixture ("1" home win | "X" draw | "2" away win).
+    /// Nil = user has no pick recorded for this fixture (read-only viewer
+    /// or pre-entry). The chip on the right edge of the row surfaces it.
+    var userPick: String? = nil
 
     private var isLive: Bool { live?.status.isLive == true }
     private var scoreString: String? {
@@ -889,8 +897,20 @@ struct ArenaFixtureRow: View {
         return "\(live.score.home ?? 0)–\(live.score.away ?? 0)"
     }
 
+    /// Friendly label for the pick — abbreviated team name for 1/2,
+    /// "EMPATE" for X. Mirrors the wording on the picker screen.
+    private var pickLabel: String? {
+        guard let p = userPick else { return nil }
+        switch p {
+        case "1": return String(fixture.homeTeam.prefix(3)).uppercased()
+        case "2": return String(fixture.awayTeam.prefix(3)).uppercased()
+        case "X": return String(localized: "DRAW")
+        default:  return p
+        }
+    }
+
     var body: some View {
-        HudFrame(cut: 14, glow: isLive ? .arenaDanger : nil) {
+        HudFrame(cut: 14) {
             VStack(spacing: 10) {
                 HStack {
                     Text(kickoffShort)
@@ -953,6 +973,35 @@ struct ArenaFixtureRow: View {
                         )
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+
+                // User's pick — bottom row chip. Surfaces what the user
+                // chose for this fixture so the pool view isn't a bare
+                // schedule. Only renders when a pick exists; absent for
+                // anonymous viewers / pre-entry browse.
+                if let label = pickLabel, let p = userPick {
+                    HStack(spacing: 6) {
+                        Text(String(localized: "TU PICK"))
+                            .font(ArenaFont.mono(size: 9, weight: .bold))
+                            .tracking(1.4)
+                            .foregroundColor(.arenaTextMuted)
+                        HStack(spacing: 4) {
+                            Text(p)
+                                .font(ArenaFont.display(size: 12, weight: .heavy))
+                                .foregroundColor(.arenaOnPrimary)
+                                .frame(width: 18)
+                            Text(label)
+                                .font(ArenaFont.mono(size: 10, weight: .bold))
+                                .tracking(0.6)
+                                .foregroundColor(.arenaOnPrimary)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(HudCornerCutShape(cut: 4).fill(Color.arenaPrimary))
+                        .clipShape(HudCornerCutShape(cut: 4))
+                        Spacer()
+                    }
+                    .padding(.top, 2)
                 }
             }
             .padding(12)

@@ -48,13 +48,16 @@ struct LiveScoresView: View {
             .padding(.bottom, 6)
     }
 
-    /// Horizontally-scrolling carousel of pools the user joined via the web
-    /// app and that are still active. Only shown when there's at least one;
-    /// taps push into the existing read-only QuinielaDetailView.
+    /// Stack of full-width hero banners for the user's active pools. The
+    /// previous design was a horizontal carousel of 220-pt cards, but in
+    /// practice users are in 1 (sometimes 2) active pools at a time —
+    /// burning a 220-pt card in the middle of the screen wasted real
+    /// estate. Each pool now reads as a clear hero with status, score,
+    /// and a tap target that fills the row.
     @ViewBuilder
     private var activePoolsBanner: some View {
         if !vm.activePools.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 6) {
                     Text("◆")
                         .font(ArenaFont.mono(size: 10, weight: .bold))
@@ -65,20 +68,18 @@ struct LiveScoresView: View {
                         .foregroundColor(.arenaTextMuted)
                 }
                 .padding(.horizontal, 16)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(vm.activePools) { entry in
-                            NavigationLink {
-                                QuinielaDetailView(quiniela: entry.quiniela)
-                                    .environmentObject(auth)
-                            } label: {
-                                ActivePoolCard(entry: entry)
-                            }
-                            .buttonStyle(.plain)
+                VStack(spacing: 10) {
+                    ForEach(vm.activePools) { entry in
+                        NavigationLink {
+                            QuinielaDetailView(quiniela: entry.quiniela)
+                                .environmentObject(auth)
+                        } label: {
+                            ActivePoolBanner(entry: entry)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, 16)
                 }
+                .padding(.horizontal, 16)
             }
             .padding(.bottom, 12)
         }
@@ -202,20 +203,20 @@ struct LiveScoresView: View {
     }
 }
 
-// MARK: - Active pool card
+// MARK: - Active pool banner
 
-/// Compact carousel card for a pool the user joined via web. Shows the
-/// pool's status (LIVE pulse / OPEN with kickoff in / CLOSED), name, and
-/// score progress against the maximum possible. Designed for horizontal
-/// scrolling — fixed width so multiple cards fit on screen at once.
-private struct ActivePoolCard: View {
+/// Full-width hero banner for an active pool. Replaces the previous
+/// 220-pt carousel card. Most users will only ever have one pool active
+/// at a time, so the banner reads as the primary surface above the
+/// scores list — bigger pool name, larger score, and a pulse / countdown
+/// chip carrying the status.
+private struct ActivePoolBanner: View {
     let entry: QuinielaEntry
 
     private var hasLiveFixture: Bool {
         let now = Date()
         for fx in entry.quiniela.fixtures {
             guard let date = fx.kickoffDate else { continue }
-            // Live ≈ kickoff in the past + status not finished.
             if date <= now && (fx.status ?? "") != "FT" { return true }
         }
         return false
@@ -224,7 +225,6 @@ private struct ActivePoolCard: View {
     private var statusLabel: String {
         if hasLiveFixture { return String(localized: "LIVE") }
         if let start = entry.quiniela.startDateValue, start > Date() {
-            // Show "STARTS IN 2H" style copy. Compact relative format.
             let f = RelativeDateTimeFormatter()
             f.unitsStyle = .abbreviated
             return f.localizedString(for: start, relativeTo: Date()).uppercased()
@@ -236,55 +236,78 @@ private struct ActivePoolCard: View {
         hasLiveFixture ? .arenaDanger : .arenaPrimary
     }
 
-    private var scoreLine: String {
-        let score = entry.score ?? 0
-        let total = entry.totalPossible ?? entry.quiniela.fixtures.count
-        return "\(score) / \(total)"
+    private var scoreNumerator: Int { entry.score ?? 0 }
+    private var scoreDenominator: Int {
+        entry.totalPossible ?? entry.quiniela.fixtures.count
     }
 
     var body: some View {
-        // Note: no `glow:` — see FixtureRow above for rationale. The
-        // LIVE label + red pulse on the card header is enough.
-        HudFrame(cut: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    if hasLiveFixture {
-                        Circle()
-                            .fill(Color.arenaDanger)
-                            .frame(width: 6, height: 6)
-                            // No shadow on the LIVE pulse — even radius:4 was
-                            // bleeding red between rows when stacked.
+        HudFrame(cut: 14) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Status pill row — color-coded, bigger than the prior
+                // 9pt mono so it carries the row at a glance.
+                HStack(spacing: 8) {
+                    HStack(spacing: 6) {
+                        if hasLiveFixture {
+                            Circle()
+                                .fill(Color.arenaDanger)
+                                .frame(width: 7, height: 7)
+                        }
+                        Text(statusLabel)
+                            .font(ArenaFont.mono(size: 10, weight: .bold))
+                            .tracking(1.6)
+                            .foregroundColor(statusColor)
                     }
-                    Text(statusLabel)
-                        .font(ArenaFont.mono(size: 9, weight: .bold))
-                        .tracking(1.5)
-                        .foregroundColor(statusColor)
-                    Spacer(minLength: 0)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        HudCornerCutShape(cut: 4)
+                            .fill(statusColor.opacity(0.14))
+                    )
+                    .overlay(
+                        HudCornerCutShape(cut: 4)
+                            .stroke(statusColor.opacity(0.35), lineWidth: 1)
+                    )
+                    .clipShape(HudCornerCutShape(cut: 4))
+                    Spacer()
+                    Text("›")
+                        .font(ArenaFont.display(size: 22, weight: .heavy))
+                        .foregroundColor(.arenaTextMuted)
                 }
+
+                // Pool name as the hero — 22pt, two-line cap.
                 Text(entry.quiniela.name.uppercased())
-                    .font(ArenaFont.display(size: 14, weight: .heavy))
-                    .tracking(0.5)
+                    .font(ArenaFont.display(size: 22, weight: .heavy))
+                    .tracking(1)
                     .foregroundColor(.arenaText)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Spacer(minLength: 4)
-                HStack(alignment: .firstTextBaseline) {
-                    Text(scoreLine)
-                        .font(ArenaFont.display(size: 22, weight: .heavy))
+
+                // Score + fixtures footer. Score is the dominant figure;
+                // fixtures count and "PTS" label are subordinate.
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("\(scoreNumerator)")
+                        .font(ArenaFont.display(size: 36, weight: .heavy))
                         .foregroundColor(statusColor)
                         .monospacedDigit()
+                    Text("/ \(scoreDenominator)")
+                        .font(ArenaFont.display(size: 22, weight: .heavy))
+                        .foregroundColor(.arenaTextMuted)
+                        .monospacedDigit()
                     Text(String(localized: "PTS"))
-                        .font(ArenaFont.mono(size: 9, weight: .bold))
+                        .font(ArenaFont.mono(size: 10, weight: .bold))
+                        .tracking(1.5)
                         .foregroundColor(.arenaTextMuted)
                     Spacer()
                     Text("\(entry.quiniela.fixtures.count) \(String(localized: "FIXTURES"))")
-                        .font(ArenaFont.mono(size: 9))
+                        .font(ArenaFont.mono(size: 10))
+                        .tracking(1)
                         .foregroundColor(.arenaTextDim)
                 }
             }
-            .padding(12)
-            .frame(width: 220, height: 124, alignment: .topLeading)
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

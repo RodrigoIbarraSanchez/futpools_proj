@@ -558,6 +558,39 @@ export function PoolDetail() {
                       <TeamCrest name={f.awayTeam} logoURL={live?.logos?.away || f.awayLogo} size={32} />
                     </div>
                   </div>
+
+                  {/* User's pick chip — surfaces what they picked for
+                      this fixture so the row reads as 'their pool' rather
+                      than a bare schedule. Hidden when no pick recorded
+                      (anonymous viewer / pre-entry browse). */}
+                  {myPicks[f.fixtureId] && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      marginTop: 10,
+                    }}>
+                      <span style={{
+                        fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700,
+                        letterSpacing: 1.4, color: 'var(--fp-text-muted)',
+                      }}>{t(locale, 'YOUR PICK')}</span>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        padding: '4px 10px',
+                        background: 'var(--fp-primary)',
+                        clipPath: 'var(--fp-clip-sm)',
+                        fontFamily: 'var(--fp-display)', fontWeight: 900,
+                        color: 'var(--fp-on-primary)',
+                      }}>
+                        <span style={{ fontSize: 13 }}>{myPicks[f.fixtureId]}</span>
+                        <span style={{
+                          fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 0.6,
+                        }}>
+                          {myPicks[f.fixtureId] === '1' ? String(f.homeTeam).slice(0, 3).toUpperCase()
+                            : myPicks[f.fixtureId] === '2' ? String(f.awayTeam).slice(0, 3).toUpperCase()
+                            : t(locale, 'DRAW')}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </HudFrame>
             </button>
