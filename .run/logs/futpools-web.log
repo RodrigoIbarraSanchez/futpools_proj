@@ -3,49 +3,12 @@
 > vite
 
 
-  VITE v5.4.21  ready in 292 ms
+  VITE v5.4.21  ready in 113 ms
 
   ➜  Local:   http://localhost:5174/
   ➜  Network: use --host to expose
-7:54:23 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:00:08 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Settings.jsx, /src/pages/Home.jsx, /src/pages/Account.jsx, /src/pages/Register.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/QuinielaPick.jsx, /src/pages/LiveMatch.jsx, /src/pages/CreatePool.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx
-8:04:17 PM [vite] hmr update /src/pages/Home.jsx
-8:04:21 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:12:30 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:12:38 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:13:14 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:13:17 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:13:18 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:14:34 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Settings.jsx, /src/pages/Home.jsx, /src/pages/Account.jsx, /src/pages/Register.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/QuinielaPick.jsx, /src/pages/LiveMatch.jsx, /src/pages/CreatePool.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx
-8:17:13 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:18:07 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:18:10 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:18:11 PM [vite] hmr update /src/pages/PoolDetail.jsx
-8:18:20 PM [vite] hmr update /src/pages/QuinielaPick.jsx
-8:18:22 PM [vite] hmr update /src/pages/QuinielaPick.jsx
-8:18:24 PM [vite] hmr update /src/pages/QuinielaPick.jsx
-8:18:27 PM [vite] hmr update /src/pages/LiveMatch.jsx
-8:18:35 PM [vite] hmr update /src/pages/LiveMatch.jsx
-8:18:37 PM [vite] hmr update /src/pages/LiveMatch.jsx
-8:18:39 PM [vite] hmr update /src/pages/CreatePool.jsx
-8:18:41 PM [vite] hmr update /src/pages/CreatePool.jsx
-8:18:46 PM [vite] hmr update /src/pages/CreatePool.jsx
-8:32:56 PM [vite] hmr update /src/App.jsx
-8:32:59 PM [vite] hmr update /src/App.jsx
-8:33:04 PM [vite] hmr update /src/App.jsx
-8:33:17 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Settings.jsx, /src/pages/Home.jsx, /src/pages/Account.jsx, /src/pages/Register.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/QuinielaPick.jsx, /src/pages/LiveMatch.jsx, /src/pages/CreatePool.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx
-8:34:11 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Settings.jsx, /src/pages/Home.jsx, /src/pages/Account.jsx, /src/pages/Register.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/QuinielaPick.jsx, /src/pages/LiveMatch.jsx, /src/pages/CreatePool.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx
-8:39:34 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Settings.jsx, /src/pages/Home.jsx, /src/pages/Account.jsx, /src/pages/Register.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/QuinielaPick.jsx, /src/pages/LiveMatch.jsx, /src/pages/CreatePool.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx
-8:46:19 PM [vite] hmr update /src/pages/LandingPage.jsx
-8:46:25 PM [vite] hmr update /src/pages/LandingPage.jsx
-8:46:37 PM [vite] hmr update /src/pages/LandingPage.jsx
-8:46:48 PM [vite] hmr update /src/pages/LandingPage.jsx
-8:49:06 PM [vite] hmr update /src/App.jsx
-8:49:09 PM [vite] hmr update /src/App.jsx
-8:49:16 PM [vite] hmr update /src/context/AuthContext.jsx
-8:49:27 PM [vite] hmr update /src/context/AuthContext.jsx
-8:52:06 PM [vite] hmr update /src/pages/LandingPage.jsx
-8:52:08 PM [vite] hmr update /src/pages/LandingPage.jsx
-8:52:09 PM [vite] hmr update /src/pages/LandingPage.jsx
-8:54:06 PM [vite] hmr update /src/pages/LandingPage.jsx
-1:09:15 PM [vite] hmr update /src/index.css
+1:55:23 PM [vite] hmr update /src/pages/LiveMatch.jsx
+1:55:31 PM [vite] hmr update /src/pages/LiveMatch.jsx
+1:55:36 PM [vite] hmr update /src/pages/LiveMatch.jsx
+1:56:01 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Home.jsx, /src/pages/QuinielaPick.jsx, /src/pages/Register.jsx, /src/pages/Settings.jsx, /src/pages/admin/AdminPayouts.jsx, /src/pages/Account.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/CreatePool.jsx, /src/pages/LiveMatch.jsx, /src/pages/onboarding/WebOnboarding.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx
+1:56:02 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Home.jsx, /src/pages/QuinielaPick.jsx, /src/pages/Register.jsx, /src/pages/Settings.jsx, /src/pages/admin/AdminPayouts.jsx, /src/pages/Account.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/CreatePool.jsx, /src/pages/LiveMatch.jsx, /src/pages/onboarding/WebOnboarding.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx

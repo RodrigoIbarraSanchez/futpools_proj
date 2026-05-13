@@ -114,7 +114,14 @@ function YourPickCard({ pick, live, locale }) {
   let state = 'waiting';
   if (result != null) {
     if (isFinal) state = pick === result ? 'earned' : 'missed';
-    else state = pick === result ? 'leading' : 'trailing';
+    else if (pick === result) state = 'leading';
+    // 0-0 (or any draw mid-game) when the pick is 1 or 2 → 'tied'.
+    // The user is not currently winning, but the opposite team is
+    // not winning either — calling it 'trailing' would lie about the
+    // game state and trigger needless loss-aversion. See iOS
+    // LiveMatchView for the same rule + a longer rationale.
+    else if (result === 'X' && pick !== 'X') state = 'tied';
+    else state = 'trailing';
   }
 
   const pickLabel = pick === '1' ? t(locale, 'HOME WIN')
@@ -125,6 +132,7 @@ function YourPickCard({ pick, live, locale }) {
   const palette = {
     waiting:  { bg: 'var(--fp-surface)', stroke: 'var(--fp-stroke)', badgeBg: 'var(--fp-surface-alt)', badgeFg: 'var(--fp-text)' },
     leading:  { bg: 'color-mix(in srgb, var(--fp-primary) 15%, transparent)', stroke: 'var(--fp-primary)', badgeBg: 'var(--fp-primary)', badgeFg: 'var(--fp-on-primary)' },
+    tied:     { bg: 'var(--fp-surface)', stroke: 'color-mix(in srgb, var(--fp-accent) 45%, transparent)', badgeBg: 'var(--fp-surface-alt)', badgeFg: 'var(--fp-text)' },
     trailing: { bg: 'var(--fp-surface)', stroke: 'color-mix(in srgb, var(--fp-danger) 35%, transparent)', badgeBg: 'var(--fp-surface-alt)', badgeFg: 'var(--fp-text-dim)' },
     earned:   { bg: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)', stroke: 'var(--fp-primary)', badgeBg: 'var(--fp-primary)', badgeFg: 'var(--fp-on-primary)' },
     missed:   { bg: 'color-mix(in srgb, var(--fp-surface) 60%, transparent)', stroke: 'color-mix(in srgb, var(--fp-danger) 35%, transparent)', badgeBg: 'var(--fp-surface-alt)', badgeFg: 'var(--fp-text-dim)' },
@@ -138,6 +146,9 @@ function YourPickCard({ pick, live, locale }) {
       case 'leading':
         return <><span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--fp-primary)' }} />
           <span style={{ color: 'var(--fp-primary)' }}>{t(locale, 'LEADING · +1 PT IF IT HOLDS')}</span></>;
+      case 'tied':
+        return <><span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--fp-accent)' }} />
+          <span style={{ color: 'var(--fp-accent)' }}>{t(locale, 'TIED · 0 PTS IF IT HOLDS')}</span></>;
       case 'trailing':
         return <><span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--fp-danger)' }} />
           <span style={{ color: 'var(--fp-danger)' }}>{isLive ? t(locale, 'TRAILING · 0 PTS IF IT HOLDS') : t(locale, 'TRAILING')}</span></>;
