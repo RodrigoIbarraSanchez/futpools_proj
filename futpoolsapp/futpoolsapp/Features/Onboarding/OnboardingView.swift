@@ -78,32 +78,15 @@ struct OnboardingView: View {
         case .welcome:
             OnbWelcomeScreen(state: state, onLogin: { goLogin() })
                 .transition(.opacity)
-        case .goal:
-            OnbGoalScreen(state: state).transition(.opacity)
-        case .pain:
-            OnbPainScreen(state: state).transition(.opacity)
-        case .social:
-            OnbSocialProofScreen(state: state).transition(.opacity)
-        case .tinder:
-            OnbTinderScreen(state: state).transition(.opacity)
-        case .solution:
-            OnbSolutionScreen(state: state).transition(.opacity)
-        case .prefs:
-            OnbPrefsScreen(state: state).transition(.opacity)
-        case .processing:
-            OnbProcessingScreen(state: state).transition(.opacity)
-        case .demo:
-            OnbDemoScreen(state: state).transition(.opacity)
-        case .value:
-            OnbValueDeliveryScreen(
-                state: state,
-                fixturesByID: [:],
-                onShare: {
-                    let txt = L("I'm playing my first futpools mini-pool. Pick yours: https://futpools.com")
-                    shareSheet = ShareItem(text: txt)
-                }
-            )
-            .transition(.opacity)
+        case .teams:
+            OnbPrefsScreen(state: state, mode: .teamsOnly)
+                .transition(.opacity)
+        case .leagues:
+            OnbPrefsScreen(state: state, mode: .leaguesOnly)
+                .transition(.opacity)
+        case .notifications:
+            OnbNotificationsScreen(state: state)
+                .transition(.opacity)
         case .gate:
             OnbAccountGateScreen(
                 state: state,

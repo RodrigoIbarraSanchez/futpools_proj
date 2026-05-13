@@ -277,6 +277,16 @@
         }
       }
     },
+    "%lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@"
+          }
+        }
+      }
+    },
     "%lld COINS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -456,16 +466,6 @@
         }
       }
     },
-    "%lld/%lld PTS" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld/%2$lld PTS"
-          }
-        }
-      }
-    },
     "%lld%%" : {
 
     },
@@ -593,6 +593,9 @@
           }
         }
       }
+    },
+    "⏳" : {
+
     },
     "▲" : {
 
@@ -842,9 +845,6 @@
 
     },
     "✎" : {
-
-    },
-    "✎ EDIT" : {
 
     },
     "✓" : {
@@ -5358,9 +5358,6 @@
         }
       }
     },
-    "Join a pool from futpools.com to see it here." : {
-
-    },
     "JOIN POOL" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6387,6 +6384,9 @@
         }
       }
     },
+    "MY ACTIVE POOLS" : {
+
+    },
     "MY CREATED POOLS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6471,9 +6471,6 @@
           }
         }
       }
-    },
-    "MY POOLS" : {
-
     },
     "Name" : {
       "extractionState" : "manual",
@@ -6801,6 +6798,9 @@
         }
       }
     },
+    "NO LIVE GAMES" : {
+
+    },
     "No matches" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6936,9 +6936,6 @@
           }
         }
       }
-    },
-    "NO POOLS YET" : {
-
     },
     "No purchase or payment is required to participate. You can earn a free entry by predicting the Daily Pick once per day for seven consecutive days (7 Tickets = 1 entry). Tickets cannot be purchased; they are earned only through Daily Pick predictions and rewarded ad views, which are also free." : {
       "extractionState" : "manual",
@@ -7160,6 +7157,9 @@
           }
         }
       }
+    },
+    "Nothing kicking off worldwide right now. Check TODAY for upcoming." : {
+
     },
     "Nothing scheduled in your leagues today. Try TOMORROW." : {
 

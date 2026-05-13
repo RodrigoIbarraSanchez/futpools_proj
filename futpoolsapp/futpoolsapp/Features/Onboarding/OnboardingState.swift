@@ -190,9 +190,13 @@ struct OnboardingDemoPick: Codable, Identifiable {
 
 @MainActor
 final class OnboardingState: ObservableObject {
-    /// The 11 ordered steps. Welcome..AccountGate.
+    /// simple_version onboarding — 5 screens, scores-first.
+    /// welcome → favorite teams → favorite leagues → notification permission
+    /// → account gate. The legacy 11-step pool-playing pitch (goal, pain,
+    /// social proof, tinder, solution, processing, demo, value) is gone;
+    /// the screens still compile but aren't reachable.
     enum Step: Int, CaseIterable {
-        case welcome, goal, pain, social, tinder, solution, prefs, processing, demo, value, gate
+        case welcome, teams, leagues, notifications, gate
 
         var progress: Double {
             Double(rawValue + 1) / Double(Step.allCases.count)

@@ -649,7 +649,18 @@ final class OnbPrefsSearchVM: ObservableObject {
 }
 
 struct OnbPrefsScreen: View {
+    /// simple_version splits the legacy combined teams+leagues prefs into
+    /// two separate screens. `mode` parametrizes which sections render
+    /// (and which API search results are surfaced) so we keep one
+    /// implementation backing both onboarding steps.
+    enum Mode {
+        case both          // legacy combined screen (master)
+        case teamsOnly     // simple_version step 2
+        case leaguesOnly   // simple_version step 3
+    }
+
     @ObservedObject var state: OnboardingState
+    var mode: Mode = .both
     @StateObject private var searchVM = OnbPrefsSearchVM()
     @FocusState private var searchFocused: Bool
     private let columns = [
@@ -664,12 +675,36 @@ struct OnbPrefsScreen: View {
         searchVM.query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
     }
 
+    private var titleText: String {
+        switch mode {
+        case .both:        return L("WHAT FOOTBALL DO YOU FOLLOW?")
+        case .teamsOnly:   return L("PICK YOUR TEAMS")
+        case .leaguesOnly: return L("PICK YOUR LEAGUES")
+        }
+    }
+
+    private var subtitleText: String {
+        switch mode {
+        case .both:        return L("We'll filter the next step's matches.")
+        case .teamsOnly:   return L("You'll get push alerts when these teams play.")
+        case .leaguesOnly: return L("Live scores will surface games from these leagues first.")
+        }
+    }
+
+    private var stepLabel: String {
+        switch mode {
+        case .both:        return "\(L("Step")) 07"
+        case .teamsOnly:   return "\(L("Step")) 02"
+        case .leaguesOnly: return "\(L("Step")) 03"
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             OnbTitleBlock(
-                eyebrow: "\(L("Step")) 07",
-                title: L("WHAT FOOTBALL DO YOU FOLLOW?"),
-                subtitle: L("We'll filter the next step's matches."),
+                eyebrow: stepLabel,
+                title: titleText,
+                subtitle: subtitleText,
                 size: .md
             )
             .padding(.top, 24)
@@ -708,13 +743,17 @@ struct OnbPrefsScreen: View {
 
     @ViewBuilder
     private var popularSections: some View {
-        sectionHeader(L("POPULAR TEAMS"))
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(OnbTeam.allCases) { t in teamCell(t) }
+        if mode != .leaguesOnly {
+            sectionHeader(L("POPULAR TEAMS"))
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(OnbTeam.allCases) { t in teamCell(t) }
+            }
         }
-        sectionHeader(L("LEAGUES"))
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(OnboardingLeague.allCases) { l in leagueCell(l) }
+        if mode != .teamsOnly {
+            sectionHeader(L("LEAGUES"))
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(OnboardingLeague.allCases) { l in leagueCell(l) }
+            }
         }
     }
 
