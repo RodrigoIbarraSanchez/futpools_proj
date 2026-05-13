@@ -1360,7 +1360,23 @@
         }
       }
     },
-    "Add favorite teams or leagues from your profile to see live scores.": {},
+    "Add favorite teams or leagues from your profile to see live scores.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add favorite teams or leagues from your profile to see live scores."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrega equipos o ligas favoritas desde tu perfil para ver marcadores."
+          }
+        }
+      }
+    },
     "ADD FIXTURES": {
       "extractionState": "manual",
       "localizations": {
@@ -4101,7 +4117,23 @@
         }
       }
     },
-    "FAVORITES": {},
+    "FAVORITES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FAVORITES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FAVORITOS"
+          }
+        }
+      }
+    },
     "FEATURED": {
       "extractionState": "manual",
       "localizations": {
@@ -4340,7 +4372,23 @@
         }
       }
     },
-    "FOOTBALL": {},
+    "FOOTBALL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FOOTBALL"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FÚTBOL"
+          }
+        }
+      }
+    },
     "For each thing you said:": {
       "extractionState": "manual",
       "localizations": {
@@ -5738,7 +5786,23 @@
         }
       }
     },
-    "LIVE SCORES": {},
+    "LIVE SCORES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIVE SCORES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MARCADORES EN VIVO"
+          }
+        }
+      }
+    },
     "Live scoring": {
       "extractionState": "manual",
       "localizations": {
@@ -6284,7 +6348,23 @@
         }
       }
     },
-    "MY ACTIVE POOLS": {},
+    "MY ACTIVE POOLS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MY ACTIVE POOLS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MIS QUINIELAS ACTIVAS"
+          }
+        }
+      }
+    },
     "MY CREATED POOLS": {
       "extractionState": "manual",
       "localizations": {
@@ -6676,7 +6756,23 @@
         }
       }
     },
-    "NO FIXTURES": {},
+    "NO FIXTURES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO FIXTURES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIN PARTIDOS"
+          }
+        }
+      }
+    },
     "No history yet": {
       "extractionState": "manual",
       "localizations": {
@@ -6694,7 +6790,23 @@
         }
       }
     },
-    "NO LIVE GAMES": {},
+    "NO LIVE GAMES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO LIVE GAMES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO HAY PARTIDOS EN VIVO"
+          }
+        }
+      }
+    },
     "No matches": {
       "extractionState": "manual",
       "localizations": {
@@ -7052,8 +7164,40 @@
         }
       }
     },
-    "Nothing kicking off worldwide right now. Check TODAY for upcoming.": {},
-    "Nothing scheduled in your leagues today. Try TOMORROW.": {},
+    "Nothing kicking off worldwide right now. Check TODAY for upcoming.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing kicking off worldwide right now. Check TODAY for upcoming."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay partidos en juego ahora mismo. Mira HOY para los siguientes."
+          }
+        }
+      }
+    },
+    "Nothing scheduled in your leagues today. Try TOMORROW.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing scheduled in your leagues today. Try TOMORROW."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nada programado en tus ligas hoy. Prueba MAÑANA."
+          }
+        }
+      }
+    },
     "Nothing to accept": {
       "extractionState": "manual",
       "localizations": {
@@ -7236,7 +7380,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "ABRIR"
+            "value": "ABIERTA"
           }
         }
       }
@@ -7972,7 +8116,23 @@
         }
       }
     },
-    "PICK YOUR FAVORITES": {},
+    "PICK YOUR FAVORITES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PICK YOUR FAVORITES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ELIGE TUS FAVORITOS"
+          }
+        }
+      }
+    },
     "PICK YOUR SIDE": {
       "extractionState": "manual",
       "localizations": {
@@ -11614,8 +11774,40 @@
         }
       }
     },
-    "TODAY": {},
-    "TOMORROW": {},
+    "TODAY": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TODAY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HOY"
+          }
+        }
+      }
+    },
+    "TOMORROW": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TOMORROW"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAÑANA"
+          }
+        }
+      }
+    },
     "TOTAL": {
       "extractionState": "manual",
       "localizations": {

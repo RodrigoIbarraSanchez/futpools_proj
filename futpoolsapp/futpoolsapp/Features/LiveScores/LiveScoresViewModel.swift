@@ -79,9 +79,11 @@ final class LiveScoresViewModel: ObservableObject {
         pollTask = nil
     }
 
-    /// Load pools the user is entered in (and that are still active —
-    /// scheduled or live, not finished). Backs the ActivePoolsBanner
-    /// that lives at the top of the SCORES home.
+    /// Load pools the user is entered in and that are STILL ACTIVE —
+    /// any fixture is currently live OR any fixture is still upcoming.
+    /// The previous filter was too permissive (`status != "FT"` matched
+    /// fixtures with empty status, leaving finished pools in the banner
+    /// indefinitely). Live pools sort to the top of the carousel.
     func loadActivePools() {
         Task {
             guard let token = KeychainHelper.getToken() else { return }
@@ -92,22 +94,38 @@ final class LiveScoresViewModel: ObservableObject {
                     token: token
                 )
                 let now = Date()
-                // Active = at least one fixture still in the future OR
-                // currently live. Once every fixture is in the past and
-                // the pool has been settled, we hide it from the banner.
-                activePools = entries.filter { entry in
+                let liveCodes: Set<String> = ["1H", "HT", "2H", "ET", "BT", "P", "LIVE", "INT"]
+
+                func isFixtureLive(_ fx: QuinielaFixture) -> Bool {
+                    liveCodes.contains((fx.status ?? "").uppercased())
+                }
+                func isFixtureUpcoming(_ fx: QuinielaFixture) -> Bool {
+                    guard let date = fx.kickoffDate else { return false }
+                    return date > now
+                }
+                func poolIsActive(_ entry: QuinielaEntry) -> Bool {
                     let fixtures = entry.quiniela.fixtures
                     guard !fixtures.isEmpty else { return false }
-                    return fixtures.contains { fx in
-                        guard let date = fx.kickoffDate else { return false }
-                        return date > now || (fx.status ?? "") != "FT"
+                    return fixtures.contains { isFixtureLive($0) || isFixtureUpcoming($0) }
+                }
+                func poolIsLive(_ entry: QuinielaEntry) -> Bool {
+                    entry.quiniela.fixtures.contains { isFixtureLive($0) }
+                }
+
+                activePools = entries
+                    .filter(poolIsActive)
+                    .sorted { (a, b) in
+                        // Live pools first, then upcoming sorted by
+                        // earliest kickoff. Pure startDate sort would
+                        // bury a live pool whose other fixtures are
+                        // older than another pool's first fixture.
+                        let aLive = poolIsLive(a)
+                        let bLive = poolIsLive(b)
+                        if aLive != bLive { return aLive && !bLive }
+                        let ad = a.quiniela.startDateValue ?? .distantFuture
+                        let bd = b.quiniela.startDateValue ?? .distantFuture
+                        return ad < bd
                     }
-                }
-                .sorted { (a, b) in
-                    let ad = a.quiniela.startDateValue ?? .distantFuture
-                    let bd = b.quiniela.startDateValue ?? .distantFuture
-                    return ad < bd
-                }
             } catch {
                 // Silent — banner just stays empty. Auth failures are
                 // handled by the existing AuthService.

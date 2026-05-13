@@ -513,20 +513,18 @@ export function CreatePool() {
   const isAdmin = user?.isAdmin === true;
 
   const [name, setName] = useState('');
-  // v3: free-text message from creator to participants. Replaces the old
-  // prize label (prize is now defined in ENTRY TYPE as real coins).
+  // simple_version: free-text message from creator to participants.
   // Persisted server-side in the existing `description` field.
   const [message, setMessage] = useState('');
-  const [visibility, setVisibility] = useState('private');
-  // v3 mutex — exactly one of these is > 0 at a time. Sponsor = creator pays
-  // prizeCoins × 1.1 upfront (participants free). Coins = peer-pay, everyone
-  // pays entryCostCoins. Both start at 0; the wizard enforces a pick before
-  // CREATE is enabled (see canSubmit below).
-  const [entryCostCoins, setEntryCostCoins] = useState(0);
-  const [prizeCoins, setPrizeCoins] = useState(0);
-  const setSponsorPrize = (amount) => { setEntryCostCoins(0); setPrizeCoins(amount); };
-  const setPeerEntryCost = (amount) => { setPrizeCoins(0); setEntryCostCoins(amount); };
-  const wizardMode = entryCostCoins > 0 ? 'coins' : 'sponsor';
+  const [visibility, setVisibility] = useState('public');
+  // simple_version: every pool charges a flat MXN fee via Stripe at
+  // checkout. The legacy SPONSOR/COINS economy is gone. Default $50;
+  // admin can override per pool.
+  const [entryFeeMXN, setEntryFeeMXN] = useState(50);
+  // Legacy state kept zeroed because the API still accepts these
+  // fields on master — sending zeros keeps a backward-compat payload.
+  const entryCostCoins = 0;
+  const prizeCoins = 0;
 
   // Basket: Map fixtureId → full fixture object (so we preserve kickoff/teams for submit)
   const [basket, setBasket] = useState(() => new Map());
@@ -559,19 +557,18 @@ export function CreatePool() {
   const canSubmit =
     name.trim().length > 0
     && selectedFixtures.length > 0
-    && !submitting
-    // v3: require an explicit economy — Sponsor OR Coins, not neither.
-    && (prizeCoins > 0 || entryCostCoins > 0);
+    && Number(entryFeeMXN) >= 1
+    && !submitting;
 
-  // First-blocking reason for the disabled CTA. Order mirrors the wizard
-  // steps so the hint points the user to the next thing to fix.
+  // First-blocking reason for the disabled CTA. Order mirrors the form
+  // sections so the hint points the user to the next thing to fix.
   const canSubmitHint = !canSubmit
     ? (name.trim().length === 0
         ? t(locale, 'Add a name to continue')
         : selectedFixtures.length === 0
           ? t(locale, 'Pick at least one match')
-          : (prizeCoins === 0 && entryCostCoins === 0)
-            ? t(locale, 'Pick a sponsor prize or coins entry')
+          : Number(entryFeeMXN) < 1
+            ? t(locale, 'Set an entry fee in MXN')
             : null)
     : null;
 
@@ -583,10 +580,11 @@ export function CreatePool() {
       const payload = {
         name: name.trim(),
         description: message.trim(),
-        // Legacy field — v3 UI no longer collects a prize label since the
-        // prize is real coins. Leave blank for back-compat with older clients.
         prizeLabel: '',
         visibility,
+        // simple_version: real-money entry fee. The legacy coin fields
+        // ride along zeroed so a master backend wouldn't choke on them.
+        entryFeeMXN: Number(entryFeeMXN),
         entryCostCoins,
         prizeCoins,
         fixtures: selectedFixtures.map(fx => ({
@@ -653,95 +651,45 @@ export function CreatePool() {
           />
         </div>
 
-        {/* ENTRY TYPE — v3 Sponsor (default) vs Coins peer selector */}
+        {/* ENTRY FEE — simple_version: flat MXN per entry, paid via Stripe.
+            The legacy SPONSOR/COINS dual economy is gone (admin-only form,
+            real-money pools only). Pre-filled to $50 per spec; admin can
+            override per pool when a special event needs a different tier. */}
         <div style={{ marginBottom: 18 }}>
-          <SectionLabel color="var(--fp-primary)">{t(locale, 'ENTRY TYPE')}</SectionLabel>
+          <SectionLabel color="var(--fp-primary)">{t(locale, 'ENTRY FEE')}</SectionLabel>
           <div style={{ height: 8 }} />
-          <div style={{ display: 'flex', gap: 6 }}>
-            <EntryTypePill
-              active={wizardMode === 'sponsor'}
-              title={t(locale, 'SPONSOR PRIZE')}
-              subtitle={t(locale, 'You pay, friends play free')}
-              onClick={() => { if (prizeCoins === 0) setSponsorPrize(50); }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              fontFamily: 'var(--fp-display)', fontSize: 28, fontWeight: 900,
+              color: 'var(--fp-primary)',
+            }}>$</div>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={entryFeeMXN}
+              onChange={(e) => setEntryFeeMXN(e.target.value.replace(/[^\d]/g, ''))}
+              style={{
+                ...arenaInputStyle,
+                fontFamily: 'var(--fp-display)',
+                fontSize: 24,
+                fontWeight: 900,
+                textAlign: 'center',
+                width: 120,
+              }}
             />
-            <EntryTypePill
-              active={wizardMode === 'coins'}
-              title={t(locale, 'COINS ENTRY')}
-              subtitle={t(locale, 'Everyone pays the same')}
-              onClick={() => { if (entryCostCoins === 0) setPeerEntryCost(25); }}
-            />
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 12, fontWeight: 700,
+              letterSpacing: 1.5, color: 'var(--fp-text-muted)',
+            }}>MXN</div>
+            <div style={{ flex: 1 }} />
           </div>
-
-          {wizardMode === 'sponsor' && (
-            <>
-              <div style={{ height: 12 }} />
-              <ArenaLabel>{t(locale, 'PRIZE AMOUNT')}</ArenaLabel>
-              <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6,
-              }}>
-                {SPONSOR_PRIZE_PRESETS.map(({ amount, tierKey }) => (
-                  <CoinPresetChip
-                    key={amount}
-                    amount={amount}
-                    tierLabel={t(locale, tierKey)}
-                    active={prizeCoins === amount}
-                    accent="var(--fp-primary)"
-                    onClick={() => setSponsorPrize(amount)}
-                  />
-                ))}
-              </div>
-              {prizeCoins > 0 && (
-                <div style={{
-                  marginTop: 10, padding: 10,
-                  background: 'color-mix(in srgb, var(--fp-primary) 10%, transparent)',
-                  border: '1px solid color-mix(in srgb, var(--fp-primary) 40%, transparent)',
-                  clipPath: 'var(--fp-clip-sm)',
-                }}>
-                  <div style={{
-                    fontFamily: 'var(--fp-mono)', fontSize: 9, fontWeight: 700,
-                    letterSpacing: 1.5, color: 'var(--fp-text-muted)',
-                  }}>{t(locale, 'TOTAL YOU PAY')}</div>
-                  <div style={{
-                    fontFamily: 'var(--fp-display)', fontSize: 18, fontWeight: 900,
-                    color: 'var(--fp-gold)', marginTop: 2,
-                  }}>{Math.ceil(prizeCoins * 1.1)} {t(locale, 'COINS')}</div>
-                  <div style={{
-                    marginTop: 4, fontFamily: 'var(--fp-mono)', fontSize: 9,
-                    color: 'var(--fp-text-dim)',
-                  }}>
-                    {prizeCoins} {t(locale, 'prize')} + {Math.ceil(prizeCoins * 1.1) - prizeCoins} {t(locale, 'platform fee')}. {t(locale, "If pool doesn't reach min players, you get a full refund.")}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {wizardMode === 'coins' && (
-            <>
-              <div style={{ height: 12 }} />
-              <ArenaLabel>{t(locale, 'ENTRY COST')}</ArenaLabel>
-              <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6,
-              }}>
-                {ENTRY_COIN_PRESETS.map(({ amount, tierKey }) => (
-                  <CoinPresetChip
-                    key={amount}
-                    amount={amount}
-                    tierLabel={t(locale, tierKey)}
-                    active={entryCostCoins === amount}
-                    accent="var(--fp-gold)"
-                    onClick={() => setPeerEntryCost(amount)}
-                  />
-                ))}
-              </div>
-              <div style={{
-                marginTop: 8, fontFamily: 'var(--fp-mono)', fontSize: 9,
-                color: 'var(--fp-text-dim)',
-              }}>
-                {t(locale, 'Minimum 2 players. 10% platform rake — winner receives the rest of the pot.')}
-              </div>
-            </>
-          )}
+          <div style={{
+            marginTop: 8, fontFamily: 'var(--fp-mono)', fontSize: 10,
+            color: 'var(--fp-text-dim)',
+          }}>
+            {t(locale, 'Each participant pays this via Stripe at signup. The winner is paid out manually.')}
+          </div>
         </div>
 
         {/* Visibility */}
