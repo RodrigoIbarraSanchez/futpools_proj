@@ -11,6 +11,7 @@ import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
 import { CreatePool, InviteResolver } from './pages/CreatePool';
 import { AdminPayouts } from './pages/admin/AdminPayouts';
+import { WebOnboarding } from './pages/onboarding/WebOnboarding';
 import { LiveMatch } from './pages/LiveMatch';
 import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
@@ -71,6 +72,10 @@ export default function App() {
 
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+            {/* simple_version onboarding (3 screens) — landing CTAs
+                point here; finishes by routing the user to /register
+                with their picks already in localStorage. */}
+            <Route path="/onboarding" element={<PublicRoute><WebOnboarding /></PublicRoute>} />
 
             <Route path="/" element={<RootSwitch />}>
               <Route index element={<Home />} />

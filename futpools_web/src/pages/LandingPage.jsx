@@ -74,21 +74,21 @@ export function LandingPage() {
         <div className="grid-bg" />
 
         <div className="hero-left">
-          <div className="kicker">{c('◆ JUGANDO EN WEB · iOS PRÓXIMAMENTE', '◆ LIVE ON WEB · iOS COMING SOON')}</div>
+          <div className="kicker">{c('◆ EL MUNDIAL EN 30 DÍAS · INSCRÍBETE YA', '◆ WORLD CUP IN 30 DAYS · JOIN NOW')}</div>
           <h1>
             <span>{c('QUINIELAS DE FÚTBOL.', 'FOOTBALL POOLS.')}</span><br />
-            <span className="accent">{c('MODO ARCADE.', 'ARCADE MODE.')}</span>
+            <span className="accent">{c('GANA DINERO REAL.', 'WIN REAL CASH.')}</span>
           </h1>
           <p className="hero-sub">
             {c(
-              "Pick'em gamificado con tus amigos. Sube de división, reúne streaks, desbloquea achievements. Sin dinero real — solo monedas, rangos y gloria eterna sobre tus compañeros de liga.",
-              "Gamified pick'em with your friends. Climb divisions, stack streaks, unlock achievements. No real money — just coins, ranks, and eternal glory over your league-mates."
+              'Inscríbete por $50 MXN. El ganador se lleva el 65% del bote acumulado por transferencia bancaria. Mundial, Liga MX, Champions y más — pickea, juega, cobra.',
+              "Pay $50 MXN to enter. Winner takes 65% of the prize pool, paid out by bank transfer. World Cup, Liga MX, Champions and more — pick, play, get paid."
             )}
           </p>
 
           <div className="hero-cta-row">
-            <Link to="/register" className="btn btn-primary btn-lg">
-              ▶ {c('Jugar Gratis', 'Play Free')}
+            <Link to="/onboarding" className="btn btn-primary btn-lg">
+              ▶ {c('Empezar a Ganar', 'Start Winning')}
             </Link>
             <Link to="/login" className="btn btn-ghost btn-lg">
               {c('Iniciar Sesión', 'Sign In')}
@@ -96,21 +96,21 @@ export function LandingPage() {
           </div>
           <div className="form-note">
             <span className="ok">◆</span>{' '}
-            {c('100 monedas gratis al registrarte', '100 free coins on signup')}
+            {c('Pago seguro con Stripe · Premios depositados a tu cuenta', 'Secure Stripe payments · Prizes deposited to your bank')}
           </div>
 
           <div className="hero-stats">
             <div className="stat">
+              <div className="num">$50<span className="pct"> MXN</span></div>
+              <div className="label">{c('Por inscripción', 'Per entry')}</div>
+            </div>
+            <div className="stat">
+              <div className="num">65<span className="pct">%</span></div>
+              <div className="label">{c('Para el ganador', 'To the winner')}</div>
+            </div>
+            <div className="stat">
               <div className="num">12<span className="pct">+</span></div>
               <div className="label">{c('Ligas cubiertas', 'Leagues covered')}</div>
-            </div>
-            <div className="stat">
-              <div className="num"><span className="pct">∞</span></div>
-              <div className="label">{c('Pools por jugar', 'Pools to play')}</div>
-            </div>
-            <div className="stat">
-              <div className="num">0<span className="pct">$</span></div>
-              <div className="label">{c('Dinero real', 'Real money')}</div>
             </div>
           </div>
         </div>
@@ -133,8 +133,8 @@ export function LandingPage() {
           <h2>{c('JUGAR EN 4 PASOS', 'PLAY IN 4 STEPS')}</h2>
           <p className="section-sub">
             {c(
-              'Sin complicaciones. Sin apuestas. Solo pura adrenalina competitiva entre tú y tu grupo.',
-              'No complications. No betting. Just raw competitive adrenaline between you and your crew.'
+              'Inscríbete, haz tus picks, gana dinero real. Pago directo a tu cuenta bancaria.',
+              'Sign up, lock in your picks, win real cash. Paid straight to your bank account.'
             )}
           </p>
         </div>
@@ -262,28 +262,28 @@ export function LandingPage() {
         <div className="brackets">
           <span className="tl" /><span className="tr" /><span className="bl" /><span className="br" />
         </div>
-        <div className="counter">● {c('JUGANDO AHORA EN WEB', 'PLAYING NOW ON WEB')}</div>
+        <div className="counter">● {c('GANADORES PAGADOS ESTA SEMANA', 'WINNERS PAID THIS WEEK')}</div>
         <h2>
-          <span>{c('ENTRA AL ARENA.', 'ENTER THE ARENA.')}</span><br />
-          <span className="cta-accent">{c('GRATIS PARA SIEMPRE.', 'FREE FOREVER.')}</span>
+          <span>{c('GANA TU PRIMERA QUINIELA.', 'WIN YOUR FIRST POOL.')}</span><br />
+          <span className="cta-accent">{c('COBRA EN EFECTIVO.', 'GET PAID IN CASH.')}</span>
         </h2>
         <p className="section-sub cta-sub">
           {c(
-            'Regístrate gratis. 100 monedas de bienvenida. Empieza a jugar en segundos.',
-            'Free signup. 100 welcome coins. Start playing in seconds.'
+            'Inscripción $50 MXN. El ganador se lleva el 65% del bote. Pago directo a tu cuenta bancaria.',
+            '$50 MXN entry. Winner takes 65% of the pot. Direct bank transfer to your account.'
           )}
         </p>
 
         <div className="cta-row">
-          <Link to="/register" className="btn btn-primary btn-lg">
-            ▶ {c('Crear Cuenta', 'Create Account')}
+          <Link to="/onboarding" className="btn btn-primary btn-lg">
+            ▶ {c('Empezar a Ganar', 'Start Winning')}
           </Link>
           <Link to="/login" className="btn btn-ghost btn-lg">
             {c('Ya tengo cuenta', 'I already have an account')}
           </Link>
         </div>
         <div className="form-note cta-note">
-          ◆ {c('Sin apuestas · Sin dinero real · Solo gloria', 'No betting · No real money · Just glory')}
+          ◆ {c('Pago seguro con Stripe · Mayores de 18 años · México', 'Secure Stripe payments · 18+ · Mexico')}
         </div>
       </section>
 
@@ -308,24 +308,24 @@ export function LandingPage() {
 
 const STEPS = [
   {
-    t_es: 'Únete', t_en: 'Sign Up',
-    d_es: 'Crea cuenta con email. Recibes 100 monedas de bienvenida para entrar a tu primer pool.',
-    d_en: 'Create account with email. Get 100 welcome coins to buy into your first pool.',
+    t_es: 'Inscríbete', t_en: 'Sign Up',
+    d_es: 'Crea tu cuenta con email. Configura tus equipos y ligas favoritas en menos de un minuto.',
+    d_en: 'Create your account with email. Set up your favorite teams and leagues in under a minute.',
   },
   {
-    t_es: 'Elige Pool', t_en: 'Pick a Pool',
-    d_es: 'Pool público con miles de jugadores o privado con tu grupo. Liga MX, Champions, Mundial — lo que quieras.',
-    d_en: 'Public pool with thousands, or private with your crew. Liga MX, Champions, World Cup — your call.',
+    t_es: 'Elige Quiniela', t_en: 'Pick a Pool',
+    d_es: 'Mundial, Liga MX, Champions, Premier — entra a la quiniela que quieras por $50 MXN.',
+    d_en: 'World Cup, Liga MX, Champions, Premier — buy into any pool for $50 MXN.',
   },
   {
-    t_es: 'Haz Picks', t_en: 'Make Picks',
-    d_es: '1 · X · 2 en cada partido. Bloqueo al kickoff. Puntos por cada acierto.',
-    d_en: '1 · X · 2 per match. Locks at kickoff. Points on every correct call.',
+    t_es: 'Haz tus Picks', t_en: 'Make Your Picks',
+    d_es: '1 · X · 2 en cada partido. Picks bloqueados al kickoff. Pago seguro vía Stripe.',
+    d_en: '1 · X · 2 per match. Picks lock at kickoff. Secure payment via Stripe.',
   },
   {
-    t_es: 'Sube de Rango', t_en: 'Rank Up',
-    d_es: 'Gana XP, escala divisiones (Rookie → Legend), desbloquea achievements y lleva monedas a la cima.',
-    d_en: 'Earn XP, climb divisions (Rookie → Legend), unlock achievements, stack coins to the top.',
+    t_es: 'Cobra', t_en: 'Get Paid',
+    d_es: 'El ganador se lleva el 65% del bote. Te depositamos por transferencia bancaria a tu cuenta.',
+    d_en: 'Winner takes 65% of the pot. We send a bank transfer straight to your account.',
   },
 ];
 

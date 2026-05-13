@@ -45,12 +45,45 @@ export function AuthProvider({ children }) {
       const { token, user: u } = await api.post('/auth/login', { email: email.trim().toLowerCase(), password });
       localStorage.setItem(TOKEN_KEY, token);
       setUser(u);
+      // Login can also happen post-onboarding (user picked teams in the
+      // web onboarding then chose 'I already have an account'). Same
+      // sync path as register.
+      syncPendingOnboarding(token);
       return true;
     } catch (e) {
       setError(e.message || 'Login failed');
       return false;
     }
   }, []);
+
+  /// Push the team/league selections captured by WebOnboarding (saved
+  /// to localStorage) up to /users/me/onboarding. Best-effort — failure
+  /// is silent so a transient blip post-signup doesn't trip the user.
+  /// Mirrors iOS's AuthService.syncPendingOnboarding so cross-platform
+  /// users converge on the same backend record.
+  function syncPendingOnboarding(token) {
+    try {
+      const teams = JSON.parse(localStorage.getItem('onboardingTeams') || '[]');
+      const leagues = JSON.parse(localStorage.getItem('onboardingLeagues') || '[]');
+      const customTeamIDs = JSON.parse(localStorage.getItem('onboardingCustomTeamIDs') || '[]');
+      const customLeagueIDs = JSON.parse(localStorage.getItem('onboardingCustomLeagueIDs') || '[]');
+      // The backend accepts arbitrary strings — iOS prefixes custom
+      // picks with 'api:' to disambiguate them from the curated enum
+      // rawValues. Match that shape here.
+      const teamsPayload = [...teams, ...customTeamIDs.map((id) => `api:${id}`)];
+      const leaguesPayload = [...leagues, ...customLeagueIDs.map((id) => `api:${id}`)];
+      if (teamsPayload.length === 0 && leaguesPayload.length === 0) return;
+      api.put('/users/me/onboarding', {
+        goals: [],
+        pains: [],
+        leagues: leaguesPayload,
+        teams: teamsPayload,
+        demoPicks: [],
+      }, token).catch(() => { /* silent — local state remains */ });
+    } catch {
+      // localStorage parse error → treat as no pending onboarding.
+    }
+  }
 
   const register = useCallback(async (email, password, username, displayName, dob, countryCode) => {
     setError(null);
@@ -67,6 +100,12 @@ export function AuthProvider({ children }) {
       });
       localStorage.setItem(TOKEN_KEY, token);
       setUser(u);
+      // Ship any pre-signup onboarding selections (teams + leagues
+      // captured by /onboarding before the user had a token) up to the
+      // user's record. Mirrors the iOS AuthService.syncPendingOnboarding
+      // path so cross-platform users converge on the same backend
+      // payload.
+      syncPendingOnboarding(token);
       return true;
     } catch (e) {
       // Keep `error` as a plain string so existing consumers
