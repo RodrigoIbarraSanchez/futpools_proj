@@ -37,11 +37,11 @@ struct QuinielaDetailView: View {
     @State private var liveFixtures: [Int: LiveFixture] = [:]
     @State private var leaderboard: LeaderboardResponse?
     @State private var leaderboardLoading = false
-    @State private var showInsufficientBalanceSheet = false
-    @State private var showRechargeSheet = false
+    // simple_version: balance/recharge gating removed — iOS is read-only.
+    // Pool joining happens on web via Stripe Checkout.
     @State private var showRulesSheet = false
     @State private var showManageSheet = false
-    @State private var pendingRechargeAfterDismiss = false
+    // pendingRechargeAfterDismiss removed with the recharge flow.
     @State private var liveTimer: Timer?
     @State private var adminErrorMessage: String?
     @State private var isTogglingFeatured = false
@@ -51,9 +51,10 @@ struct QuinielaDetailView: View {
 
     private let client = APIClient.shared
 
-    private var userBalance: Double { auth.currentUser?.balanceValue ?? 0 }
-    private var entryCost: Double { quiniela.entryCostValue }
-    private var hasEnoughBalance: Bool { userBalance >= entryCost }
+    // simple_version: read-only view — no balance/entry-cost gating.
+    // The "JOIN" CTA only appears when the user doesn't already have an
+    // entry (loaded from /quinielas/:id/entries/me into entryCount).
+    private var hasUserEntry: Bool { entryCount > 0 }
     private var isAdmin: Bool { auth.currentUser?.isAdmin == true }
     private var isOwner: Bool {
         guard let uid = auth.currentUser?.id, let by = quiniela.createdBy else { return false }
@@ -100,23 +101,27 @@ struct QuinielaDetailView: View {
             VStack(spacing: 0) {
                 LinearGradient(colors: [.clear, Color.arenaBg], startPoint: .top, endPoint: .bottom)
                     .frame(height: 40)
-                ArcadeButton(
-                    title: canJoin
-                        ? String(format: NSLocalizedString("▶ MAKE PICKS · %@", comment: ""), quiniela.cost)
-                        : NSLocalizedString("POOL LOCKED", comment: ""),
-                    size: .lg,
-                    fullWidth: true,
-                    disabled: !canJoin
-                ) {
-                    if canJoin && !hasEnoughBalance {
-                        showInsufficientBalanceSheet = true
-                    } else if canJoin {
-                        showPickView = true
+                // simple_version: read-only pool view. The "MAKE PICKS"
+                // CTA is gone — joining happens on futpools.com via Stripe.
+                // Users who hit this screen via deep link without an entry
+                // see a Safari-redirect button to the web join flow.
+                if !hasUserEntry {
+                    ArcadeButton(
+                        title: canJoin
+                            ? NSLocalizedString("▶ JOIN ON FUTPOOLS.COM", comment: "")
+                            : NSLocalizedString("POOL LOCKED", comment: ""),
+                        size: .lg,
+                        fullWidth: true,
+                        disabled: !canJoin
+                    ) {
+                        if canJoin, let url = URL(string: "https://futpools.com/pool/\(quiniela.id)") {
+                            UIApplication.shared.open(url)
+                        }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 28)
+                    .background(Color.arenaBg)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 28)
-                .background(Color.arenaBg)
             }
         }
         .arenaTabBarHidden()
@@ -249,28 +254,7 @@ struct QuinielaDetailView: View {
         .navigationDestination(isPresented: $showPickView) {
             QuinielaPickView(quiniela: quiniela)
         }
-        .sheet(isPresented: $showInsufficientBalanceSheet) {
-            ArenaInsufficientBalanceSheet(
-                entryCost: entryCost,
-                currentBalance: userBalance,
-                onRecharge: {
-                    pendingRechargeAfterDismiss = true
-                    showInsufficientBalanceSheet = false
-                },
-                onDismiss: { showInsufficientBalanceSheet = false }
-            )
-        }
-        .onChange(of: showInsufficientBalanceSheet) { _, newValue in
-            if !newValue && pendingRechargeAfterDismiss {
-                pendingRechargeAfterDismiss = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    showRechargeSheet = true
-                }
-            }
-        }
-        .sheet(isPresented: $showRechargeSheet) {
-            RechargeView().environmentObject(auth)
-        }
+        // simple_version: insufficient-balance + recharge sheets removed.
         .confirmationDialog("Delete pool?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { performDelete() }
             Button("Cancel", role: .cancel) {}

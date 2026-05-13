@@ -17,11 +17,9 @@ final class AuthService: ObservableObject {
     @Published var errorCode: String?
     /// Field on the form the error refers to (e.g. "username").
     @Published var errorField: String?
-    /// Coin amount granted at registration. Non-nil only for the one-shot
-    /// celebration sheet right after register — cleared when the user
-    /// acknowledges it. Not persisted (deliberate — we only want to show the
-    /// welcome once per session, and fresh signups only happen once anyway).
-    @Published var pendingSignupBonus: Int?
+    // simple_version: signup bonus flow removed (no coin economy). The
+    // backend AuthResponse may still include signupBonus on master, but
+    // the iOS UI no longer reads it.
 
     private let client = APIClient.shared
 
@@ -83,22 +81,11 @@ final class AuthService: ObservableObject {
             )
             KeychainHelper.saveToken(res.token)
             currentUser = res.user
-            // Trigger the welcome celebration only if the server granted a
-            // bonus on this specific register call (idempotent re-registers
-            // will return null so we don't re-show it).
-            if let bonus = res.signupBonus, bonus > 0 {
-                pendingSignupBonus = bonus
-            }
             isAuthenticated = true
             await syncPendingOnboarding()
         } catch {
             handleError(error)
         }
-    }
-
-    /// Called by the celebration sheet when the user taps "LET'S GO".
-    func acknowledgeSignupBonus() {
-        pendingSignupBonus = nil
     }
 
     func login(email: String, password: String) async {
@@ -211,18 +198,8 @@ final class AuthService: ObservableObject {
         isAuthenticated = false
     }
 
-    /// Submit IAP signed transaction to backend; on success refreshes user (balance updated).
-    func rechargeBalance(signedTransaction: String) async throws {
-        struct Body: Encodable { let signedTransaction: String }
-        struct Response: Decodable { let balance: Double? }
-        let _: Response = try await client.request(
-            method: "POST",
-            path: "/users/me/balance/recharge",
-            body: Body(signedTransaction: signedTransaction),
-            token: token
-        )
-        await fetchUser()
-    }
+    // simple_version: rechargeBalance removed — no coin shop on iOS.
+    // Stripe-paid pool entries happen on the web. iOS is read-only.
 
     /// Request a password reset code for the given email. Returns true if the request succeeded (we always return success for privacy).
     func forgotPassword(email: String) async -> Bool {

@@ -10,7 +10,7 @@ struct MatchdayDetailView: View {
     @State private var matchdayWithMatches: Matchday?
     @State private var isLoading = true
     @State private var errorMessage: String?
-    @State private var navigateToQuiniela = false
+    // simple_version: navigateToQuiniela removed (no MakeQuiniela in iOS).
     @StateObject private var liveVM = LiveMatchdayViewModel()
     private let client = APIClient.shared
 
@@ -45,13 +45,10 @@ struct MatchdayDetailView: View {
                         }
                         .padding(.horizontal)
 
-                        if !matches.isEmpty && (matchdayWithMatches?.status == "open" || matchdayWithMatches?.status == "upcoming") {
-                            PrimaryButton("Make my picks", style: .green) {
-                                navigateToQuiniela = true
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, AppSpacing.md)
-                        }
+                        // simple_version: "Make my picks" CTA removed —
+                        // pool creation is web-only (admin) and pool entry
+                        // is web-only (Stripe checkout). Matchday view is
+                        // read-only here.
                     }
                 }
                 .padding(.vertical)
@@ -60,11 +57,6 @@ struct MatchdayDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .navigationDestination(isPresented: $navigateToQuiniela) {
-                if let md = matchdayWithMatches, !matches.isEmpty {
-                    MakeQuinielaView(matchday: md, matches: matches)
-                }
-            }
             .onAppear {
                 loadMatchday()
                 liveVM.start(matchdayId: matchday.id)

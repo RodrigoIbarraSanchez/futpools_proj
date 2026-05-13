@@ -13,10 +13,9 @@ struct ProfileView: View {
     @EnvironmentObject var auth: AuthService
     @State private var showEditName = false
     @State private var showSettings = false
-    @State private var showRechargeSheet = false
-    @State private var showAdmin = false
-    @State private var myPools: [Quiniela] = []
-    @State private var loadingMyPools = false
+    // simple_version: showRechargeSheet/showAdmin/myPools gone — coin shop,
+    // admin dashboard, and "my created pools" removed from iOS. Pool
+    // creation is web-only (admin /admin/pools/new); payouts are web-only.
 
     @State private var rankSummary: UserRankSummary?
     @State private var loadingRank = false
@@ -48,10 +47,7 @@ struct ProfileView: View {
                     VStack(spacing: 16) {
                         hero
                         rankSection
-                        balanceCard
                         achievementsSection
-                        adminSection
-                        myCreatedPoolsSection
                         signOutSection
                     }
                     .padding(.top, 18)
@@ -85,12 +81,6 @@ struct ProfileView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
-            .sheet(isPresented: $showRechargeSheet) {
-                RechargeView().environmentObject(auth)
-            }
-            .sheet(isPresented: $showAdmin) {
-                AdminDashboardView().environmentObject(auth)
-            }
             .task { await refreshAll() }
             .refreshable { await refreshAll() }
         }
@@ -99,10 +89,7 @@ struct ProfileView: View {
     // MARK: - Refresh
 
     private func refreshAll() async {
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await loadMyPools() }
-            group.addTask { await loadRank() }
-        }
+        await loadRank()
     }
 
     // MARK: - Rank
@@ -175,94 +162,10 @@ struct ProfileView: View {
         .padding(.horizontal, 16)
     }
 
-    // MARK: - My created pools
+    // simple_version: adminSection / myCreatedPoolsSection / loadMyPools
+    // removed. Pool creation and admin tools are web-only now.
 
-    @ViewBuilder
-    private var adminSection: some View {
-        if auth.currentUser?.isAdmin == true {
-            Button {
-                showAdmin = true
-            } label: {
-                HudFrame(
-                    cut: 12,
-                    fill: AnyShapeStyle(
-                        LinearGradient(
-                            colors: [Color.arenaPrimary.opacity(0.18), Color.arenaSurface],
-                            startPoint: .leading, endPoint: .trailing
-                        )
-                    )
-                ) {
-                    HStack(spacing: 10) {
-                        Text("⬢")
-                            .font(ArenaFont.display(size: 16, weight: .heavy))
-                            .foregroundColor(.arenaPrimary)
-                        Text(String(localized: "ADMIN CONSOLE"))
-                            .font(ArenaFont.mono(size: 10, weight: .bold))
-                            .tracking(2)
-                            .foregroundColor(.arenaText)
-                        Spacer()
-                        Text("›")
-                            .font(ArenaFont.display(size: 16, weight: .bold))
-                            .foregroundColor(.arenaPrimary)
-                    }
-                    .padding(14)
-                }
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 16)
-        }
-    }
-
-    @ViewBuilder
-    private var myCreatedPoolsSection: some View {
-        if loadingMyPools {
-            HStack(spacing: 10) {
-                ProgressView().tint(.arenaPrimary)
-                Text(String(localized: "LOADING MY POOLS…"))
-                    .font(ArenaFont.mono(size: 10))
-                    .tracking(1.5)
-                    .foregroundColor(.arenaTextDim)
-            }
-            .padding(.horizontal, 16)
-        } else if !myPools.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("◆ " + String(localized: "MY CREATED POOLS"))
-                    .font(ArenaFont.display(size: 10, weight: .bold))
-                    .tracking(3)
-                    .foregroundColor(.arenaTextMuted)
-                VStack(spacing: 8) {
-                    ForEach(myPools) { pool in
-                        NavigationLink {
-                            QuinielaDetailView(quiniela: pool)
-                                .environmentObject(auth)
-                        } label: {
-                            MyPoolRow(pool: pool)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-        }
-    }
-
-    private func loadMyPools() async {
-        guard let token = KeychainHelper.getToken() else { return }
-        loadingMyPools = true
-        defer { loadingMyPools = false }
-        do {
-            myPools = try await client.request(
-                method: "GET",
-                path: "/quinielas/mine/created",
-                token: token
-            )
-        } catch {
-            // Keep the section hidden on failure.
-            myPools = []
-        }
-    }
-
-    // MARK: - Hero / balance / sign out
+    // MARK: - Hero / sign out
 
     private var hero: some View {
         VStack(spacing: 12) {
@@ -308,53 +211,7 @@ struct ProfileView: View {
         .padding(.horizontal, 16)
     }
 
-    private var balanceCard: some View {
-        Button {
-            showRechargeSheet = true
-        } label: {
-            HudFrame(
-                cut: 14,
-                fill: AnyShapeStyle(
-                    LinearGradient(
-                        colors: [Color.arenaGold.opacity(0.18), Color.arenaSurface],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-            ) {
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [.arenaGold, Color(hex: "B88A1F")],
-                                center: UnitPoint(x: 0.35, y: 0.35),
-                                startRadius: 0,
-                                endRadius: 20
-                            )
-                        )
-                        .frame(width: 36, height: 36)
-                        .shadow(color: .arenaGold.opacity(0.6), radius: 8)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(String(localized: "BALANCE"))
-                            .font(ArenaFont.mono(size: 9))
-                            .tracking(1.5)
-                            .foregroundColor(.arenaTextMuted)
-                        Text(formatted(auth.currentUser?.balanceValue ?? 0) + " " + String(localized: "COINS"))
-                            .font(ArenaFont.display(size: 22, weight: .heavy))
-                            .tracking(0.5)
-                            .foregroundColor(.arenaGold)
-                    }
-                    Spacer()
-                    ArcadeButton(title: String(localized: "+ TOP UP"), variant: .accent, size: .sm) {
-                        showRechargeSheet = true
-                    }
-                }
-                .padding(14)
-            }
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 16)
-    }
+    // simple_version: balanceCard removed — no coin economy.
 
     private var signOutSection: some View {
         ArcadeButton(title: String(localized: "SIGN OUT"), variant: .surface, fullWidth: true) {
@@ -368,52 +225,6 @@ struct ProfileView: View {
         n.split(separator: " ").prefix(2).map { String($0.prefix(1)) }.joined().uppercased()
     }
 
-    private func formatted(_ value: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .decimal
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-    }
-}
-
-private struct MyPoolRow: View {
-    let pool: Quiniela
-
-    var body: some View {
-        HudFrame {
-            HStack(spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(pool.name.uppercased())
-                        .font(ArenaFont.display(size: 13, weight: .bold))
-                        .tracking(0.5)
-                        .foregroundColor(.arenaText)
-                        .lineLimit(1)
-                    HStack(spacing: 6) {
-                        if let code = pool.inviteCode {
-                            Text(code)
-                                .font(ArenaFont.mono(size: 10, weight: .bold))
-                                .tracking(1.5)
-                                .foregroundColor(.arenaPrimary)
-                        }
-                        if let vis = pool.visibility {
-                            Text("· \(vis.uppercased())")
-                                .font(ArenaFont.mono(size: 9))
-                                .foregroundColor(.arenaTextMuted)
-                        }
-                        if let count = pool.entriesCount {
-                            Text("· \(count) PLAYERS")
-                                .font(ArenaFont.mono(size: 9))
-                                .foregroundColor(.arenaTextMuted)
-                        }
-                    }
-                }
-                Spacer()
-                Text("›")
-                    .font(ArenaFont.display(size: 18, weight: .bold))
-                    .foregroundColor(.arenaTextMuted)
-            }
-            .padding(12)
-        }
-    }
 }
 
 private struct ArenaEditNameSheet: View {

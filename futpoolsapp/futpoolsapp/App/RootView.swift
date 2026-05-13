@@ -42,20 +42,7 @@ struct RootView: View {
                 }
             }
         }
-        // Mirror the pool handler for challenge invite links.
-        .sheet(
-            isPresented: Binding(
-                get: { inviteRouter.pendingChallenge != nil },
-                set: { if !$0 { inviteRouter.clearChallenge() } }
-            )
-        ) {
-            if let c = inviteRouter.pendingChallenge {
-                NavigationStack {
-                    ChallengeDetailView(challengeId: c.id)
-                        .environmentObject(auth)
-                }
-            }
-        }
+        // simple_version: challenge deep links removed — 1v1 is gone.
     }
 }
 

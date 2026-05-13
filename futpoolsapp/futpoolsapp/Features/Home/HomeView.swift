@@ -9,8 +9,6 @@ struct HomeView: View {
     @EnvironmentObject var auth: AuthService
     @StateObject private var vm = HomeViewModel()
     @State private var activeFilter: String = "all"
-    @State private var showJoinByCode = false
-    @State private var joinedPool: Quiniela?
 
     var body: some View {
         NavigationStack {
@@ -19,11 +17,16 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
-                        ArenaHeader(
-                            coins: auth.currentUser?.balanceValue ?? 0,
-                            tickets: auth.currentUser?.ticketsValue ?? 0,
-                            onJoinCode: { showJoinByCode = true }
-                        )
+                        // simple_version Home header — title only. The
+                        // legacy ArenaHeader carried coins/tickets badges
+                        // and a join-by-code shortcut; iOS in simple mode
+                        // has neither currency nor a way to join, so the
+                        // header is just a label.
+                        Text(String(localized: "POOLS"))
+                            .font(ArenaFont.display(size: 24, weight: .heavy))
+                            .tracking(3)
+                            .foregroundColor(.arenaText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                             .padding(.top, 6)
 
@@ -40,23 +43,9 @@ struct HomeView: View {
                                 .padding(.horizontal, 16)
                         }
 
-                        // Sweepstakes entry point — opens the list of
-                        // open weekly raffles paying real prizes.
-                        SweepstakesTeaserCard()
-                            .padding(.horizontal, 16)
-
-                        // Daily Pick check-in: predict the day's featured
-                        // fixture for +1 Ticket immediate (and +1 bonus if
-                        // correct). The Tickets faucet that funds the
-                        // weekly sweepstakes entries.
-                        DailyPickCard()
-                            .padding(.horizontal, 16)
-
-                        // Rewarded ad — second Tickets faucet. Stub in
-                        // DEBUG, real AdMob when SDK is wired (see
-                        // Features/Rewards/RewardedAdService.swift).
-                        RewardedAdButton()
-                            .padding(.horizontal, 16)
+                        // Sweepstakes/Daily-Pick/Rewarded-ad teasers were
+                        // funnels into the Tickets economy. simple_version
+                        // drops Tickets entirely; the cards go away too.
 
                         ArenaFilterStrip(
                             active: $activeFilter,
@@ -122,25 +111,8 @@ struct HomeView: View {
             .refreshable {
                 vm.loadQuinielas()
             }
-            .sheet(isPresented: $showJoinByCode) {
-                JoinByCodeView { pool in
-                    // Push the pool detail after the sheet finishes dismissing;
-                    // doing it too eagerly conflicts with SwiftUI's sheet
-                    // animation and the push silently drops.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        joinedPool = pool
-                    }
-                }
-                .preferredColorScheme(.dark)
-            }
-            .navigationDestination(isPresented: Binding(
-                get: { joinedPool != nil },
-                set: { if !$0 { joinedPool = nil } }
-            )) {
-                if let pool = joinedPool {
-                    QuinielaDetailView(quiniela: pool)
-                }
-            }
+            // simple_version: join-by-code sheet removed — iOS users can't
+            // join pools at all. Pool participation is web-only via Stripe.
         }
     }
 

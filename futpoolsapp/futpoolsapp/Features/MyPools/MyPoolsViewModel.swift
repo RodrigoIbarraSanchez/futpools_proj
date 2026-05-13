@@ -1,13 +1,18 @@
 //
-//  MyEntriesViewModel.swift
+//  MyPoolsViewModel.swift
 //  futpoolsapp
+//
+//  Renamed from MyEntriesViewModel in Phase 4 of the simple_version pivot.
+//  Same shape (entries, isLoading, errorMessage, liveFixtures + polling) —
+//  the rename reflects that the screen now lists pools-with-entry rather
+//  than entries-as-stacks-on-a-pool.
 //
 
 import Foundation
 import Combine
 
 @MainActor
-final class MyEntriesViewModel: ObservableObject {
+final class MyPoolsViewModel: ObservableObject {
     @Published var entries: [QuinielaEntry] = []
     @Published var isLoading = false
     @Published var errorMessage: String?

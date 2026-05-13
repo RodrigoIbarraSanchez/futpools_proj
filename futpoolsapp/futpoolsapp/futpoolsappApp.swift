@@ -66,18 +66,14 @@ struct futpoolsappApp: App {
                     .environmentObject(auth)
                     .environmentObject(inviteRouter)
                     .onOpenURL { url in
-                        // Two deep link shapes handled here:
-                        //   futpools://p/<CODE>  → pool invite     (host == "p")
-                        //   futpools://c/<CODE>  → challenge invite (host == "c")
-                        guard url.scheme == "futpools" else { return }
+                        // simple_version handles only pool invite deep links.
+                        // The /c/<CODE> challenge invite path is gone (1v1
+                        // removed entirely).
+                        guard url.scheme == "futpools", url.host == "p" else { return }
                         let code = url.pathComponents.dropFirst().first
                             ?? url.lastPathComponent
                         guard !code.isEmpty else { return }
-                        if url.host == "p" {
-                            Task { await inviteRouter.resolve(code: code) }
-                        } else if url.host == "c" {
-                            Task { await inviteRouter.resolveChallenge(code: code) }
-                        }
+                        Task { await inviteRouter.resolve(code: code) }
                     }
             }
             .preferredColorScheme(.dark)
@@ -90,9 +86,6 @@ struct futpoolsappApp: App {
 @MainActor
 final class InviteRouter: ObservableObject {
     @Published var pendingPool: Quiniela?
-    /// Populated when a `futpools://c/<CODE>` link is opened. RootView reads
-    /// this and pushes `ChallengeDetailView(challengeId: c.id)`.
-    @Published var pendingChallenge: Challenge?
     private let client = APIClient.shared
 
     func resolve(code: String) async {
@@ -107,23 +100,5 @@ final class InviteRouter: ObservableObject {
         }
     }
 
-    func resolveChallenge(code: String) async {
-        let normalized = code.uppercased()
-        guard let token = KeychainHelper.getToken() else {
-            print("[InviteRouter] challenge resolve skipped — unauthenticated")
-            return
-        }
-        do {
-            pendingChallenge = try await client.request(
-                method: "GET",
-                path: "/challenges/code/\(normalized)",
-                token: token
-            )
-        } catch {
-            print("[InviteRouter] challenge resolve failed for \(normalized): \(error)")
-        }
-    }
-
     func clear() { pendingPool = nil }
-    func clearChallenge() { pendingChallenge = nil }
 }

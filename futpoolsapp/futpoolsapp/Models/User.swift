@@ -11,12 +11,12 @@ struct User: Codable {
     let username: String?
     let displayName: String?
     let isAdmin: Bool?
-    /// User balance (e.g. in MXN or app currency). Used to pay pool entry cost.
+    // simple_version: balance/tickets are intentionally NOT exposed by
+    // /users/me in simple mode. They remain on the schema (rollback-safe)
+    // but the dual-currency UI is gone. The fields below stay optional
+    // so a master-mode response still decodes without error if iOS ever
+    // talks to a master backend.
     let balance: Double?
-    /// Tickets v2.4 — second virtual currency, completely decoupled from
-    /// `balance`. Earn-only (Daily Pick check-in + rewarded ads). Spent on
-    /// entries to premium sweepstakes pools that pay real-world prizes.
-    /// Optional to keep older payloads decoding without error.
     let tickets: Int?
 
     // ── FutPools Rank ─────────────────────────────────────────────────

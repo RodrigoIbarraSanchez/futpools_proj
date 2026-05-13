@@ -1,29 +1,19 @@
 //
-//  MyEntriesView.swift
+//  MyPoolsView.swift
 //  futpoolsapp
+//
+//  simple_version: read-only list of pools the user joined via futpools.com.
+//  iOS can't create or join — the only entry path is the web Stripe checkout.
+//  Was previously MyEntriesView with a 1V1 Challenges sub-tab; now it's a
+//  single list of pools-with-entry, since challenges are gone in simple mode.
 //
 
 import SwiftUI
 
-/// Two segments inside the Entries tab: pool entries (default) and 1V1
-/// challenges. Both surface "active stakes" so they share the same tab,
-/// keeping bottom nav at 4 + FAB instead of growing to a 5th tab.
-private enum EntriesSection: String, CaseIterable, Identifiable {
-    case entries, challenges
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .entries:    return String(localized: "POOL ENTRIES")
-        case .challenges: return String(localized: "1V1 CHALLENGES")
-        }
-    }
-}
-
-struct MyEntriesView: View {
-    @StateObject private var vm = MyEntriesViewModel()
+struct MyPoolsView: View {
+    @StateObject private var vm = MyPoolsViewModel()
     @EnvironmentObject var auth: AuthService
     @State private var expandedGroups: Set<String> = []
-    @State private var section: EntriesSection = .entries
 
     private var groupedEntries: [ArenaEntryGroup] {
         let groups = Dictionary(grouping: vm.entries, by: { $0.quiniela.id })
@@ -41,18 +31,8 @@ struct MyEntriesView: View {
                 ArenaBackground()
                 VStack(spacing: 0) {
                     header
-                    sectionPicker
-                    if section == .entries {
-                        entriesScroll
-                    } else {
-                        ChallengesListContent(showsHeader: false)
-                    }
+                    entriesScroll
                 }
-                // Anchor content to the top of the screen. Without this,
-                // ZStack's default `.center` alignment would float the
-                // collapsed VStack vertically (visible whenever the
-                // challenges list is empty and content doesn't fill the
-                // available height).
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -78,11 +58,11 @@ struct MyEntriesView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(String(localized: "MY ENTRIES"))
+            Text(String(localized: "MY POOLS"))
                 .font(ArenaFont.display(size: 28, weight: .heavy))
                 .tracking(1)
                 .foregroundColor(.arenaText)
-            if section == .entries && !vm.entries.isEmpty {
+            if !vm.entries.isEmpty {
                 Text("[ \(vm.entries.count) " + String(localized: "TOTAL") + " ]")
                     .font(ArenaFont.mono(size: 10))
                     .tracking(1)
@@ -92,36 +72,6 @@ struct MyEntriesView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.top, 14)
-        .padding(.bottom, 10)
-    }
-
-    private var sectionPicker: some View {
-        HStack(spacing: 6) {
-            ForEach(EntriesSection.allCases) { s in
-                Button {
-                    if section != s {
-                        withAnimation(.easeOut(duration: 0.15)) { section = s }
-                    }
-                } label: {
-                    Text(s.label)
-                        .font(ArenaFont.mono(size: 10, weight: .bold))
-                        .tracking(1.5)
-                        .foregroundColor(section == s ? .arenaOnPrimary : .arenaTextDim)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            HudCornerCutShape(cut: 6)
-                                .fill(section == s ? Color.arenaPrimary : Color.clear)
-                        )
-                        .overlay(
-                            HudCornerCutShape(cut: 6)
-                                .stroke(section == s ? Color.arenaPrimary : Color.arenaStroke, lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.horizontal, 16)
         .padding(.bottom, 10)
     }
 
@@ -147,11 +97,11 @@ struct MyEntriesView: View {
                 VStack(spacing: 12) {
                     Text("🎯")
                         .font(.system(size: 40))
-                    Text(String(localized: "NO ENTRIES YET"))
+                    Text(String(localized: "NO POOLS YET"))
                         .font(ArenaFont.display(size: 14, weight: .heavy))
                         .tracking(2)
                         .foregroundColor(.arenaText)
-                    Text(String(localized: "Join a pool and submit picks to get started."))
+                    Text(String(localized: "Join a pool from futpools.com to see it here."))
                         .font(ArenaFont.body(size: 12))
                         .foregroundColor(.arenaTextDim)
                         .multilineTextAlignment(.center)
@@ -595,7 +545,7 @@ private struct PickRow: View {
 }
 
 #Preview {
-    MyEntriesView()
+    MyPoolsView()
         .environmentObject(AuthService())
         .preferredColorScheme(.dark)
 }
