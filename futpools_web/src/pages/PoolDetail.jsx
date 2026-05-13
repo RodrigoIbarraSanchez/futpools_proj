@@ -139,9 +139,9 @@ export function PoolDetail() {
   // is stable and polling wastes quota.
   const [liveByFixture, setLiveByFixture] = useState({});
 
-  // Pool entry fee in MXN — Stripe Checkout charges in cents, schema
-  // stores cents, we display pesos. Default 5000 cents = $50 MXN.
-  const feeMXN = ((quiniela?.entryFeeMXN ?? 5000) / 100).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+  // Pool entry fee in MXN pesos. Schema stores pesos; the backend
+  // converts ×100 to centavos at the Stripe API call. Default $50.
+  const feeMXN = (quiniela?.entryFeeMXN ?? 50).toLocaleString('es-MX', { minimumFractionDigits: 0 });
   // simple_version: one entry per user per pool. The button changes wording
   // when the user is already in.
   const alreadyEntered = entryCount > 0;

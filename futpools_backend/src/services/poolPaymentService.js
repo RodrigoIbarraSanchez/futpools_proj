@@ -141,7 +141,10 @@ async function createCheckoutSessionForEntry({ user, poolId, picks }) {
 
   validatePicks(pool, picks);
 
-  const amount = Number(pool.entryFeeMXN) || 5000;
+  // Stripe expects unit_amount in the smallest currency unit (centavos
+  // for MXN). Schema stores pesos for legibility; we ×100 here.
+  const amountPesos = Number(pool.entryFeeMXN) || 50;
+  const amountCents = amountPesos * 100;
   const picksMeta = serializePicks(picks);
   if (picksMeta.length > 480) {
     // Defensive — Stripe limit is 500. If we ever ship a pool with more
@@ -159,7 +162,7 @@ async function createCheckoutSessionForEntry({ user, poolId, picks }) {
     line_items: [{
       price_data: {
         currency: 'mxn',
-        unit_amount: amount,
+        unit_amount: amountCents,
         product_data: {
           name: pool.name || 'FutPools entry',
           description: `Entry to ${pool.name} (${(pool.fixtures || []).length} fixtures)`,

@@ -118,12 +118,12 @@ const quinielaSchema = new mongoose.Schema({
   realPrize: { type: realPrizeSchema, default: null },
 
   // ── simple_version (Phase 1) ──────────────────────────────────────────
-  // Stripe Checkout entry fee in MXN cents. Defaults to 5000 = $50 MXN
+  // Stripe Checkout entry fee in **MXN pesos** (NOT cents — converted to
+  // centavos at the Stripe API call site by ×100). Default 50 = $50 MXN
   // per the simple_version product spec. Stored even on master pools
   // (unused there) so a single QuinielaEntry schema can carry stripe
-  // metadata regardless of branch. Admin can override per pool if a
-  // higher tier is ever needed.
-  entryFeeMXN: { type: Number, default: 5000 },
+  // metadata regardless of branch. Admin can override per pool.
+  entryFeeMXN: { type: Number, default: 50 },
   // Set when the admin marks a settled pool as paid out to the winner
   // (manual SPEI / bank transfer happens off-band). The presence of
   // this date is what removes the pool from the AdminPayouts list.

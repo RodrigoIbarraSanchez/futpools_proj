@@ -47,7 +47,7 @@ export function QuinielaPick() {
   const count = fixtures.filter(f => ['1','X','2'].includes(picks[f.fixtureId])).length;
   const total = fixtures.length;
   const complete = count === total && total > 0;
-  const feeMXN = ((quiniela?.entryFeeMXN ?? 5000) / 100).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+  const feeMXN = (quiniela?.entryFeeMXN ?? 50).toLocaleString('es-MX', { minimumFractionDigits: 0 });
 
   const setPick = (fixtureId, value, nextIndex) => {
     setPicks(prev => ({ ...prev, [fixtureId]: value }));
