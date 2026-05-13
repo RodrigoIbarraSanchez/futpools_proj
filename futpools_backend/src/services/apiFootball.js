@@ -632,6 +632,15 @@ const mapFixturePreview = (f) => ({
   fixtureId: f?.fixture?.id,
   date: f?.fixture?.date,
   status: f?.fixture?.status?.short,
+  // Live + final scores. Extend over the historical preview shape so
+  // simple_version's LiveScoresView can render scores inline without a
+  // second round-trip. Existing callers (CreatePool fixture picker,
+  // pre-game pool list) ignore these fields.
+  elapsed: f?.fixture?.status?.elapsed ?? null,
+  goals: {
+    home: f?.goals?.home ?? null,
+    away: f?.goals?.away ?? null,
+  },
   league: {
     id: f?.league?.id,
     name: f?.league?.name,
@@ -758,6 +767,61 @@ const getFixturesByDate = async (date) => {
   return data?.response || [];
 };
 
+/**
+ * Fetch fixtures for a single team on a single date. Powers the
+ * simple_version Live Scores feed when the user has favorite teams
+ * outside the leagues they follow (e.g. follows Real Madrid but not
+ * LaLiga as a whole).
+ */
+const getFixturesByTeamAndDate = async (teamId, date) => {
+  const data = await apiFetch('/fixtures', { team: teamId, date });
+  return data?.response || [];
+};
+
+/**
+ * Aggregated fixtures feed for the iOS Live Scores tab. Fan-out by
+ * (date × league) AND (date × team), dedupe by fixtureId, return the
+ * mapped preview shape so the client can render scores + status inline.
+ *
+ * Caching: 30s in-memory keyed by (date, sorted league ids, sorted
+ * team ids). The polling cadence in iOS is also 30s, so under steady
+ * use this hits the cache between ticks.
+ */
+const fixturesFeedCache = new Map();
+const FIXTURES_FEED_TTL_MS = 30_000;
+const fetchFixturesFeed = async ({ date, leagueIds = [], teamIds = [], season }) => {
+  const sortedLeagues = Array.from(new Set(leagueIds.map(Number))).filter((n) => n > 0).sort((a, b) => a - b);
+  const sortedTeams = Array.from(new Set(teamIds.map(Number))).filter((n) => n > 0).sort((a, b) => a - b);
+  const cacheKey = `${date}|L:${sortedLeagues.join(',')}|T:${sortedTeams.join(',')}`;
+
+  const hit = fixturesFeedCache.get(cacheKey);
+  if (hit && Date.now() - hit.updatedAt < FIXTURES_FEED_TTL_MS) return hit.payload;
+
+  const tasks = [];
+  for (const lid of sortedLeagues) {
+    tasks.push(getFixturesByLeagueAndDate(lid, date, season).catch(() => []));
+  }
+  for (const tid of sortedTeams) {
+    tasks.push(getFixturesByTeamAndDate(tid, date).catch(() => []));
+  }
+  const results = await Promise.all(tasks);
+
+  // Dedupe by fixtureId across leagues + teams (a Real Madrid–Barcelona
+  // game would otherwise appear twice if the user follows both teams
+  // and LaLiga). Map at the same time.
+  const byId = new Map();
+  for (const arr of results) {
+    for (const f of arr) {
+      const id = f?.fixture?.id;
+      if (!id || byId.has(id)) continue;
+      byId.set(id, mapFixturePreview(f));
+    }
+  }
+  const payload = Array.from(byId.values()).sort(fixturePreviewSort);
+  fixturesFeedCache.set(cacheKey, { updatedAt: Date.now(), payload });
+  return payload;
+};
+
 module.exports = {
   fetchFixturesForMatchday,
   fetchFixturesByIds,
@@ -768,5 +832,7 @@ module.exports = {
   getFixtureEvents,
   getFixturesByLeagueAndDate,
   getFixturesByDate,
+  getFixturesByTeamAndDate,
+  fetchFixturesFeed,
   startLivePolling,
 };

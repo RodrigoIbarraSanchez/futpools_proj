@@ -1,3 +1,4 @@
+const apiFootball = require('../services/apiFootball');
 const {
   fetchFixturesForMatchday,
   fetchFixturesByIds,
@@ -6,7 +7,7 @@ const {
   getTeamFixtures,
   getLeagueFixtures,
   getFixtureEvents,
-} = require('../services/apiFootball');
+} = apiFootball;
 const League = require('../models/League');
 const Team = require('../models/Team');
 
@@ -113,6 +114,35 @@ exports.getFixtureEvents = async (req, res) => {
     res.json(events);
   } catch (err) {
     console.warn('[Football] getFixtureEvents failed:', err.message);
+    res.json([]);
+  }
+};
+
+/**
+ * GET /football/fixtures/feed?date=YYYY-MM-DD&leagues=1,2&teams=33,40&season=2025
+ *
+ * Aggregated feed for the iOS Live Scores tab. Defaults to today (UTC)
+ * if `date` is omitted. `leagues` and `teams` are comma-separated
+ * api-football ids. Empty/missing returns []. Cached 30s server-side
+ * (matching the iOS polling cadence) so a refresh storm doesn't burn
+ * api-football quota.
+ */
+exports.getFixturesFeed = async (req, res) => {
+  try {
+    const date = String(req.query.date || '').trim()
+      || new Date().toISOString().slice(0, 10);
+    const leagueIds = String(req.query.leagues || '')
+      .split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+    const teamIds = String(req.query.teams || '')
+      .split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+    if (leagueIds.length === 0 && teamIds.length === 0) return res.json([]);
+    const season = req.query.season ? Number(req.query.season) : undefined;
+    const out = await apiFootball.fetchFixturesFeed({
+      date, leagueIds, teamIds, season,
+    });
+    res.json(out);
+  } catch (err) {
+    console.warn('[Football] getFixturesFeed failed:', err.message);
     res.json([]);
   }
 };

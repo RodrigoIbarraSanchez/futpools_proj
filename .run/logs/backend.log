@@ -121,3 +121,33 @@ MongoDB connected
 Server running on port 3000
 MongoDB connected
 [Quiniela] getMyEntries: dropped 1 orphan entry/entries (pool deleted) for user 69e833d4497af8109ea3fed9
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+[32m[nodemon] restarting due to changes...[39m
+MongoDB connected
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[DailyPick] scheduler started (1-minute tick)
+Server running on port 3000
+MongoDB connected

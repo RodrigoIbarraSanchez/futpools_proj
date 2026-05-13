@@ -43,7 +43,7 @@ struct MainTabView: View {
         ZStack(alignment: .bottom) {
             Group {
                 switch selected {
-                case .scores:  LiveScoresPlaceholder()
+                case .scores:  LiveScoresView()
                 case .pools:   MyPoolsView()
                 case .profile: ProfileView()
                 }
@@ -59,28 +59,6 @@ struct MainTabView: View {
         }
         .background(Color.arenaBg.ignoresSafeArea())
         .onPreferenceChange(ArenaTabBarHiddenKey.self) { tabBarHidden = $0 }
-    }
-}
-
-/// Phase 5 will swap this for the real LiveScoresView. Empty state for now
-/// so the tab is wired but doesn't crash if a user taps it before Phase 5
-/// ships.
-struct LiveScoresPlaceholder: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            Text("▶")
-                .font(ArenaFont.display(size: 56, weight: .heavy))
-                .foregroundColor(.arenaPrimary)
-            Text("LIVE SCORES")
-                .font(ArenaFont.display(size: 22, weight: .heavy))
-                .tracking(3)
-            Text(String(localized: "Coming next."))
-                .font(ArenaFont.body(size: 13))
-                .foregroundColor(.arenaTextDim)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

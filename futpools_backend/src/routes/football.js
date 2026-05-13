@@ -7,6 +7,10 @@ const router = express.Router();
 router.get('/matchday/:id', footballController.getMatchdayFixtures);
 // GET /football/fixtures?ids=1,2,3  |  ?teamId=X  |  ?leagueId=X&season=Y
 router.get('/fixtures', footballController.getFixturesByIds);
+// GET /football/fixtures/feed?date=YYYY-MM-DD&leagues=1,2&teams=33,40
+//   simple_version Live Scores tab — aggregates a date's fixtures for
+//   the user's favorite leagues + teams, scores included.
+router.get('/fixtures/feed', footballController.getFixturesFeed);
 // GET /football/teams?league=ID|apiId&code=LIGA_MX|EPL&name=Liga%20MX
 router.get('/teams', footballController.getTeamsByLeague);
 // GET /football/leagues/search?query=liga  (for mobile "add fixtures" picker)
