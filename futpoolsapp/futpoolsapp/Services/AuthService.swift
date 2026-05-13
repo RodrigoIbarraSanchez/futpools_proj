@@ -82,6 +82,7 @@ final class AuthService: ObservableObject {
             KeychainHelper.saveToken(res.token)
             currentUser = res.user
             isAuthenticated = true
+            markOnboardingComplete()
             await syncPendingOnboarding()
         } catch {
             handleError(error)
@@ -103,11 +104,26 @@ final class AuthService: ObservableObject {
             KeychainHelper.saveToken(res.token)
             currentUser = res.user
             isAuthenticated = true
+            markOnboardingComplete()
             await fetchUser()
             await syncPendingOnboarding()
         } catch {
             handleError(error)
         }
+    }
+
+    /// Flip the `hasSeenOnboarding` flag now that the user is
+    /// authenticated. Doing this here (rather than inside
+    /// OnboardingState.persist()) avoids a race where RootView swaps
+    /// from OnboardingView to LoginView mid-navigation: the parent
+    /// hierarchy re-evaluates `hasSeenOnboarding` the moment the flag
+    /// flips, and if the user is not yet authenticated when that
+    /// happens, the whole OnboardingView subtree is replaced with
+    /// LoginView — wiping any pending push to RegisterView. By only
+    /// flipping the flag AFTER auth lands, RootView's auth-success
+    /// branch wins and the user lands on MainTabView.
+    private func markOnboardingComplete() {
+        UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
     }
 
     func fetchUser() async {

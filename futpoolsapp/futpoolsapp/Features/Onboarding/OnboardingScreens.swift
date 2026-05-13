@@ -53,14 +53,14 @@ struct OnbWelcomeScreen: View {
                     }
                 }
                 VStack(spacing: 12) {
-                    Text(L("LIVE FUTBOL EN TU BOLSILLO"))
+                    Text(L("FOOTBALL LIVE, INSTANTLY"))
                         .font(ArenaFont.display(size: 26, weight: .heavy))
                         .tracking(2)
                         .lineSpacing(2)
                         .foregroundColor(.arenaText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
-                    Text(L("Marcadores en vivo, alertas de tus equipos y tus quinielas a un tap."))
+                    Text(L("Real-time scores, alerts from your teams, and your pools — all in one place."))
                         .font(ArenaFont.body(size: 14))
                         .foregroundColor(.arenaTextDim)
                         .multilineTextAlignment(.center)
@@ -68,7 +68,7 @@ struct OnbWelcomeScreen: View {
                 }
                 HStack(spacing: 8) {
                     OnbBadge(text: L("Live scores"))
-                    OnbBadge(text: L("Push alerts"))
+                    OnbBadge(text: L("Alerts"))
                     OnbBadge(text: L("World Cup"))
                 }
             }
@@ -1526,11 +1526,12 @@ struct OnbAccountGateScreen: View {
     /// saved", "100 welcome coins", "Access to weekly real-prize
     /// sweepstake") all referenced systems that don't exist in
     /// simple_version (no picks on iOS, no coins, no sweepstakes).
+    /// Keys are English so xcstrings localization handles the ES side.
     private var bullets: [String] {
         [
-            L("Tus equipos favoritos siempre contigo"),
-            L("Alertas de goles y resultados al instante"),
-            L("Sincroniza tus quinielas desde futpools.com"),
+            L("Your favorite teams, always with you"),
+            L("Goal and result alerts in real time"),
+            L("Sync the pools you joined from futpools.com"),
         ]
     }
 
@@ -1539,12 +1540,12 @@ struct OnbAccountGateScreen: View {
             VStack(spacing: 28) {
                 heroIcon
                 VStack(spacing: 10) {
-                    Text(L("ÚLTIMO PASO"))
+                    Text(L("LAST STEP"))
                         .font(ArenaFont.display(size: 24, weight: .heavy))
                         .tracking(1.4)
                         .foregroundColor(.arenaText)
                         .multilineTextAlignment(.center)
-                    Text(L("Crea tu cuenta para guardar tus preferencias."))
+                    Text(L("Create your account to save your preferences."))
                         .font(ArenaFont.body(size: 14))
                         .foregroundColor(.arenaTextDim)
                         .multilineTextAlignment(.center)

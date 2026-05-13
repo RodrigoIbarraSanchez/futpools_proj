@@ -230,12 +230,16 @@ final class OnboardingState: ObservableObject {
         }
     }
 
-    /// Persist the captured state so post-signup screens can use it
-    /// (e.g. preselect leagues on Home, prefill the first Pool create
-    /// with the demo picks).
+    /// Persist the captured preferences so the post-signup AuthService
+    /// hook can ship them up to the backend. **Critical:** does NOT set
+    /// `hasSeenOnboarding` — that flag flips only after a successful
+    /// auth (in AuthService.markOnboardingComplete()), because RootView
+    /// is sensitive to it: writing the flag mid-onboarding makes
+    /// RootView swap the whole subtree from OnboardingView → LoginView,
+    /// killing the pending push to RegisterView. That race was the
+    /// reason CREATE FREE ACCOUNT appeared to navigate to login.
     func persist() {
         let d = UserDefaults.standard
-        d.set(true, forKey: "hasSeenOnboarding")
         d.set(goals.map(\.rawValue), forKey: "onboardingGoals")
         d.set(pains.map(\.rawValue), forKey: "onboardingPains")
         d.set(leagues.map(\.rawValue), forKey: "onboardingLeagues")
