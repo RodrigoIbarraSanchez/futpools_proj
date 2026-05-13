@@ -120,8 +120,10 @@ export function WebOnboarding() {
 function WelcomeScreen({ locale, onContinue }) {
   return (
     <div className="onb-welcome">
-      <div className="onb-hero">
-        <div className="trophy-glow">🏆</div>
+      {/* Desktop 2-column layout: hero/copy on left, mock pool card on
+          right. Below ~1100px the right column hides and the hero
+          centers as a single column. */}
+      <div className="onb-welcome-left">
         <div className="brand">FUT<span>POOLS</span></div>
         <h1>
           {locale === 'es' ? 'GANA DINERO REAL' : 'WIN REAL CASH'}<br />
@@ -137,22 +139,60 @@ function WelcomeScreen({ locale, onContinue }) {
 
         <div className="badges">
           <div className="badge-pill">
-            {locale === 'es' ? '⚡ Pago instantáneo' : '⚡ Fast payout'}
+            {locale === 'es' ? '⚡ Pago seguro' : '⚡ Secure payment'}
           </div>
           <div className="badge-pill">
-            {locale === 'es' ? '🔒 Stripe seguro' : '🔒 Stripe secure'}
+            {locale === 'es' ? '🔒 Stripe' : '🔒 Stripe'}
           </div>
           <div className="badge-pill">
-            {locale === 'es' ? '🏆 Mundial · Liga MX · Champions' : '🏆 World Cup · Liga MX · Champions'}
+            {locale === 'es' ? '🏆 Mundial · Liga MX' : '🏆 World Cup · Liga MX'}
           </div>
         </div>
 
-        <button className="onb-cta-primary" onClick={onContinue}>
-          ▶ {locale === 'es' ? 'EMPEZAR' : 'GET STARTED'}
-        </button>
-        <Link to="/login" className="onb-cta-secondary">
-          {locale === 'es' ? 'Ya tengo cuenta' : 'I already have an account'}
-        </Link>
+        <div className="onb-cta-row">
+          <button className="onb-cta-primary" onClick={onContinue}>
+            ▶ {locale === 'es' ? 'EMPEZAR' : 'GET STARTED'}
+          </button>
+          <Link to="/login" className="onb-cta-secondary">
+            {locale === 'es' ? 'Ya tengo cuenta' : 'I already have an account'}
+          </Link>
+        </div>
+      </div>
+
+      <div className="onb-welcome-right" aria-hidden="true">
+        <div className="onb-mock-card">
+          <div className="onb-mock-header">
+            <div className="onb-mock-status">
+              <span className="onb-mock-dot" /> {locale === 'es' ? 'EN VIVO' : 'LIVE'}
+            </div>
+            <div className="onb-mock-id">{locale === 'es' ? 'QUINIELA MUNDIAL · 0014' : 'WORLD CUP POOL · 0014'}</div>
+          </div>
+          <div className="onb-mock-prize">
+            <div className="onb-mock-label">{locale === 'es' ? 'PREMIO ACUMULADO' : 'PRIZE POOL'}</div>
+            <div className="onb-mock-amount">$2,925 MXN</div>
+            <div className="onb-mock-meta">90 {locale === 'es' ? 'JUGADORES' : 'PLAYERS'} · 65% {locale === 'es' ? 'AL GANADOR' : 'TO WINNER'}</div>
+          </div>
+          <div className="onb-mock-fixture">
+            <span className="onb-mock-team">MEX</span>
+            <span className="onb-mock-score">2 – 1</span>
+            <span className="onb-mock-team">USA</span>
+          </div>
+          <div className="onb-mock-fixture">
+            <span className="onb-mock-team">BRA</span>
+            <span className="onb-mock-score">3 – 0</span>
+            <span className="onb-mock-team">ARG</span>
+          </div>
+          <div className="onb-mock-fixture">
+            <span className="onb-mock-team">ESP</span>
+            <span className="onb-mock-score">— —</span>
+            <span className="onb-mock-team">FRA</span>
+          </div>
+          <div className="onb-mock-pick">
+            <span className="onb-mock-pick-label">{locale === 'es' ? 'TU PICK' : 'YOUR PICK'}</span>
+            <span className="onb-mock-pick-value">1 · MEX</span>
+          </div>
+        </div>
+        <div className="onb-mock-trophy">🏆</div>
       </div>
     </div>
   );
@@ -365,8 +405,17 @@ const ONB_CSS = `
 .onb-bg {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(33,226,140,0.10) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 80% 60%, rgba(54,233,255,0.05) 0%, transparent 60%);
+    radial-gradient(ellipse 60% 50% at 30% 0%, rgba(33,226,140,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 80% 80%, rgba(255,209,102,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 30%, rgba(54,233,255,0.05) 0%, transparent 60%);
+}
+/* Subtle scanlines + vignette so empty desktop space doesn't feel flat */
+.onb-root::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode: overlay;
 }
 .onb-topbar {
   position: relative; z-index: 1;
@@ -415,12 +464,15 @@ const ONB_CSS = `
 }
 
 /* Welcome */
-.onb-welcome { text-align: center; padding-top: 30px; }
-.onb-hero { display: flex; flex-direction: column; align-items: center; gap: 18px; }
-.trophy-glow {
-  font-size: 110px; line-height: 1;
-  filter: drop-shadow(0 0 40px var(--fp-primary)) drop-shadow(0 0 60px var(--fp-gold));
+.onb-welcome {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 24px; padding-top: 24px; text-align: center;
 }
+.onb-welcome-left {
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  width: 100%;
+}
+.onb-welcome-right { display: none; }  /* hidden under tablet breakpoint */
 .brand {
   font-family: var(--fp-brand, var(--fp-display)); font-weight: 800;
   font-size: 22px; letter-spacing: 6px;
@@ -429,7 +481,7 @@ const ONB_CSS = `
 .brand span { color: var(--fp-primary); text-shadow: 0 0 12px var(--fp-primary); }
 .onb-welcome h1 {
   font-family: var(--fp-display); font-weight: 900;
-  font-size: 32px; line-height: 1.05; letter-spacing: 1.5px;
+  font-size: 34px; line-height: 1.05; letter-spacing: 1.5px;
   margin: 0; color: var(--fp-text);
 }
 .onb-welcome h1 .accent {
@@ -447,6 +499,91 @@ const ONB_CSS = `
   clip-path: var(--fp-clip-sm);
   font-family: var(--fp-mono); font-size: 11px; font-weight: 700;
   color: var(--fp-primary); letter-spacing: 0.6px;
+}
+.onb-cta-row {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; margin-top: 8px;
+}
+
+/* Welcome mock card — visible from tablet up. Stylized 'live pool'
+   preview that mirrors the in-app pool detail layout. */
+.onb-mock-card {
+  position: relative;
+  width: 100%; max-width: 360px;
+  padding: 20px; padding-top: 24px;
+  background: linear-gradient(180deg, var(--fp-surface-alt), var(--fp-surface));
+  border: 1px solid var(--fp-stroke-strong);
+  clip-path: var(--fp-clip);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 40px rgba(33,226,140,0.18);
+}
+.onb-mock-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.onb-mock-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--fp-mono); font-size: 10px; font-weight: 800;
+  color: var(--fp-danger); letter-spacing: 1.5px;
+}
+.onb-mock-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--fp-danger);
+  box-shadow: 0 0 6px var(--fp-danger);
+}
+.onb-mock-id {
+  font-family: var(--fp-mono); font-size: 9px; letter-spacing: 1.3px;
+  color: var(--fp-text-muted);
+}
+.onb-mock-prize {
+  padding: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--fp-gold) 18%, transparent), transparent);
+  border: 1px solid color-mix(in srgb, var(--fp-gold) 35%, transparent);
+  clip-path: var(--fp-clip-sm);
+  margin-bottom: 14px;
+}
+.onb-mock-label {
+  font-family: var(--fp-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 1.5px; color: var(--fp-text-muted);
+}
+.onb-mock-amount {
+  font-family: var(--fp-display); font-weight: 900;
+  font-size: 28px; letter-spacing: 1px; color: var(--fp-gold);
+  margin-top: 4px; text-shadow: 0 0 20px rgba(255,209,102,0.4);
+}
+.onb-mock-meta {
+  font-family: var(--fp-mono); font-size: 9px; letter-spacing: 1.2px;
+  color: var(--fp-text-dim); margin-top: 6px;
+}
+.onb-mock-fixture {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; padding: 10px 12px; margin-bottom: 6px;
+  background: var(--fp-bg2); clip-path: var(--fp-clip-sm);
+  font-family: var(--fp-display); font-weight: 800;
+  font-size: 13px; letter-spacing: 1.5px;
+}
+.onb-mock-team:first-child { text-align: left; }
+.onb-mock-team:last-child { text-align: right; }
+.onb-mock-score {
+  color: var(--fp-primary);
+  font-family: var(--fp-mono); font-weight: 800; font-size: 14px;
+  padding: 0 14px;
+}
+.onb-mock-pick {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 10px;
+}
+.onb-mock-pick-label {
+  font-family: var(--fp-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 1.4px; color: var(--fp-text-muted);
+}
+.onb-mock-pick-value {
+  font-family: var(--fp-display); font-weight: 900; font-size: 12px;
+  letter-spacing: 1.5px;
+  padding: 4px 10px; clip-path: var(--fp-clip-sm);
+  background: var(--fp-primary); color: var(--fp-on-primary);
+}
+.onb-mock-trophy {
+  display: none;
 }
 
 .onb-cta-primary {
@@ -586,31 +723,88 @@ const ONB_CSS = `
   font-weight: 900; font-size: 11px; flex-shrink: 0;
 }
 
-/* Tablet (≥768) */
+/* ─────────────────────────────────────────────────────────────
+ * Tablet (≥768) — wider container, 4-col team grid, mock card
+ * shows up at end of welcome flow as a stacked preview below.
+ * ───────────────────────────────────────────────────────────── */
 @media (min-width: 768px) {
-  .onb-main { padding: 32px 40px; }
-  .onb-welcome h1 { font-size: 44px; }
-  .onb-welcome .lede { font-size: 16px; max-width: 540px; }
-  .trophy-glow { font-size: 140px; }
-  .onb-prefs h2 { font-size: 28px; }
-  .onb-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .onb-cell { min-height: 100px; }
+  .onb-topbar { padding: 24px 32px 8px; max-width: 920px; }
+  .onb-main { padding: 24px 32px; max-width: 920px; }
+
+  .onb-welcome { padding-top: 36px; gap: 36px; }
+  .onb-welcome h1 { font-size: 48px; }
+  .onb-welcome .lede { font-size: 16px; max-width: 560px; }
+  .onb-welcome-right { display: flex; justify-content: center; }
+
+  .onb-prefs h2 { font-size: 30px; }
+  .onb-sub { font-size: 14px; max-width: 580px; }
+  .onb-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .onb-cell { min-height: 104px; }
   .onb-cell-logo { width: 44px; height: 44px; }
   .onb-cell-name { font-size: 12px; }
-  .onb-wc-card { padding: 18px; }
-  .onb-wc-logo { width: 60px; height: 60px; }
-  .onb-wc-title { font-size: 18px; }
+
+  .onb-wc-card { padding: 20px 24px; }
+  .onb-wc-logo { width: 64px; height: 64px; }
+  .onb-wc-title { font-size: 20px; }
   .onb-wc-desc { font-size: 12px; }
-  .onb-gate h2 { font-size: 36px; }
-  .onb-gate-icon { font-size: 80px; }
+
+  .onb-gate h2 { font-size: 40px; }
+  .onb-gate-icon { font-size: 88px; }
+  .onb-bullet { font-size: 14px; padding: 14px 18px; }
 }
 
-/* Desktop (≥1100) — wider container, 5-column grids */
+/* ─────────────────────────────────────────────────────────────
+ * Desktop (≥1100) — welcome becomes a 2-column hero (copy left,
+ * mock pool card right). Prefs container widens, 6-col grids.
+ * ───────────────────────────────────────────────────────────── */
 @media (min-width: 1100px) {
-  .onb-main { max-width: 880px; padding: 40px; }
-  .onb-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
-  .onb-welcome { padding-top: 60px; }
-  .onb-welcome h1 { font-size: 56px; line-height: 1; }
-  .onb-cta-primary { font-size: 17px; padding: 18px 36px; min-width: 280px; }
+  .onb-topbar { max-width: 1100px; padding: 28px 48px 12px; }
+  .onb-main { max-width: 1100px; padding: 40px 48px; }
+
+  /* Welcome — split layout */
+  .onb-welcome {
+    flex-direction: row; align-items: center; justify-content: space-between;
+    gap: 56px; padding-top: 40px; text-align: left;
+  }
+  .onb-welcome-left {
+    align-items: flex-start; max-width: 520px; flex: 1;
+  }
+  .onb-welcome-right { flex-shrink: 0; }
+  .brand { font-size: 24px; }
+  .onb-welcome h1 { font-size: 60px; line-height: 1; letter-spacing: 1px; }
+  .onb-welcome .lede {
+    font-size: 17px; max-width: 460px;
+    margin: 8px 0 12px;
+  }
+  .badges { justify-content: flex-start; }
+  .onb-cta-row {
+    flex-direction: row; align-items: center; gap: 16px;
+    margin-top: 14px;
+  }
+  .onb-cta-primary { font-size: 16px; padding: 18px 32px; min-width: 220px; }
+
+  /* Prefs — wider grids + bigger featured card */
+  .onb-prefs { max-width: 980px; margin: 0 auto; }
+  .onb-grid { grid-template-columns: repeat(6, 1fr); gap: 14px; }
+  .onb-cell { min-height: 116px; }
+  .onb-cell-logo { width: 48px; height: 48px; }
+  .onb-wc-card { padding: 24px 28px; gap: 20px; }
+  .onb-wc-logo { width: 78px; height: 78px; }
+  .onb-wc-title { font-size: 22px; }
+  .onb-wc-desc { font-size: 13px; }
+
+  /* Gate stays centered but a bit roomier */
+  .onb-gate { padding-top: 50px; }
+  .onb-gate h2 { font-size: 44px; }
+  .onb-gate-icon { font-size: 100px; }
+  .onb-bullets { max-width: 480px; }
+}
+
+/* Extra wide (≥1440) — push container limit so very large displays
+   don't strand the hero in a narrow column. */
+@media (min-width: 1440px) {
+  .onb-topbar, .onb-main { max-width: 1240px; }
+  .onb-welcome h1 { font-size: 68px; }
+  .onb-mock-card { max-width: 400px; }
 }
 `;
