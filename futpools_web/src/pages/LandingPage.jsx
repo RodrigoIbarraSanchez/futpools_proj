@@ -63,7 +63,7 @@ export function LandingPage() {
           <Link to="/login" className="nav-login">
             {c('Entrar', 'Sign in')}
           </Link>
-          <Link to="/register" className="btn btn-primary btn-nav">
+          <Link to="/onboarding" className="btn btn-primary btn-nav">
             {c('Jugar', 'Play')}
           </Link>
         </div>
