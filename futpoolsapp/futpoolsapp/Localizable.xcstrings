@@ -70,15 +70,6 @@
     "·" : {
 
     },
-    "· %@" : {
-
-    },
-    "· %lld PLAYERS" : {
-
-    },
-    "· PAST" : {
-
-    },
     "›" : {
 
     },
@@ -149,9 +140,6 @@
     "@%@" : {
 
     },
-    "@username" : {
-
-    },
     "#%@" : {
 
     },
@@ -194,9 +182,6 @@
           }
         }
       }
-    },
-    "%@ is now live." : {
-
     },
     "%@ vs %@" : {
       "localizations" : {
@@ -394,16 +379,6 @@
         }
       }
     },
-    "%lld prize + %lld platform fee. If pool doesn't reach min players, you get a full refund." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld prize + %2$lld platform fee. If pool doesn't reach min players, you get a full refund."
-          }
-        }
-      }
-    },
     "%lld SELECTED" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -511,12 +486,6 @@
         }
       }
     },
-    "←" : {
-
-    },
-    "← BACK" : {
-
-    },
     "← SIGN IN" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -534,19 +503,7 @@
         }
       }
     },
-    "→" : {
-
-    },
     "→ %@" : {
-
-    },
-    "＋" : {
-
-    },
-    "+ ADD" : {
-
-    },
-    "+ EDIT" : {
 
     },
     "+ TOP UP" : {
@@ -586,9 +543,6 @@
         }
       }
     },
-    "+1" : {
-
-    },
     "+1 point for every correct pick. All matches count the same." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -623,9 +577,6 @@
         }
       }
     },
-    "+10% BONUS" : {
-
-    },
     "+10%% BONUS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -644,6 +595,9 @@
       }
     },
     "▲" : {
+
+    },
+    "▶" : {
 
     },
     "▶ %@" : {
@@ -682,6 +636,9 @@
           }
         }
       }
+    },
+    "▶ JOIN ON FUTPOOLS.COM" : {
+
     },
     "▶ MAKE PICKS · %@" : {
       "extractionState" : "manual",
@@ -751,9 +708,6 @@
         }
       }
     },
-    "▶ SHARE LINK" : {
-
-    },
     "▶ SUBMIT PICKS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -775,9 +729,6 @@
 
     },
     "◆" : {
-
-    },
-    "◆ %@" : {
 
     },
     "◆ ACTIVE POOLS" : {
@@ -814,9 +765,6 @@
         }
       }
     },
-    "◆ ECONOMY" : {
-
-    },
     "◆ FEATURED" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -833,15 +781,6 @@
           }
         }
       }
-    },
-    "◆ FIXTURES (%lld)" : {
-
-    },
-    "◆ NAME" : {
-
-    },
-    "◆ POPULAR" : {
-
     },
     "◆ PROGRESS · %lld/%lld" : {
       "localizations" : {
@@ -891,9 +830,6 @@
 
     },
     "⚔" : {
-
-    },
-    "⚔ %@" : {
 
     },
     "⚙" : {
@@ -1025,9 +961,6 @@
     "✗ %@" : {
 
     },
-    "⬢" : {
-
-    },
     "🎁" : {
 
     },
@@ -1037,19 +970,7 @@
     "🏆" : {
 
     },
-    "💀" : {
-
-    },
     "💬 %@" : {
-
-    },
-    "🔒 %@" : {
-
-    },
-    "🪙 %lld" : {
-
-    },
-    "$" : {
 
     },
     "0 / %lld" : {
@@ -1228,9 +1149,6 @@
         }
       }
     },
-    "7" : {
-
-    },
     "7. Apple disclaimer" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1281,12 +1199,6 @@
           }
         }
       }
-    },
-    "14" : {
-
-    },
-    "20" : {
-
     },
     "100%% correct in a pool." : {
       "extractionState" : "manual",
@@ -2019,9 +1931,6 @@
         }
       }
     },
-    "Basics" : {
-
-    },
     "BASICS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2055,9 +1964,6 @@
           }
         }
       }
-    },
-    "Below MIN PLAYERS at first kickoff → prize dissolves + entries refunded." : {
-
     },
     "BEST STREAK" : {
       "extractionState" : "manual",
@@ -2160,9 +2066,6 @@
           }
         }
       }
-    },
-    "both score?" : {
-
     },
     "both teams score" : {
       "extractionState" : "manual",
@@ -2728,6 +2631,9 @@
         }
       }
     },
+    "Coming next." : {
+
+    },
     "Coming soon" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3221,9 +3127,6 @@
         }
       }
     },
-    "Create real-prize pool" : {
-
-    },
     "Create sponsored pools with guaranteed prizes. Prize unlocks only when minimum participants is reached." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3533,9 +3436,6 @@
         }
       }
     },
-    "Description" : {
-
-    },
     "DESCRIPTION" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3658,9 +3558,6 @@
         }
       }
     },
-    "e.g. WEEKEND MILLION" : {
-
-    },
     "EARNED · +1 PT" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3779,9 +3676,6 @@
           }
         }
       }
-    },
-    "Elige 1 (local), X (empate) o 2 (visitante) para cada partido" : {
-
     },
     "Email" : {
       "extractionState" : "manual",
@@ -4157,12 +4051,6 @@
         }
       }
     },
-    "Entry cost (Tickets)" : {
-
-    },
-    "Entry rules" : {
-
-    },
     "ENTRY TYPE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4213,9 +4101,6 @@
           }
         }
       }
-    },
-    "EVENT CREATED" : {
-
     },
     "Every player pays %1$lld coins. Winner takes the full pot (minus a %2$lld%% platform fee)." : {
       "extractionState" : "manual",
@@ -5005,9 +4890,6 @@
         }
       }
     },
-    "home/draw/away" : {
-
-    },
     "HOW DO YOU SEE YOURSELF PLAYING?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5466,6 +5348,9 @@
           }
         }
       }
+    },
+    "Join a pool from futpools.com to see it here." : {
+
     },
     "JOIN POOL" : {
       "extractionState" : "manual",
@@ -5943,6 +5828,9 @@
         }
       }
     },
+    "LIVE SCORES" : {
+
+    },
     "Live scoring" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6354,9 +6242,6 @@
         }
       }
     },
-    "Mi quiniela" : {
-
-    },
     "min" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6374,9 +6259,6 @@
         }
       }
     },
-    "Min entries" : {
-
-    },
     "MINE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6393,9 +6275,6 @@
           }
         }
       }
-    },
-    "Minimum 2 players. 10% platform rake — winner takes the rest of the pot." : {
-
     },
     "Minimum 2 players. 10%% platform rake — winner receives the rest of the pot." : {
       "extractionState" : "manual",
@@ -6584,6 +6463,9 @@
         }
       }
     },
+    "MY POOLS" : {
+
+    },
     "Name" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6686,9 +6568,6 @@
         }
       }
     },
-    "NEED MORE" : {
-
-    },
     "New 1V1 challenge" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6773,9 +6652,6 @@
           }
         }
       }
-    },
-    "New real-prize pool" : {
-
     },
     "NEXT" : {
       "extractionState" : "manual",
@@ -7048,6 +6924,9 @@
           }
         }
       }
+    },
+    "NO POOLS YET" : {
+
     },
     "No purchase or payment is required to participate. You can earn a free entry by predicting the Daily Pick once per day for seven consecutive days (7 Tickets = 1 entry). Tickets cannot be purchased; they are earned only through Daily Pick predictions and rewarded ad views, which are also free." : {
       "extractionState" : "manual",
@@ -7661,9 +7540,6 @@
         }
       }
     },
-    "over or under" : {
-
-    },
     "Overview" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8157,9 +8033,6 @@
         }
       }
     },
-    "Pick fixtures from the League/Team picker." : {
-
-    },
     "Pick must differ from the challenger." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8329,9 +8202,6 @@
           }
         }
       }
-    },
-    "PLATFORM EVENT" : {
-
     },
     "Platform Events" : {
       "extractionState" : "manual",
@@ -8843,40 +8713,6 @@
         }
       }
     },
-    "TEAMS" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "TEAMS"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "EQUIPOS"
-          }
-        }
-      }
-    },
-    "Searching…" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Searching…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buscando…"
-          }
-        }
-      }
-    },
     "POPULAR TEAMS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -9115,9 +8951,6 @@
         }
       }
     },
-    "Prize cost (USD)" : {
-
-    },
     "PRIZE COST (USD)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -9134,9 +8967,6 @@
           }
         }
       }
-    },
-    "Prize label" : {
-
     },
     "PRIZE LABEL" : {
       "extractionState" : "manual",
@@ -10079,6 +9909,9 @@
         }
       }
     },
+    "SCORES" : {
+
+    },
     "Search a league or team…" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -10143,6 +9976,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Busca equipos o ligas"
+          }
+        }
+      }
+    },
+    "Searching…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Searching…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando…"
           }
         }
       }
@@ -11167,9 +11017,6 @@
         }
       }
     },
-    "Sweepstake created" : {
-
-    },
     "Sweepstakes are organized by the Futpools entity registered in Mexico. For questions or to claim a prize, contact support@futpools.com." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -11370,6 +11217,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "EQUIPO"
+          }
+        }
+      }
+    },
+    "TEAMS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TEAMS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EQUIPOS"
           }
         }
       }
@@ -11802,9 +11666,6 @@
         }
       }
     },
-    "Title" : {
-
-    },
     "to actually pay what they owe" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -12008,9 +11869,6 @@
           }
         }
       }
-    },
-    "Tu quiniela se guardó correctamente. Puedes verla en Mis entradas." : {
-
     },
     "Upcoming" : {
       "extractionState" : "manual",
