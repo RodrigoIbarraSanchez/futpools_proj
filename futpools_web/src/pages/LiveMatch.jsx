@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useSafeBack } from '../lib/safeBack';
 import { api } from '../api/client';
 import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
@@ -284,6 +285,8 @@ export function LiveMatch() {
   const { fixtureId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  // Fixture detail can be reached via deep link; no history → home.
+  const goBack = useSafeBack('/');
   const { locale } = useLocale();
 
   // Fallback teams from router state (we navigate from PoolDetail with
@@ -332,7 +335,7 @@ export function LiveMatch() {
 
   return (
     <>
-      <TitleBar live={live} locale={locale} onBack={() => navigate(-1)} />
+      <TitleBar live={live} locale={locale} onBack={goBack} />
 
       {/* Scoreboard */}
       <div style={{ padding: '14px 16px 0' }}>

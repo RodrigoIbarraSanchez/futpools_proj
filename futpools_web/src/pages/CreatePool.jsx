@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSafeBack } from '../lib/safeBack';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -508,6 +509,9 @@ function FixturePickerModal({ open, onClose, onDone, selected, onToggle, locale 
 
 export function CreatePool() {
   const navigate = useNavigate();
+  // Cancel/back from the admin-only create form should go home rather
+  // than try to pop history (admin tile in Account.jsx is one tap away).
+  const goBack = useSafeBack('/');
   const { token, user } = useAuth();
   const { locale } = useLocale();
   const isAdmin = user?.isAdmin === true;
@@ -621,7 +625,7 @@ export function CreatePool() {
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)', fontSize: 12,

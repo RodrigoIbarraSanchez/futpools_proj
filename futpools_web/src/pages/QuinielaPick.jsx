@@ -8,10 +8,14 @@ import { AppBackground } from '../arena-ui/AppBackground';
 import {
   HudFrame, HudChip, XpBar, TeamCrest, ArcadeButton, IconButton,
 } from '../arena-ui/primitives';
+import { useSafeBack } from '../lib/safeBack';
 
 export function QuinielaPick() {
   const { id } = useParams();
   const navigate = useNavigate();
+  // Picks are scoped to a pool — when there's no history the natural
+  // home for the back arrow is that pool's detail page.
+  const goBack = useSafeBack(`/pool/${id}`);
   const { token } = useAuth();
   const { locale } = useLocale();
 
@@ -103,7 +107,7 @@ export function QuinielaPick() {
       {/* Header */}
       <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--fp-stroke)' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
-          <IconButton onClick={() => navigate(-1)}>←</IconButton>
+          <IconButton onClick={goBack}>←</IconButton>
           <div style={{
             flex: 1, textAlign: 'center',
             fontFamily: 'var(--fp-display)', fontSize: 12, letterSpacing: 3,

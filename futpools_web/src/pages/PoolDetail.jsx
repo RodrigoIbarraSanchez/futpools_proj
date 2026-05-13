@@ -8,6 +8,7 @@ import { AppBackground } from '../arena-ui/AppBackground';
 import {
   HudFrame, HudChip, LiveDot, TeamCrest, ArcadeButton, SectionLabel, IconButton,
 } from '../arena-ui/primitives';
+import { useSafeBack } from '../lib/safeBack';
 
 /// Compose the leaderboard label for a participant. Multiple entries per
 /// user are allowed in simple_version; the 2nd, 3rd, ... entry is shown
@@ -149,6 +150,7 @@ export function PoolDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const goBack = useSafeBack('/');
   const { user, token } = useAuth();
   const { locale } = useLocale();
   const [quiniela, setQuiniela] = useState(null);
@@ -348,7 +350,7 @@ export function PoolDetail() {
       {/* Header */}
       <div style={{ padding: '14px 16px 18px' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
-          <IconButton onClick={() => navigate(-1)}>←</IconButton>
+          <IconButton onClick={goBack}>←</IconButton>
           <div style={{
             flex: 1, textAlign: 'center',
             fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 2,
