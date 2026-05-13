@@ -122,6 +122,7 @@
       }
     },
     "@%@": {},
+    "/ %lld": {},
     "#%@": {},
     "#%lld": {},
     "%@ · %@": {
@@ -1122,6 +1123,23 @@
         }
       }
     },
+    "30-minute warning before any pool you joined starts.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30-minute warning before any pool you joined starts."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aviso 30 minutos antes de que inicie cualquier quiniela en la que estés."
+          }
+        }
+      }
+    },
     "100%% correct in a pool.": {
       "extractionState": "manual",
       "localizations": {
@@ -1462,6 +1480,23 @@
         }
       }
     },
+    "Alerts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alerts"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alertas"
+          }
+        }
+      }
+    },
     "ALL": {
       "extractionState": "manual",
       "localizations": {
@@ -1645,6 +1680,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "ARENA"
+          }
+        }
+      }
+    },
+    "ASKING…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ASKING…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIDIENDO…"
           }
         }
       }
@@ -1866,6 +1918,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saldo actualizado. Puedes cerrar esta pantalla."
+          }
+        }
+      }
+    },
+    "Banner pops the second your team scores or concedes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Banner pops the second your team scores or concedes."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Te avisamos al segundo en que tu equipo anota o le anotan."
           }
         }
       }
@@ -3078,6 +3147,23 @@
         }
       }
     },
+    "Create your account to save your preferences.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create your account to save your preferences."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea tu cuenta para guardar tus preferencias."
+          }
+        }
+      }
+    },
     "CREATED BY @%@": {
       "extractionState": "manual",
       "localizations": {
@@ -3433,6 +3519,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "¿No tienes cuenta? Regístrate"
+          }
+        }
+      }
+    },
+    "Don't miss a single match of the tournament.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't miss a single match of the tournament."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No te pierdas ningún partido del torneo."
           }
         }
       }
@@ -4389,6 +4492,23 @@
         }
       }
     },
+    "FOOTBALL LIVE, INSTANTLY": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FOOTBALL LIVE, INSTANTLY"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FÚTBOL EN VIVO, AL INSTANTE"
+          }
+        }
+      }
+    },
     "For each thing you said:": {
       "extractionState": "manual",
       "localizations": {
@@ -4561,6 +4681,23 @@
         }
       }
     },
+    "Get instant alerts when your teams play.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get instant alerts when your teams play."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recibe alertas al instante cuando juegan tus equipos."
+          }
+        }
+      }
+    },
     "GET STARTED": {
       "extractionState": "manual",
       "localizations": {
@@ -4574,6 +4711,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "EMPEZAR"
+          }
+        }
+      }
+    },
+    "Get the FT score the moment the match ends.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get the FT score the moment the match ends."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recibe el resultado final apenas termine el partido."
           }
         }
       }
@@ -4625,6 +4779,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "GOL"
+          }
+        }
+      }
+    },
+    "Goal and result alerts in real time": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal and result alerts in real time"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alertas de goles y resultados en tiempo real"
           }
         }
       }
@@ -5446,6 +5617,23 @@
         }
       }
     },
+    "KICKOFF REMINDERS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KICKOFF REMINDERS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RECORDATORIOS DE INICIO"
+          }
+        }
+      }
+    },
     "La vaquita del mundial": {
       "extractionState": "manual",
       "localizations": {
@@ -5476,6 +5664,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Idioma"
+          }
+        }
+      }
+    },
+    "LAST STEP": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LAST STEP"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÚLTIMO PASO"
           }
         }
       }
@@ -5752,6 +5957,23 @@
         }
       }
     },
+    "LIVE GOALS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIVE GOALS"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GOLES EN VIVO"
+          }
+        }
+      }
+    },
     "LIVE NOW": {
       "extractionState": "manual",
       "localizations": {
@@ -5786,6 +6008,23 @@
         }
       }
     },
+    "Live scores": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live scores"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcadores en vivo"
+          }
+        }
+      }
+    },
     "LIVE SCORES": {
       "extractionState": "manual",
       "localizations": {
@@ -5799,6 +6038,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "MARCADORES EN VIVO"
+          }
+        }
+      }
+    },
+    "Live scores and push alerts will follow these picks.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live scores and push alerts will follow these picks."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los marcadores y las alertas se basan en estas selecciones."
           }
         }
       }
@@ -7555,6 +7811,23 @@
         }
       }
     },
+    "OTHER LEAGUES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OTHER LEAGUES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OTRAS LIGAS"
+          }
+        }
+      }
+    },
     "Outcome %@ — neither pick matched, no rake.": {
       "extractionState": "manual",
       "localizations": {
@@ -8146,6 +8419,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "ELIGE TU LADO"
+          }
+        }
+      }
+    },
+    "PICK YOUR TEAMS AND LEAGUES": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PICK YOUR TEAMS AND LEAGUES"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ELIGE TUS EQUIPOS Y LIGAS"
           }
         }
       }
@@ -9080,7 +9370,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "BOTE"
+            "value": "PREMIO"
           }
         }
       }
@@ -9523,6 +9813,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "PREMIOS REALES CADA SEMANA"
+          }
+        }
+      }
+    },
+    "Real-time scores, alerts from your teams, and your pools — all in one place.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Real-time scores, alerts from your teams, and your pools — all in one place."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcadores en tiempo real, alertas de tus equipos y tus quinielas, todo en un solo lugar."
           }
         }
       }
@@ -10923,6 +11230,40 @@
         }
       }
     },
+    "STARTS SOON": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STARTS SOON"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRONTO"
+          }
+        }
+      }
+    },
+    "STAY IN THE GAME": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STAY IN THE GAME"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO TE PIERDAS NADA"
+          }
+        }
+      }
+    },
     "Step": {
       "extractionState": "manual",
       "localizations": {
@@ -11106,6 +11447,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Swipe → si te late. ← si no."
+          }
+        }
+      }
+    },
+    "Sync the pools you joined from futpools.com": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync the pools you joined from futpools.com"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincroniza las quinielas en las que entras desde futpools.com"
           }
         }
       }
@@ -11961,6 +12319,23 @@
         }
       }
     },
+    "TU PICK": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TU PICK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TU PICK"
+          }
+        }
+      }
+    },
     "Upcoming": {
       "extractionState": "manual",
       "localizations": {
@@ -12795,6 +13170,40 @@
         }
       }
     },
+    "World Cup": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "World Cup"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mundial"
+          }
+        }
+      }
+    },
+    "WORLD CUP": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WORLD CUP"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MUNDIAL"
+          }
+        }
+      }
+    },
     "X DRAW": {
       "extractionState": "manual",
       "localizations": {
@@ -12842,6 +13251,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "TÚ"
+          }
+        }
+      }
+    },
+    "You can change this any time in Settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can change this any time in Settings."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes cambiarlo cuando quieras desde Ajustes."
           }
         }
       }
@@ -13067,6 +13493,23 @@
         }
       }
     },
+    "Your favorite teams, always with you": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your favorite teams, always with you"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus equipos favoritos siempre contigo"
+          }
+        }
+      }
+    },
     "YOUR FIRST POOL": {
       "extractionState": "manual",
       "localizations": {
@@ -13237,125 +13680,6 @@
         }
       }
     },
-    "FOOTBALL LIVE, INSTANTLY": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FOOTBALL LIVE, INSTANTLY"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FÚTBOL EN VIVO, AL INSTANTE"
-          }
-        }
-      }
-    },
-    "Real-time scores, alerts from your teams, and your pools — all in one place.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Real-time scores, alerts from your teams, and your pools — all in one place."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marcadores en tiempo real, alertas de tus equipos y tus quinielas, todo en un solo lugar."
-          }
-        }
-      }
-    },
-    "Live scores": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live scores"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marcadores en vivo"
-          }
-        }
-      }
-    },
-    "Alerts": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alerts"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alertas"
-          }
-        }
-      }
-    },
-    "World Cup": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "World Cup"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mundial"
-          }
-        }
-      }
-    },
-    "PICK YOUR TEAMS AND LEAGUES": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PICK YOUR TEAMS AND LEAGUES"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ELIGE TUS EQUIPOS Y LIGAS"
-          }
-        }
-      }
-    },
-    "Live scores and push alerts will follow these picks.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live scores and push alerts will follow these picks."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los marcadores y las alertas se basan en estas selecciones."
-          }
-        }
-      }
-    },
     "YOUR SELECTIONS": {
       "extractionState": "manual",
       "localizations": {
@@ -13373,325 +13697,19 @@
         }
       }
     },
-    "OTHER LEAGUES": {
+    "PLAYERS": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "OTHER LEAGUES"
+            "value": "PLAYERS"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "OTRAS LIGAS"
-          }
-        }
-      }
-    },
-    "WORLD CUP": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "WORLD CUP"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MUNDIAL"
-          }
-        }
-      }
-    },
-    "STARTS SOON": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "STARTS SOON"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PRONTO"
-          }
-        }
-      }
-    },
-    "Don't miss a single match of the tournament.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Don't miss a single match of the tournament."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No te pierdas ningún partido del torneo."
-          }
-        }
-      }
-    },
-    "STAY IN THE GAME": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "STAY IN THE GAME"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NO TE PIERDAS NADA"
-          }
-        }
-      }
-    },
-    "Get instant alerts when your teams play.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Get instant alerts when your teams play."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recibe alertas al instante cuando juegan tus equipos."
-          }
-        }
-      }
-    },
-    "LIVE GOALS": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LIVE GOALS"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "GOLES EN VIVO"
-          }
-        }
-      }
-    },
-    "Banner pops the second your team scores or concedes.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Banner pops the second your team scores or concedes."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Te avisamos al segundo en que tu equipo anota o le anotan."
-          }
-        }
-      }
-    },
-    "KICKOFF REMINDERS": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "KICKOFF REMINDERS"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RECORDATORIOS DE INICIO"
-          }
-        }
-      }
-    },
-    "30-minute warning before any pool you joined starts.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30-minute warning before any pool you joined starts."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aviso 30 minutos antes de que inicie cualquier quiniela en la que estés."
-          }
-        }
-      }
-    },
-    "Get the FT score the moment the match ends.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Get the FT score the moment the match ends."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recibe el resultado final apenas termine el partido."
-          }
-        }
-      }
-    },
-    "You can change this any time in Settings.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You can change this any time in Settings."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Puedes cambiarlo cuando quieras desde Ajustes."
-          }
-        }
-      }
-    },
-    "ASKING…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ASKING…"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PIDIENDO…"
-          }
-        }
-      }
-    },
-    "LAST STEP": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LAST STEP"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ÚLTIMO PASO"
-          }
-        }
-      }
-    },
-    "Create your account to save your preferences.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Create your account to save your preferences."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crea tu cuenta para guardar tus preferencias."
-          }
-        }
-      }
-    },
-    "Your favorite teams, always with you": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your favorite teams, always with you"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tus equipos favoritos siempre contigo"
-          }
-        }
-      }
-    },
-    "Goal and result alerts in real time": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Goal and result alerts in real time"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alertas de goles y resultados en tiempo real"
-          }
-        }
-      }
-    },
-    "Sync the pools you joined from futpools.com": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sync the pools you joined from futpools.com"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sincroniza las quinielas en las que entras desde futpools.com"
-          }
-        }
-      }
-    },
-    "TU PICK": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TU PICK"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TU PICK"
+            "value": "JUGADORES"
           }
         }
       }

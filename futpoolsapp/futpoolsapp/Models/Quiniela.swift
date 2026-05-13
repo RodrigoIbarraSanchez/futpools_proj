@@ -37,6 +37,10 @@ struct Quiniela: Decodable, Identifiable {
     let platformPrizeCoins: Int?
     let entryCostCoins: Int?
     let rakePercent: Int?
+    /// simple_version per-entry MXN fee. Replaces the legacy coin-based
+    /// economy for pools created via /admin/pools/new. Optional so the
+    /// model still decodes legacy pools that don't carry it.
+    let entryFeeMXN: Int?
     /// Real-world prize attached to admin-curated pools. When set,
     /// the detail view renders the prize hero image + AMOE + Apple
     /// Guideline 5.3 disclaimers, and the pool surfaces in the Home
@@ -66,6 +70,7 @@ struct Quiniela: Decodable, Identifiable {
         case platformPrizeCoins
         case entryCostCoins
         case rakePercent
+        case entryFeeMXN
         case realPrize
     }
 
@@ -81,6 +86,30 @@ struct Quiniela: Decodable, Identifiable {
     var isScheduled: Bool { status == "scheduled" }
     var isLive: Bool { status == "live" }
     var isCompleted: Bool { status == "completed" }
+
+    /// User-facing entry fee. Prefers the new MXN field; falls back to
+    /// the legacy coin string for pools created on master. Returns
+    /// "—" when neither is set.
+    var entryFeeDisplay: String {
+        if let mxn = entryFeeMXN, mxn > 0 { return "$\(mxn) MXN" }
+        let trimmed = cost.trimmingCharacters(in: .whitespaces)
+        return (!trimmed.isEmpty && trimmed != "0") ? cost : "—"
+    }
+
+    /// Live-computed prize pool. For simple_version pools (entryFeeMXN
+    /// set) the prize is `entries × fee × (1 - rake/100)` — the rake
+    /// defaults to 10%. For legacy pools fall back to the prize string
+    /// the admin set.
+    var prizePoolDisplay: String {
+        if let mxn = entryFeeMXN, mxn > 0 {
+            let entries = entriesCount ?? 0
+            let rake = Double(rakePercent ?? 10) / 100.0
+            let pot = Int(Double(entries) * Double(mxn) * (1.0 - rake))
+            return pot > 0 ? "$\(pot) MXN" : "—"
+        }
+        let trimmed = prize.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty ? "—" : prize
+    }
 
     /// Backend can wedge a finished pool at `status: "live"` when the
     /// API-Football status fetch fails (no data → fallback marks past

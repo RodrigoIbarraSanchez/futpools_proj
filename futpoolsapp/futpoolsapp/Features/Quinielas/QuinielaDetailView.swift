@@ -391,7 +391,7 @@ struct QuinielaDetailView: View {
                         .font(ArenaFont.mono(size: 9))
                         .tracking(2)
                         .foregroundColor(.arenaTextMuted)
-                    Text(quiniela.prize)
+                    Text(quiniela.prizePoolDisplay)
                         .font(ArenaFont.display(size: 26, weight: .heavy))
                         .tracking(1)
                         .foregroundColor(.arenaGold)
@@ -402,7 +402,7 @@ struct QuinielaDetailView: View {
                         .font(ArenaFont.mono(size: 9))
                         .tracking(2)
                         .foregroundColor(.arenaTextMuted)
-                    Text(quiniela.cost)
+                    Text(quiniela.entryFeeDisplay)
                         .font(ArenaFont.mono(size: 18, weight: .bold))
                         .foregroundColor(.arenaText)
                 }

@@ -540,7 +540,7 @@ export const translations = {
     'SHOP': 'TIENDA',
     'PROFILE': 'PERFIL',
     'MY CREATED POOLS': 'MIS QUINIELAS CREADAS',
-    'POT': 'BOTE',
+    'POT': 'PREMIO',
     'ENTRY': 'ENTRADA',
     // Create pool
     'Create pool': 'Crear quiniela',
@@ -727,7 +727,7 @@ export const translations = {
     'HIGH STAKES': 'ALTO RIESGO',
 
     // PoolDetail + Home
-    'PRIZE POOL': 'BOTE',
+    'PRIZE POOL': 'PREMIO',
     'ENTRY': 'ENTRADA',
     'FIXTURES': 'PARTIDOS',
     'RANKING': 'RANKING',

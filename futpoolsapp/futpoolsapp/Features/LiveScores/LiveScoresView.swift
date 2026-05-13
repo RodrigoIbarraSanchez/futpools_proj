@@ -244,8 +244,8 @@ private struct ActivePoolBanner: View {
     var body: some View {
         HudFrame(cut: 14) {
             VStack(alignment: .leading, spacing: 12) {
-                // Status pill row — color-coded, bigger than the prior
-                // 9pt mono so it carries the row at a glance.
+                // Status pill — color-coded LIVE/countdown/OPEN, anchored
+                // top-left with a chevron on the right for the tap hint.
                 HStack(spacing: 8) {
                     HStack(spacing: 6) {
                         if hasLiveFixture {
@@ -275,7 +275,7 @@ private struct ActivePoolBanner: View {
                         .foregroundColor(.arenaTextMuted)
                 }
 
-                // Pool name as the hero — 22pt, two-line cap.
+                // Pool name hero.
                 Text(entry.quiniela.name.uppercased())
                     .font(ArenaFont.display(size: 22, weight: .heavy))
                     .tracking(1)
@@ -284,8 +284,56 @@ private struct ActivePoolBanner: View {
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Score + fixtures footer. Score is the dominant figure;
-                // fixtures count and "PTS" label are subordinate.
+                // Premio destacado — hero gold band with trophy emoji
+                // + live-computed pot. This is the dopamine hit of the
+                // banner: tells the user 'X MXN is at stake right now'.
+                // Hidden when the pool has no entryFeeMXN (legacy pools)
+                // and there's nothing meaningful to display.
+                if entry.quiniela.entryFeeMXN ?? 0 > 0 {
+                    HStack(spacing: 12) {
+                        Text("🏆")
+                            .font(.system(size: 28))
+                            .shadow(color: .arenaGold.opacity(0.7), radius: 8)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String(localized: "PRIZE POOL"))
+                                .font(ArenaFont.mono(size: 9, weight: .bold))
+                                .tracking(1.5)
+                                .foregroundColor(.arenaTextMuted)
+                            Text(entry.quiniela.prizePoolDisplay)
+                                .font(ArenaFont.display(size: 22, weight: .heavy))
+                                .tracking(0.5)
+                                .foregroundColor(.arenaGold)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(String(localized: "PLAYERS"))
+                                .font(ArenaFont.mono(size: 9, weight: .bold))
+                                .tracking(1.5)
+                                .foregroundColor(.arenaTextMuted)
+                            Text("\(entry.quiniela.entriesCount ?? 0)")
+                                .font(ArenaFont.display(size: 18, weight: .heavy))
+                                .foregroundColor(.arenaText)
+                                .monospacedDigit()
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        HudCornerCutShape(cut: 8)
+                            .fill(LinearGradient(
+                                colors: [Color.arenaGold.opacity(0.18), Color.arenaGold.opacity(0.04)],
+                                startPoint: .leading, endPoint: .trailing
+                            ))
+                    )
+                    .overlay(
+                        HudCornerCutShape(cut: 8)
+                            .stroke(Color.arenaGold.opacity(0.35), lineWidth: 1)
+                    )
+                    .clipShape(HudCornerCutShape(cut: 8))
+                }
+
+                // Score row — user's points vs max. Fixtures count tucked
+                // bottom-right as supporting metadata.
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("\(scoreNumerator)")
                         .font(ArenaFont.display(size: 36, weight: .heavy))
