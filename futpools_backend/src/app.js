@@ -77,13 +77,16 @@ if (!isSimpleMode()) {
   app.use('/sweepstakes', sweepstakesRoutes);
 }
 
-// Per-pool Stripe Checkout (simple_version only). Lives under /pools to
-// avoid namespace collision with /payments which is coin-pack territory.
-// The companion webhook handler is the shared /payments/webhook above —
-// dispatch happens by session.metadata.poolId vs metadata.packId.
-if (isSimpleMode()) {
-  app.use('/pools', poolPaymentsRoutes);
-}
+// Per-pool Stripe Checkout. Lives under /pools to avoid namespace
+// collision with /payments which is coin-pack territory. The companion
+// webhook handler is the shared /payments/webhook above — dispatch
+// happens by session.metadata.poolId vs metadata.packId.
+//
+// Mounted unconditionally (NOT gated by isSimpleMode) so a master-mode
+// dev backend can still serve simple_version web clients hitting it.
+// Master clients have no UI path that calls this endpoint, so it sits
+// idle on master without side effects.
+app.use('/pools', poolPaymentsRoutes);
 
 // Unauthenticated read-only endpoints used by the iOS onboarding
 // "App Demo" screen (real fixtures before signup).
