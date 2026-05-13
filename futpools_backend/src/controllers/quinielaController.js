@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const User = require('../models/User');
@@ -593,12 +594,30 @@ exports.getMyEntries = async (req, res) => {
     }
     const resultsByQuiniela = buildResultsByQuiniela(entries, liveFixtures);
 
+    // Count entries per pool in one round-trip so the populated quiniela
+    // object carries entriesCount. Without this, iOS reads
+    // entry.quiniela.entriesCount as undefined → 0 and shows '0 PLAYERS'
+    // / '— PRIZE POOL' even when the pool actually has participants.
+    // populate('quiniela') returns the raw Quiniela document which
+    // doesn't store entriesCount (it's only computed in getQuinielaById).
+    const uniquePoolIds = [...new Set(entries.map((e) => String(e.quiniela?._id ?? e.quiniela)))];
+    const counts = await QuinielaEntry.aggregate([
+      { $match: { quiniela: { $in: uniquePoolIds.map((s) => new mongoose.Types.ObjectId(s)) } } },
+      { $group: { _id: '$quiniela', count: { $sum: 1 } } },
+    ]);
+    const entriesCountByPool = new Map(counts.map((c) => [String(c._id), c.count]));
+
     const payload = entries.map((entry) => {
       const q = entry.toObject ? entry.toObject() : entry;
-      const qid = q.quiniela?._id ?? q.quiniela;
-      const resultsMap = resultsByQuiniela.get(String(qid)) || new Map();
+      const qid = String(q.quiniela?._id ?? q.quiniela);
+      const resultsMap = resultsByQuiniela.get(qid) || new Map();
       const totalPossible = resultsMap.size;
       const score = scoreForEntry(entry, resultsMap);
+      // Inject entriesCount into the populated quiniela object so the
+      // client-side prize-pool helpers compute the right number.
+      if (q.quiniela && typeof q.quiniela === 'object') {
+        q.quiniela.entriesCount = entriesCountByPool.get(qid) ?? 0;
+      }
       return { ...q, score, totalPossible };
     });
     res.json(payload);

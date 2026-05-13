@@ -101,27 +101,15 @@ struct QuinielaDetailView: View {
             VStack(spacing: 0) {
                 LinearGradient(colors: [.clear, Color.arenaBg], startPoint: .top, endPoint: .bottom)
                     .frame(height: 40)
-                // simple_version: read-only pool view. The "MAKE PICKS"
-                // CTA is gone — joining happens on futpools.com via Stripe.
-                // Users who hit this screen via deep link without an entry
-                // see a Safari-redirect button to the web join flow.
-                if !hasUserEntry {
-                    ArcadeButton(
-                        title: canJoin
-                            ? NSLocalizedString("▶ JOIN ON FUTPOOLS.COM", comment: "")
-                            : NSLocalizedString("POOL LOCKED", comment: ""),
-                        size: .lg,
-                        fullWidth: true,
-                        disabled: !canJoin
-                    ) {
-                        if canJoin, let url = URL(string: "https://futpools.com/pool/\(quiniela.id)") {
-                            UIApplication.shared.open(url)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 28)
-                    .background(Color.arenaBg)
-                }
+                // simple_version: NO join CTA on iOS, ever. The view is
+                // strictly read-only — pool participation is web-only via
+                // Stripe. The previous "JOIN ON FUTPOOLS.COM" Safari
+                // hand-off was visible while entries loaded (hasUserEntry
+                // briefly false), and that's exactly what user feedback
+                // flagged: 'por ningún motivo eso debe de pasar en la
+                // iOS app'. The empty container keeps the layout stable
+                // without rendering any button.
+                EmptyView()
             }
         }
         .arenaTabBarHidden()
