@@ -243,7 +243,9 @@ private struct ActivePoolCard: View {
     }
 
     var body: some View {
-        HudFrame(cut: 12, glow: hasLiveFixture ? .arenaDanger : nil) {
+        // Note: no `glow:` — see FixtureRow above for rationale. The
+        // LIVE label + red pulse on the card header is enough.
+        HudFrame(cut: 12) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     if hasLiveFixture {
@@ -320,7 +322,10 @@ private struct FixtureRow: View {
     let fixture: FeedFixture
 
     var body: some View {
-        HudFrame(cut: 10, glow: fixture.isLive ? .arenaDanger : nil) {
+        // Note: no `glow:` — the red shadow effect was too aggressive
+        // visually with multiple live games stacked. The LIVE pulse +
+        // red minute counter inside the row carry the urgency cue.
+        HudFrame(cut: 10) {
             HStack(spacing: 12) {
                 // Status / kickoff time on the left
                 statusColumn
