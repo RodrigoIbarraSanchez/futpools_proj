@@ -51,11 +51,14 @@ export function WebOnboarding() {
   const navigate = useNavigate();
   const { locale, setLocale } = useLocale();
   const [step, setStep] = useState(STEPS[0]);
-  // Selected popular team enum keys + custom api-football team IDs +
-  // selected popular league enum keys + custom league IDs. Two
-  // separate lists per type matches the iOS persistence schema.
+  // Selected popular team enum keys + popular league enum keys.
   const [teamKeys, setTeamKeys] = useState(new Set());
   const [leagueKeys, setLeagueKeys] = useState(new Set([WORLD_CUP.key]));
+  // Custom picks from the API search — keyed by api-football id so the
+  // chip metadata (name, logo, country) sticks even after the user
+  // clears the search bar. Mirrors iOS's customTeams / customLeagues.
+  const [customTeams, setCustomTeams] = useState(new Map());
+  const [customLeagues, setCustomLeagues] = useState(new Map());
 
   const advance = () => {
     const i = STEPS.indexOf(step);
@@ -66,11 +69,11 @@ export function WebOnboarding() {
     if (i > 0) setStep(STEPS[i - 1]);
   };
 
-  // Persist on each step transition so localStorage is always the
-  // source of truth for AuthContext.register to read after signup.
+  // Persist on each state change so localStorage is the source of truth
+  // for AuthContext.register/login to read after signup.
   useEffect(() => {
-    persistSelections(teamKeys, leagueKeys);
-  }, [teamKeys, leagueKeys]);
+    persistSelections(teamKeys, leagueKeys, customTeams, customLeagues);
+  }, [teamKeys, leagueKeys, customTeams, customLeagues]);
 
   return (
     <div className="onb-root">
@@ -102,6 +105,8 @@ export function WebOnboarding() {
             locale={locale}
             teamKeys={teamKeys} setTeamKeys={setTeamKeys}
             leagueKeys={leagueKeys} setLeagueKeys={setLeagueKeys}
+            customTeams={customTeams} setCustomTeams={setCustomTeams}
+            customLeagues={customLeagues} setCustomLeagues={setCustomLeagues}
             onContinue={advance}
           />
         )}
@@ -202,7 +207,11 @@ function WelcomeScreen({ locale, onContinue }) {
 // Step 2 — Teams + Leagues prefs (World Cup featured)
 // ─────────────────────────────────────────────────────────────────────
 
-function PrefsScreen({ locale, teamKeys, setTeamKeys, leagueKeys, setLeagueKeys, onContinue }) {
+function PrefsScreen({
+  locale, teamKeys, setTeamKeys, leagueKeys, setLeagueKeys,
+  customTeams, setCustomTeams, customLeagues, setCustomLeagues,
+  onContinue,
+}) {
   const toggleTeam = (key) => {
     setTeamKeys((prev) => {
       const next = new Set(prev);
@@ -217,7 +226,75 @@ function PrefsScreen({ locale, teamKeys, setTeamKeys, leagueKeys, setLeagueKeys,
       return next;
     });
   };
+  const toggleCustomTeam = (team) => {
+    // If the API returned a team whose id matches a popular enum,
+    // mirror the iOS logic and flip the enum key instead — keeps the
+    // visual selection state in sync with whichever cell rendered the
+    // pick. Otherwise add/remove from the custom map.
+    const popular = POPULAR_TEAMS.find((p) => p.id === team.id);
+    if (popular) { toggleTeam(popular.key); return; }
+    setCustomTeams((prev) => {
+      const next = new Map(prev);
+      if (next.has(team.id)) next.delete(team.id);
+      else next.set(team.id, team);
+      return next;
+    });
+  };
+  const toggleCustomLeague = (league) => {
+    const popular = [...LEAGUES, WORLD_CUP].find((p) => p.id === league.id);
+    if (popular) { toggleLeague(popular.key); return; }
+    setCustomLeagues((prev) => {
+      const next = new Map(prev);
+      if (next.has(league.id)) next.delete(league.id);
+      else next.set(league.id, league);
+      return next;
+    });
+  };
+  const removeCustomTeam = (id) => {
+    setCustomTeams((prev) => { const next = new Map(prev); next.delete(id); return next; });
+  };
+  const removeCustomLeague = (id) => {
+    setCustomLeagues((prev) => { const next = new Map(prev); next.delete(id); return next; });
+  };
   const wcSelected = leagueKeys.has(WORLD_CUP.key);
+
+  // ── Search state + debounced API calls ────────────────────────────
+  const [query, setQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [teamResults, setTeamResults] = useState([]);
+  const [leagueResults, setLeagueResults] = useState([]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setTeamResults([]); setLeagueResults([]); setIsSearching(false);
+      return undefined;
+    }
+    setIsSearching(true);
+    // 350ms debounce mirrors the iOS OnbPrefsSearchVM cancellation
+    // window — fires the request only once the user pauses typing.
+    const handle = setTimeout(async () => {
+      try {
+        const [teams, leagues] = await Promise.all([
+          api.get(`/football/teams/search?query=${encodeURIComponent(trimmed)}`),
+          api.get(`/football/leagues/search?query=${encodeURIComponent(trimmed)}`),
+        ]);
+        setTeamResults(Array.isArray(teams) ? teams : []);
+        setLeagueResults(Array.isArray(leagues) ? leagues : []);
+      } catch {
+        // Network/API failure → empty results, no banner. The user can
+        // still pick from popular sections + retry by editing the query.
+        setTeamResults([]); setLeagueResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 350);
+    return () => clearTimeout(handle);
+  }, [query]);
+
+  const hasQuery = query.trim().length >= 2;
+  const hasAnySelection = teamKeys.size > 0 || leagueKeys.size > 0
+    || customTeams.size > 0 || customLeagues.size > 0;
 
   return (
     <div className="onb-prefs">
@@ -229,71 +306,171 @@ function PrefsScreen({ locale, teamKeys, setTeamKeys, leagueKeys, setLeagueKeys,
           : "We'll show pools from your favorite teams and leagues first."}
       </p>
 
-      {/* World Cup featured row */}
-      <div className="onb-section-label">
-        ◆ {locale === 'es' ? 'DESTACADO' : 'FEATURED'}
-      </div>
-      <button
-        type="button"
-        className={'onb-wc-card' + (wcSelected ? ' active' : '')}
-        onClick={() => toggleLeague(WORLD_CUP.key)}
-      >
-        <img src={leagueLogo(WORLD_CUP.id)} alt="" className="onb-wc-logo" />
-        <div className="onb-wc-text">
-          <div className="onb-wc-title">
-            <span>{locale === 'es' ? 'COPA DEL MUNDO' : 'WORLD CUP'}</span>
-            <span className="onb-wc-badge">{locale === 'es' ? 'EN 30 DÍAS' : 'IN 30 DAYS'}</span>
-          </div>
-          <div className="onb-wc-desc">
-            {locale === 'es'
-              ? 'Las quinielas más grandes del año. No te las pierdas.'
-              : "The year's biggest pools. Don't miss out."}
-          </div>
-        </div>
-        <div className="onb-wc-check">{wcSelected ? '✓' : '+'}</div>
-      </button>
+      {/* Search bar — pinned above the sections so it's the first thing
+          the user sees on the screen. Mirrors iOS OnbPrefsScreen. */}
+      <SearchBar
+        locale={locale}
+        value={query}
+        onChange={setQuery}
+        isSearching={isSearching}
+      />
 
-      {/* Popular teams grid */}
-      <div className="onb-section-label" style={{ marginTop: 18 }}>
-        ◆ {locale === 'es' ? 'EQUIPOS POPULARES' : 'POPULAR TEAMS'}
-      </div>
-      <div className="onb-grid">
-        {POPULAR_TEAMS.map((t) => {
-          const active = teamKeys.has(t.key);
-          return (
-            <button
-              key={t.key}
-              type="button"
-              className={'onb-cell' + (active ? ' active' : '')}
-              onClick={() => toggleTeam(t.key)}
-            >
-              <img src={teamLogo(t.id)} alt="" className="onb-cell-logo" />
-              <div className="onb-cell-name">{t.name}</div>
-            </button>
-          );
-        })}
-      </div>
+      {/* "TUS SELECCIONES" pill row — survives across search clears so
+          the user never loses sight of what they've picked. Identical
+          rule as iOS: every active selection (popular + custom) shown
+          as a removable chip. */}
+      {hasAnySelection && (
+        <SelectionsRow
+          locale={locale}
+          teamKeys={teamKeys}
+          leagueKeys={leagueKeys}
+          customTeams={customTeams}
+          customLeagues={customLeagues}
+          onRemoveTeam={(key) => toggleTeam(key)}
+          onRemoveLeague={(key) => toggleLeague(key)}
+          onRemoveCustomTeam={removeCustomTeam}
+          onRemoveCustomLeague={removeCustomLeague}
+        />
+      )}
 
-      {/* Other leagues grid */}
-      <div className="onb-section-label" style={{ marginTop: 18 }}>
-        ◆ {locale === 'es' ? 'OTRAS LIGAS' : 'OTHER LEAGUES'}
-      </div>
-      <div className="onb-grid">
-        {LEAGUES.map((l) => {
-          const active = leagueKeys.has(l.key);
-          return (
-            <button
-              key={l.key}
-              type="button"
-              className={'onb-cell' + (active ? ' active' : '')}
-              onClick={() => toggleLeague(l.key)}
-            >
-              <img src={leagueLogo(l.id)} alt="" className="onb-cell-logo" />
-              <div className="onb-cell-name">{l.name}</div>
-            </button>
-          );
-        })}
-      </div>
+      {hasQuery ? (
+        // Search results — teams + leagues sections, each hidden when empty.
+        <>
+          {isSearching && teamResults.length === 0 && leagueResults.length === 0 && (
+            <div className="onb-search-loading">
+              {locale === 'es' ? 'Buscando…' : 'Searching…'}
+            </div>
+          )}
+          {!isSearching && teamResults.length === 0 && leagueResults.length === 0 && (
+            <div className="onb-search-empty">
+              <div>{locale === 'es' ? 'Sin resultados' : 'No matches'}</div>
+              <div className="onb-search-empty-sub">
+                {locale === 'es'
+                  ? 'Intenta con otro nombre de equipo o liga.'
+                  : 'Try a different team or league name.'}
+              </div>
+            </div>
+          )}
+          {teamResults.length > 0 && (
+            <>
+              <div className="onb-section-label">
+                ◆ {locale === 'es' ? 'EQUIPOS' : 'TEAMS'}
+              </div>
+              <div className="onb-grid">
+                {teamResults.map((t) => {
+                  const popular = POPULAR_TEAMS.find((p) => p.id === t.id);
+                  const active = popular ? teamKeys.has(popular.key) : customTeams.has(t.id);
+                  return (
+                    <button
+                      key={`team-${t.id}`}
+                      type="button"
+                      className={'onb-cell' + (active ? ' active' : '')}
+                      onClick={() => toggleCustomTeam(t)}
+                    >
+                      {t.logo
+                        ? <img src={t.logo} alt="" className="onb-cell-logo" />
+                        : <span className="onb-cell-fallback">⚽</span>}
+                      <div className="onb-cell-name">{t.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {leagueResults.length > 0 && (
+            <>
+              <div className="onb-section-label" style={{ marginTop: 18 }}>
+                ◆ {locale === 'es' ? 'LIGAS' : 'LEAGUES'}
+              </div>
+              <div className="onb-grid">
+                {leagueResults.map((l) => {
+                  const popular = [...LEAGUES, WORLD_CUP].find((p) => p.id === l.id);
+                  const active = popular ? leagueKeys.has(popular.key) : customLeagues.has(l.id);
+                  return (
+                    <button
+                      key={`league-${l.id}`}
+                      type="button"
+                      className={'onb-cell' + (active ? ' active' : '')}
+                      onClick={() => toggleCustomLeague(l)}
+                    >
+                      {l.logo
+                        ? <img src={l.logo} alt="" className="onb-cell-logo" />
+                        : <span className="onb-cell-fallback">🏆</span>}
+                      <div className="onb-cell-name">{l.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </>
+      ) : (
+        // No query → curated popular sections (World Cup featured + grid).
+        <>
+          <div className="onb-section-label">
+            ◆ {locale === 'es' ? 'DESTACADO' : 'FEATURED'}
+          </div>
+          <button
+            type="button"
+            className={'onb-wc-card' + (wcSelected ? ' active' : '')}
+            onClick={() => toggleLeague(WORLD_CUP.key)}
+          >
+            <img src={leagueLogo(WORLD_CUP.id)} alt="" className="onb-wc-logo" />
+            <div className="onb-wc-text">
+              <div className="onb-wc-title">
+                <span>{locale === 'es' ? 'COPA DEL MUNDO' : 'WORLD CUP'}</span>
+                <span className="onb-wc-badge">{locale === 'es' ? 'EN 30 DÍAS' : 'IN 30 DAYS'}</span>
+              </div>
+              <div className="onb-wc-desc">
+                {locale === 'es'
+                  ? 'Las quinielas más grandes del año. No te las pierdas.'
+                  : "The year's biggest pools. Don't miss out."}
+              </div>
+            </div>
+            <div className="onb-wc-check">{wcSelected ? '✓' : '+'}</div>
+          </button>
+
+          <div className="onb-section-label" style={{ marginTop: 18 }}>
+            ◆ {locale === 'es' ? 'EQUIPOS POPULARES' : 'POPULAR TEAMS'}
+          </div>
+          <div className="onb-grid">
+            {POPULAR_TEAMS.map((t) => {
+              const active = teamKeys.has(t.key);
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  className={'onb-cell' + (active ? ' active' : '')}
+                  onClick={() => toggleTeam(t.key)}
+                >
+                  <img src={teamLogo(t.id)} alt="" className="onb-cell-logo" />
+                  <div className="onb-cell-name">{t.name}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="onb-section-label" style={{ marginTop: 18 }}>
+            ◆ {locale === 'es' ? 'OTRAS LIGAS' : 'OTHER LEAGUES'}
+          </div>
+          <div className="onb-grid">
+            {LEAGUES.map((l) => {
+              const active = leagueKeys.has(l.key);
+              return (
+                <button
+                  key={l.key}
+                  type="button"
+                  className={'onb-cell' + (active ? ' active' : '')}
+                  onClick={() => toggleLeague(l.key)}
+                >
+                  <img src={leagueLogo(l.id)} alt="" className="onb-cell-logo" />
+                  <div className="onb-cell-name">{l.name}</div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <div className="onb-footer">
         <button className="onb-cta-primary" onClick={onContinue}>
@@ -301,6 +478,104 @@ function PrefsScreen({ locale, teamKeys, setTeamKeys, leagueKeys, setLeagueKeys,
         </button>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Search bar — controlled input with a clear (×) button on the right
+// and a small spinner-style label when the API is in flight.
+// ─────────────────────────────────────────────────────────────────────
+
+function SearchBar({ locale, value, onChange, isSearching }) {
+  return (
+    <div className="onb-search">
+      <span className="onb-search-icon">⌕</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={locale === 'es' ? 'Busca equipos o ligas' : 'Search teams or leagues'}
+        className="onb-search-input"
+      />
+      {isSearching && <span className="onb-search-spinner">…</span>}
+      {value && (
+        <button
+          type="button"
+          className="onb-search-clear"
+          onClick={() => onChange('')}
+          aria-label="clear"
+        >×</button>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Horizontal pill row of every currently-selected team/league. Always
+// visible whenever the user has any pick, so search-and-clear doesn't
+// visually erase their previous choices.
+// ─────────────────────────────────────────────────────────────────────
+
+function SelectionsRow({
+  locale, teamKeys, leagueKeys, customTeams, customLeagues,
+  onRemoveTeam, onRemoveLeague, onRemoveCustomTeam, onRemoveCustomLeague,
+}) {
+  const teamPills = POPULAR_TEAMS.filter((t) => teamKeys.has(t.key));
+  // Include World Cup in the leagues list since it lives separately
+  // from the LEAGUES array but the user does select it as a league.
+  const leaguePills = [WORLD_CUP, ...LEAGUES].filter((l) => leagueKeys.has(l.key));
+  const customTeamList = Array.from(customTeams.values());
+  const customLeagueList = Array.from(customLeagues.values());
+  return (
+    <>
+      <div className="onb-section-label">
+        ◆ {locale === 'es' ? 'TUS SELECCIONES' : 'YOUR SELECTIONS'}
+      </div>
+      <div className="onb-selections">
+        {teamPills.map((t) => (
+          <SelectionPill
+            key={`pop-team-${t.key}`}
+            label={t.name}
+            logo={teamLogo(t.id)}
+            onRemove={() => onRemoveTeam(t.key)}
+          />
+        ))}
+        {leaguePills.map((l) => (
+          <SelectionPill
+            key={`pop-league-${l.key}`}
+            label={l.name}
+            logo={leagueLogo(l.id)}
+            onRemove={() => onRemoveLeague(l.key)}
+          />
+        ))}
+        {customTeamList.map((t) => (
+          <SelectionPill
+            key={`custom-team-${t.id}`}
+            label={t.name}
+            logo={t.logo}
+            onRemove={() => onRemoveCustomTeam(t.id)}
+          />
+        ))}
+        {customLeagueList.map((l) => (
+          <SelectionPill
+            key={`custom-league-${l.id}`}
+            label={l.name}
+            logo={l.logo}
+            onRemove={() => onRemoveCustomLeague(l.id)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function SelectionPill({ label, logo, onRemove }) {
+  return (
+    <button type="button" className="onb-selection-pill" onClick={onRemove}>
+      {logo && <img src={logo} alt="" className="onb-selection-logo" />}
+      <span className="onb-selection-name">{label}</span>
+      <span className="onb-selection-x">×</span>
+    </button>
   );
 }
 
@@ -369,19 +644,21 @@ function ProgressBar({ current, total }) {
   );
 }
 
-function persistSelections(teamKeys, leagueKeys) {
+function persistSelections(teamKeys, leagueKeys, customTeams, customLeagues) {
   // Mirrors iOS OnboardingState.persist():
-  //   onboardingTeams       — popular team enum rawValues (e.g. "realMadrid")
-  //   onboardingLeagues     — popular league enum rawValues
-  //   onboardingCustomTeamIDs   — api-football ids of custom search picks (web doesn't surface
-  //                                custom search yet — list stays empty for now)
-  //   onboardingCustomLeagueIDs — same
-  // AuthContext.register reads them back after signup.
+  //   onboardingTeams           — popular team enum rawValues
+  //   onboardingLeagues         — popular league enum rawValues
+  //   onboardingCustomTeamIDs   — api-football ids of custom search picks
+  //   onboardingCustomLeagueIDs — same for leagues
+  // AuthContext.register reads them back after signup and ships to
+  // /users/me/onboarding with the 'api:<id>' prefix for customs.
   try {
     localStorage.setItem('onboardingTeams', JSON.stringify(Array.from(teamKeys)));
     localStorage.setItem('onboardingLeagues', JSON.stringify(Array.from(leagueKeys)));
-    localStorage.setItem('onboardingCustomTeamIDs', '[]');
-    localStorage.setItem('onboardingCustomLeagueIDs', '[]');
+    localStorage.setItem('onboardingCustomTeamIDs',
+      JSON.stringify(customTeams ? Array.from(customTeams.keys()) : []));
+    localStorage.setItem('onboardingCustomLeagueIDs',
+      JSON.stringify(customLeagues ? Array.from(customLeagues.keys()) : []));
   } catch {
     // localStorage can throw on Safari private mode — non-blocking.
   }
@@ -622,6 +899,85 @@ const ONB_CSS = `
 .onb-section-label {
   font-family: var(--fp-mono); font-size: 10px; font-weight: 700;
   letter-spacing: 2px; color: var(--fp-text-muted); margin: 12px 0 8px;
+}
+
+/* Search bar */
+.onb-search {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px;
+  background: var(--fp-surface);
+  border: 1px solid var(--fp-stroke);
+  clip-path: var(--fp-clip-sm);
+  margin-bottom: 14px;
+  transition: border-color 0.15s;
+}
+.onb-search:focus-within { border-color: var(--fp-primary); }
+.onb-search-icon {
+  font-size: 16px; color: var(--fp-text-dim); flex-shrink: 0;
+}
+.onb-search-input {
+  flex: 1; height: 44px;
+  background: transparent; border: none; outline: none;
+  color: var(--fp-text); font-family: var(--fp-body); font-size: 14px;
+}
+.onb-search-input::placeholder { color: var(--fp-text-faint); }
+.onb-search-spinner {
+  font-family: var(--fp-mono); font-size: 16px; font-weight: 800;
+  color: var(--fp-primary); animation: onb-spin 1s ease-in-out infinite;
+}
+@keyframes onb-spin {
+  0%, 100% { opacity: 0.4; } 50% { opacity: 1; }
+}
+.onb-search-clear {
+  width: 22px; height: 22px;
+  background: var(--fp-bg2); border: 1px solid var(--fp-stroke);
+  border-radius: 50%; cursor: pointer;
+  color: var(--fp-text-muted); font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.onb-search-clear:hover { color: var(--fp-text); border-color: var(--fp-text-muted); }
+.onb-search-loading, .onb-search-empty {
+  text-align: center; padding: 28px 16px;
+  font-family: var(--fp-mono); font-size: 12px;
+  color: var(--fp-text-dim);
+}
+.onb-search-empty > div:first-child {
+  font-family: var(--fp-display); font-weight: 800; font-size: 14px;
+  color: var(--fp-text); margin-bottom: 4px;
+}
+.onb-search-empty-sub {
+  font-family: var(--fp-mono); font-size: 11px; color: var(--fp-text-faint);
+}
+
+/* Selections pill row — horizontal scroll on mobile, wraps on desktop */
+.onb-selections {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 8px;
+}
+.onb-selection-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  background: var(--fp-primary); color: var(--fp-on-primary);
+  border: none; cursor: pointer;
+  clip-path: var(--fp-clip-sm);
+  font-family: var(--fp-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.4px;
+  max-width: 200px;
+}
+.onb-selection-pill:hover { filter: brightness(1.05); }
+.onb-selection-logo {
+  width: 16px; height: 16px; object-fit: contain; flex-shrink: 0;
+}
+.onb-selection-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.onb-selection-x {
+  font-size: 14px; font-weight: 900; opacity: 0.85; flex-shrink: 0;
+}
+
+/* Cell fallback when a search result has no logo URL */
+.onb-cell-fallback {
+  font-size: 28px; opacity: 0.55; line-height: 1;
 }
 
 .onb-wc-card {
