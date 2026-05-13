@@ -78,11 +78,13 @@ body {
 }
 
 /* The app is mobile-first and lives inside a 430px-wide "phone frame" on
-   desktop. The marketing landing, however, needs the full viewport, so we
-   opt it out of the frame via `:has()` — when #root contains the landing
-   subtree we skip the max-width clamp entirely. */
+   desktop. Full-bleed surfaces (marketing landing, onboarding) opt out
+   of the frame via :has() — when #root contains one of those subtrees
+   we skip the max-width clamp entirely so they can use the whole
+   viewport for desktop layouts.
+   New full-bleed pages: add their root class to the :not() selector. */
 @media (min-width: 430px) {
-  #root:not(:has(.fp-landing)) {
+  #root:not(:has(.fp-landing)):not(:has(.onb-root)) {
     max-width: 430px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(33, 226, 140, 0.06), 0 0 0 1px var(--fp-stroke);
