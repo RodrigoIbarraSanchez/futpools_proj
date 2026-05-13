@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -12,23 +12,19 @@ import {
 export function QuinielaPick() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { token } = useAuth();
   const { locale } = useLocale();
 
-  // When `?entryId=<id>` is present we're editing an existing entry rather
-  // than creating a new one. The screen reuses the same UI — only the title,
-  // the HTTP verb, and the pre-fill on mount differ.
-  const editEntryId = searchParams.get('entryId');
-  const isEditing = Boolean(editEntryId);
-
+  // simple_version: picks happen exactly once, at checkout. The legacy
+  // edit-an-existing-entry path is gone (PUT /quinielas/:id/entries/:entryId
+  // is unmounted in simple mode), so this screen only handles the
+  // "fresh entry, then pay" flow.
   const [quiniela, setQuiniela] = useState(null);
   const [picks, setPicks] = useState({});
   const [focused, setFocused] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -38,19 +34,6 @@ export function QuinielaPick() {
         const pool = await api.get(`/quinielas/${id}`);
         if (cancelled) return;
         setQuiniela(pool);
-
-        // Edit mode: hydrate picks from the existing entry so the user sees
-        // their previous choices highlighted instead of a blank slate.
-        if (isEditing && token) {
-          const entries = await api.get(`/quinielas/${id}/entries/me`, token);
-          const entry = (Array.isArray(entries) ? entries : [])
-            .find((e) => String(e._id) === String(editEntryId));
-          if (entry && !cancelled) {
-            const seed = {};
-            for (const p of (entry.picks || [])) seed[p.fixtureId] = p.pick;
-            setPicks(seed);
-          }
-        }
       } catch {
         if (!cancelled) setQuiniela(null);
       } finally {
@@ -58,12 +41,13 @@ export function QuinielaPick() {
       }
     })();
     return () => { cancelled = true; };
-  }, [id, isEditing, editEntryId, token]);
+  }, [id]);
 
   const fixtures = quiniela?.fixtures || [];
   const count = fixtures.filter(f => ['1','X','2'].includes(picks[f.fixtureId])).length;
   const total = fixtures.length;
   const complete = count === total && total > 0;
+  const feeMXN = ((quiniela?.entryFeeMXN ?? 5000) / 100).toLocaleString('es-MX', { minimumFractionDigits: 0 });
 
   const setPick = (fixtureId, value, nextIndex) => {
     setPicks(prev => ({ ...prev, [fixtureId]: value }));
@@ -71,6 +55,16 @@ export function QuinielaPick() {
     if (next) setTimeout(() => setFocused(next.fixtureId), 120);
   };
 
+  /**
+   * Hand off to Stripe Checkout. The backend creates the session with picks
+   * embedded in metadata; on payment success the webhook reconstructs and
+   * persists the QuinielaEntry, then redirects the browser back to
+   * /pool/:id?paid=1 where PoolDetail shows the success state.
+   *
+   * Note: we don't need to retain picks in localStorage. If the user
+   * abandons checkout, returning to this page is a fresh entry — Stripe
+   * sessions expire in 24h and we never created a server-side entry.
+   */
   const handleSubmit = async () => {
     if (!token) { setError(t(locale, 'Please sign in to submit picks.')); return; }
     setError(null);
@@ -81,16 +75,12 @@ export function QuinielaPick() {
           .filter(f => ['1','X','2'].includes(picks[f.fixtureId]))
           .map(f => ({ fixtureId: f.fixtureId, pick: picks[f.fixtureId] })),
       };
-      if (isEditing) {
-        await api.put(`/quinielas/${id}/entries/${editEntryId}`, payload, token);
-      } else {
-        await api.post(`/quinielas/${id}/entries`, payload, token);
-      }
-      setSuccess(true);
-      setTimeout(() => navigate(-1), 1800);
+      const { url } = await api.post(`/pools/${id}/checkout-session`, payload, token);
+      if (!url) throw new Error('Stripe URL missing');
+      // Full-page redirect — Stripe Checkout is hosted on their domain.
+      window.location.href = url;
     } catch (e) {
       setError(e.message);
-    } finally {
       setSubmitting(false);
     }
   };
@@ -119,7 +109,7 @@ export function QuinielaPick() {
             fontFamily: 'var(--fp-display)', fontSize: 12, letterSpacing: 3,
             fontWeight: 700,
           }}>
-            {isEditing ? t(locale, 'EDIT YOUR PICKS') : t(locale, 'MAKE YOUR PICKS')}
+            {t(locale, 'MAKE YOUR PICKS')}
           </div>
           <div style={{ width: 32 }} />
         </div>
@@ -257,34 +247,12 @@ export function QuinielaPick() {
             disabled={!complete || submitting}
             onClick={handleSubmit}
           >
-            {submitting ? t(locale, 'SUBMITTING…')
-              : complete ? (isEditing ? t(locale, '▶ SAVE CHANGES') : t(locale, '▶ SUBMIT PICKS'))
+            {submitting ? t(locale, 'REDIRECTING TO PAYMENT…')
+              : complete ? `▶ ${t(locale, 'PAY')} $${feeMXN} MXN`
               : `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`}
           </ArcadeButton>
         </div>
       </div>
-
-      {/* Success overlay */}
-      {success && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div className="fp-pop-in" style={{ textAlign: 'center', padding: 28 }}>
-            <div style={{ fontSize: 72, marginBottom: 10, filter: 'drop-shadow(0 0 20px var(--fp-primary))' }}>🏆</div>
-            <div style={{
-              fontFamily: 'var(--fp-display)', fontSize: 28, fontWeight: 900,
-              color: 'var(--fp-primary)', letterSpacing: 3, marginBottom: 6,
-            }}>{isEditing ? t(locale, 'PICKS UPDATED!') : t(locale, 'PICKS LOCKED!')}</div>
-            <div style={{
-              fontFamily: 'var(--fp-body)', fontSize: 12,
-              color: 'var(--fp-text-dim)',
-            }}>{t(locale, 'Picks saved')}</div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

@@ -1,4 +1,10 @@
-// TabBar.jsx — 4-tab Arena bottom nav with an elevated centre "+" create button.
+// TabBar.jsx — bottom nav for simple_version.
+//
+// Reduced from the master 4-tabs+FAB ("POOLS · ENTRIES · [+] · SHOP · PROFILE")
+// to a 3-tab layout (POOLS · PROFILE, plus an admin-only ADMIN tab).
+// The "+" creation FAB is gone — pool creation is admin-only and reached via
+// /admin/pools/new from the Account page; regular users have no creation
+// surface at all in simple_version.
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
@@ -6,17 +12,6 @@ import { useAuth } from '../context/AuthContext';
 import { t } from '../i18n/translations';
 
 export const TAB_BAR_HEIGHT = 88;
-
-// Mirrors the iOS MainTabView: tabs split around a centre create FAB so the
-// primary action lives inside the bar itself (Strava/Instagram pattern).
-const LEFT_TABS = [
-  { path: '/',        key: 'POOLS',    icon: '◆' },
-  { path: '/entries', key: 'ENTRIES',  icon: '▤' },
-];
-const RIGHT_TABS = [
-  { path: '/shop',    key: 'SHOP',     icon: '$' },
-  { path: '/account', key: 'PROFILE',  icon: '◉' },
-];
 
 const CLIP_HUD_SM =
   'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)';
@@ -27,12 +22,21 @@ export function ArenaTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { locale } = useLocale();
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
+
+  // Admins get the extra ADMIN tab pointing to the create-pool form. The
+  // backend gates POST /quinielas to admin, so non-admins never see the tab
+  // (and would be bounced by AdminRoute even if they navigated by URL).
+  const tabs = [
+    { path: '/',        key: 'POOLS',    icon: '◆' },
+    { path: '/account', key: 'PROFILE',  icon: '◉' },
+  ];
+  if (user?.isAdmin) {
+    tabs.push({ path: '/admin/pools/new', key: 'ADMIN', icon: '⚙' });
+  }
 
   const activeFor = (path) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
-
-  const isCreateActive = location.pathname.startsWith('/create');
 
   const renderTab = (tab) => {
     const isActive = activeFor(tab.path);
@@ -84,7 +88,6 @@ export function ArenaTabBar() {
         maxWidth: 430 - 24,
         margin: '0 auto',
         zIndex: 50,
-        // container sits around the bar so the lifted centre button isn't clipped
       }}
     >
       <nav
@@ -99,40 +102,8 @@ export function ArenaTabBar() {
           alignItems: 'stretch',
         }}
       >
-        {LEFT_TABS.map(renderTab)}
-        {/* Placeholder keeps spacing symmetric; real "+" is absolutely lifted */}
-        <div style={{ flex: 1, minWidth: 56 }} />
-        {RIGHT_TABS.map(renderTab)}
+        {tabs.map(renderTab)}
       </nav>
-
-      {/* Elevated centre create button */}
-      {isAuthenticated && (
-        <button
-          type="button"
-          onClick={() => navigate('/create')}
-          aria-label={t(locale, 'Create pool')}
-          style={{
-            position: 'absolute',
-            left: '50%',
-            top: -22,
-            transform: 'translateX(-50%)',
-            width: 56,
-            height: 56,
-            background: 'var(--fp-primary)',
-            color: 'var(--fp-on-primary)',
-            border: '3px solid var(--fp-bg)',
-            clipPath: CLIP_HUD_MD,
-            cursor: 'pointer',
-            fontFamily: 'var(--fp-display)',
-            fontSize: 24,
-            fontWeight: 900,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 6px 22px rgba(33,226,140,0.55)',
-            outline: isCreateActive ? '2px solid var(--fp-primary-soft, var(--fp-primary))' : 'none',
-            outlineOffset: isCreateActive ? 2 : 0,
-          }}
-        >+</button>
-      )}
     </div>
   );
 }

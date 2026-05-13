@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -8,7 +8,6 @@ import { AppBackground } from '../arena-ui/AppBackground';
 import {
   HudFrame, HudChip, LiveDot, TeamCrest, ArcadeButton, SectionLabel, IconButton,
 } from '../arena-ui/primitives';
-import { InsufficientBalanceModal } from '../components/InsufficientBalanceModal';
 
 function ShareButton({ pool }) {
   // Pull locale from context — previously referenced as a free variable
@@ -117,6 +116,7 @@ export function PoolDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, token } = useAuth();
   const { locale } = useLocale();
   const [quiniela, setQuiniela] = useState(null);
@@ -124,9 +124,12 @@ export function PoolDetail() {
   const [tab, setTab] = useState('fixtures');
   const [entryCount, setEntryCount] = useState(0);
   const [leaderboard, setLeaderboard] = useState(null);
-  const [showInsufficient, setShowInsufficient] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showManage, setShowManage] = useState(false);
+  // simple_version: if Stripe redirected the user back here with ?paid=1,
+  // show a one-shot success banner. We strip the query param after first
+  // render so back-button/refresh don't replay the toast.
+  const justPaid = searchParams.get('paid') === '1';
   // Map fixtureId → "1"|"X"|"2" so we can pass the user's pick into LiveMatch
   // when they tap a fixture. Mirrors iOS loadMyPicks.
   const [myPicks, setMyPicks] = useState({});
@@ -136,9 +139,25 @@ export function PoolDetail() {
   // is stable and polling wastes quota.
   const [liveByFixture, setLiveByFixture] = useState({});
 
-  const userBalance = user?.balance ?? 0;
-  const entryCost = quiniela ? parseEntryCost(quiniela.cost) : 0;
-  const hasEnoughBalance = userBalance >= entryCost;
+  // Pool entry fee in MXN — Stripe Checkout charges in cents, schema
+  // stores cents, we display pesos. Default 5000 cents = $50 MXN.
+  const feeMXN = ((quiniela?.entryFeeMXN ?? 5000) / 100).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+  // simple_version: one entry per user per pool. The button changes wording
+  // when the user is already in.
+  const alreadyEntered = entryCount > 0;
+
+  // Strip ?paid=1 once we've consumed it. The success banner stays on
+  // screen via state (justPaid captured above) but the URL no longer
+  // carries the flag, so reload/back-button don't double-fire.
+  useEffect(() => {
+    if (justPaid) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('paid');
+      next.delete('session_id');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Creator-only admin surface is gated by ownership AND "pool hasn't started
   // yet" (same gate the backend enforces). `isScheduled` mirrors the server's
@@ -270,7 +289,9 @@ export function PoolDetail() {
   const handleJoin = () => {
     if (!canJoin()) return;
     if (!user) { navigate('/login', { state: { from: location.pathname } }); return; }
-    if (entryCost > 0 && !hasEnoughBalance) { setShowInsufficient(true); return; }
+    // simple_version: no balance gating — payment is per-entry via Stripe.
+    // The pick screen creates the checkout session; we just navigate.
+    if (alreadyEntered) return;  // button shouldn't be clickable, defensive
     navigate(`/pool/${id}/pick`);
   };
 
@@ -544,23 +565,38 @@ export function PoolDetail() {
           <ArcadeButton
             size="lg"
             fullWidth
-            disabled={!canJoin()}
+            disabled={!canJoin() || alreadyEntered}
             onClick={handleJoin}
           >
-            {canJoin()
-              ? `▶ ${entryCount > 0 ? t(locale, 'NEW ENTRY') : t(locale, 'MAKE PICKS')} · ${quiniela.cost}`
-              : t(locale, 'POOL LOCKED')}
+            {!canJoin()
+              ? t(locale, 'POOL LOCKED')
+              : alreadyEntered
+                ? `✓ ${t(locale, "YOU'RE IN")}`
+                : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`}
           </ArcadeButton>
         </div>
       </div>
 
-      {showInsufficient && (
-        <InsufficientBalanceModal
-          entryCost={entryCost}
-          currentBalance={userBalance}
-          onRecharge={() => { setShowInsufficient(false); navigate('/shop'); }}
-          onClose={() => setShowInsufficient(false)}
-        />
+      {/* One-shot Stripe-return success banner. Anchored above the sticky
+          submit so it doesn't fight the layout. The URL ?paid=1 is stripped
+          on mount so refresh/back-button won't reshow it. */}
+      {justPaid && (
+        <div style={{
+          position: 'fixed',
+          top: 12, left: 12, right: 12,
+          maxWidth: 430 - 24, margin: '0 auto',
+          zIndex: 100,
+          padding: '12px 16px',
+          background: 'color-mix(in srgb, var(--fp-primary) 18%, var(--fp-bg))',
+          border: '1px solid var(--fp-primary)',
+          clipPath: 'var(--fp-clip-sm)',
+          color: 'var(--fp-primary)',
+          fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800,
+          letterSpacing: 1.5, textAlign: 'center',
+          boxShadow: '0 8px 24px rgba(33,226,140,0.35)',
+        }}>
+          ✓ {t(locale, 'PAYMENT CONFIRMED — YOU ARE IN!')}
+        </div>
       )}
 
       {showRules && (

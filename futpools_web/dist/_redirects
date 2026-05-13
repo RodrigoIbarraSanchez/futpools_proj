@@ -1,3 +1,7 @@
+# SPA fallback so React Router can handle deep-links client-side.
+# Note: Render Static Sites silently ignores external URLs in _redirects
+# (neither 200! nor 3xx work). Share-preview routes /c/* and /p/* are
+# served directly by api.futpools.com — see APIClient.swift / share helpers.
 /p/*    /index.html   200
 /c/*    /index.html   200
 /*      /index.html   200

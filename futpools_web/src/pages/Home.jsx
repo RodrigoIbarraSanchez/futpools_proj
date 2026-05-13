@@ -56,7 +56,12 @@ function formatDate(d) {
 // ──────────────────────────────────────────────────────────────
 // Header — pool title + real coin balance
 // ──────────────────────────────────────────────────────────────
-function ArenaHeader({ coins, tickets, locale, onJoinCode }) {
+// simple_version header: just the POOLS title + the join-by-code button.
+// Coins/Tickets badges (dual-currency UI) are removed — the simplified
+// product has neither economy. Join-by-code stays so users can still
+// reach a private pool from a shared code without going through the
+// /p/:code deep link.
+function ArenaHeader({ locale, onJoinCode }) {
   return (
     <div style={{
       padding: '14px 16px 10px',
@@ -88,65 +93,6 @@ function ArenaHeader({ coins, tickets, locale, onJoinCode }) {
           }}
         >#</button>
       )}
-      {/* Dual currency: Tickets first (cyan), Coins second (gold). The
-          visual difference makes the legal wall obvious — the user reads
-          them as two separate things, not interchangeable. */}
-      <TicketBadge value={tickets} />
-      <CoinBadge value={coins} />
-    </div>
-  );
-}
-
-function CoinBadge({ value }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 6,
-      padding: '6px 10px',
-      background: 'color-mix(in srgb, var(--fp-gold) 15%, transparent)',
-      clipPath: 'var(--fp-clip-sm)',
-    }}>
-      <div style={{
-        width: 14, height: 14, borderRadius: '50%',
-        background: 'radial-gradient(circle at 35% 35%, var(--fp-gold), #B88A1F)',
-        boxShadow: '0 0 6px rgba(255,209,102,0.5)',
-      }} />
-      <span style={{
-        fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
-        color: 'var(--fp-gold)',
-      }}>
-        {Number(value).toLocaleString()}
-      </span>
-    </div>
-  );
-}
-
-function TicketBadge({ value }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 5,
-      padding: '6px 10px',
-      background: 'color-mix(in srgb, var(--fp-accent) 14%, transparent)',
-      border: '1px solid color-mix(in srgb, var(--fp-accent) 30%, transparent)',
-      clipPath: 'var(--fp-clip-sm)',
-    }}
-    aria-label={`${value} Tickets`}
-    title={`${value} Tickets`}
-    >
-      {/* SVG ticket glyph — same accent cyan that flags interactive,
-          earn-only currency throughout the app. */}
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-           style={{ filter: 'drop-shadow(0 0 3px color-mix(in srgb, var(--fp-accent) 45%, transparent))' }}>
-        <path
-          d="M3 7a1 1 0 011-1h16a1 1 0 011 1v3a2 2 0 100 4v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3a2 2 0 100-4V7z"
-          fill="currentColor" style={{ color: 'var(--fp-accent)' }}
-        />
-      </svg>
-      <span style={{
-        fontFamily: 'var(--fp-mono)', fontSize: 13, fontWeight: 700,
-        color: 'var(--fp-accent)',
-      }}>
-        {Number(value || 0).toLocaleString()}
-      </span>
     </div>
   );
 }
@@ -548,7 +494,7 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
 
 // ──────────────────────────────────────────────────────────────
 export function Home() {
-  const { user, token, fetchUser } = useAuth();
+  const { user, token } = useAuth();
   const { locale } = useLocale();
   const [quinielas, setQuinielas] = useState([]);
   const [liveFixtures, setLiveFixtures] = useState({});
@@ -668,8 +614,6 @@ export function Home() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <ArenaHeader
-        coins={user?.balance ?? 0}
-        tickets={user?.tickets ?? 0}
         locale={locale}
         onJoinCode={() => setShowJoinByCode(true)}
       />
@@ -691,9 +635,9 @@ export function Home() {
         <QuickPlayHero quiniela={quickPlayPools[0]} liveFixtures={liveFixtures} locale={locale} />
       ) : null}
 
-      <DailyPickCard locale={locale} token={token} onTicketAwarded={fetchUser} />
-
-      <RewardedAdButton locale={locale} token={token} onTicketAwarded={fetchUser} />
+      {/* Daily Pick + Rewarded Ad were Tickets-economy faucets. simple_version
+          drops the Tickets currency entirely so both teasers go away. The
+          backend services still run for master compatibility. */}
 
       <FilterStrip
         active={activeFilter}

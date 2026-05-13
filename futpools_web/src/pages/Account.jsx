@@ -26,7 +26,9 @@ export function Account() {
 
   const displayName = (user?.displayName || '').trim() || user?.email || 'Player';
   const username = user?.username || (user?.email?.split('@')[0] ?? 'player');
-  const balance = user?.balance ?? 0;
+  // simple_version: balance/tickets are not exposed in /users/me — schema
+  // still carries them but the dual-currency UI is gone.
+  const isAdmin = !!user?.isAdmin;
 
   useEffect(() => {
     if (!token) return;
@@ -143,33 +145,64 @@ export function Account() {
         </Link>
       </div>
 
-      {/* Balance → Shop */}
-      <div style={{ padding: '0 16px 14px' }}>
-        <Link to="/shop" style={{ textDecoration: 'none' }}>
-          <HudFrame bg="linear-gradient(90deg, color-mix(in srgb, var(--fp-gold) 15%, transparent), var(--fp-surface) 60%)">
-            <div style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'radial-gradient(circle at 35% 35%, var(--fp-gold), #B88A1F)',
-                boxShadow: '0 0 10px rgba(255,209,102,0.5)',
-              }} />
-              <div style={{ flex: 1 }}>
+      {/* Admin tools — only visible to ADMIN_EMAILS allowlist members.
+          Backend gates the corresponding routes (POST /quinielas,
+          /admin/payouts) so this is a UX shortcut rather than a security
+          surface. Phase 9 fills in the real payouts dashboard. */}
+      {isAdmin && (
+        <div style={{ padding: '0 16px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Link to="/admin/pools/new" style={{ textDecoration: 'none' }}>
+            <HudFrame bg="linear-gradient(90deg, color-mix(in srgb, var(--fp-primary) 15%, transparent), var(--fp-surface) 60%)">
+              <div style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{
-                  fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
-                  color: 'var(--fp-text-muted)',
-                }}>{t(locale, 'BALANCE')}</div>
-                <div style={{
-                  fontFamily: 'var(--fp-display)', fontSize: 22, fontWeight: 800,
-                  color: 'var(--fp-gold)', letterSpacing: 0.5,
-                }}>
-                  {Number(balance).toLocaleString()} COINS
+                  width: 36, height: 36,
+                  background: 'var(--fp-primary)',
+                  clipPath: 'var(--fp-clip-sm)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--fp-display)', fontSize: 22, fontWeight: 900,
+                  color: 'var(--fp-on-primary)',
+                }}>+</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
+                    color: 'var(--fp-text-muted)',
+                  }}>{t(locale, 'ADMIN')}</div>
+                  <div style={{
+                    fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 800,
+                    color: 'var(--fp-text)', letterSpacing: 0.5,
+                  }}>{t(locale, 'CREATE POOL')}</div>
                 </div>
+                <span style={{ color: 'var(--fp-text-muted)', fontSize: 22 }}>›</span>
               </div>
-              <ArcadeButton size="sm" variant="accent">+ TOP UP</ArcadeButton>
-            </div>
-          </HudFrame>
-        </Link>
-      </div>
+            </HudFrame>
+          </Link>
+          <Link to="/admin/payouts" style={{ textDecoration: 'none' }}>
+            <HudFrame>
+              <div style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36,
+                  background: 'var(--fp-surface-alt)',
+                  border: '1px solid var(--fp-stroke-strong)',
+                  clipPath: 'var(--fp-clip-sm)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18,
+                }}>💸</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
+                    color: 'var(--fp-text-muted)',
+                  }}>{t(locale, 'ADMIN')}</div>
+                  <div style={{
+                    fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 800,
+                    color: 'var(--fp-text)', letterSpacing: 0.5,
+                  }}>{t(locale, 'PENDING PAYOUTS')}</div>
+                </div>
+                <span style={{ color: 'var(--fp-text-muted)', fontSize: 22 }}>›</span>
+              </div>
+            </HudFrame>
+          </Link>
+        </div>
+      )}
 
       {/* Achievements */}
       <div style={{ padding: '0 16px 14px' }}>

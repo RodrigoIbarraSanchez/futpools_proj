@@ -7,19 +7,13 @@ import { MainTabs } from './pages/MainTabs';
 import { Home } from './pages/Home';
 import { PoolDetail } from './pages/PoolDetail';
 import { QuinielaPick } from './pages/QuinielaPick';
-import { MyEntries } from './pages/MyEntries';
 import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
-import { Recharge } from './pages/Recharge';
 import { CreatePool, InviteResolver } from './pages/CreatePool';
 import { LiveMatch } from './pages/LiveMatch';
 import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
-import { SignupBonusModal } from './components/SignupBonusModal';
 import { LandingPage } from './pages/LandingPage';
-import { Challenges } from './pages/Challenges';
-import { ChallengeCreate } from './pages/ChallengeCreate';
-import { ChallengeDetail, ChallengeInviteResolver } from './pages/ChallengeDetail';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -36,11 +30,29 @@ function PublicRoute({ children }) {
 }
 
 /**
+ * Admin-only routes — pool creation, payouts dashboard. The simple_version
+ * product spec keeps creation behind ADMIN_EMAILS (matched server-side too,
+ * so this is a UX gate rather than a security boundary). Non-admin users
+ * who somehow land on /admin/* get bounced to home.
+ */
+function AdminRoute({ children }) {
+  const { isAuthenticated, ready, user } = useAuth();
+  if (!ready) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!user?.isAdmin) return <Navigate to="/" replace />;
+  return children;
+}
+
+/**
  * `/` renders the marketing landing for anonymous visitors and the real
  * in-app home (MainTabs) for authenticated users. Nested tab routes
- * (/entries, /shop, /account) are the same URLs they were before — but
- * unauth visitors who land there see the Landing instead of a tab layout,
- * since we don't render an `<Outlet/>` in the landing branch.
+ * (/account) are the same URLs they were before — but unauth visitors
+ * who land there see the Landing instead of a tab layout, since we
+ * don't render an `<Outlet/>` in the landing branch.
+ *
+ * simple_version: removed /entries and /shop child routes — the simplified
+ * product has neither an entry-history page nor a coin shop. Pool entries
+ * live on each pool's detail page; "shop" is gone entirely.
  */
 function RootSwitch() {
   const { isAuthenticated, ready } = useAuth();
@@ -61,8 +73,6 @@ export default function App() {
 
             <Route path="/" element={<RootSwitch />}>
               <Route index element={<Home />} />
-              <Route path="entries" element={<MyEntries />} />
-              <Route path="shop" element={<Recharge />} />
               <Route path="account" element={<Account />} />
             </Route>
 
@@ -71,21 +81,45 @@ export default function App() {
             <Route path="/fixture/:fixtureId" element={<PrivateRoute><LiveMatch /></PrivateRoute>} />
             <Route path="/leaderboard" element={<PrivateRoute><GlobalLeaderboard /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-            <Route path="/recharge" element={<Navigate to="/shop" replace />} />
 
-            <Route path="/create" element={<PrivateRoute><CreatePool /></PrivateRoute>} />
+            {/* Admin pool creation. Backend POST /quinielas also requires
+                admin in simple_version, so this is a UX gate; trying to hit
+                the route as a regular user just bounces back to /. */}
+            <Route path="/admin/pools/new" element={<AdminRoute><CreatePool /></AdminRoute>} />
+            {/* Phase 9 will fill in AdminPayouts. Placeholder route exists
+                so links from Account.jsx don't 404 in the meantime. */}
+            <Route path="/admin/payouts" element={<AdminRoute><AdminPayoutsPlaceholder /></AdminRoute>} />
+
+            {/* Pool invite deep link — public so unauthenticated friends
+                can land on the join page. */}
             <Route path="/p/:code" element={<InviteResolver />} />
 
-            <Route path="/challenges" element={<PrivateRoute><Challenges /></PrivateRoute>} />
-            <Route path="/challenges/new" element={<PrivateRoute><ChallengeCreate /></PrivateRoute>} />
-            <Route path="/challenges/:id" element={<PrivateRoute><ChallengeDetail /></PrivateRoute>} />
-            <Route path="/c/:code" element={<ChallengeInviteResolver />} />
+            {/* Legacy redirects: pre-simple_version URLs that bookmarks may
+                still target. Bouncing to / preserves a working back-button
+                without a confusing 404. */}
+            <Route path="/create" element={<Navigate to="/admin/pools/new" replace />} />
+            <Route path="/entries" element={<Navigate to="/" replace />} />
+            <Route path="/shop" element={<Navigate to="/" replace />} />
+            <Route path="/recharge" element={<Navigate to="/" replace />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <SignupBonusModal />
         </BrowserRouter>
       </AuthProvider>
     </LocaleProvider>
+  );
+}
+
+/**
+ * Throwaway placeholder for /admin/payouts. Phase 9 swaps this for the real
+ * AdminPayouts page that lists settled pools with `winnerPaidAt: null` and
+ * lets the admin mark them as paid out. Living here in App.jsx for now so
+ * we don't ship a bare-named file we'll immediately delete.
+ */
+function AdminPayoutsPlaceholder() {
+  return (
+    <div style={{ padding: 40, textAlign: 'center', color: 'var(--fp-text-muted)', fontFamily: 'var(--fp-mono)' }}>
+      ADMIN PAYOUTS DASHBOARD<br />(coming in Phase 9)
+    </div>
   );
 }
