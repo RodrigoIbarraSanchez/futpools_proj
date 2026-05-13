@@ -9,3 +9,5 @@
   ➜  Network: use --host to expose
 7:54:23 PM [vite] hmr update /src/pages/PoolDetail.jsx
 8:00:08 PM [vite] hmr update /src/pages/Login.jsx, /src/pages/Settings.jsx, /src/pages/Home.jsx, /src/pages/Account.jsx, /src/pages/Register.jsx, /src/pages/GlobalLeaderboard.jsx, /src/pages/QuinielaPick.jsx, /src/pages/LiveMatch.jsx, /src/pages/CreatePool.jsx, /src/pages/PoolDetail.jsx, /src/components/ComingSoonModal.jsx, /src/arena-ui/TabBar.jsx
+8:04:17 PM [vite] hmr update /src/pages/Home.jsx
+8:04:21 PM [vite] hmr update /src/pages/PoolDetail.jsx

@@ -90,9 +90,12 @@ const quinielaSchema = new mongoose.Schema({
   minParticipants: { type: Number, default: 1 },
   // Virtual-currency entry cost for 'peer' pools. 0 for free/platform pools.
   entryCostCoins: { type: Number, default: 0 },
-  // Rake the house takes on peer pools (basis points / 10000 for precision;
-  // default 1000 = 10%).
-  rakePercent: { type: Number, default: 10 },
+  // House cut on settlement. simple_version splits 65/35: winner gets
+  // 65% of the gross pot, the remaining 35% absorbs Stripe processing
+  // (~3.6% + $3 MXN) and the FutPools platform fee. Default raised
+  // from the legacy 10% so newly-created pools settle on the new
+  // economics without a per-pool override.
+  rakePercent: { type: Number, default: 35 },
   // Lifecycle of the pledged prize. See plan file for transitions.
   prizeLockStatus: {
     type: String,

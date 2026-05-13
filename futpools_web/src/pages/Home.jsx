@@ -67,15 +67,20 @@ function formatEntryFee(quiniela) {
   return '—';
 }
 
-/// Pool prize pool — sum of all entry fees minus the platform rake.
-/// For pools using the new entryFeeMXN flow this is computed live from
-/// entry count; for legacy pools we keep showing whatever `prize` string
-/// the admin set.
+/// Winner's share of the gross pot. simple_version is fixed at 65%:
+/// the remaining 35% covers Stripe processing (~3.6% + \$3 MXN per txn)
+/// and the FutPools platform fee. Hardcoded rather than reading
+/// rakePercent so existing pools created before the schema default
+/// changed still display the correct number.
+const WINNER_SHARE = 0.65;
+
+/// Pool prize pool — winner's share of `entries × entryFeeMXN`. Only
+/// rendered for pools that opted into the new entryFeeMXN flow; legacy
+/// pools show whatever `prize` string the admin originally set.
 function formatPrizePool(quiniela) {
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     const entries = quiniela?.entriesCount ?? 0;
-    const rake = (quiniela?.rakePercent ?? 10) / 100;
-    const pot = Math.floor(entries * quiniela.entryFeeMXN * (1 - rake));
+    const pot = Math.floor(entries * quiniela.entryFeeMXN * WINNER_SHARE);
     return pot > 0 ? `$${pot} MXN` : '—';
   }
   return quiniela?.prize || '—';

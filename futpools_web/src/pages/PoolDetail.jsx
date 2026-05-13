@@ -17,11 +17,12 @@ function formatPoolEntry(quiniela) {
   }
   return (quiniela?.cost && String(quiniela.cost).trim() !== '0') ? quiniela.cost : '—';
 }
+/// Winner gets 65% of the gross pot — see Home.jsx for the rationale.
+const WINNER_SHARE = 0.65;
 function formatPoolPrize(quiniela) {
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     const entries = quiniela?.entriesCount ?? 0;
-    const rake = (quiniela?.rakePercent ?? 10) / 100;
-    const pot = Math.floor(entries * quiniela.entryFeeMXN * (1 - rake));
+    const pot = Math.floor(entries * quiniela.entryFeeMXN * WINNER_SHARE);
     return pot > 0 ? `$${pot} MXN` : '—';
   }
   return quiniela?.prize || '—';

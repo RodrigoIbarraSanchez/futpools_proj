@@ -96,15 +96,20 @@ struct Quiniela: Decodable, Identifiable {
         return (!trimmed.isEmpty && trimmed != "0") ? cost : "—"
     }
 
-    /// Live-computed prize pool. For simple_version pools (entryFeeMXN
-    /// set) the prize is `entries × fee × (1 - rake/100)` — the rake
-    /// defaults to 10%. For legacy pools fall back to the prize string
-    /// the admin set.
+    /// Winner's share of the gross pot. simple_version is fixed at 65%:
+    /// the remaining 35% covers Stripe processing (~3.6% + $3 MXN per
+    /// txn) and the FutPools platform fee. Hardcoded so pools created
+    /// before the backend schema default flipped still display the
+    /// correct number.
+    private static let winnerShare: Double = 0.65
+
+    /// Live-computed prize pool — `entries × fee × 0.65` for simple_
+    /// version pools, falling back to the legacy `prize` string for
+    /// older pools that don't carry entryFeeMXN.
     var prizePoolDisplay: String {
         if let mxn = entryFeeMXN, mxn > 0 {
             let entries = entriesCount ?? 0
-            let rake = Double(rakePercent ?? 10) / 100.0
-            let pot = Int(Double(entries) * Double(mxn) * (1.0 - rake))
+            let pot = Int(Double(entries) * Double(mxn) * Self.winnerShare)
             return pot > 0 ? "$\(pot) MXN" : "—"
         }
         let trimmed = prize.trimmingCharacters(in: .whitespaces)
