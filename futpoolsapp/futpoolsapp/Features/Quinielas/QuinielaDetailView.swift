@@ -1003,6 +1003,19 @@ struct ArenaFixtureRow: View {
     }
 }
 
+/// Compose the leaderboard label for a participant. Same rule as the
+/// web's formatLeaderboardName: append ' N' when entryNumber > 1, and
+/// truncate the username (NOT the suffix) with an ellipsis when the
+/// composed string would be too long. SwiftUI's `truncationMode(.tail)`
+/// would clip the ' N' off long names, defeating the whole point.
+private func formatLeaderboardName(_ displayName: String, entryNumber: Int?, maxBaseLength: Int = 14) -> String {
+    let base = displayName.isEmpty ? "player" : displayName
+    let suffix = (entryNumber ?? 0) > 1 ? " \(entryNumber!)" : ""
+    if base.count <= maxBaseLength { return base + suffix }
+    let truncated = String(base.prefix(maxBaseLength - 1)) + "…"
+    return truncated + suffix
+}
+
 struct ArenaLeaderboardPanel: View {
     let leaderboard: LeaderboardResponse?
     let isLoading: Bool
@@ -1195,7 +1208,7 @@ struct ArenaLeaderboardPanel: View {
                                         .font(ArenaFont.mono(size: 12, weight: .bold))
                                         .foregroundColor(.arenaTextDim)
                                         .frame(width: 24)
-                                    Text(row.displayName)
+                                    Text(formatLeaderboardName(row.displayName, entryNumber: row.entryNumber))
                                         .font(ArenaFont.mono(size: 12))
                                         .foregroundColor(.arenaText)
                                         .lineLimit(1)
@@ -1296,7 +1309,9 @@ private struct PodiumColumn: View {
             // Long names get squeezed (`minimumScaleFactor`) before they
             // truncate, so a "Daniel Alexis Yoldi Sanchez" doesn't push
             // the column taller than its siblings and break alignment.
-            Text(row.displayName)
+            // entryNumber > 1 appends ' 2', ' 3', etc to disambiguate
+            // multiple entries by the same user.
+            Text(formatLeaderboardName(row.displayName, entryNumber: row.entryNumber, maxBaseLength: 12))
                 .font(ArenaFont.mono(size: 10, weight: .semibold))
                 .foregroundColor(.arenaText)
                 .lineLimit(1)

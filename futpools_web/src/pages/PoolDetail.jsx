@@ -9,6 +9,19 @@ import {
   HudFrame, HudChip, LiveDot, TeamCrest, ArcadeButton, SectionLabel, IconButton,
 } from '../arena-ui/primitives';
 
+/// Compose the leaderboard label for a participant. Multiple entries per
+/// user are allowed in simple_version; the 2nd, 3rd, ... entry is shown
+/// as 'displayName N' to disambiguate them in the ranking. Long
+/// usernames are truncated with an ellipsis BEFORE the suffix so the
+/// number stays visible (CSS text-overflow ellipsis would clip the
+/// suffix instead).
+function formatLeaderboardName(displayName, entryNumber, maxBaseLength = 14) {
+  const base = String(displayName || 'player');
+  const suffix = (entryNumber && entryNumber > 1) ? ` ${entryNumber}` : '';
+  if (base.length <= maxBaseLength) return base + suffix;
+  return base.slice(0, maxBaseLength - 1) + '…' + suffix;
+}
+
 /// Same helpers as Home.jsx — shows entry fee in MXN when the pool has
 /// the new entryFeeMXN field, falls back to the legacy `cost` string.
 function formatPoolEntry(quiniela) {
@@ -310,7 +323,8 @@ export function PoolDetail() {
     if (!user) { navigate('/login', { state: { from: location.pathname } }); return; }
     // simple_version: no balance gating — payment is per-entry via Stripe.
     // The pick screen creates the checkout session; we just navigate.
-    if (alreadyEntered) return;  // button shouldn't be clickable, defensive
+    // Multiple entries per user are allowed; each goes through its own
+    // Stripe checkout and shows up in the leaderboard as 'username N'.
     navigate(`/pool/${id}/pick`);
   };
 
@@ -614,16 +628,30 @@ export function PoolDetail() {
         pointerEvents: 'none',
       }}>
         <div style={{ pointerEvents: 'auto' }}>
+          {/* Already-entered hint surfaces the user's status without
+              taking the CTA out of action. Multiple entries are allowed
+              — the button stays tappable. */}
+          {alreadyEntered && canJoin() && (
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
+              letterSpacing: 1.4, color: 'var(--fp-primary)',
+              textAlign: 'center', marginBottom: 6,
+            }}>
+              ✓ {entryCount === 1
+                ? t(locale, 'You have 1 entry — pay again to add another')
+                : tFormat(locale, 'You have {n} entries — pay again to add another', { n: entryCount })}
+            </div>
+          )}
           <ArcadeButton
             size="lg"
             fullWidth
-            disabled={!canJoin() || alreadyEntered}
+            disabled={!canJoin()}
             onClick={handleJoin}
           >
             {!canJoin()
               ? t(locale, 'POOL LOCKED')
               : alreadyEntered
-                ? `✓ ${t(locale, "YOU'RE IN")}`
+                ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
                 : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`}
           </ArcadeButton>
         </div>
@@ -882,7 +910,7 @@ function LeaderboardPanel({ leaderboard, locale }) {
                     fontFamily: 'var(--fp-mono)', fontSize: 12,
                     color: 'var(--fp-text)',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{e.displayName || e.userId || 'player'}</div>
+                  }}>{formatLeaderboardName(e.displayName || e.userId, e.entryNumber)}</div>
                   {isRowLive && (e.liveDelta ?? 0) > 0 && (
                     <span
                       // Re-mount the badge each time the delta value changes
@@ -917,7 +945,7 @@ function LeaderboardPanel({ leaderboard, locale }) {
 }
 
 function PodiumColumn({ position, row, hasLive }) {
-  const name = row?.displayName || row?.userId || 'player';
+  const name = formatLeaderboardName(row?.displayName || row?.userId, row?.entryNumber, 12);
   const displayScore = rowScore(row, hasLive);
   const total = row?.totalPossible ?? 0;
   const isRowLive = hasLive && (row?.liveDelta ?? 0) > 0;

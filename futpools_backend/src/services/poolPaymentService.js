@@ -130,14 +130,11 @@ async function createCheckoutSessionForEntry({ user, poolId, picks }) {
     throw Object.assign(new Error('Pool already started'), { code: 'POOL_STARTED', status: 400 });
   }
 
-  // Block duplicate entries: one user, one entry per pool. The legacy
-  // master flow allowed multiple entries (entryNumber on the schema) but
-  // simple_version's product spec is one-shot per user. Easy to relax
-  // later if needed.
-  const existing = await QuinielaEntry.findOne({ quiniela: poolId, user: user._id }).lean();
-  if (existing) {
-    throw Object.assign(new Error('You are already entered in this pool'), { code: 'ALREADY_ENTERED', status: 409 });
-  }
+  // simple_version allows multiple entries per user — each new
+  // checkout creates an additional entry, displayed in the leaderboard
+  // as "username", "username 2", "username 3", etc. The duplicate
+  // guard from the previous iteration is gone; entryNumber scoping
+  // per-user happens in handleCheckoutCompleted.
 
   validatePicks(pool, picks);
 
@@ -243,11 +240,15 @@ async function handleCheckoutCompleted(session) {
     return { ok: false, reason: 'PICKS_INVALID_NEEDS_REFUND' };
   }
 
-  const entryCount = await QuinielaEntry.countDocuments({ quiniela: poolId });
+  // entryNumber is scoped per-user so it reads as "your nth entry in
+  // this pool", not "the nth entry overall". The leaderboard renders
+  // username #N when the number is > 1, so the user sees "tester",
+  // "tester 2", "tester 3" for their three submissions.
+  const userEntryCount = await QuinielaEntry.countDocuments({ quiniela: poolId, user: userId });
   const entry = new QuinielaEntry({
     quiniela: poolId,
     user: userId,
-    entryNumber: entryCount + 1,
+    entryNumber: userEntryCount + 1,
     picks,
     stripeSessionId: session.id,
     stripePaymentIntentId: session.payment_intent || null,
