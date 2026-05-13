@@ -10,6 +10,7 @@ import { QuinielaPick } from './pages/QuinielaPick';
 import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
 import { CreatePool, InviteResolver } from './pages/CreatePool';
+import { AdminPayouts } from './pages/admin/AdminPayouts';
 import { LiveMatch } from './pages/LiveMatch';
 import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
@@ -86,9 +87,7 @@ export default function App() {
                 admin in simple_version, so this is a UX gate; trying to hit
                 the route as a regular user just bounces back to /. */}
             <Route path="/admin/pools/new" element={<AdminRoute><CreatePool /></AdminRoute>} />
-            {/* Phase 9 will fill in AdminPayouts. Placeholder route exists
-                so links from Account.jsx don't 404 in the meantime. */}
-            <Route path="/admin/payouts" element={<AdminRoute><AdminPayoutsPlaceholder /></AdminRoute>} />
+            <Route path="/admin/payouts" element={<AdminRoute><AdminPayouts /></AdminRoute>} />
 
             {/* Pool invite deep link — public so unauthenticated friends
                 can land on the join page. */}
@@ -110,16 +109,5 @@ export default function App() {
   );
 }
 
-/**
- * Throwaway placeholder for /admin/payouts. Phase 9 swaps this for the real
- * AdminPayouts page that lists settled pools with `winnerPaidAt: null` and
- * lets the admin mark them as paid out. Living here in App.jsx for now so
- * we don't ship a bare-named file we'll immediately delete.
- */
-function AdminPayoutsPlaceholder() {
-  return (
-    <div style={{ padding: 40, textAlign: 'center', color: 'var(--fp-text-muted)', fontFamily: 'var(--fp-mono)' }}>
-      ADMIN PAYOUTS DASHBOARD<br />(coming in Phase 9)
-    </div>
-  );
-}
+// AdminPayoutsPlaceholder removed — replaced by the real
+// pages/admin/AdminPayouts.jsx in Phase 9.

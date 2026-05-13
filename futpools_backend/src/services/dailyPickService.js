@@ -270,6 +270,14 @@ async function dailyPickTick() {
   catch (err) { console.warn('[DailyPick] selectForToday error:', err.message); }
   try { await settleOpenPicks(); }
   catch (err) { console.warn('[DailyPick] settleOpenPicks error:', err.message); }
+  // Piggy-back simple_version pool settlement onto the same 1-minute
+  // tick. settleEligiblePools is idempotent and skips pools that are
+  // already settled or whose fixtures haven't all finished — cheap to
+  // call frequently.
+  try {
+    const { settleEligiblePools } = require('./poolSettlementService');
+    await settleEligiblePools();
+  } catch (err) { console.warn('[PoolSettlement] tick error:', err.message); }
 }
 
 function startDailyPickScheduler() {
