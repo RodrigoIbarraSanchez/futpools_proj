@@ -380,10 +380,20 @@ struct LiveMatchView: View {
         let result = liveResult(home: home, away: away)           // "1" | "X" | "2" | nil
         let isCorrect = result == pick
         let state: PickState = {
-            guard let _ = result else { return .waiting }
+            guard let result else { return .waiting }
             if isFinal && isCorrect { return .earned }
             if isFinal && !isCorrect { return .missed }
             if isCorrect { return .leading }
+            // Mid-game and the live result doesn't match the pick.
+            // Distinguish two cases:
+            //   - Live result is X (draw) and pick is 1 or 2 → .tied.
+            //     Nobody scored yet; the user's pick still has time to
+            //     materialize. Calling this 'va perdiendo' is wrong —
+            //     the game is genuinely undecided.
+            //   - Live result is the OPPOSITE-team-wins (1↔2 mismatch
+            //     or X↔1/X↔2 with someone leading) → .trailing.
+            //     The other side is actually winning right now.
+            if result == "X" && pick != "X" { return .tied }
             return .trailing
         }()
 
@@ -416,12 +426,13 @@ struct LiveMatchView: View {
     }
 
     private enum PickState {
-        case waiting, leading, trailing, earned, missed
+        case waiting, leading, tied, trailing, earned, missed
 
         var background: Color {
             switch self {
             case .waiting:  return Color.arenaSurface
             case .leading:  return Color.arenaPrimary.opacity(0.15)
+            case .tied:     return Color.arenaSurface
             case .trailing: return Color.arenaSurface
             case .earned:   return Color.arenaPrimary.opacity(0.22)
             case .missed:   return Color.arenaSurface.opacity(0.6)
@@ -431,6 +442,7 @@ struct LiveMatchView: View {
             switch self {
             case .waiting:  return .arenaStroke
             case .leading:  return .arenaPrimary
+            case .tied:     return .arenaAccent.opacity(0.45)
             case .trailing: return .arenaDanger.opacity(0.35)
             case .earned:   return .arenaPrimary
             case .missed:   return .arenaDanger.opacity(0.35)
@@ -439,6 +451,7 @@ struct LiveMatchView: View {
         var badgeFill: Color {
             switch self {
             case .leading, .earned:  return .arenaPrimary
+            case .tied:              return Color.arenaSurfaceAlt
             case .trailing, .missed: return Color.arenaSurfaceAlt
             case .waiting:           return Color.arenaSurfaceAlt
             }
@@ -446,6 +459,7 @@ struct LiveMatchView: View {
         var badgeTextColor: Color {
             switch self {
             case .leading, .earned:  return .arenaOnPrimary
+            case .tied:              return .arenaText
             case .trailing, .missed: return .arenaTextDim
             case .waiting:           return .arenaText
             }
@@ -485,6 +499,12 @@ struct LiveMatchView: View {
                 Text(String(localized: "LEADING · +1 PT IF IT HOLDS"))
                     .font(ArenaFont.mono(size: 10, weight: .bold))
                     .foregroundColor(.arenaPrimary)
+                    .tracking(1.2)
+            case .tied:
+                Circle().fill(Color.arenaAccent).frame(width: 5, height: 5)
+                Text(String(localized: "TIED · 0 PTS IF IT HOLDS"))
+                    .font(ArenaFont.mono(size: 10, weight: .bold))
+                    .foregroundColor(.arenaAccent)
                     .tracking(1.2)
             case .trailing:
                 Circle().fill(Color.arenaDanger).frame(width: 5, height: 5)
