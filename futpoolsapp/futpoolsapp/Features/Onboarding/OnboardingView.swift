@@ -12,11 +12,20 @@
 
 import SwiftUI
 
+/// Where the AccountGate routes the user. Driving navigation off a
+/// single enum (rather than two parallel `.navigationDestination(isPresented:)`
+/// modifiers) avoids a subtle SwiftUI bug where two boolean destinations on
+/// the same NavigationStack collide and only one fires — the previous build
+/// was sending users to LoginView when they tapped CREATE ACCOUNT because
+/// of exactly that.
+private enum AuthRoute: Hashable {
+    case login, signup
+}
+
 struct OnboardingView: View {
     @StateObject private var state = OnboardingState()
     @AppStorage("app_language") private var appLanguage = ""
-    @State private var presentLogin = false
-    @State private var presentSignup = false
+    @State private var route: AuthRoute?
     @State private var shareSheet: ShareItem?
 
     private var demoFixturesByID: [Int: OnbDemoFixture] {
@@ -58,11 +67,11 @@ struct OnboardingView: View {
             // onboarding tree to rebuild, picking up the new
             // language without an app restart.
             .id(appLanguage)
-            .navigationDestination(isPresented: $presentSignup) {
-                RegisterView()
-            }
-            .navigationDestination(isPresented: $presentLogin) {
-                LoginView()
+            .navigationDestination(item: $route) { dest in
+                switch dest {
+                case .signup: RegisterView()
+                case .login:  LoginView()
+                }
             }
             .sheet(item: $shareSheet) { item in
                 ActivityViewController(activityItems: [item.text])
@@ -78,11 +87,8 @@ struct OnboardingView: View {
         case .welcome:
             OnbWelcomeScreen(state: state, onLogin: { goLogin() })
                 .transition(.opacity)
-        case .teams:
-            OnbPrefsScreen(state: state, mode: .teamsOnly)
-                .transition(.opacity)
-        case .leagues:
-            OnbPrefsScreen(state: state, mode: .leaguesOnly)
+        case .prefs:
+            OnbPrefsScreen(state: state)
                 .transition(.opacity)
         case .notifications:
             OnbNotificationsScreen(state: state)
@@ -160,11 +166,11 @@ struct OnboardingView: View {
 
     private func goSignup() {
         state.persist()
-        presentSignup = true
+        route = .signup
     }
     private func goLogin() {
         state.persist()
-        presentLogin = true
+        route = .login
     }
 }
 

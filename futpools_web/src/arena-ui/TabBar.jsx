@@ -8,7 +8,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
-import { useAuth } from '../context/AuthContext';
 import { t } from '../i18n/translations';
 
 export const TAB_BAR_HEIGHT = 88;
@@ -22,18 +21,15 @@ export function ArenaTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { locale } = useLocale();
-  const { user } = useAuth();
 
-  // Admins get the extra ADMIN tab pointing to the create-pool form. The
-  // backend gates POST /quinielas to admin, so non-admins never see the tab
-  // (and would be bounced by AdminRoute even if they navigated by URL).
+  // Strictly 2 tabs — Quinielas + Perfil. Admins reach /admin/pools/new
+  // and /admin/payouts via the link tiles inside Account.jsx, not via a
+  // visible tab. Per product spec the web should look identical for
+  // everyone in the bottom nav.
   const tabs = [
     { path: '/',        key: 'POOLS',    icon: '◆' },
     { path: '/account', key: 'PROFILE',  icon: '◉' },
   ];
-  if (user?.isAdmin) {
-    tabs.push({ path: '/admin/pools/new', key: 'ADMIN', icon: '⚙' });
-  }
 
   const activeFor = (path) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);

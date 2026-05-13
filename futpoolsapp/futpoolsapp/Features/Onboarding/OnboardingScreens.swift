@@ -32,50 +32,49 @@ struct OnbWelcomeScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Body — everything from BrandMark to badges centered
-            // vertically in the remaining space.
             VStack(spacing: 28) {
-                VStack(spacing: 18) {
+                // Hero: brand mark + animated football glow. Replaces the
+                // legacy Amazon gift card image — that visual implied the
+                // app pays out real prizes, which a scores app does not,
+                // and would have triggered Apple Guideline 2.3.1 review.
+                VStack(spacing: 22) {
                     OnbBrandMark(size: 12)
                     ZStack {
                         Circle()
                             .fill(RadialGradient(
-                                colors: [Color.arenaGold.opacity(0.32), .clear],
-                                center: .center, startRadius: 0, endRadius: 120
+                                colors: [Color.arenaPrimary.opacity(0.45), .clear],
+                                center: .center, startRadius: 0, endRadius: 130
                             ))
                             .frame(width: 240, height: 240)
-                            .blur(radius: 8)
-                        Image("PrizeAmazonGift")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 200, height: 200)
+                            .blur(radius: 14)
+                        Text("⚽")
+                            .font(.system(size: 110))
+                            .shadow(color: .arenaPrimary.opacity(0.55), radius: 30)
                     }
                 }
                 VStack(spacing: 12) {
-                    Text(L("WIN REAL PRIZES BY PREDICTING FOOTBALL"))
+                    Text(L("LIVE FUTBOL EN TU BOLSILLO"))
                         .font(ArenaFont.display(size: 26, weight: .heavy))
-                        .tracking(2.1)
+                        .tracking(2)
                         .lineSpacing(2)
-                        .foregroundColor(.arenaGold)
-                        .shadow(color: .arenaGold.opacity(0.35), radius: 24)
+                        .foregroundColor(.arenaText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
-                    Text(L("Pools with friends. No spreadsheets. Nobody to chase for money."))
+                    Text(L("Marcadores en vivo, alertas de tus equipos y tus quinielas a un tap."))
                         .font(ArenaFont.body(size: 14))
                         .foregroundColor(.arenaTextDim)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 300)
                 }
                 HStack(spacing: 8) {
-                    OnbBadge(text: L("Free to play"))
-                    OnbBadge(text: L("Live scoring"))
-                    OnbBadge(text: L("Real prizes"))
+                    OnbBadge(text: L("Live scores"))
+                    OnbBadge(text: L("Push alerts"))
+                    OnbBadge(text: L("World Cup"))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.horizontal, 24)
 
-            // Footer
             VStack(spacing: 12) {
                 OnbPrimaryButton(label: L("GET STARTED")) { state.advance() }
                 Button(action: onLogin) {
@@ -649,18 +648,7 @@ final class OnbPrefsSearchVM: ObservableObject {
 }
 
 struct OnbPrefsScreen: View {
-    /// simple_version splits the legacy combined teams+leagues prefs into
-    /// two separate screens. `mode` parametrizes which sections render
-    /// (and which API search results are surfaced) so we keep one
-    /// implementation backing both onboarding steps.
-    enum Mode {
-        case both          // legacy combined screen (master)
-        case teamsOnly     // simple_version step 2
-        case leaguesOnly   // simple_version step 3
-    }
-
     @ObservedObject var state: OnboardingState
-    var mode: Mode = .both
     @StateObject private var searchVM = OnbPrefsSearchVM()
     @FocusState private var searchFocused: Bool
     private let columns = [
@@ -675,36 +663,21 @@ struct OnbPrefsScreen: View {
         searchVM.query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
     }
 
-    private var titleText: String {
-        switch mode {
-        case .both:        return L("WHAT FOOTBALL DO YOU FOLLOW?")
-        case .teamsOnly:   return L("PICK YOUR TEAMS")
-        case .leaguesOnly: return L("PICK YOUR LEAGUES")
-        }
-    }
-
-    private var subtitleText: String {
-        switch mode {
-        case .both:        return L("We'll filter the next step's matches.")
-        case .teamsOnly:   return L("You'll get push alerts when these teams play.")
-        case .leaguesOnly: return L("Live scores will surface games from these leagues first.")
-        }
-    }
-
-    private var stepLabel: String {
-        switch mode {
-        case .both:        return "\(L("Step")) 07"
-        case .teamsOnly:   return "\(L("Step")) 02"
-        case .leaguesOnly: return "\(L("Step")) 03"
-        }
+    /// Anything the user has selected (popular enum picks + custom API
+    /// picks). Drives the "TUS SELECCIONES" pill row at the top so that
+    /// when the user clears the search bar, the items they searched for
+    /// and selected don't visually disappear.
+    private var hasAnySelection: Bool {
+        !state.teams.isEmpty || !state.leagues.isEmpty
+            || !state.customTeams.isEmpty || !state.customLeagues.isEmpty
     }
 
     var body: some View {
         VStack(spacing: 0) {
             OnbTitleBlock(
-                eyebrow: stepLabel,
-                title: titleText,
-                subtitle: subtitleText,
+                eyebrow: "\(L("Step")) 02",
+                title: L("PICK YOUR TEAMS AND LEAGUES"),
+                subtitle: L("Live scores and push alerts will follow these picks."),
                 size: .md
             )
             .padding(.top, 24)
@@ -715,6 +688,9 @@ struct OnbPrefsScreen: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
+                    if hasAnySelection {
+                        selectionsSection
+                    }
                     if hasQuery {
                         searchResultsSection
                     } else {
@@ -727,9 +703,10 @@ struct OnbPrefsScreen: View {
             .frame(maxHeight: .infinity)
 
             OnbPrimaryButton(label: L("NEXT")) {
-                if state.leagues.isEmpty && state.teams.isEmpty
-                   && state.customTeams.isEmpty && state.customLeagues.isEmpty {
-                    state.leagues = [.ligaMX]
+                if !hasAnySelection {
+                    // Default to World Cup since it kicks off in 30 days
+                    // and is the relevant headline event right now.
+                    state.leagues = [.worldCup]
                 }
                 state.advance()
             }
@@ -741,20 +718,163 @@ struct OnbPrefsScreen: View {
 
     // MARK: Sections
 
+    /// Pinned at the top so search-and-clear doesn't visually nuke the
+    /// user's picks. Shows every active selection as a chip with an [×]
+    /// to drop it. Mixes popular + custom + teams + leagues into one row
+    /// because from the user's POV they're all "things I follow".
+    @ViewBuilder
+    private var selectionsSection: some View {
+        sectionHeader(L("YOUR SELECTIONS"))
+        let selectedTeams = OnbTeam.allCases.filter { state.teams.contains($0) }
+        let selectedLeagues = OnboardingLeague.allCases.filter { state.leagues.contains($0) }
+        let customTeamList = Array(state.customTeams.values)
+        let customLeagueList = Array(state.customLeagues.values)
+        // Horizontal scroll keeps the layout simple (no custom wrapping
+        // Layout protocol implementation) and matches how iOS users are
+        // used to seeing tag rows.
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(selectedTeams) { t in
+                    selectionPill(label: t.label, logo: t.logoURL) {
+                        state.teams.remove(t)
+                    }
+                }
+                ForEach(selectedLeagues) { l in
+                    selectionPill(label: stripFlags(l.label), logo: l.logoURL) {
+                        state.leagues.remove(l)
+                    }
+                }
+                ForEach(customTeamList) { t in
+                    selectionPill(label: t.name, logo: t.logo.flatMap(URL.init(string:))) {
+                        state.customTeams.removeValue(forKey: t.id)
+                    }
+                }
+                ForEach(customLeagueList) { l in
+                    selectionPill(label: l.name, logo: l.logo.flatMap(URL.init(string:))) {
+                        state.customLeagues.removeValue(forKey: l.id)
+                    }
+                }
+            }
+            .padding(.horizontal, 1)
+        }
+    }
+
+    /// League labels are prefixed with country flag emojis (🇲🇽 Liga MX).
+    /// In the compact selection pill the flag duplicates the logo, so we
+    /// strip them.
+    private func stripFlags(_ label: String) -> String {
+        var out = label
+        for prefix in ["🇲🇽 ", "🇪🇸 ", "🇬🇧 ", "🇺🇸 ", "🏆 ", "⚽ "] {
+            if out.hasPrefix(prefix) { out.removeFirst(prefix.count) }
+        }
+        return out
+    }
+
+    /// Compact removable chip used in the selections row. Tap anywhere
+    /// (label or x) to drop it — single tap target = simpler UX than
+    /// separate chip + [×] hit boxes.
+    private func selectionPill(label: String, logo: URL?, onRemove: @escaping () -> Void) -> some View {
+        Button(action: onRemove) {
+            HStack(spacing: 6) {
+                if let url = logo {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let img): img.resizable().scaledToFit()
+                        default: Color.clear
+                        }
+                    }
+                    .frame(width: 16, height: 16)
+                }
+                Text(label)
+                    .font(ArenaFont.mono(size: 11, weight: .bold))
+                    .tracking(0.5)
+                    .foregroundColor(.arenaOnPrimary)
+                    .lineLimit(1)
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundColor(.arenaOnPrimary.opacity(0.85))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(HudCornerCutShape(cut: 4).fill(Color.arenaPrimary))
+            .clipShape(HudCornerCutShape(cut: 4))
+        }
+        .buttonStyle(.plain)
+    }
+
     @ViewBuilder
     private var popularSections: some View {
-        if mode != .leaguesOnly {
-            sectionHeader(L("POPULAR TEAMS"))
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(OnbTeam.allCases) { t in teamCell(t) }
+        // ── World Cup featured row ─────────────────────────────────
+        // The World Cup kicks off in ~30 days. Surface it standalone
+        // above the rest so it's the first thing eyeballs land on,
+        // wider than the regular grid cells for emphasis.
+        sectionHeader(L("FEATURED"))
+        worldCupFeatureCell
+
+        sectionHeader(L("POPULAR TEAMS"))
+        LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(OnbTeam.allCases) { t in teamCell(t) }
+        }
+        sectionHeader(L("OTHER LEAGUES"))
+        LazyVGrid(columns: columns, spacing: 8) {
+            // Skip World Cup here — it's already featured above.
+            ForEach(OnboardingLeague.allCases.filter { $0 != .worldCup }) { l in
+                leagueCell(l)
             }
         }
-        if mode != .teamsOnly {
-            sectionHeader(L("LEAGUES"))
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(OnboardingLeague.allCases) { l in leagueCell(l) }
+    }
+
+    private var worldCupFeatureCell: some View {
+        let active = state.leagues.contains(.worldCup)
+        return Button {
+            if active { state.leagues.remove(.worldCup) }
+            else { state.leagues.insert(.worldCup) }
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    if let url = OnboardingLeague.worldCup.logoURL {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let img): img.resizable().scaledToFit()
+                            default: Text("🏆").font(.system(size: 28))
+                            }
+                        }
+                    } else {
+                        Text("🏆").font(.system(size: 28))
+                    }
+                }
+                .frame(width: 48, height: 48)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(L("WORLD CUP"))
+                            .font(ArenaFont.display(size: 14, weight: .heavy))
+                            .tracking(1.5)
+                            .foregroundColor(active ? .arenaOnPrimary : .arenaText)
+                        Text(L("STARTS SOON"))
+                            .font(ArenaFont.mono(size: 8, weight: .bold))
+                            .tracking(1.2)
+                            .foregroundColor(.arenaOnPrimary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(HudCornerCutShape(cut: 3).fill(Color.arenaDanger))
+                            .clipShape(HudCornerCutShape(cut: 3))
+                    }
+                    Text(L("Don't miss a single match of the tournament."))
+                        .font(ArenaFont.mono(size: 10))
+                        .foregroundColor(active ? .arenaOnPrimary.opacity(0.85) : .arenaTextDim)
+                        .lineLimit(2)
+                }
+                Spacer()
+                Image(systemName: active ? "checkmark.circle.fill" : "plus.circle")
+                    .font(.system(size: 22))
+                    .foregroundColor(active ? .arenaOnPrimary : .arenaPrimary)
             }
+            .padding(14)
+            .background(HudCornerCutShape(cut: 8).fill(active ? Color.arenaPrimary : Color.arenaSurface))
+            .overlay(HudCornerCutShape(cut: 8).stroke(active ? Color.arenaPrimary : Color.arenaPrimary.opacity(0.4), lineWidth: 1))
+            .clipShape(HudCornerCutShape(cut: 8))
         }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -1402,30 +1522,33 @@ struct OnbAccountGateScreen: View {
     let onSignup: () -> Void
     let onLogin: () -> Void
 
+    /// Scores-app value props. The legacy bullets ("Your picks stay
+    /// saved", "100 welcome coins", "Access to weekly real-prize
+    /// sweepstake") all referenced systems that don't exist in
+    /// simple_version (no picks on iOS, no coins, no sweepstakes).
     private var bullets: [String] {
         [
-            L("Your picks stay saved"),
-            L("100 welcome coins"),
-            L("Access to weekly real-prize sweepstake"),
+            L("Tus equipos favoritos siempre contigo"),
+            L("Alertas de goles y resultados al instante"),
+            L("Sincroniza tus quinielas desde futpools.com"),
         ]
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Whole screen content centered vertically (no separate
-            // top-anchored header on this screen — the design puts
-            // hero + headline + bullets all as one centered block).
             VStack(spacing: 28) {
                 heroIcon
                 VStack(spacing: 10) {
-                    Text(L("SAVE YOUR PICKS AND PLAY"))
+                    Text(L("ÚLTIMO PASO"))
                         .font(ArenaFont.display(size: 24, weight: .heavy))
                         .tracking(1.4)
                         .foregroundColor(.arenaText)
                         .multilineTextAlignment(.center)
-                    Text(L("One tap and you're in."))
+                    Text(L("Crea tu cuenta para guardar tus preferencias."))
                         .font(ArenaFont.body(size: 14))
                         .foregroundColor(.arenaTextDim)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
                 }
                 bulletCard
             }

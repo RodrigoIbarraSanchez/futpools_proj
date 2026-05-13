@@ -252,7 +252,8 @@ private struct ActivePoolCard: View {
                         Circle()
                             .fill(Color.arenaDanger)
                             .frame(width: 6, height: 6)
-                            .shadow(color: .arenaDanger, radius: 4)
+                            // No shadow on the LIVE pulse — even radius:4 was
+                            // bleeding red between rows when stacked.
                     }
                     Text(statusLabel)
                         .font(ArenaFont.mono(size: 9, weight: .bold))

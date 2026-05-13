@@ -2,14 +2,12 @@
 //  OnbNotificationsScreen.swift
 //  futpoolsapp
 //
-//  simple_version onboarding step 4 — asks for push permission and
-//  explains the value before tapping. Pre-prompting (showing the
-//  benefits before the system alert) materially improves opt-in rate
-//  vs prompting cold from the system dialog.
-//
-//  The user can also Skip; we still let them through because push is a
-//  scores-app nice-to-have, not a hard gate. They can re-enable from
-//  Settings later (Phase 8 will wire that view too).
+//  simple_version onboarding step 3 — explains push value, then asks
+//  permission. The CTA is intentionally NEUTRAL ("CONTINUAR") because
+//  Apple flags onboarding flows that promise the app will turn on
+//  notifications (the user is always the one who decides via the system
+//  alert). Wording the button as "Activate notifications" gets reviews
+//  rejected under App Review guideline 4.5.4.
 //
 
 import SwiftUI
@@ -18,78 +16,59 @@ import UserNotifications
 struct OnbNotificationsScreen: View {
     @ObservedObject var state: OnboardingState
     @State private var requesting = false
-    /// Becomes `true` once we know the system alert was dismissed (either
-    /// way). Drives the CTA copy from "Activate" to "Continue" so it's
-    /// clear the user can move on.
-    @State private var asked = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        // Vertically-centered single column. The legacy layout
+        // top-anchored everything, leaving a big empty bottom band.
+        VStack(spacing: 28) {
             OnbTitleBlock(
-                eyebrow: "\(L("Step")) 04",
+                eyebrow: "\(L("Step")) 03",
                 title: L("STAY IN THE GAME"),
                 subtitle: L("Get instant alerts when your teams play."),
                 size: .md
             )
-            .padding(.top, 24)
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 14) {
-                    bullet(
-                        icon: "⚽",
-                        title: L("GOALS, LIVE"),
-                        desc: L("Banner pops the second your team scores or concedes.")
-                    )
-                    bullet(
-                        icon: "⏰",
-                        title: L("KICKOFF REMINDERS"),
-                        desc: L("30-minute warning before any pool you joined starts.")
-                    )
-                    bullet(
-                        icon: "🏁",
-                        title: L("FINAL RESULTS"),
-                        desc: L("Get the FT score the moment the match ends.")
-                    )
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
+            VStack(spacing: 12) {
+                bullet(
+                    icon: "⚽",
+                    title: L("LIVE GOALS"),
+                    desc: L("Banner pops the second your team scores or concedes.")
+                )
+                bullet(
+                    icon: "⏰",
+                    title: L("KICKOFF REMINDERS"),
+                    desc: L("30-minute warning before any pool you joined starts.")
+                )
+                bullet(
+                    icon: "🏁",
+                    title: L("FINAL RESULTS"),
+                    desc: L("Get the FT score the moment the match ends.")
+                )
             }
-            .frame(maxHeight: .infinity)
-
-            // Privacy line — small, subtle, non-blocking. Builds trust
-            // without taking a second screen.
-            Text(L("You can change this any time in Settings."))
-                .font(ArenaFont.mono(size: 10))
-                .foregroundColor(.arenaTextDim)
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, 8)
-
-            OnbPrimaryButton(
-                label: requesting
-                    ? L("ASKING…")
-                    : (asked ? L("CONTINUE") : L("ACTIVATE NOTIFICATIONS")),
-                disabled: requesting
-            ) {
-                if asked { state.advance() }
-                else { requestPermission() }
+            .padding(.horizontal, 4)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .padding(.horizontal, 24)
+        .safeAreaInset(edge: .bottom) {
+            // Footer pinned to the bottom safe area so the centered
+            // content above doesn't get crowded.
+            VStack(spacing: 8) {
+                Text(L("You can change this any time in Settings."))
+                    .font(ArenaFont.mono(size: 10))
+                    .foregroundColor(.arenaTextDim)
+                    .multilineTextAlignment(.center)
+                OnbPrimaryButton(
+                    label: requesting ? L("ASKING…") : L("CONTINUE"),
+                    disabled: requesting
+                ) {
+                    requestPermission()
+                }
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 8)
-
-            // Skip path — quieter visual treatment so it doesn't pull
-            // focus from the primary CTA.
-            Button {
-                asked = true
-                state.advance()
-            } label: {
-                Text(L("Not now"))
-                    .font(ArenaFont.mono(size: 11, weight: .bold))
-                    .tracking(1.5)
-                    .foregroundColor(.arenaTextDim)
-                    .padding(.vertical, 8)
-            }
-            .buttonStyle(.plain)
-            .padding(.bottom, 28)
+            .padding(.bottom, 20)
+            // Skip path removed entirely — the simple_version onboarding
+            // is mandatory end-to-end. The system alert itself gives the
+            // user the actual yes/no, and either way we advance.
         }
     }
 
@@ -133,14 +112,13 @@ struct OnbNotificationsScreen: View {
         ) { granted, _ in
             DispatchQueue.main.async {
                 requesting = false
-                asked = true
                 if granted {
-                    // Trigger APNs token registration. The handler
-                    // (Phase 8) uploads the resulting token to the
-                    // backend. Calling this without permission is a
-                    // no-op, so it's safe even when granted=false.
                     UIApplication.shared.registerForRemoteNotifications()
                 }
+                // Always advance — onboarding is mandatory. If the user
+                // denied, they continue without push (Settings re-entry
+                // ships in Phase 8 so they can change their mind later).
+                state.advance()
             }
         }
     }
