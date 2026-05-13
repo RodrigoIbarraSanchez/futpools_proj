@@ -366,12 +366,31 @@ exports.getMyCreatedQuinielas = async (req, res) => {
 
 exports.getQuinielas = async (req, res) => {
   try {
-    // Discovery list: public pools + legacy pools without visibility + the
-    // caller's own private pools (so they show up in MINE/ALL filters). Other
-    // people's private pools stay reachable only by invite code.
+    // Discovery list. Always includes:
+    //   - public pools (everyone can see)
+    //   - legacy pools without an explicit visibility field
+    // When the caller is authenticated, also includes:
+    //   - any private pool they created
+    //   - any private pool they have an entry in (joined via invite code)
+    //
+    // The 'entry-as-membership' clause is what fixes the bug where a user
+    // who paid \$50 to join a private pool didn't see it on their Home —
+    // private pools were only surfaced for their creator, not their
+    // participants. Once you have at least one pick stored, you're in.
     const visibilityClauses = [{ visibility: 'public' }, { visibility: { $exists: false } }];
+    let entryPoolIdSet = new Set();
     if (req.user?._id) {
       visibilityClauses.push({ visibility: 'private', createdBy: req.user._id });
+      const entryPoolIds = await QuinielaEntry.find({
+        user: req.user._id,
+        refundedAt: null,
+      }).distinct('quiniela');
+      entryPoolIdSet = new Set(entryPoolIds.map(String));
+      if (entryPoolIds.length > 0) {
+        // _id match wins over the visibility filter — any pool the user
+        // participates in shows up regardless of who owns it.
+        visibilityClauses.push({ _id: { $in: entryPoolIds } });
+      }
     }
     const filter = { $or: visibilityClauses };
     // Optional ?realPrize=1 — surface only pools that carry a real-
@@ -399,9 +418,20 @@ exports.getQuinielas = async (req, res) => {
       createdByDisplayName: q.createdBy?.displayName || null,
       createdBy: q.createdBy?._id || null,
     }, liveStatusMap));
-    // Live first, then upcoming (sooner = higher), then completed (recently
-    // finished = higher within the bucket). Users scan tops-down.
-    res.json(sortPoolsByStatus(withCounts));
+    // Sort: pools the user is in always float to the top (live > upcoming
+    // > completed within their own bucket), then the rest of the feed
+    // follows the standard status sort. Surfacing 'their' pools above
+    // the broader feed matches user expectation — once you've paid \$50
+    // to join, you want to see that pool first, not buried beneath
+    // public pools you haven't entered.
+    const sorted = sortPoolsByStatus(withCounts);
+    if (entryPoolIdSet.size > 0) {
+      const mine = sorted.filter((p) => entryPoolIdSet.has(String(p._id)));
+      const others = sorted.filter((p) => !entryPoolIdSet.has(String(p._id)));
+      res.json([...mine, ...others]);
+    } else {
+      res.json(sorted);
+    }
   } catch (err) {
     console.error('[Quiniela] list error:', err.message);
     res.status(500).json({ message: 'Server error' });
