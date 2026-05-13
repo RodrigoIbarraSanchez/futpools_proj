@@ -131,7 +131,7 @@ function WelcomeScreen({ locale, onContinue }) {
         </h1>
         <p className="lede">
           {locale === 'es'
-            ? 'Inscríbete por $50 MXN. El ganador se lleva el 65% del bote acumulado, depositado por transferencia bancaria a tu cuenta.'
+            ? 'Inscríbete por $50 MXN. El ganador se lleva el 65% del premio acumulado, depositado por transferencia bancaria a tu cuenta.'
             : 'Pay $50 MXN to enter. Winner takes 65% of the prize pool, deposited by bank transfer to your account.'}
         </p>
 

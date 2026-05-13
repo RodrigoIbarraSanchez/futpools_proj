@@ -81,7 +81,7 @@ export function LandingPage() {
           </h1>
           <p className="hero-sub">
             {c(
-              'Inscríbete por $50 MXN. El ganador se lleva el 65% del bote acumulado por transferencia bancaria. Mundial, Liga MX, Champions y más — pickea, juega, cobra.',
+              'Inscríbete por $50 MXN. El ganador se lleva el 65% del premio acumulado por transferencia bancaria. Mundial, Liga MX, Champions y más — pickea, juega, cobra.',
               "Pay $50 MXN to enter. Winner takes 65% of the prize pool, paid out by bank transfer. World Cup, Liga MX, Champions and more — pick, play, get paid."
             )}
           </p>
@@ -269,7 +269,7 @@ export function LandingPage() {
         </h2>
         <p className="section-sub cta-sub">
           {c(
-            'Inscripción $50 MXN. El ganador se lleva el 65% del bote. Pago directo a tu cuenta bancaria.',
+            'Inscripción $50 MXN. El ganador se lleva el 65% del premio acumulado. Pago directo a tu cuenta bancaria.',
             '$50 MXN entry. Winner takes 65% of the pot. Direct bank transfer to your account.'
           )}
         </p>
@@ -324,7 +324,7 @@ const STEPS = [
   },
   {
     t_es: 'Cobra', t_en: 'Get Paid',
-    d_es: 'El ganador se lleva el 65% del bote. Te depositamos por transferencia bancaria a tu cuenta.',
+    d_es: 'El ganador se lleva el 65% del premio acumulado. Te depositamos por transferencia bancaria a tu cuenta.',
     d_en: 'Winner takes 65% of the pot. We send a bank transfer straight to your account.',
   },
 ];
