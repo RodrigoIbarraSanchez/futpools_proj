@@ -779,17 +779,38 @@ const getFixturesByTeamAndDate = async (teamId, date) => {
 };
 
 /**
- * Aggregated fixtures feed for the iOS Live Scores tab. Fan-out by
- * (date × league) AND (date × team), dedupe by fixtureId, return the
- * mapped preview shape so the client can render scores + status inline.
+ * Aggregated fixtures feed for the iOS Live Scores tab. Two modes:
  *
- * Caching: 30s in-memory keyed by (date, sorted league ids, sorted
- * team ids). The polling cadence in iOS is also 30s, so under steady
- * use this hits the cache between ticks.
+ *   - { live: true } → returns ALL globally-live fixtures via
+ *     api-football's `/fixtures?live=all` (server-side filter, single
+ *     round-trip). Ignores leagueIds/teamIds. Cache 15s — live data
+ *     moves fast and stale scores are visible to users.
+ *
+ *   - { date, leagueIds, teamIds } → fan-out per league + per team for
+ *     the given date, dedupe by fixtureId. Cache 30s.
+ *
+ * In both modes we map to the preview shape so the client renders
+ * scores + status inline without a second round-trip.
  */
 const fixturesFeedCache = new Map();
 const FIXTURES_FEED_TTL_MS = 30_000;
-const fetchFixturesFeed = async ({ date, leagueIds = [], teamIds = [], season }) => {
+const FIXTURES_LIVE_TTL_MS = 15_000;
+
+const fetchFixturesFeed = async ({ date, leagueIds = [], teamIds = [], season, live = false } = {}) => {
+  // Live-all mode: one api-football call, returns the in-progress games
+  // worldwide. Much cheaper than fan-out and matches what users expect
+  // on the LIVE tab — they want to see ALL live football, not just the
+  // intersection of their favorites.
+  if (live) {
+    const cacheKey = 'LIVE_ALL';
+    const hit = fixturesFeedCache.get(cacheKey);
+    if (hit && Date.now() - hit.updatedAt < FIXTURES_LIVE_TTL_MS) return hit.payload;
+    const data = await apiFetch('/fixtures', { live: 'all' }).catch(() => null);
+    const out = (data?.response || []).map(mapFixturePreview).sort(fixturePreviewSort);
+    fixturesFeedCache.set(cacheKey, { updatedAt: Date.now(), payload: out });
+    return out;
+  }
+
   const sortedLeagues = Array.from(new Set(leagueIds.map(Number))).filter((n) => n > 0).sort((a, b) => a - b);
   const sortedTeams = Array.from(new Set(teamIds.map(Number))).filter((n) => n > 0).sort((a, b) => a - b);
   const cacheKey = `${date}|L:${sortedLeagues.join(',')}|T:${sortedTeams.join(',')}`;

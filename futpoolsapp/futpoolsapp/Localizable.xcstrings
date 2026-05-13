@@ -1438,6 +1438,9 @@
         }
       }
     },
+    "Add favorite teams or leagues from your profile to see live scores." : {
+
+    },
     "ADD FIXTURES" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2630,9 +2633,6 @@
           }
         }
       }
-    },
-    "Coming next." : {
-
     },
     "Coming soon" : {
       "extractionState" : "manual",
@@ -4187,6 +4187,9 @@
         }
       }
     },
+    "FAVORITES" : {
+
+    },
     "FEATURED" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4425,6 +4428,9 @@
         }
       }
     },
+    "FOOTBALL" : {
+
+    },
     "For each thing you said:" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4577,6 +4583,9 @@
           }
         }
       }
+    },
+    "FT" : {
+
     },
     "FUTPOOLS" : {
 
@@ -6772,6 +6781,9 @@
         }
       }
     },
+    "NO FIXTURES" : {
+
+    },
     "No history yet" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7148,6 +7160,9 @@
           }
         }
       }
+    },
+    "Nothing scheduled in your leagues today. Try TOMORROW." : {
+
     },
     "Nothing to accept" : {
       "extractionState" : "manual",
@@ -8066,6 +8081,9 @@
           }
         }
       }
+    },
+    "PICK YOUR FAVORITES" : {
+
     },
     "PICK YOUR SIDE" : {
       "extractionState" : "manual",
@@ -11716,6 +11734,12 @@
           }
         }
       }
+    },
+    "TODAY" : {
+
+    },
+    "TOMORROW" : {
+
     },
     "TOTAL" : {
       "extractionState" : "manual",

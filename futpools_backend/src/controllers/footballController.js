@@ -129,6 +129,13 @@ exports.getFixtureEvents = async (req, res) => {
  */
 exports.getFixturesFeed = async (req, res) => {
   try {
+    // Live-all mode: ?live=true returns every globally-live fixture,
+    // ignores leagues/teams/date. The iOS LIVE tab uses this so users
+    // see all in-progress football, not just their favorites.
+    if (String(req.query.live || '').toLowerCase() === 'true') {
+      const out = await apiFootball.fetchFixturesFeed({ live: true });
+      return res.json(out);
+    }
     const date = String(req.query.date || '').trim()
       || new Date().toISOString().slice(0, 10);
     const leagueIds = String(req.query.leagues || '')

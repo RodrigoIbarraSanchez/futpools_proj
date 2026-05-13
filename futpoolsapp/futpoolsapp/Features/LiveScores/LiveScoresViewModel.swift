@@ -17,13 +17,16 @@ import Combine
 @MainActor
 final class LiveScoresViewModel: ObservableObject {
     enum Tab: String, CaseIterable, Identifiable {
-        case today, tomorrow, live, favorites
+        // Order is the order they appear in the tab strip — LIVE first
+        // matches user expectation (Scorespot-style "what's playing
+        // right now").
+        case live, today, tomorrow, favorites
         var id: String { rawValue }
         var label: String {
             switch self {
+            case .live:      return String(localized: "LIVE")
             case .today:     return String(localized: "TODAY")
             case .tomorrow:  return String(localized: "TOMORROW")
-            case .live:      return String(localized: "LIVE")
             case .favorites: return String(localized: "FAVORITES")
             }
         }
@@ -32,28 +35,27 @@ final class LiveScoresViewModel: ObservableObject {
     @Published var fixtures: [FeedFixture] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var selectedTab: Tab = .today
+    @Published var selectedTab: Tab = .live
+
+    /// User's currently-active pool entries (joined via web; iOS just
+    /// surfaces them). Loaded once per appear, not polled — pool state
+    /// changes slowly relative to live scores.
+    @Published var activePools: [QuinielaEntry] = []
 
     private let client = APIClient.shared
     private var pollTask: Task<Void, Never>?
     private var lastFetchKey: String?
 
-    /// Switches the visible tab and triggers a load if the underlying date
-    /// query changes (today → tomorrow). LIVE/FAVORITES filter the same
-    /// today's-fixtures payload so they don't refetch.
+    /// Switches the visible tab. Each tab implies a different fetch
+    /// (live-all vs date+favorites vs date+favorites for tomorrow), so
+    /// switching always triggers a load.
     func selectTab(_ tab: Tab) {
         guard tab != selectedTab else { return }
         selectedTab = tab
-        // today / tomorrow have different date queries; live/favorites
-        // are derived from the today payload.
-        if tab == .tomorrow || tab == .today {
-            load()
-        }
+        load()
     }
 
-    /// Fetch the feed for whichever date the current tab implies.
-    /// `today/live/favorites` use today's date (favorites is derived from
-    /// the same payload, just filtered client-side); `tomorrow` uses today+1.
+    /// Fetch the feed for whichever shape the current tab implies.
     func load() {
         let key = makeFetchKey()
         guard key != lastFetchKey || fixtures.isEmpty else { return }
@@ -77,14 +79,47 @@ final class LiveScoresViewModel: ObservableObject {
         pollTask = nil
     }
 
+    /// Load pools the user is entered in (and that are still active —
+    /// scheduled or live, not finished). Backs the ActivePoolsBanner
+    /// that lives at the top of the SCORES home.
+    func loadActivePools() {
+        Task {
+            guard let token = KeychainHelper.getToken() else { return }
+            do {
+                let entries: [QuinielaEntry] = try await client.request(
+                    method: "GET",
+                    path: "/quinielas/entries/me",
+                    token: token
+                )
+                let now = Date()
+                // Active = at least one fixture still in the future OR
+                // currently live. Once every fixture is in the past and
+                // the pool has been settled, we hide it from the banner.
+                activePools = entries.filter { entry in
+                    let fixtures = entry.quiniela.fixtures
+                    guard !fixtures.isEmpty else { return false }
+                    return fixtures.contains { fx in
+                        guard let date = fx.kickoffDate else { return false }
+                        return date > now || (fx.status ?? "") != "FT"
+                    }
+                }
+                .sorted { (a, b) in
+                    let ad = a.quiniela.startDateValue ?? .distantFuture
+                    let bd = b.quiniela.startDateValue ?? .distantFuture
+                    return ad < bd
+                }
+            } catch {
+                // Silent — banner just stays empty. Auth failures are
+                // handled by the existing AuthService.
+            }
+        }
+    }
+
     /// Visible fixtures after the current tab's filter is applied.
-    /// Sort: live first, then chronological within each league.
     var visibleFixtures: [FeedFixture] {
         switch selectedTab {
-        case .today, .tomorrow:
+        case .live, .today, .tomorrow:
             return fixtures
-        case .live:
-            return fixtures.filter { $0.isLive }
         case .favorites:
             // The feed already includes favorite teams' fixtures (we
             // pass them as the `teams` query param). For the FAVORITES
@@ -131,6 +166,7 @@ final class LiveScoresViewModel: ObservableObject {
     // MARK: - Private
 
     private func makeFetchKey() -> String {
+        if selectedTab == .live { return "LIVE_ALL" }
         let date = isoDate(for: dateForCurrentTab())
         let leagues = Self.favoriteLeagueIDs().sorted().map(String.init).joined(separator: ",")
         let teams = Self.favoriteTeamIDs().sorted().map(String.init).joined(separator: ",")
@@ -141,7 +177,7 @@ final class LiveScoresViewModel: ObservableObject {
         switch selectedTab {
         case .tomorrow:
             return Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
-        case .today, .live, .favorites:
+        case .live, .today, .favorites:
             return Date()
         }
     }
@@ -159,16 +195,34 @@ final class LiveScoresViewModel: ObservableObject {
     }
 
     private func refresh(silent: Bool = false) async {
+        if !silent { isLoading = true }
+        defer { isLoading = false }
+
+        // LIVE tab: globally-live mode — ignore favorites, hit
+        // /fixtures/feed?live=true. Users want to see all live football,
+        // not just intersection of their followings.
+        if selectedTab == .live {
+            do {
+                let payload: [FeedFixture] = try await client.request(
+                    method: "GET",
+                    path: "/football/fixtures/feed?live=true"
+                )
+                fixtures = payload
+                errorMessage = nil
+            } catch {
+                if !silent { errorMessage = error.localizedDescription }
+            }
+            return
+        }
+
         let leagueIDs = Self.favoriteLeagueIDs()
         let teamIDs = Self.favoriteTeamIDs()
-        // No favorites at all → empty state. Avoids hitting the backend
-        // with a guaranteed-empty query.
+        // No favorites at all → empty state for non-LIVE tabs. Avoids
+        // hitting the backend with a guaranteed-empty query.
         guard !leagueIDs.isEmpty || !teamIDs.isEmpty else {
             fixtures = []
             return
         }
-        if !silent { isLoading = true }
-        defer { isLoading = false }
 
         let date = isoDate(for: dateForCurrentTab())
         let leagues = leagueIDs.map(String.init).joined(separator: ",")

@@ -11,6 +11,7 @@
 import SwiftUI
 
 struct LiveScoresView: View {
+    @EnvironmentObject var auth: AuthService
     @StateObject private var vm = LiveScoresViewModel()
 
     var body: some View {
@@ -19,6 +20,7 @@ struct LiveScoresView: View {
                 ArenaBackground()
                 VStack(spacing: 0) {
                     header
+                    activePoolsBanner
                     tabStrip
                     content
                 }
@@ -29,6 +31,7 @@ struct LiveScoresView: View {
             .onAppear {
                 vm.load()
                 vm.startPolling()
+                vm.loadActivePools()
             }
             .onDisappear { vm.stopPolling() }
         }
@@ -43,6 +46,42 @@ struct LiveScoresView: View {
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 6)
+    }
+
+    /// Horizontally-scrolling carousel of pools the user joined via the web
+    /// app and that are still active. Only shown when there's at least one;
+    /// taps push into the existing read-only QuinielaDetailView.
+    @ViewBuilder
+    private var activePoolsBanner: some View {
+        if !vm.activePools.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Text("◆")
+                        .font(ArenaFont.mono(size: 10, weight: .bold))
+                        .foregroundColor(.arenaPrimary)
+                    Text(String(localized: "MY ACTIVE POOLS"))
+                        .font(ArenaFont.display(size: 11, weight: .heavy))
+                        .tracking(2)
+                        .foregroundColor(.arenaTextMuted)
+                }
+                .padding(.horizontal, 16)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(vm.activePools) { entry in
+                            NavigationLink {
+                                QuinielaDetailView(quiniela: entry.quiniela)
+                                    .environmentObject(auth)
+                            } label: {
+                                ActivePoolCard(entry: entry)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+            }
+            .padding(.bottom, 12)
+        }
     }
 
     private var tabStrip: some View {
@@ -118,28 +157,132 @@ struct LiveScoresView: View {
 
     @ViewBuilder
     private var emptyState: some View {
-        // Distinguish "no favorites picked" from "no fixtures today".
-        let hasFavorites = !LiveScoresViewModel.favoriteLeagueIDs().isEmpty
-            || !LiveScoresViewModel.favoriteTeamIDs().isEmpty
-        VStack(spacing: 12) {
-            Text("⚽")
-                .font(.system(size: 48))
-            Text(hasFavorites
-                 ? String(localized: "NO FIXTURES")
-                 : String(localized: "PICK YOUR FAVORITES"))
-                .font(ArenaFont.display(size: 14, weight: .heavy))
-                .tracking(2)
-                .foregroundColor(.arenaText)
-            Text(hasFavorites
-                 ? String(localized: "Nothing scheduled in your leagues today. Try TOMORROW.")
-                 : String(localized: "Add favorite teams or leagues from your profile to see live scores."))
-                .font(ArenaFont.body(size: 12))
-                .foregroundColor(.arenaTextDim)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+        // LIVE tab has its own copy — when nothing's playing globally we
+        // say so explicitly rather than implying the user lacks
+        // favorites (which is the other tabs' problem).
+        if vm.selectedTab == .live {
+            VStack(spacing: 12) {
+                Text("⏳").font(.system(size: 48))
+                Text(String(localized: "NO LIVE GAMES"))
+                    .font(ArenaFont.display(size: 14, weight: .heavy))
+                    .tracking(2)
+                    .foregroundColor(.arenaText)
+                Text(String(localized: "Nothing kicking off worldwide right now. Check TODAY for upcoming."))
+                    .font(ArenaFont.body(size: 12))
+                    .foregroundColor(.arenaTextDim)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, 60)
+        } else {
+            // Date/Favorites tabs: distinguish "no favorites picked" from
+            // "no fixtures today".
+            let hasFavorites = !LiveScoresViewModel.favoriteLeagueIDs().isEmpty
+                || !LiveScoresViewModel.favoriteTeamIDs().isEmpty
+            VStack(spacing: 12) {
+                Text("⚽").font(.system(size: 48))
+                Text(hasFavorites
+                     ? String(localized: "NO FIXTURES")
+                     : String(localized: "PICK YOUR FAVORITES"))
+                    .font(ArenaFont.display(size: 14, weight: .heavy))
+                    .tracking(2)
+                    .foregroundColor(.arenaText)
+                Text(hasFavorites
+                     ? String(localized: "Nothing scheduled in your leagues today. Try TOMORROW.")
+                     : String(localized: "Add favorite teams or leagues from your profile to see live scores."))
+                    .font(ArenaFont.body(size: 12))
+                    .foregroundColor(.arenaTextDim)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, 60)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, 60)
+    }
+}
+
+// MARK: - Active pool card
+
+/// Compact carousel card for a pool the user joined via web. Shows the
+/// pool's status (LIVE pulse / OPEN with kickoff in / CLOSED), name, and
+/// score progress against the maximum possible. Designed for horizontal
+/// scrolling — fixed width so multiple cards fit on screen at once.
+private struct ActivePoolCard: View {
+    let entry: QuinielaEntry
+
+    private var hasLiveFixture: Bool {
+        let now = Date()
+        for fx in entry.quiniela.fixtures {
+            guard let date = fx.kickoffDate else { continue }
+            // Live ≈ kickoff in the past + status not finished.
+            if date <= now && (fx.status ?? "") != "FT" { return true }
+        }
+        return false
+    }
+
+    private var statusLabel: String {
+        if hasLiveFixture { return String(localized: "LIVE") }
+        if let start = entry.quiniela.startDateValue, start > Date() {
+            // Show "STARTS IN 2H" style copy. Compact relative format.
+            let f = RelativeDateTimeFormatter()
+            f.unitsStyle = .abbreviated
+            return f.localizedString(for: start, relativeTo: Date()).uppercased()
+        }
+        return String(localized: "OPEN")
+    }
+
+    private var statusColor: Color {
+        hasLiveFixture ? .arenaDanger : .arenaPrimary
+    }
+
+    private var scoreLine: String {
+        let score = entry.score ?? 0
+        let total = entry.totalPossible ?? entry.quiniela.fixtures.count
+        return "\(score) / \(total)"
+    }
+
+    var body: some View {
+        HudFrame(cut: 12, glow: hasLiveFixture ? .arenaDanger : nil) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    if hasLiveFixture {
+                        Circle()
+                            .fill(Color.arenaDanger)
+                            .frame(width: 6, height: 6)
+                            .shadow(color: .arenaDanger, radius: 4)
+                    }
+                    Text(statusLabel)
+                        .font(ArenaFont.mono(size: 9, weight: .bold))
+                        .tracking(1.5)
+                        .foregroundColor(statusColor)
+                    Spacer(minLength: 0)
+                }
+                Text(entry.quiniela.name.uppercased())
+                    .font(ArenaFont.display(size: 14, weight: .heavy))
+                    .tracking(0.5)
+                    .foregroundColor(.arenaText)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Spacer(minLength: 4)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(scoreLine)
+                        .font(ArenaFont.display(size: 22, weight: .heavy))
+                        .foregroundColor(statusColor)
+                        .monospacedDigit()
+                    Text(String(localized: "PTS"))
+                        .font(ArenaFont.mono(size: 9, weight: .bold))
+                        .foregroundColor(.arenaTextMuted)
+                    Spacer()
+                    Text("\(entry.quiniela.fixtures.count) \(String(localized: "FIXTURES"))")
+                        .font(ArenaFont.mono(size: 9))
+                        .foregroundColor(.arenaTextDim)
+                }
+            }
+            .padding(12)
+            .frame(width: 220, height: 124, alignment: .topLeading)
+        }
     }
 }
 

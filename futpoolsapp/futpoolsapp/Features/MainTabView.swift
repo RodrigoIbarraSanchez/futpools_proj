@@ -11,16 +11,19 @@
 import SwiftUI
 
 enum ArenaTab: String, CaseIterable, Identifiable {
-    case scores, pools, profile
+    // simple_version: 2 tabs only. Quinielas the user joined via web
+    // surface as a banner inside the SCORES home, not as their own tab,
+    // because pool participation is a web-only flow and a dedicated tab
+    // would imply iOS users can manage pools (they can't).
+    case scores, profile
     var id: String { rawValue }
 
     /// Resolved label — goes through `String(localized:)` so Spanish users see
-    /// "MARCADORES / QUINIELAS / PERFIL" instead of the English keys. Static
-    /// strings bypass SwiftUI's automatic Text localization.
+    /// "MARCADORES / PERFIL" instead of the English keys. Static strings
+    /// bypass SwiftUI's automatic Text localization.
     var label: String {
         switch self {
         case .scores:  return String(localized: "SCORES")
-        case .pools:   return String(localized: "POOLS")
         case .profile: return String(localized: "PROFILE")
         }
     }
@@ -28,7 +31,6 @@ enum ArenaTab: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .scores:  return "▶"
-        case .pools:   return "◆"
         case .profile: return "◉"
         }
     }
@@ -44,7 +46,6 @@ struct MainTabView: View {
             Group {
                 switch selected {
                 case .scores:  LiveScoresView()
-                case .pools:   MyPoolsView()
                 case .profile: ProfileView()
                 }
             }
