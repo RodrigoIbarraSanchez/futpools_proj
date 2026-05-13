@@ -53,6 +53,34 @@ function formatDate(d) {
   return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/// Display the per-entry fee. simple_version pools use the new
+/// `entryFeeMXN` numeric field; legacy pools may carry only the string
+/// `cost` (e.g. "$15"). Prefer the new field; fall back to cost; finally
+/// show "—" so empty fields don't render an awkward blank cell.
+function formatEntryFee(quiniela) {
+  if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
+    return `$${quiniela.entryFeeMXN} MXN`;
+  }
+  if (quiniela?.cost && String(quiniela.cost).trim() !== '0' && String(quiniela.cost).trim() !== '') {
+    return quiniela.cost;
+  }
+  return '—';
+}
+
+/// Pool prize pool — sum of all entry fees minus the platform rake.
+/// For pools using the new entryFeeMXN flow this is computed live from
+/// entry count; for legacy pools we keep showing whatever `prize` string
+/// the admin set.
+function formatPrizePool(quiniela) {
+  if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
+    const entries = quiniela?.entriesCount ?? 0;
+    const rake = (quiniela?.rakePercent ?? 10) / 100;
+    const pot = Math.floor(entries * quiniela.entryFeeMXN * (1 - rake));
+    return pot > 0 ? `$${pot} MXN` : '—';
+  }
+  return quiniela?.prize || '—';
+}
+
 // ──────────────────────────────────────────────────────────────
 // Header — pool title + real coin balance
 // ──────────────────────────────────────────────────────────────
@@ -287,8 +315,8 @@ function QuickPlayHero({ quiniela, liveFixtures, locale, embedded = false }) {
             textTransform: 'uppercase',
           }}>{quiniela.name}</div>
           <div style={{ display: 'flex', gap: 18, marginBottom: 12, flexWrap: 'wrap' }}>
-            <StatInline label={t(locale, 'Prize')}    value={quiniela.prize}                color="var(--fp-primary)" mono />
-            <StatInline label={t(locale, 'Entry')}    value={quiniela.cost}                 color="var(--fp-accent)"  mono />
+            <StatInline label={t(locale, 'Prize')}    value={formatPrizePool(quiniela)}      color="var(--fp-primary)" mono />
+            <StatInline label={t(locale, 'Entry')}    value={formatEntryFee(quiniela)}       color="var(--fp-accent)"  mono />
             <StatInline label={t(locale, 'Fixtures')} value={quiniela.fixtures?.length ?? 0} color="var(--fp-gold)"    mono />
           </div>
           <Link to={`/pool/${quiniela._id}`} style={{ textDecoration: 'none' }}>
@@ -438,8 +466,8 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: preview.length ? 10 : 0 }}>
-            <StatTile label={t(locale, 'POT')}     value={quiniela.prize}             color="var(--fp-gold)" />
-            <StatTile label={t(locale, 'ENTRY')}   value={quiniela.cost}              color="var(--fp-text)" />
+            <StatTile label={t(locale, 'POT')}     value={formatPrizePool(quiniela)}  color="var(--fp-gold)" />
+            <StatTile label={t(locale, 'ENTRY')}   value={formatEntryFee(quiniela)}   color="var(--fp-text)" />
             <StatTile label={t(locale, 'PLAYERS')} value={quiniela.entriesCount ?? 0} color="var(--fp-accent)" />
           </div>
 

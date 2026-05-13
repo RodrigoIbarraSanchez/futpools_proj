@@ -9,6 +9,24 @@ import {
   HudFrame, HudChip, LiveDot, TeamCrest, ArcadeButton, SectionLabel, IconButton,
 } from '../arena-ui/primitives';
 
+/// Same helpers as Home.jsx — shows entry fee in MXN when the pool has
+/// the new entryFeeMXN field, falls back to the legacy `cost` string.
+function formatPoolEntry(quiniela) {
+  if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
+    return `$${quiniela.entryFeeMXN} MXN`;
+  }
+  return (quiniela?.cost && String(quiniela.cost).trim() !== '0') ? quiniela.cost : '—';
+}
+function formatPoolPrize(quiniela) {
+  if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
+    const entries = quiniela?.entriesCount ?? 0;
+    const rake = (quiniela?.rakePercent ?? 10) / 100;
+    const pot = Math.floor(entries * quiniela.entryFeeMXN * (1 - rake));
+    return pot > 0 ? `$${pot} MXN` : '—';
+  }
+  return quiniela?.prize || '—';
+}
+
 function ShareButton({ pool }) {
   // Pull locale from context — previously referenced as a free variable
   // which threw ReferenceError at runtime, crashing the whole PoolDetail
@@ -410,14 +428,14 @@ export function PoolDetail() {
               <div style={{
                 fontFamily: 'var(--fp-display)', fontSize: 26, fontWeight: 800,
                 color: 'var(--fp-gold)', letterSpacing: 1, lineHeight: 1,
-              }}>{quiniela.prize}</div>
+              }}>{formatPoolPrize(quiniela)}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
                 {t(locale, 'ENTRY')}
               </div>
               <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 18, fontWeight: 700, color: 'var(--fp-text)' }}>
-                {quiniela.cost}
+                {formatPoolEntry(quiniela)}
               </div>
             </div>
           </div>
