@@ -59,7 +59,6 @@ function crumbsFor(pathname, locale) {
   const tr = (k) => t(locale, k);
   if (pathname === '/' || pathname.startsWith('/?')) return [tr('Pools')];
   if (pathname.startsWith('/scores')) return [tr('Pools'), tr('Live')];
-  if (pathname.startsWith('/entries')) return [tr('Pools'), tr('My Entries')];
   if (pathname.startsWith('/account')) return [tr('Account')];
   if (pathname.startsWith('/settings')) return [tr('Account'), tr('Settings')];
   if (pathname.startsWith('/leaderboard')) return [tr('Account'), tr('Leaderboard')];
@@ -101,8 +100,6 @@ function Sidebar({ pathname, navigate, mini, locale, isAdmin, logout, navigateOn
                active={isActive('/')} onClick={() => navigate('/')} />
       <NavItem icon="fire" label={t(locale, 'Live')}
                active={isActive('/scores')} onClick={() => navigate('/scores')} />
-      <NavItem icon="ticket" label={t(locale, 'My Entries')}
-               active={isActive('/entries')} onClick={() => navigate('/entries')} />
 
       {!mini && <div className="fp-nav-section">{t(locale, 'ACCOUNT')}</div>}
       <NavItem icon="user" label={t(locale, 'Account')}

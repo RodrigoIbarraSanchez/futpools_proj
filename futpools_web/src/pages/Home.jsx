@@ -10,6 +10,7 @@ import {
 } from '../arena-ui/primitives';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { HomeDesktop } from './desktop/HomeDesktop';
+import { resolvePoolStatus } from '../lib/poolStatus';
 
 // ──────────────────────────────────────────────────────────────
 // Live/state helpers (shared across Home sub-components)
@@ -22,32 +23,36 @@ function isFixtureLive(fixture, liveFixtures) {
 }
 
 function resolveStatus(q, locale, liveFixtures) {
-  const hasActuallyLive = (q.fixtures || []).some(f => isFixtureLive(f, liveFixtures));
-  if (hasActuallyLive) return { key: 'live', label: t(locale, 'LIVE'), color: 'var(--fp-danger)' };
-
-  if (q.status === 'completed') return { key: 'closed', label: t(locale, 'Completed').toUpperCase(), color: 'var(--fp-text-muted)' };
-  const now = new Date();
-  if (q.endDate && new Date(q.endDate) < now) return { key: 'closed', label: t(locale, 'Closed').toUpperCase(), color: 'var(--fp-text-muted)' };
-  if (q.startDate && new Date(q.startDate) > now) return { key: 'upcoming', label: t(locale, 'Upcoming').toUpperCase(), color: 'var(--fp-accent)' };
-  return { key: 'open', label: t(locale, 'Open').toUpperCase(), color: 'var(--fp-primary)' };
+  // Delegates to the shared helper so a finalized pool whose fixtures
+  // have FT status (but stale/missing kickoff/endDate) shows as 'closed'
+  // here too — fixing the original "Partidos de media semana" bug.
+  const key = resolvePoolStatus(q, liveFixtures);
+  switch (key) {
+    case 'live':
+      return { key: 'live', label: t(locale, 'LIVE'), color: 'var(--fp-danger)' };
+    case 'completed':
+      return { key: 'closed', label: t(locale, 'Closed').toUpperCase(), color: 'var(--fp-text-muted)' };
+    case 'upcoming':
+      return { key: 'upcoming', label: t(locale, 'Upcoming').toUpperCase(), color: 'var(--fp-accent)' };
+    default:
+      return { key: 'open', label: t(locale, 'Open').toUpperCase(), color: 'var(--fp-primary)' };
+  }
 }
 
 /// Derives the hero block's status with "LIVE NOW" only when at least one fixture
 /// is actually running per the polled data — not just `q.status`.
 function heroState(q, liveFixtures, locale) {
-  const fixtures = q?.fixtures || [];
-  const hasLive = fixtures.some(f => isFixtureLive(f, liveFixtures));
-  if (hasLive) return { label: t(locale, 'LIVE NOW'), color: 'var(--fp-danger)', showDot: true, live: true };
-
-  const now = new Date();
-  const endedByStatus = q?.status === 'completed';
-  const endedByDate = q?.endDate && new Date(q.endDate) < now;
-  if (endedByStatus || endedByDate) {
+  const key = resolvePoolStatus(q, liveFixtures);
+  if (key === 'live') {
+    return { label: t(locale, 'LIVE NOW'), color: 'var(--fp-danger)', showDot: true, live: true };
+  }
+  if (key === 'completed') {
     return { label: t(locale, 'POOL FINISHED'), color: 'var(--fp-text-muted)', showDot: false, live: false };
   }
-  const anyUpcoming = fixtures.some(f => f.kickoff && new Date(f.kickoff) > now);
-  if (anyUpcoming) return { label: t(locale, 'Upcoming').toUpperCase(), color: 'var(--fp-accent)', showDot: false, live: false };
-  return { label: t(locale, 'POOL FINISHED'), color: 'var(--fp-text-muted)', showDot: false, live: false };
+  if (key === 'upcoming') {
+    return { label: t(locale, 'Upcoming').toUpperCase(), color: 'var(--fp-accent)', showDot: false, live: false };
+  }
+  return { label: t(locale, 'Open').toUpperCase(), color: 'var(--fp-primary)', showDot: false, live: false };
 }
 
 function formatDate(d) {

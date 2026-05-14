@@ -12,10 +12,9 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
 import { t } from '../../i18n/translations';
+import { resolvePoolStatus } from '../../lib/poolStatus';
 
 const WINNER_SHARE = 0.65;
-const isFixtureLive = (fixture, liveFixtures) =>
-  liveFixtures[fixture.fixtureId]?.status?.isLive === true;
 
 function formatMxn(n) {
   return '$' + Number(n).toLocaleString('es-MX');
@@ -34,15 +33,11 @@ function prizePoolMxn(q) {
   return null;
 }
 
-function poolStatus(q, liveFixtures) {
-  const hasLive = (q.fixtures || []).some((f) => isFixtureLive(f, liveFixtures));
-  if (hasLive) return 'live';
-  if (q.status === 'completed') return 'completed';
-  const now = Date.now();
-  if (q.endDate && new Date(q.endDate).getTime() < now) return 'completed';
-  if (q.startDate && new Date(q.startDate).getTime() > now) return 'upcoming';
-  return 'open';
-}
+// Delegates to the shared helper. The previous local implementation
+// only checked the legacy `q.status` field (often empty) + endDate, so a
+// pool whose fixtures had FT codes but stale kickoff/endDate appeared as
+// 'open' on the grid (the "Partidos de media semana" bug).
+const poolStatus = (q, liveFixtures) => resolvePoolStatus(q, liveFixtures);
 
 function statusLabel(key, locale) {
   switch (key) {

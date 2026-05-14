@@ -9,6 +9,9 @@ import {
   HudFrame, HudChip, LiveDot, TeamCrest, ArcadeButton, SectionLabel, IconButton,
 } from '../arena-ui/primitives';
 import { useSafeBack } from '../lib/safeBack';
+import { canJoinPool } from '../lib/poolStatus';
+import { useIsDesktop } from '../desktop/useIsDesktop';
+import { PoolDetailDesktop } from './desktop/PoolDetailDesktop';
 
 /// Compose the leaderboard label for a participant. Multiple entries per
 /// user are allowed in simple_version; the 2nd, 3rd, ... entry is shown
@@ -153,6 +156,7 @@ export function PoolDetail() {
   const goBack = useSafeBack('/');
   const { user, token } = useAuth();
   const { locale } = useLocale();
+  const isDesktop = useIsDesktop();
   const [quiniela, setQuiniela] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('fixtures');
@@ -209,15 +213,11 @@ export function PoolDetail() {
   // surface (delete vs. read-only picks) differs by phase.
   const canViewPicks = isOwner && !isScheduled && (quiniela?.entriesCount ?? 0) > 0;
 
-  const canJoin = () => {
-    if (!quiniela?.fixtures?.length) return false;
-    const now = new Date();
-    for (const f of quiniela.fixtures) {
-      const kick = f.kickoff ? new Date(f.kickoff) : null;
-      if (kick && kick <= now) return false;
-    }
-    return true;
-  };
+  // Delegates to the shared helper so PoolDetail, Home, and HomeDesktop
+  // never disagree on whether a pool is joinable. Bug 2026-05-14: pools
+  // whose fixtures had FT statuses but stale/missing kickoff dates fell
+  // through the previous kickoff-only check and rendered as joinable.
+  const canJoin = () => canJoinPool(quiniela, liveByFixture);
 
   const load = async () => {
     if (!id) return;
@@ -342,6 +342,28 @@ export function PoolDetail() {
   }
 
   const status = statusMeta(quiniela, locale);
+
+  // Desktop renders the design's two-column layout (PoolDetailDesktop)
+  // using the same data + handlers we just hydrated above. Mobile keeps
+  // the existing phone-frame UI verbatim.
+  if (isDesktop) {
+    return (
+      <PoolDetailDesktop
+        quiniela={quiniela}
+        liveByFixture={liveByFixture}
+        leaderboard={leaderboard}
+        currentUserId={user?._id || user?.id}
+        entryCount={entryCount}
+        alreadyEntered={alreadyEntered}
+        canJoin={canJoin()}
+        feeMXN={feeMXN}
+        handleJoin={handleJoin}
+        navigate={navigate}
+        goBack={goBack}
+        justPaid={justPaid}
+      />
+    );
+  }
 
   return (
     // .fp-pool-deep escapes the global 430-wide phone-frame on desktop and
