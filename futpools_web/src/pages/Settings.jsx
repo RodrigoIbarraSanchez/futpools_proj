@@ -3,6 +3,7 @@ import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
 import { AppBackground } from '../arena-ui/AppBackground';
 import { HudFrame, IconButton, SectionLabel } from '../arena-ui/primitives';
+import { useIsDesktop } from '../desktop/useIsDesktop';
 
 const OPTIONS = [
   { value: '',   labelKey: 'Use your iPhone language' },
@@ -12,6 +13,69 @@ const OPTIONS = [
 
 export function Settings() {
   const { locale, setLocale, rawLocale } = useLocale();
+  const isDesktop = useIsDesktop();
+
+  // Desktop variant — radio cards inside a max-720 container, mirroring
+  // the design's `screen-settings.jsx`. Mobile keeps its native select
+  // (better UX on touch).
+  if (isDesktop) {
+    const current = rawLocale || (locale.startsWith('es') ? 'es' : 'en');
+    return (
+      <div className="fp-desktop-narrow">
+        <div className="fp-desktop-page-head">
+          <div>
+            <h1 className="fp-desktop-page-title">{t(locale, 'Settings')}</h1>
+            <p className="fp-desktop-page-sub">{t(locale, 'App preferences.')}</p>
+          </div>
+        </div>
+        <div className="fp-card">
+          <h4 className="fp-section-title">{t(locale, 'App Language').toUpperCase()}</h4>
+          <p className="muted" style={{ fontSize: 13, margin: '8px 0 18px' }}>
+            {t(locale, 'Changes apply instantly')}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {OPTIONS.map((opt) => {
+              const active = current === opt.value;
+              return (
+                <label
+                  key={opt.value || 'auto'}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    padding: '14px 16px',
+                    borderRadius: 12,
+                    cursor: 'pointer',
+                    border: active
+                      ? '1.5px solid var(--fp-primary)'
+                      : '1px solid var(--fp-stroke)',
+                    background: active
+                      ? 'rgba(33,226,140,0.06)'
+                      : 'var(--fp-surface-alt)',
+                    transition: 'all 120ms ease',
+                  }}
+                >
+                  <input
+                    type="radio" name="lang"
+                    checked={active}
+                    onChange={() => setLocale(opt.value)}
+                    style={{ display: 'none' }}
+                  />
+                  <span style={{
+                    width: 20, height: 20, borderRadius: '50%',
+                    border: active ? '6px solid var(--fp-primary)' : '2px solid var(--fp-stroke)',
+                    background: active ? 'var(--fp-surface)' : 'transparent',
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>
+                    {t(locale, opt.labelKey)}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

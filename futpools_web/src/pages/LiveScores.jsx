@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
 import { HudFrame, SectionLabel } from '../arena-ui/primitives';
+import { useIsDesktop } from '../desktop/useIsDesktop';
 
 // ── Popular enum → api-football ID maps. Mirrors POPULAR_TEAMS/LEAGUES
 //    in WebOnboarding.jsx and OnbTeam/OnboardingLeague on iOS so reading
@@ -509,29 +510,54 @@ export function LiveScores() {
   }, [fixtures, tab, favoriteTeamIDs]);
 
   const hasFavorites = favoriteTeamIDs.length > 0 || favoriteLeagueIDs.length > 0;
+  const isDesktop = useIsDesktop();
+
+  // Desktop reduces the chrome (no big sticky header — the topbar already
+  // shows the breadcrumb) and widens the fixture rows into a 2-col
+  // responsive grid. Mobile stays a single-column phone-frame layout.
+  const horizontalPad = isDesktop ? 0 : 16;
+  const fixtureGrid = isDesktop
+    ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 8 }
+    : { display: 'flex', flexDirection: 'column', gap: 6 };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div style={{
-        padding: '14px 16px 6px',
-        borderBottom: '1px solid var(--fp-stroke)',
-        background: 'linear-gradient(180deg, var(--fp-bg2), transparent)',
-      }}>
+      {/* Header — only render the big "LIVE SCORES" title on mobile.
+          On desktop the breadcrumb in the topbar carries this. */}
+      {!isDesktop && (
         <div style={{
-          fontFamily: 'var(--fp-display)', fontSize: 24, fontWeight: 800,
-          letterSpacing: 3, textTransform: 'uppercase',
-          color: 'var(--fp-text)',
-        }}>{t(locale, 'LIVE SCORES')}</div>
-      </div>
+          padding: '14px 16px 6px',
+          borderBottom: '1px solid var(--fp-stroke)',
+          background: 'linear-gradient(180deg, var(--fp-bg2), transparent)',
+        }}>
+          <div style={{
+            fontFamily: 'var(--fp-display)', fontSize: 24, fontWeight: 800,
+            letterSpacing: 3, textTransform: 'uppercase',
+            color: 'var(--fp-text)',
+          }}>{t(locale, 'LIVE SCORES')}</div>
+        </div>
+      )}
+      {isDesktop && (
+        <div className="fp-desktop-page-head">
+          <div>
+            <h1 className="fp-desktop-page-title">{t(locale, 'LIVE SCORES')}</h1>
+            <p className="fp-desktop-page-sub">
+              {t(locale, 'Live football and your active pools at a glance.')}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Active pools banner (only when authed + has active pools) */}
       {activePools.length > 0 && (
-        <div style={{ padding: '12px 16px 0' }}>
+        <div style={{ padding: isDesktop ? '0 0 24px' : '12px 16px 0' }}>
           <div style={{ marginBottom: 8 }}>
             <SectionLabel>◆ {t(locale, 'MY ACTIVE POOLS')}</SectionLabel>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={isDesktop
+            ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 12 }
+            : { display: 'flex', flexDirection: 'column', gap: 10 }
+          }>
             {activePools.map((entry) => (
               <ActivePoolBanner key={entry._id} entry={entry} locale={locale} />
             ))}
@@ -539,8 +565,10 @@ export function LiveScores() {
         </div>
       )}
 
-      <div style={{ height: 12 }} />
-      <TabStrip active={tab} onChange={setTab} locale={locale} />
+      {!isDesktop && <div style={{ height: 12 }} />}
+      <div style={isDesktop ? { padding: 0, marginBottom: 16 } : undefined}>
+        <TabStrip active={tab} onChange={setTab} locale={locale} />
+      </div>
 
       {/* Content */}
       {loading && fixtures.length === 0 ? (
@@ -554,9 +582,9 @@ export function LiveScores() {
       ) : (
         <div style={{ paddingBottom: 24 }}>
           {groups.map((group) => (
-            <section key={group.id} style={{ marginBottom: 4 }}>
+            <section key={group.id} style={{ marginBottom: isDesktop ? 16 : 4 }}>
               <LeagueHeader group={group} />
-              <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ padding: `0 ${horizontalPad}px`, ...fixtureGrid }}>
                 {group.fixtures.map((fx) => (
                   <FixtureRow
                     key={fx.fixtureId}

@@ -11,6 +11,7 @@ import {
 import {
   TIER_TO_DIVISION, TIER_NAMES, ACHIEVEMENTS, progressInTier,
 } from '../rank/catalog';
+import { useIsDesktop } from '../desktop/useIsDesktop';
 
 function initials(name) {
   return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -50,6 +51,29 @@ export function Account() {
   };
 
   const unlockedCodes = new Set((rankSummary?.achievements || []).map(a => a.code));
+  const isDesktop = useIsDesktop();
+
+  // Desktop: render the same content but inside a max-width container
+  // and a 2-column grid (identity+rank+stats on the left, admin+achievements+
+  // pools on the right). Mobile renders unchanged.
+  if (isDesktop) {
+    return <AccountDesktopLayout
+      displayName={displayName}
+      username={username}
+      user={user}
+      isAdmin={isAdmin}
+      myPools={myPools}
+      rankSummary={rankSummary}
+      unlockedCodes={unlockedCodes}
+      locale={locale}
+      logout={logout}
+      showEditName={showEditName}
+      setShowEditName={setShowEditName}
+      editName={editName}
+      setEditName={setEditName}
+      onSave={handleSave}
+    />;
+  }
 
   return (
     <>
@@ -291,6 +315,194 @@ export function Account() {
         </div>
       )}
     </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Desktop layout — same data, two-column grid.
+// Reuses the RankHero / StatsGrid / AchievementsGrid components defined
+// below so visual fidelity stays identical to the mobile rank layer.
+function AccountDesktopLayout({
+  displayName, username, user, isAdmin, myPools, rankSummary,
+  unlockedCodes, locale, logout, showEditName, setShowEditName,
+  editName, setEditName, onSave,
+}) {
+  return (
+    <div className="fp-desktop-wide">
+      <div className="fp-desktop-page-head">
+        <div>
+          <h1 className="fp-desktop-page-title">{t(locale, 'My account')}</h1>
+          <p className="fp-desktop-page-sub">{t(locale, 'Profile, rank, and admin tools.')}</p>
+        </div>
+        <button
+          type="button"
+          className="fp-btn danger sm"
+          onClick={logout}
+        >↩ {t(locale, 'Sign out')}</button>
+      </div>
+
+      <div style={{
+        display: 'grid', gap: 'var(--app-space-6)',
+        gridTemplateColumns: '1.4fr 1fr', alignItems: 'flex-start',
+      }}>
+        {/* LEFT — identity + rank hero + stats */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-5)' }}>
+          <div className="fp-card" style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--app-space-5)',
+          }}>
+            <div style={{
+              width: 80, height: 80, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #36E9FF, #21E28C)',
+              display: 'grid', placeItems: 'center',
+              color: '#0B0F14', fontWeight: 800, fontSize: 28,
+              flexShrink: 0,
+            }}>{initials(displayName)}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <h2 style={{
+                  margin: 0, fontSize: 24, fontWeight: 700,
+                  letterSpacing: '-0.01em', color: 'var(--fp-text)',
+                }}>{displayName}</h2>
+                <button
+                  type="button"
+                  className="fp-icon-btn"
+                  style={{ width: 30, height: 30 }}
+                  onClick={() => { setEditName(displayName); setShowEditName(true); }}
+                  title={t(locale, 'Edit name')}
+                >✎</button>
+              </div>
+              <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+                @{username}{user?.email ? ` · ${user.email}` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div className="fp-card" style={{ padding: 'var(--app-space-5)' }}>
+            <RankHero summary={rankSummary} locale={locale} />
+          </div>
+
+          <StatsGrid summary={rankSummary} locale={locale} />
+
+          <Link
+            to="/leaderboard"
+            className="fp-btn ghost"
+            style={{ alignSelf: 'flex-start' }}
+          >◆ {t(locale, 'VIEW GLOBAL LEADERBOARD')} ›</Link>
+        </div>
+
+        {/* RIGHT — admin tools, achievements, created pools */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-5)' }}>
+          {isAdmin && (
+            <div className="fp-card" style={{
+              background: 'linear-gradient(180deg, rgba(33,226,140,0.10), transparent 70%), var(--fp-surface)',
+              border: '1px solid rgba(33,226,140,0.28)',
+            }}>
+              <h4 className="fp-section-title">Admin</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                <Link to="/admin/pools/new" className="fp-btn primary block">
+                  + {t(locale, 'Create pool')}
+                </Link>
+                <Link to="/admin/payouts" className="fp-btn ghost block">
+                  💸 {t(locale, 'Pending payouts')}
+                </Link>
+              </div>
+            </div>
+          )}
+
+          <div className="fp-card">
+            <h4 className="fp-section-title">{t(locale, 'ACHIEVEMENTS')}</h4>
+            <div style={{ marginTop: 12 }}>
+              <AchievementsGrid unlockedCodes={unlockedCodes} locale={locale} />
+            </div>
+          </div>
+
+          {myPools.length > 0 && (
+            <div className="fp-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{
+                padding: '14px 18px',
+                borderBottom: '1px solid var(--fp-stroke)',
+              }}>
+                <h4 className="fp-section-title" style={{ margin: 0 }}>
+                  {t(locale, 'MY CREATED POOLS')}
+                </h4>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {myPools.map((p) => (
+                  <Link
+                    key={p._id}
+                    to={`/pool/${p._id}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '12px 18px',
+                      borderTop: '1px solid rgba(255,255,255,0.04)',
+                      color: 'var(--fp-text)', textDecoration: 'none',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 14, fontWeight: 700, letterSpacing: 0.3,
+                        textTransform: 'uppercase',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{p.name}</div>
+                      <div style={{
+                        display: 'flex', gap: 8, marginTop: 4,
+                        fontFamily: 'var(--app-font-mono)', fontSize: 11,
+                        color: 'var(--fp-text-muted)',
+                      }}>
+                        {p.inviteCode && (
+                          <span style={{ color: 'var(--fp-primary)', fontWeight: 700 }}>{p.inviteCode}</span>
+                        )}
+                        {typeof p.entriesCount === 'number' && (
+                          <span>· {p.entriesCount} {t(locale, 'players')}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="muted" style={{ fontSize: 18 }}>›</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* Edit name modal — keeps the same UX as mobile but uses the
+          desktop modal styling. */}
+      {showEditName && (
+        <div className="fp-modal-backdrop" onClick={() => setShowEditName(false)}>
+          <div className="fp-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 700 }}>
+              {t(locale, 'Edit name')}
+            </h3>
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%', padding: '10px 12px', fontSize: 16,
+                background: 'var(--fp-surface-alt)',
+                border: '1px solid var(--fp-stroke)',
+                borderRadius: 10, color: 'var(--fp-text)',
+                fontFamily: 'inherit', outline: 'none',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button
+                type="button"
+                className="fp-btn ghost block"
+                onClick={() => setShowEditName(false)}
+              >{t(locale, 'Cancel')}</button>
+              <button
+                type="button"
+                className="fp-btn primary block"
+                onClick={onSave}
+              >{t(locale, 'Save')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

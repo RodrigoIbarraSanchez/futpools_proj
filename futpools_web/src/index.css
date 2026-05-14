@@ -84,10 +84,19 @@ body {
    viewport for desktop layouts.
    New full-bleed pages: add their root class to the :not() selector. */
 @media (min-width: 430px) {
-  #root:not(:has(.fp-landing)):not(:has(.onb-root)) {
+  #root:not(:has(.fp-landing)):not(:has(.onb-root)):not(:has(.fp-desktop-shell)):not(:has(.fp-pool-deep)) {
     max-width: 430px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(33, 226, 140, 0.06), 0 0 0 1px var(--fp-stroke);
+  }
+}
+/* Pool deep views (PoolDetail, QuinielaPick) escape the phone-frame on
+   desktop and center their existing layout in a comfortable reading width
+   so a 1920-wide monitor doesn't render a 430-px ribbon down the middle. */
+@media (min-width: 1100px) {
+  .fp-pool-deep {
+    max-width: 1080px;
+    margin: 0 auto;
   }
 }
 

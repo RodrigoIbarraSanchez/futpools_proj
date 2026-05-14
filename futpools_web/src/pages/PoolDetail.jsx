@@ -332,19 +332,22 @@ export function PoolDetail() {
 
   if (loading || !quiniela) {
     return (
-      <>
+      <div className="fp-pool-deep">
         <AppBackground />
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)' }}>
           {loading ? t(locale, 'Loading pools…').toUpperCase() : 'POOL NOT FOUND'}
         </div>
-      </>
+      </div>
     );
   }
 
   const status = statusMeta(quiniela, locale);
 
   return (
-    <>
+    // .fp-pool-deep escapes the global 430-wide phone-frame on desktop and
+    // re-centers the body inside a 1080-max container (see index.css). On
+    // mobile the class is a no-op — phone frame stays.
+    <div className="fp-pool-deep">
       <AppBackground />
 
       {/* Header */}
@@ -700,7 +703,7 @@ export function PoolDetail() {
           onMutated={() => load()}
         />
       )}
-    </>
+    </div>
   );
 }
 

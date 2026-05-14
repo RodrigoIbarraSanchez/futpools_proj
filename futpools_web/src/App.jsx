@@ -14,6 +14,7 @@ import { AdminPayouts } from './pages/admin/AdminPayouts';
 import { WebOnboarding } from './pages/onboarding/WebOnboarding';
 import { LiveMatch } from './pages/LiveMatch';
 import { LiveScores } from './pages/LiveScores';
+import { MyEntries } from './pages/MyEntries';
 import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
 import { LandingPage } from './pages/LandingPage';
@@ -81,6 +82,7 @@ export default function App() {
             <Route path="/" element={<RootSwitch />}>
               <Route index element={<Home />} />
               <Route path="scores" element={<LiveScores />} />
+              <Route path="entries" element={<PrivateRoute><MyEntries /></PrivateRoute>} />
               <Route path="account" element={<Account />} />
             </Route>
 

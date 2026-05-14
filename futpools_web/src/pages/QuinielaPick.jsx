@@ -91,17 +91,19 @@ export function QuinielaPick() {
 
   if (loading || !quiniela) {
     return (
-      <>
+      <div className="fp-pool-deep">
         <AppBackground />
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)' }}>
           {t(locale, 'Loading pools…').toUpperCase()}
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    // .fp-pool-deep escapes the global 430-wide phone-frame on desktop —
+    // mobile renders inside the existing phone frame unchanged.
+    <div className="fp-pool-deep">
       <AppBackground />
 
       {/* Header */}
@@ -257,6 +259,6 @@ export function QuinielaPick() {
           </ArcadeButton>
         </div>
       </div>
-    </>
+    </div>
   );
 }

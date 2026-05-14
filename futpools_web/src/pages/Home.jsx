@@ -8,6 +8,8 @@ import {
   HudFrame, HudChip, LiveDot, StatTile, StatInline,
   TeamCrest, SectionLabel, ArcadeButton,
 } from '../arena-ui/primitives';
+import { useIsDesktop } from '../desktop/useIsDesktop';
+import { HomeDesktop } from './desktop/HomeDesktop';
 
 // ──────────────────────────────────────────────────────────────
 // Live/state helpers (shared across Home sub-components)
@@ -527,6 +529,12 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
 
 // ──────────────────────────────────────────────────────────────
 export function Home() {
+  const isDesktop = useIsDesktop();
+  if (isDesktop) return <HomeDesktop />;
+  return <HomeMobile />;
+}
+
+function HomeMobile() {
   const { user, token } = useAuth();
   const { locale } = useLocale();
   const [quinielas, setQuinielas] = useState([]);
