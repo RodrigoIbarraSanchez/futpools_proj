@@ -84,7 +84,7 @@ body {
    viewport for desktop layouts.
    New full-bleed pages: add their root class to the :not() selector. */
 @media (min-width: 430px) {
-  #root:not(:has(.fp-landing)):not(:has(.onb-root)):not(:has(.fp-desktop-shell)):not(:has(.fp-pool-deep)) {
+  #root:not(:has(.fp-landing)):not(:has(.onb-root)):not(:has(.fp-desktop-shell)):not(:has(.fp-desktop-scope)):not(:has(.fp-pool-deep)) {
     max-width: 430px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(33, 226, 140, 0.06), 0 0 0 1px var(--fp-stroke);

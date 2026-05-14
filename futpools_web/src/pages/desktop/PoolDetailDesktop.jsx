@@ -447,7 +447,15 @@ export function PoolDetailDesktop({
   const [tab, setTab] = useState('overview');
 
   return (
-    <div className="fp-desktop-wide">
+    // .fp-desktop-scope opts this top-level route into the same scoped
+    // styles the desktop shell uses (.fp-card, .fp-tabs, .fp-status,
+    // .fp-fixture, etc). Without this wrapper PoolDetail renders bare
+    // HTML because the desktop CSS rules require an ancestor with either
+    // .fp-desktop-shell or .fp-desktop-scope.
+    <div
+      className="fp-desktop-scope fp-desktop-wide"
+      style={{ padding: 'var(--app-space-8)' }}
+    >
       <PoolHeader
         quiniela={quiniela} status={status} locale={locale}
         navigate={navigate} goBack={goBack} justPaid={justPaid}

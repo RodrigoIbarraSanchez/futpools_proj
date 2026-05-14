@@ -56,6 +56,20 @@
 }
 .fp-desktop-shell.mini { grid-template-columns: var(--app-sidebar-w-mini) 1fr; }
 
+/* Scope-only wrapper for top-level routes (PoolDetail, QuinielaPick) that
+   render outside the sidebar shell but want the same desktop typography +
+   tokens. Picks up the same background, font stack, and text color so the
+   page doesn't fall back to mobile defaults. */
+.fp-desktop-scope {
+  font-family: var(--app-font-sans);
+  color: var(--fp-text);
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 8% -10%, rgba(33,226,140,0.06), transparent 60%),
+    radial-gradient(900px 500px at 105% 110%, rgba(54,233,255,0.05), transparent 60%),
+    var(--fp-bg);
+}
+
 /* ─── Sidebar ──────────────────────────────────────────────────────────── */
 .fp-desktop-sidebar {
   display: flex;
@@ -66,11 +80,11 @@
   gap: var(--app-space-2);
   overflow-y: auto;
 }
-.fp-desktop-shell .fp-brand {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-brand {
   display: flex; align-items: center; gap: 12px;
   padding: 4px 8px var(--app-space-6);
 }
-.fp-desktop-shell .fp-brand-mark {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-brand-mark {
   width: 36px; height: 36px;
   border-radius: 10px;
   background: linear-gradient(135deg, var(--fp-primary), #18A668);
@@ -78,18 +92,18 @@
   color: #0B0F14; font-weight: 800; font-size: 18px;
   box-shadow: 0 6px 16px rgba(33,226,140,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
 }
-.fp-desktop-shell .fp-brand-name {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-brand-name {
   font-weight: 700; font-size: 18px; letter-spacing: -0.01em;
 }
-.fp-desktop-shell .fp-brand-name span { color: var(--fp-primary); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-brand-name span { color: var(--fp-primary); }
 
-.fp-desktop-shell .fp-nav-section {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-section {
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--fp-text-faint);
   padding: var(--app-space-4) var(--app-space-3) var(--app-space-2);
 }
 
-.fp-desktop-shell .fp-nav-item {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-item {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px; border-radius: var(--app-radius-button);
   color: var(--fp-text-dim);
@@ -103,34 +117,34 @@
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
   position: relative;
 }
-.fp-desktop-shell .fp-nav-item:hover { background: rgba(255,255,255,0.04); color: var(--fp-text); }
-.fp-desktop-shell .fp-nav-item.active {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-item:hover { background: rgba(255,255,255,0.04); color: var(--fp-text); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-item.active {
   background: rgba(33,226,140,0.12);
   color: var(--fp-primary);
   border-color: rgba(33,226,140,0.24);
 }
-.fp-desktop-shell .fp-nav-item.active::before {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-item.active::before {
   content: ''; position: absolute; left: -16px; top: 8px; bottom: 8px; width: 3px;
   background: var(--fp-primary); border-radius: 0 4px 4px 0;
 }
-.fp-desktop-shell .fp-nav-item .fp-nav-icon {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-item .fp-nav-icon {
   width: 22px; height: 22px; flex: 0 0 22px;
   display: grid; place-items: center;
   color: inherit;
 }
-.fp-desktop-shell .fp-nav-item .fp-nav-count {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-item .fp-nav-count {
   margin-left: auto;
   font-size: 11px; font-weight: 600;
   padding: 2px 8px; border-radius: 999px;
   background: rgba(255,255,255,0.06); color: var(--fp-text-dim);
 }
-.fp-desktop-shell .fp-nav-item .fp-nav-badge {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-nav-item .fp-nav-badge {
   margin-left: auto;
   font-size: 10px; font-weight: 700;
   padding: 2px 7px; border-radius: 999px;
   background: var(--fp-danger); color: #fff;
 }
-.fp-desktop-shell .fp-sidebar-foot {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-sidebar-foot {
   margin-top: auto;
   display: flex; flex-direction: column; gap: 8px;
   padding-top: var(--app-space-4);
@@ -162,19 +176,19 @@
   -webkit-backdrop-filter: blur(12px);
   flex: 0 0 auto;
 }
-.fp-desktop-shell .fp-crumb {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crumb {
   display: flex; align-items: center; gap: 8px;
   font-size: 13px; color: var(--fp-text-muted);
   font-weight: 500;
 }
-.fp-desktop-shell .fp-crumb .now { color: var(--fp-text); font-weight: 600; }
-.fp-desktop-shell .fp-crumb .sep { opacity: 0.45; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crumb .now { color: var(--fp-text); font-weight: 600; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crumb .sep { opacity: 0.45; }
 
-.fp-desktop-shell .fp-top-actions {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-top-actions {
   margin-left: auto;
   display: flex; align-items: center; gap: 10px;
 }
-.fp-desktop-shell .fp-icon-btn {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-icon-btn {
   width: 38px; height: 38px;
   display: grid; place-items: center;
   background: var(--fp-surface);
@@ -186,8 +200,8 @@
   transition: border-color 120ms ease, color 120ms ease;
   flex-shrink: 0;
 }
-.fp-desktop-shell .fp-icon-btn:hover { border-color: var(--fp-primary); color: var(--fp-primary); }
-.fp-desktop-shell .fp-avatar {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-icon-btn:hover { border-color: var(--fp-primary); color: var(--fp-primary); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-avatar {
   width: 38px; height: 38px; border-radius: 50%;
   display: grid; place-items: center;
   background: linear-gradient(135deg, var(--fp-accent, #36E9FF), var(--fp-primary));
@@ -196,7 +210,7 @@
   border: 2px solid var(--fp-surface);
   flex-shrink: 0;
 }
-.fp-desktop-shell .fp-lang {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-lang {
   display: inline-flex;
   background: var(--fp-surface);
   border: 1px solid var(--fp-stroke);
@@ -206,7 +220,7 @@
   font-size: 11px;
   font-weight: 700;
 }
-.fp-desktop-shell .fp-lang button {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-lang button {
   padding: 6px 10px;
   background: transparent;
   border: none;
@@ -214,7 +228,7 @@
   cursor: pointer;
   font: inherit;
 }
-.fp-desktop-shell .fp-lang button.active {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-lang button.active {
   background: var(--fp-primary);
   color: #0B0F14;
 }
@@ -249,23 +263,23 @@
 }
 
 /* ─── Reusable atoms ───────────────────────────────────────────────────── */
-.fp-desktop-shell .fp-card {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-card {
   background: var(--fp-surface);
   border: 1px solid var(--fp-stroke);
   border-radius: var(--app-radius-card);
   padding: var(--app-space-5);
 }
-.fp-desktop-shell .fp-card.hoverable {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-card.hoverable {
   cursor: pointer;
   transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
-.fp-desktop-shell .fp-card.hoverable:hover {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-card.hoverable:hover {
   border-color: rgba(33,226,140,0.4);
   transform: translateY(-2px);
   box-shadow: var(--app-shadow-card);
 }
 
-.fp-desktop-shell .fp-chip {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 12px;
   background: var(--fp-surface);
@@ -277,34 +291,34 @@
   transition: all 120ms ease;
   font-family: inherit;
 }
-.fp-desktop-shell .fp-chip:hover { color: var(--fp-text); border-color: rgba(255,255,255,0.16); }
-.fp-desktop-shell .fp-chip.active {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-chip:hover { color: var(--fp-text); border-color: rgba(255,255,255,0.16); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-chip.active {
   background: rgba(33,226,140,0.12);
   border-color: rgba(33,226,140,0.4);
   color: var(--fp-primary);
 }
-.fp-desktop-shell .fp-chip .count {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-chip .count {
   color: var(--fp-text-muted);
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 999px;
   background: rgba(255,255,255,0.05);
 }
-.fp-desktop-shell .fp-chip.active .count { color: var(--fp-primary); background: rgba(33,226,140,0.18); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-chip.active .count { color: var(--fp-primary); background: rgba(33,226,140,0.18); }
 
-.fp-desktop-shell .fp-status {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-status {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.fp-desktop-shell .fp-status.live    { background: rgba(255,93,93,0.16);  color: var(--fp-danger);   border: 1px solid rgba(255,93,93,0.4); }
-.fp-desktop-shell .fp-status.open    { background: rgba(33,226,140,0.16); color: var(--fp-primary);    border: 1px solid rgba(33,226,140,0.4); }
-.fp-desktop-shell .fp-status.upcoming{ background: rgba(54,233,255,0.14); color: var(--fp-accent);     border: 1px solid rgba(54,233,255,0.36); }
-.fp-desktop-shell .fp-status.completed,
-.fp-desktop-shell .fp-status.closed{background: rgba(255,255,255,0.06);color: var(--fp-text-muted); border: 1px solid var(--fp-stroke); }
-.fp-desktop-shell .fp-status .pulse {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-status.live    { background: rgba(255,93,93,0.16);  color: var(--fp-danger);   border: 1px solid rgba(255,93,93,0.4); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-status.open    { background: rgba(33,226,140,0.16); color: var(--fp-primary);    border: 1px solid rgba(33,226,140,0.4); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-status.upcoming{ background: rgba(54,233,255,0.14); color: var(--fp-accent);     border: 1px solid rgba(54,233,255,0.36); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-status.completed,
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-status.closed{background: rgba(255,255,255,0.06);color: var(--fp-text-muted); border: 1px solid var(--fp-stroke); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-status .pulse {
   width: 6px; height: 6px; border-radius: 50%;
   background: currentColor;
   animation: fp-pulse 1.6s infinite ease-out;
@@ -315,7 +329,7 @@
   100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
 }
 
-.fp-desktop-shell .fp-btn {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   padding: 10px 18px;
   border-radius: var(--app-radius-button);
@@ -326,31 +340,31 @@
   transition: all 120ms ease;
   text-decoration: none;
 }
-.fp-desktop-shell .fp-btn.primary {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.primary {
   background: var(--fp-primary); color: #0B0F14;
   box-shadow: 0 6px 16px rgba(33,226,140,0.28);
 }
-.fp-desktop-shell .fp-btn.primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
-.fp-desktop-shell .fp-btn.primary:disabled {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.primary:disabled {
   opacity: 0.5; cursor: not-allowed; transform: none; filter: none;
   box-shadow: none;
 }
-.fp-desktop-shell .fp-btn.ghost {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.ghost {
   background: var(--fp-surface);
   border-color: var(--fp-stroke);
   color: var(--fp-text);
 }
-.fp-desktop-shell .fp-btn.ghost:hover { border-color: var(--fp-primary); color: var(--fp-primary); }
-.fp-desktop-shell .fp-btn.danger {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.ghost:hover { border-color: var(--fp-primary); color: var(--fp-primary); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.danger {
   background: rgba(255,93,93,0.1);
   color: var(--fp-danger);
   border-color: rgba(255,93,93,0.3);
 }
-.fp-desktop-shell .fp-btn.lg { padding: 14px 22px; font-size: 15px; }
-.fp-desktop-shell .fp-btn.sm { padding: 7px 12px; font-size: 13px; }
-.fp-desktop-shell .fp-btn.block { width: 100%; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.lg { padding: 14px 22px; font-size: 15px; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.sm { padding: 7px 12px; font-size: 13px; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-btn.block { width: 100%; }
 
-.fp-desktop-shell .fp-tabs {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-tabs {
   display: inline-flex;
   padding: 4px;
   background: var(--fp-surface);
@@ -358,7 +372,7 @@
   border-radius: 12px;
   gap: 2px;
 }
-.fp-desktop-shell .fp-tabs button {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-tabs button {
   padding: 8px 16px;
   font-size: 13px; font-weight: 600;
   background: transparent;
@@ -369,15 +383,15 @@
   font-family: inherit;
   transition: all 120ms ease;
 }
-.fp-desktop-shell .fp-tabs button:hover { color: var(--fp-text); }
-.fp-desktop-shell .fp-tabs button.active {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-tabs button:hover { color: var(--fp-text); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-tabs button.active {
   background: var(--fp-surface-alt);
   color: var(--fp-text);
   box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset;
 }
 
 /* ─── Crest (team logo placeholder) ────────────────────────────────────── */
-.fp-desktop-shell .fp-crest-d {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crest-d {
   display: grid; place-items: center;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--fp-surface-alt), var(--fp-surface));
@@ -386,13 +400,13 @@
   flex-shrink: 0;
   overflow: hidden;
 }
-.fp-desktop-shell .fp-crest-d.sm { width: 28px; height: 28px; font-size: 11px; }
-.fp-desktop-shell .fp-crest-d.md { width: 40px; height: 40px; font-size: 13px; }
-.fp-desktop-shell .fp-crest-d.lg { width: 56px; height: 56px; font-size: 17px; }
-.fp-desktop-shell .fp-crest-d img { width: 100%; height: 100%; object-fit: contain; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crest-d.sm { width: 28px; height: 28px; font-size: 11px; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crest-d.md { width: 40px; height: 40px; font-size: 13px; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crest-d.lg { width: 56px; height: 56px; font-size: 17px; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-crest-d img { width: 100%; height: 100%; object-fit: contain; }
 
 /* ─── Pitch-styled fixture row ─────────────────────────────────────────── */
-.fp-desktop-shell .fp-fixture {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture {
   position: relative;
   padding: 14px 16px;
   border-radius: var(--app-radius-soft);
@@ -404,41 +418,41 @@
   align-items: center;
   gap: 12px;
 }
-.fp-desktop-shell .fp-fixture::before {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture::before {
   content: '';
   position: absolute; inset: 0;
   background:
     linear-gradient(90deg, transparent 49.6%, rgba(255,255,255,0.06) 49.6%, rgba(255,255,255,0.06) 50.4%, transparent 50.4%);
   pointer-events: none;
 }
-.fp-desktop-shell .fp-fixture-team {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-team {
   display: flex; align-items: center; gap: 10px;
   min-width: 0;
 }
-.fp-desktop-shell .fp-fixture-team.away { flex-direction: row-reverse; text-align: right; }
-.fp-desktop-shell .fp-fixture-team .name {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-team.away { flex-direction: row-reverse; text-align: right; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-team .name {
   font-size: 14px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.fp-desktop-shell .fp-fixture-score {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   min-width: 90px;
 }
-.fp-desktop-shell .fp-fixture-score .nums {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .nums {
   display: flex; align-items: baseline; gap: 8px;
   font-variant-numeric: tabular-nums;
 }
-.fp-desktop-shell .fp-fixture-score .nums .n { font-size: 22px; font-weight: 800; }
-.fp-desktop-shell .fp-fixture-score .nums .dash { color: var(--fp-text-muted); }
-.fp-desktop-shell .fp-fixture-score .meta { font-size: 11px; color: var(--fp-text-dim); }
-.fp-desktop-shell .fp-fixture-score .vs {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .nums .n { font-size: 22px; font-weight: 800; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .nums .dash { color: var(--fp-text-muted); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .meta { font-size: 11px; color: var(--fp-text-dim); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .vs {
   font-size: 13px; font-weight: 700; color: var(--fp-text-muted);
   letter-spacing: 0.06em;
 }
 
 /* ─── Pick button (1/X/2) ──────────────────────────────────────────────── */
-.fp-desktop-shell .fp-pick { display: flex; gap: 8px; }
-.fp-desktop-shell .fp-pick button {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-pick { display: flex; gap: 8px; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-pick button {
   flex: 1;
   padding: 12px;
   background: var(--fp-surface);
@@ -451,14 +465,14 @@
   transition: all 120ms ease;
   position: relative;
 }
-.fp-desktop-shell .fp-pick button:hover { color: var(--fp-text); border-color: rgba(255,255,255,0.18); }
-.fp-desktop-shell .fp-pick button.selected {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-pick button:hover { color: var(--fp-text); border-color: rgba(255,255,255,0.18); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-pick button.selected {
   background: rgba(33,226,140,0.18);
   color: var(--fp-primary);
   border-color: var(--fp-primary);
   box-shadow: 0 0 0 3px rgba(33,226,140,0.08);
 }
-.fp-desktop-shell .fp-pick .sub {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-pick .sub {
   display: block;
   font-size: 10px;
   color: var(--fp-text-muted);
@@ -467,10 +481,10 @@
   text-transform: uppercase;
   font-weight: 600;
 }
-.fp-desktop-shell .fp-pick button.selected .sub { color: var(--fp-primary); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-pick button.selected .sub { color: var(--fp-primary); }
 
 /* ─── Hero (featured pool) ─────────────────────────────────────────────── */
-.fp-desktop-shell .fp-hero {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero {
   position: relative;
   border-radius: 22px;
   overflow: hidden;
@@ -484,7 +498,7 @@
   gap: var(--app-space-8);
   align-items: center;
 }
-.fp-desktop-shell .fp-hero::after {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero::after {
   content: '';
   position: absolute; right: -120px; top: -60px;
   width: 360px; height: 360px;
@@ -492,7 +506,7 @@
   filter: blur(20px);
   pointer-events: none;
 }
-.fp-desktop-shell .fp-hero .tag {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero .tag {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px;
   background: rgba(33,226,140,0.14);
@@ -502,50 +516,50 @@
   font-size: 12px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.06em;
 }
-.fp-desktop-shell .fp-hero h2 {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero h2 {
   font-size: 40px; font-weight: 700; letter-spacing: -0.025em;
   margin: 14px 0 8px;
   line-height: 1.05;
   color: var(--fp-text);
 }
-.fp-desktop-shell .fp-hero p {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero p {
   color: var(--fp-text-dim); font-size: 15px;
   max-width: 48ch;
   margin: 0 0 var(--app-space-6);
   line-height: 1.5;
 }
-.fp-desktop-shell .fp-hero-stats {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-stats {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: var(--app-space-3);
   margin-bottom: var(--app-space-6);
 }
-.fp-desktop-shell .fp-hero-stats .cell {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-stats .cell {
   padding: 12px 14px;
   border-radius: 12px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
 }
-.fp-desktop-shell .fp-hero-stats .cell .label {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-stats .cell .label {
   font-size: 11px; color: var(--fp-text-muted);
   text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
 }
-.fp-desktop-shell .fp-hero-stats .cell .value {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-stats .cell .value {
   font-size: 20px; font-weight: 700; margin-top: 2px;
   color: var(--fp-text);
   font-variant-numeric: tabular-nums;
 }
-.fp-desktop-shell .fp-hero-stats .cell .value.gold { color: var(--fp-gold); }
-.fp-desktop-shell .fp-hero-cta {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-stats .cell .value.gold { color: var(--fp-gold); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-cta {
   display: flex; gap: 12px; align-items: center;
   flex-wrap: wrap;
 }
-.fp-desktop-shell .fp-hero-right {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-right {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center; justify-content: center;
 }
-.fp-desktop-shell .fp-hero-trophy {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy {
   width: 280px; height: 280px;
   border-radius: 50%;
   background:
@@ -554,104 +568,104 @@
   display: grid; place-items: center;
   position: relative;
 }
-.fp-desktop-shell .fp-hero-trophy .ring {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .ring {
   position: absolute; inset: 0;
   border-radius: 50%;
   border: 1px dashed rgba(255,215,0,0.32);
   animation: fp-rotate 24s linear infinite;
 }
-.fp-desktop-shell .fp-hero-trophy .ring2 {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .ring2 {
   position: absolute; inset: 24px;
   border-radius: 50%;
   border: 1px solid rgba(33,226,140,0.32);
   animation: fp-rotate 18s linear infinite reverse;
 }
 @keyframes fp-rotate { to { transform: rotate(360deg); } }
-.fp-desktop-shell .fp-hero-trophy .prize-num {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num {
   position: relative;
   text-align: center;
 }
-.fp-desktop-shell .fp-hero-trophy .prize-num .lbl {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num .lbl {
   font-size: 12px; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--fp-gold);
   font-weight: 700;
 }
-.fp-desktop-shell .fp-hero-trophy .prize-num .v {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num .v {
   font-size: 52px; font-weight: 800; letter-spacing: -0.02em;
   color: #fff;
   text-shadow: 0 4px 24px rgba(255,215,0,0.4);
   font-variant-numeric: tabular-nums;
 }
-.fp-desktop-shell .fp-hero-trophy .prize-num .sub {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num .sub {
   font-size: 13px; color: var(--fp-text-dim); margin-top: 4px;
 }
 
 /* ─── Tables ───────────────────────────────────────────────────────────── */
-.fp-desktop-shell .fp-table {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 14px;
 }
-.fp-desktop-shell .fp-table th, .fp-desktop-shell .fp-table td {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table th, :where(.fp-desktop-shell, .fp-desktop-scope) .fp-table td {
   padding: 14px 16px;
   text-align: left;
 }
-.fp-desktop-shell .fp-table thead th {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table thead th {
   font-size: 11px; font-weight: 700;
   color: var(--fp-text-muted);
   text-transform: uppercase; letter-spacing: 0.06em;
   border-bottom: 1px solid var(--fp-stroke);
 }
-.fp-desktop-shell .fp-table tbody tr {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table tbody tr {
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
-.fp-desktop-shell .fp-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-.fp-desktop-shell .fp-table tbody tr.you { background: rgba(33,226,140,0.06); }
-.fp-desktop-shell .fp-table tbody tr.you td:first-child {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table tbody tr.you { background: rgba(33,226,140,0.06); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table tbody tr.you td:first-child {
   border-left: 2px solid var(--fp-primary);
 }
-.fp-desktop-shell .fp-table .num {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table .num {
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
-.fp-desktop-shell .fp-table .rank {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table .rank {
   font-weight: 700; color: var(--fp-text-muted);
   width: 56px;
 }
-.fp-desktop-shell .fp-table .rank.top { color: var(--fp-gold); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-table .rank.top { color: var(--fp-gold); }
 
 /* ─── Section title + small helpers ───────────────────────────────────── */
-.fp-desktop-shell .fp-section-title {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-section-title {
   font-size: 14px; font-weight: 700;
   margin: 0 0 var(--app-space-3);
   color: var(--fp-text);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.fp-desktop-shell .fp-section-title .accent { color: var(--fp-text-faint); margin-left: 8px; font-weight: 500; }
-.fp-desktop-shell .muted { color: var(--fp-text-muted); }
-.fp-desktop-shell .faint { color: var(--fp-text-faint); }
-.fp-desktop-shell .gold  { color: var(--fp-gold); }
-.fp-desktop-shell .green { color: var(--fp-primary); }
-.fp-desktop-shell .num   { font-variant-numeric: tabular-nums; }
-.fp-desktop-shell .fp-mt-2 { margin-top: var(--app-space-2); }
-.fp-desktop-shell .fp-mt-4 { margin-top: var(--app-space-4); }
-.fp-desktop-shell .fp-mt-6 { margin-top: var(--app-space-6); }
-.fp-desktop-shell .fp-mt-8 { margin-top: var(--app-space-8); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-section-title .accent { color: var(--fp-text-faint); margin-left: 8px; font-weight: 500; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .muted { color: var(--fp-text-muted); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .faint { color: var(--fp-text-faint); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .gold  { color: var(--fp-gold); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .green { color: var(--fp-primary); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .num   { font-variant-numeric: tabular-nums; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-mt-2 { margin-top: var(--app-space-2); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-mt-4 { margin-top: var(--app-space-4); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-mt-6 { margin-top: var(--app-space-6); }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-mt-8 { margin-top: var(--app-space-8); }
 
 /* ─── Empty state ──────────────────────────────────────────────────────── */
-.fp-desktop-shell .fp-empty {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-empty {
   padding: var(--app-space-12);
   text-align: center;
   border: 1px dashed var(--fp-stroke);
   border-radius: var(--app-radius-card);
   color: var(--fp-text-muted);
 }
-.fp-desktop-shell .fp-empty h4 { font-size: 16px; color: var(--fp-text); margin: 0 0 6px; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-empty h4 { font-size: 16px; color: var(--fp-text); margin: 0 0 6px; }
 
 /* ─── Modal (overrides) ────────────────────────────────────────────────── */
-.fp-desktop-shell .fp-modal-backdrop {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(8,11,15,0.72);
   backdrop-filter: blur(8px);
@@ -659,7 +673,7 @@
   z-index: 200;
   padding: var(--app-space-6);
 }
-.fp-desktop-shell .fp-modal {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-modal {
   width: 100%; max-width: 480px;
   background: var(--fp-surface);
   border: 1px solid var(--fp-stroke);
@@ -669,10 +683,10 @@
 }
 
 /* ─── Page-body desktop containers (constrain over-wide content) ──────── */
-.fp-desktop-shell .fp-desktop-narrow {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-desktop-narrow {
   max-width: 720px;
 }
-.fp-desktop-shell .fp-desktop-wide {
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-desktop-wide {
   max-width: 1280px;
   margin: 0 auto;
 }

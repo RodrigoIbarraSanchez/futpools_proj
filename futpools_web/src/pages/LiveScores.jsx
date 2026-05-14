@@ -344,13 +344,29 @@ function LeagueHeader({ group }) {
 // Tab strip — one button per tab, mirrors HudCornerCutShape look.
 // ─────────────────────────────────────────────────────────────────────
 
-function TabStrip({ active, onChange, locale }) {
+function TabStrip({ active, onChange, locale, isDesktop }) {
   const labels = {
     live: t(locale, 'LIVE'),
     today: t(locale, 'TODAY'),
     tomorrow: t(locale, 'TOMORROW'),
     favorites: t(locale, 'FAVORITES'),
   };
+  // Desktop variant uses the design's pill-tabs (.fp-tabs) — softer
+  // rounded pills inside a card. Mobile keeps the angular HUD-cut chips.
+  if (isDesktop) {
+    return (
+      <div className="fp-tabs" style={{ marginBottom: 16 }}>
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={tab === active ? 'active' : ''}
+            onClick={() => onChange(tab)}
+          >{labels[tab]}</button>
+        ))}
+      </div>
+    );
+  }
   return (
     <div style={{
       display: 'flex', gap: 6,
@@ -566,9 +582,7 @@ export function LiveScores() {
       )}
 
       {!isDesktop && <div style={{ height: 12 }} />}
-      <div style={isDesktop ? { padding: 0, marginBottom: 16 } : undefined}>
-        <TabStrip active={tab} onChange={setTab} locale={locale} />
-      </div>
+      <TabStrip active={tab} onChange={setTab} locale={locale} isDesktop={isDesktop} />
 
       {/* Content */}
       {loading && fixtures.length === 0 ? (

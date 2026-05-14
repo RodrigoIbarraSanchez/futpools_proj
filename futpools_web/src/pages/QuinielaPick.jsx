@@ -9,6 +9,7 @@ import {
   HudFrame, HudChip, XpBar, TeamCrest, ArcadeButton, IconButton,
 } from '../arena-ui/primitives';
 import { useSafeBack } from '../lib/safeBack';
+import { useIsDesktop } from '../desktop/useIsDesktop';
 
 export function QuinielaPick() {
   const { id } = useParams();
@@ -18,6 +19,7 @@ export function QuinielaPick() {
   const goBack = useSafeBack(`/pool/${id}`);
   const { token } = useAuth();
   const { locale } = useLocale();
+  const isDesktop = useIsDesktop();
 
   // simple_version: picks happen exactly once, at checkout. The legacy
   // edit-an-existing-entry path is gone (PUT /quinielas/:id/entries/:entryId
@@ -91,8 +93,8 @@ export function QuinielaPick() {
 
   if (loading || !quiniela) {
     return (
-      <div className="fp-pool-deep">
-        <AppBackground />
+      <div className={isDesktop ? 'fp-desktop-scope fp-pool-deep' : 'fp-pool-deep'}>
+        {!isDesktop && <AppBackground />}
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--fp-text-dim)', fontFamily: 'var(--fp-mono)' }}>
           {t(locale, 'Loading pools…').toUpperCase()}
         </div>
@@ -101,10 +103,11 @@ export function QuinielaPick() {
   }
 
   return (
-    // .fp-pool-deep escapes the global 430-wide phone-frame on desktop —
-    // mobile renders inside the existing phone frame unchanged.
-    <div className="fp-pool-deep">
-      <AppBackground />
+    // On desktop: .fp-desktop-scope opts into the same scoped CSS the
+    // sidebar shell uses + paints the page background. On mobile:
+    // .fp-pool-deep is a no-op (only matters at ≥1100px).
+    <div className={isDesktop ? 'fp-desktop-scope fp-pool-deep' : 'fp-pool-deep'}>
+      {!isDesktop && <AppBackground />}
 
       {/* Header */}
       <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--fp-stroke)' }}>
@@ -238,11 +241,17 @@ export function QuinielaPick() {
         )}
       </div>
 
-      {/* Sticky submit */}
+      {/* Sticky submit. On desktop the bottom tab bar isn't there so we
+          drop closer to the viewport edge and widen the max-width to
+          match the .fp-pool-deep container — otherwise the 430px-clamp
+          left a stray pill overlapping the fixture rows. */}
       <div style={{
-        position: 'fixed', bottom: 104, left: 0, right: 0,
-        maxWidth: 430, margin: '0 auto',
-        padding: '8px 16px 0',
+        position: 'fixed',
+        bottom: isDesktop ? 24 : 104,
+        left: 0, right: 0,
+        maxWidth: isDesktop ? 1080 : 430,
+        margin: '0 auto',
+        padding: isDesktop ? '12px 0 0' : '8px 16px 0',
         background: 'linear-gradient(180deg, transparent, var(--fp-bg) 40%)',
         pointerEvents: 'none',
       }}>
