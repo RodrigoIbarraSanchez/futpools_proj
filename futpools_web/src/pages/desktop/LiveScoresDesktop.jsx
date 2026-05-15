@@ -895,9 +895,24 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
         style={{
           width: 'min(640px, calc(100vw - 32px))',
           maxHeight: 'min(85vh, 720px)',
-          overflowY: 'auto',
+          // Three-zone flex column: header (title + search) is fixed,
+          // body (sections + extras) scrolls, footer (Cancel/Save) is
+          // pinned to the bottom. Removes the 'buttons fall off the
+          // visible area' problem that the previous scroll-the-whole-
+          // modal approach had.
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 0,
+          overflow: 'hidden',
         }}
       >
+        {/* HEADER — fixed at the top of the flex column. Title + sub +
+            search bar so a user mid-scroll can still reach the search. */}
+        <div style={{
+          padding: 'var(--app-space-6) var(--app-space-6) 14px',
+          flexShrink: 0,
+          borderBottom: '1px solid var(--fp-stroke)',
+        }}>
         <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>
           {t(locale, 'Favorite teams & leagues')}
         </h3>
@@ -914,7 +929,7 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
           background: 'var(--fp-surface-alt)',
           border: '1px solid var(--fp-stroke)',
           borderRadius: 10,
-          marginBottom: 14,
+          marginBottom: 0,
         }}>
           <span style={{ color: 'var(--fp-text-muted)', fontSize: 14 }}>🔎</span>
           <input
@@ -943,6 +958,16 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
             >×</button>
           )}
         </div>
+        </div>
+
+        {/* SCROLLABLE BODY — flex-grow + overflow auto so all the
+            section content can scroll independently while header/footer
+            stay pinned. */}
+        <div style={{
+          flex: '1 1 auto',
+          overflowY: 'auto',
+          padding: '14px var(--app-space-6) 0',
+        }}>
 
         {/* Search results — only shown while there's a query (≥2 chars). */}
         {hasQuery && (
@@ -958,7 +983,7 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
                   ⚽ {t(locale, 'TEAM RESULTS')}
                 </h4>
                 <div style={{
-                  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                   gap: 6, marginBottom: 10,
                 }}>
                   {teamResults.slice(0, 12).map((tm) => {
@@ -1001,7 +1026,7 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
                   🏆 {t(locale, 'LEAGUE RESULTS')}
                 </h4>
                 <div style={{
-                  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                   gap: 6,
                 }}>
                   {leagueResults.slice(0, 12).map((lg) => {
@@ -1102,7 +1127,7 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
             ⚽ {t(locale, 'TEAMS')}
           </h4>
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
             gap: 8,
           }}>
             {POPULAR_TEAMS.map((p) => {
@@ -1146,7 +1171,7 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
             🏆 {t(locale, 'LEAGUES')}
           </h4>
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
             gap: 8,
           }}>
             {POPULAR_LEAGUES.map((p) => {
@@ -1187,8 +1212,18 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
             })}
           </div>
         </div>
+        {/* End SCROLLABLE BODY */}
+        </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+        {/* FOOTER — pinned at the bottom of the flex column. Always
+            visible regardless of how much the body has scrolled. */}
+        <div style={{
+          display: 'flex', gap: 10,
+          padding: '14px var(--app-space-6) var(--app-space-6)',
+          borderTop: '1px solid var(--fp-stroke)',
+          flexShrink: 0,
+          background: 'var(--fp-surface)',
+        }}>
           <button type="button" className="fp-btn ghost block" onClick={onClose}>
             {t(locale, 'Cancel')}
           </button>
