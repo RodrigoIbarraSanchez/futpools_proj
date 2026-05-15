@@ -40,7 +40,9 @@ function formatPoolPrize(quiniela) {
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     const entries = quiniela?.entriesCount ?? 0;
     const pot = Math.floor(entries * quiniela.entryFeeMXN * WINNER_SHARE);
-    return pot > 0 ? `$${pot} MXN` : '—';
+    // 0 entries on a paid pool → real $0, not '—'. Same fix as
+    // HomeDesktop / PoolDetailDesktop so the empty pot reads honestly.
+    return pot > 0 ? `$${pot} MXN` : '$0 MXN';
   }
   return quiniela?.prize || '—';
 }

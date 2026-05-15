@@ -217,13 +217,17 @@ function FixtureCard({ fixture, idx, picks, setPick, locale }) {
 
 function SummaryCard({
   count, total, complete, submitting, error,
-  feeMXN, prizeMxn, onSubmit, locale,
+  feeMXN, prizeMxn, onSubmit, locale, isAdmin,
 }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
+  // Admin CTA drops the price (no payment) and reads as a confirm —
+  // the backend will create the entry inline without Stripe.
   const ctaLabel = submitting
     ? t(locale, 'Sending…')
     : complete
-      ? `${t(locale, 'Confirm for')} $${feeMXN} MXN`
+      ? (isAdmin
+          ? t(locale, 'Confirm (admin free entry)')
+          : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
       : `${t(locale, 'Missing')} ${total - count} ${total - count === 1 ? t(locale, 'pick') : t(locale, 'picks')}`;
   return (
     <div className="fp-card">
@@ -277,7 +281,9 @@ function SummaryCard({
       <p className="muted" style={{
         fontSize: 11, lineHeight: 1.5, margin: '12px 0 0', textAlign: 'center',
       }}>
-        {t(locale, 'Picks are submitted on the next screen and confirmed via Stripe.')}
+        {isAdmin
+          ? t(locale, 'Admin entry — picks register immediately, no payment required.')
+          : t(locale, 'Picks are submitted on the next screen and confirmed via Stripe.')}
       </p>
       {error && (
         <p style={{
@@ -333,7 +339,7 @@ function DistributionCard({ fixtures, picks, locale }) {
 export function QuinielaPickDesktop({
   quiniela, picks, setPicks, setPick,
   count, total, complete, submitting, error,
-  feeMXN, onSubmit, goBack,
+  feeMXN, onSubmit, goBack, isAdmin = false,
 }) {
   const { locale } = useLocale();
   const fixtures = quiniela?.fixtures || [];
@@ -449,6 +455,7 @@ export function QuinielaPickDesktop({
             prizeMxn={prizeMxn}
             onSubmit={onSubmit}
             locale={locale}
+            isAdmin={isAdmin}
           />
           <DistributionCard fixtures={fixtures} picks={picks} locale={locale} />
         </aside>

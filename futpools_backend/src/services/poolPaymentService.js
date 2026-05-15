@@ -23,6 +23,7 @@
 const Stripe = require('stripe');
 const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
+const { isAdminUser } = require('../middleware/auth');
 
 let stripeClient = null;
 function getStripe() {
@@ -116,9 +117,6 @@ function firstKickoff(pool) {
  * they're paying for in the Stripe UI.
  */
 async function createCheckoutSessionForEntry({ user, poolId, picks }) {
-  const stripe = getStripe();
-  if (!stripe) throw Object.assign(new Error('Payments not configured'), { code: 'STRIPE_NOT_CONFIGURED', status: 503 });
-
   const pool = await Quiniela.findById(poolId);
   if (!pool) throw Object.assign(new Error('Pool not found'), { code: 'POOL_NOT_FOUND', status: 404 });
 
@@ -137,6 +135,35 @@ async function createCheckoutSessionForEntry({ user, poolId, picks }) {
   // per-user happens in handleCheckoutCompleted.
 
   validatePicks(pool, picks);
+
+  // Admin bypass — admins curate the platform and shouldn't be charged
+  // to test pools or fill in for missing players. Skip Stripe entirely
+  // and create the entry inline. The webhook flow stays untouched for
+  // regular users so the audit trail (sessionId, paymentIntent) is only
+  // missing for admin entries, which is fine — they never settled money.
+  if (isAdminUser(user)) {
+    const userEntryCount = await QuinielaEntry.countDocuments({
+      quiniela: poolId, user: user._id,
+    });
+    const entry = await QuinielaEntry.create({
+      quiniela: poolId,
+      user: user._id,
+      entryNumber: userEntryCount + 1,
+      picks,
+      // No stripeSessionId / stripePaymentIntentId — these stay null so
+      // future refundEntry calls correctly skip the Stripe API and just
+      // soft-delete the entry.
+      paidAt: new Date(),
+      adminFreeEntry: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log(`[poolPayment] admin free entry — pool=${poolId} user=${user._id} entry=${entry._id}`);
+    return { ok: true, freeEntry: true, entryId: String(entry._id) };
+  }
+
+  const stripe = getStripe();
+  if (!stripe) throw Object.assign(new Error('Payments not configured'), { code: 'STRIPE_NOT_CONFIGURED', status: 503 });
 
   // Stripe expects unit_amount in the smallest currency unit (centavos
   // for MXN). Schema stores pesos for legibility; we ×100 here.

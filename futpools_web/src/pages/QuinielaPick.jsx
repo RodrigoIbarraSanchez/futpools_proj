@@ -18,7 +18,8 @@ export function QuinielaPick() {
   // Picks are scoped to a pool — when there's no history the natural
   // home for the back arrow is that pool's detail page.
   const goBack = useSafeBack(`/pool/${id}`);
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const isAdmin = !!user?.isAdmin;
   const { locale } = useLocale();
   const isDesktop = useIsDesktop();
 
@@ -82,7 +83,20 @@ export function QuinielaPick() {
           .filter(f => ['1','X','2'].includes(picks[f.fixtureId]))
           .map(f => ({ fixtureId: f.fixtureId, pick: picks[f.fixtureId] })),
       };
-      const { url } = await api.post(`/pools/${id}/checkout-session`, payload, token);
+      const res = await api.post(`/pools/${id}/checkout-session`, payload, token);
+      // Two response shapes:
+      //   • Regular user → { url, sessionId } — full-page redirect to
+      //     Stripe Checkout, which on success bounces back to
+      //     /pool/:id?paid=1.
+      //   • Admin (ADMIN_EMAILS) → { ok: true, freeEntry: true,
+      //     entryId } — backend created the entry inline, no payment
+      //     needed. We just navigate to the success URL ourselves so
+      //     the user lands on the same post-paid screen.
+      if (res?.freeEntry) {
+        navigate(`/pool/${id}?paid=1`);
+        return;
+      }
+      const { url } = res || {};
       if (!url) throw new Error('Stripe URL missing');
       // Full-page redirect — Stripe Checkout is hosted on their domain.
       window.location.href = url;
@@ -120,6 +134,7 @@ export function QuinielaPick() {
         feeMXN={feeMXN}
         onSubmit={handleSubmit}
         goBack={goBack}
+        isAdmin={isAdmin}
       />
     );
   }

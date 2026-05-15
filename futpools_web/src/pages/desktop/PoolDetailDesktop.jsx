@@ -110,14 +110,24 @@ function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid }) {
 // JOIN card (sticky aside) — Stripe checkout entry point.
 // ─────────────────────────────────────────────────────────────────────
 
-function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMXN, onJoin, status }) {
+function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMXN, onJoin, status, isAdmin }) {
   const closed = !canJoin;
   const prizePot = (quiniela.entriesCount ?? 0) * (quiniela.entryFeeMXN ?? 50) * WINNER_SHARE;
+  // Prize line — '—' would lie when entries === 0; show '$0 MXN' so
+  // the user understands the pot is empty waiting for first entry.
+  const prizeStr = prizePot > 0
+    ? fmtMxn(prizePot)
+    : `$0 MXN`;
+  // Admins enter free (backend skips Stripe), so we drop the price tag
+  // from the CTA and swap the disclaimer to call out the bypass — no
+  // surprise 'free!' for anyone else.
   const ctaLabel = closed
     ? (status === 'completed' ? t(locale, 'Pool closed') : t(locale, 'POOL LOCKED'))
-    : alreadyEntered
-      ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
-      : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`;
+    : isAdmin
+      ? (alreadyEntered ? `+ ${t(locale, 'NEW ENTRY')} · ${t(locale, 'ADMIN FREE')}` : `▶ ${t(locale, 'JOIN')} · ${t(locale, 'ADMIN FREE')}`)
+      : alreadyEntered
+        ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
+        : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`;
   return (
     <div className="fp-card" style={{
       background: 'linear-gradient(180deg, rgba(33,226,140,0.08), transparent 70%), var(--fp-surface)',
@@ -144,7 +154,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
             {t(locale, 'Prize')}
           </div>
           <div className="gold num" style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>
-            {prizePot > 0 ? fmtMxn(prizePot) : '—'}
+            {prizeStr}
           </div>
         </div>
       </div>
@@ -170,7 +180,9 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
         {ctaLabel}
       </button>
       <p className="muted" style={{ fontSize: 11, lineHeight: 1.5, margin: '12px 0 0', textAlign: 'center' }}>
-        {t(locale, 'Picks are submitted on the next screen and confirmed via Stripe.')}
+        {isAdmin
+          ? t(locale, 'Admin entry — picks register immediately, no payment required.')
+          : t(locale, 'Picks are submitted on the next screen and confirmed via Stripe.')}
       </p>
     </div>
   );
@@ -519,6 +531,7 @@ export function PoolDetailDesktop({
             feeMXN={feeMXN}
             onJoin={handleJoin}
             status={status}
+            isAdmin={isAdmin}
           />
           {/* Invite code box — visible on private pools so the creator
               can copy/share without leaving the screen. */}

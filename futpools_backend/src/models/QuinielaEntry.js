@@ -30,6 +30,11 @@ const quinielaEntrySchema = new mongoose.Schema({
   // survives, but scoring + leaderboard queries filter them out.
   refundedAt: { type: Date, default: null },
   refundId: { type: String, default: null },
+  // Set when an ADMIN_EMAILS user joined a pool without going through
+  // Stripe (free entry — admins curate the platform and shouldn't be
+  // charged to test pools). adminPayoutsController.cancelPool checks
+  // this flag and skips the refund call (no payment intent to refund).
+  adminFreeEntry: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

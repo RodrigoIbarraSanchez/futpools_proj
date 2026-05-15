@@ -127,6 +127,10 @@ export const translations = {
     'Play this pool': 'Play this pool',
     'Picks are submitted on the next screen and confirmed via Stripe.':
       'Picks are submitted on the next screen and confirmed via Stripe.',
+    'ADMIN FREE': 'ADMIN FREE',
+    'Admin entry — picks register immediately, no payment required.':
+      'Admin entry — picks register immediately, no payment required.',
+    'Confirm (admin free entry)': 'Confirm (admin free entry)',
     // QuinielaPickDesktop
     'Back to pool': 'Back to pool',
     'Create entry': 'Create entry',
@@ -760,6 +764,10 @@ export const translations = {
     'Play this pool': 'Jugar esta quiniela',
     'Picks are submitted on the next screen and confirmed via Stripe.':
       'Tus pronósticos se envían en la siguiente pantalla y se confirman vía Stripe.',
+    'ADMIN FREE': 'ADMIN GRATIS',
+    'Admin entry — picks register immediately, no payment required.':
+      'Entrada de admin — los pronósticos se registran al instante, sin pago.',
+    'Confirm (admin free entry)': 'Confirmar (admin sin costo)',
     // QuinielaPickDesktop (es)
     'Back to pool': 'Volver a la quiniela',
     'Create entry': 'Crear apuesta',
