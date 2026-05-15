@@ -319,15 +319,19 @@ export function HomeDesktop() {
   //   live     → no featured, but something's playing now
   //   next     → no featured / no live, but something's joinable soon
   //   null     → nothing worth heroing, hide the section entirely
-  // Closed pools never get heroed (the previous publicPools[0] fallback
-  // surfaced them, which made an unfeatured closed pool look featured).
+  //
+  // Selection runs over the full `quinielas` list, NOT just public pools.
+  // The backend's getQuinielas already gates visibility per caller (admin
+  // sees all, owner sees their own, participants see the ones they joined),
+  // so anything in `quinielas` is already authorised — no need for a second
+  // visibility filter that would also exclude an admin's own private pool
+  // from being heroed when they explicitly mark it as featured.
   const heroPick = useMemo(() => {
-    const publicPools = quinielas.filter((q) => (q.visibility ?? 'public') !== 'private');
-    const adminFeatured = publicPools.find((q) => q.featured);
+    const adminFeatured = quinielas.find((q) => q.featured);
     if (adminFeatured) return { pool: adminFeatured, kind: 'featured' };
-    const live = publicPools.find((q) => poolStatus(q, liveFixtures) === 'live');
+    const live = quinielas.find((q) => poolStatus(q, liveFixtures) === 'live');
     if (live) return { pool: live, kind: 'live' };
-    const upcoming = [...publicPools]
+    const upcoming = [...quinielas]
       .filter((q) => {
         const s = poolStatus(q, liveFixtures);
         return s === 'upcoming' || s === 'open';
