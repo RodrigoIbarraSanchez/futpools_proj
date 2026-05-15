@@ -685,20 +685,30 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
   });
   // Custom selections from search results — keyed by api-football id.
   // Value carries display metadata (name, logo) so the UI can render
-  // selected pills without a second fetch. The first time this modal
-  // opens we don't have the metadata for previously-saved customs (only
-  // their IDs are persisted), so the rendered chip falls back to the
-  // bare ID — that's acceptable; a re-search re-hydrates the metadata.
+  // selected pills without a second fetch.
+  //
+  // First-time hydration from localStorage only has the IDs (api-football
+  // doesn't expose a 'lookup by id' endpoint we proxy). We seed the logo
+  // from the deterministic api-sports.io media URL and the name from a
+  // 'Team #ID' / 'League #ID' placeholder so the pill renders cleanly.
+  // The next time the user searches and re-toggles, the real name is
+  // captured and the placeholder is replaced.
   const [customTeams, setCustomTeams] = useState(() => {
     try {
       const ids = JSON.parse(localStorage.getItem('onboardingCustomTeamIDs') || '[]');
-      return new Map(ids.map((id) => [Number(id), { id: Number(id), name: '#' + id }]));
+      return new Map(ids.map((id) => [
+        Number(id),
+        { id: Number(id), name: `Team #${id}`, logo: teamLogo(id) },
+      ]));
     } catch { return new Map(); }
   });
   const [customLeagues, setCustomLeagues] = useState(() => {
     try {
       const ids = JSON.parse(localStorage.getItem('onboardingCustomLeagueIDs') || '[]');
-      return new Map(ids.map((id) => [Number(id), { id: Number(id), name: '#' + id }]));
+      return new Map(ids.map((id) => [
+        Number(id),
+        { id: Number(id), name: `League #${id}`, logo: leagueLogo(id) },
+      ]));
     } catch { return new Map(); }
   });
   const [saving, setSaving] = useState(false);
@@ -822,7 +832,12 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
         className="fp-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 640, maxHeight: '85vh',
+          width: '100%', maxWidth: 640,
+          // Use min(85vh, 720) so on tall monitors the modal doesn't
+          // stretch to nearly fill the viewport (which made it feel
+          // top-anchored even though it was technically centered). On
+          // short laptops (~800px viewport) it still fits inside 85vh.
+          maxHeight: 'min(85vh, 720px)',
           overflowY: 'auto',
           // Belt-and-braces: also tell the flex parent to center this
           // child explicitly so any future backdrop tweak can't shift
