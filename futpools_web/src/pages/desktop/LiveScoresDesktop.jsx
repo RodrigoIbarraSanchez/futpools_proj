@@ -711,6 +711,52 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
       ]));
     } catch { return new Map(); }
   });
+
+  // On mount, hit the new lookup endpoints to replace the 'Team #N' /
+  // 'League #N' placeholders with real names. Best-effort — if the fetch
+  // fails the placeholder copy stays. 1h server cache means repeated
+  // opens are cheap.
+  useEffect(() => {
+    let cancelled = false;
+    const teamIds = Array.from(customTeams.keys());
+    const leagueIds = Array.from(customLeagues.keys());
+    if (teamIds.length === 0 && leagueIds.length === 0) return undefined;
+    (async () => {
+      try {
+        const [teams, leagues] = await Promise.all([
+          teamIds.length
+            ? api.get(`/football/teams/lookup?ids=${teamIds.join(',')}`).catch(() => [])
+            : Promise.resolve([]),
+          leagueIds.length
+            ? api.get(`/football/leagues/lookup?ids=${leagueIds.join(',')}`).catch(() => [])
+            : Promise.resolve([]),
+        ]);
+        if (cancelled) return;
+        if (Array.isArray(teams) && teams.length > 0) {
+          setCustomTeams((prev) => {
+            const next = new Map(prev);
+            for (const t of teams) {
+              if (next.has(t.id)) next.set(t.id, t);
+            }
+            return next;
+          });
+        }
+        if (Array.isArray(leagues) && leagues.length > 0) {
+          setCustomLeagues((prev) => {
+            const next = new Map(prev);
+            for (const l of leagues) {
+              if (next.has(l.id)) next.set(l.id, l);
+            }
+            return next;
+          });
+        }
+      } catch { /* placeholders stay */ }
+    })();
+    return () => { cancelled = true; };
+    // Only run on mount — once the modal is open the search-driven
+    // toggles already capture metadata.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [saving, setSaving] = useState(false);
 
   const toggleTeam = (k) => setTeamKeys((prev) => {
@@ -817,32 +863,30 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
     <div
       className="fp-modal-backdrop"
       onClick={onClose}
-      // Override the base .fp-modal-backdrop's `display: grid;
-      // place-items: center` with explicit flex centering. The grid
-      // version was top-anchoring this taller-than-default modal on
-      // some viewport heights — flex with align-items center is more
-      // predictable when the child uses max-height + overflow.
+      // Strip the base 'display: grid; place-items: center' — we're
+      // positioning the modal absolutely inside the backdrop instead.
+      // The grid centering was unreliable on tall monitors because the
+      // modal's max-height interacted weirdly with grid track sizing
+      // and produced a top-anchored result.
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'block',
+        padding: 0,
       }}
     >
       <div
         className="fp-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 640,
-          // Use min(85vh, 720) so on tall monitors the modal doesn't
-          // stretch to nearly fill the viewport (which made it feel
-          // top-anchored even though it was technically centered). On
-          // short laptops (~800px viewport) it still fits inside 85vh.
+          // Bulletproof centering: position fixed against viewport,
+          // top/left 50%, then translate self by half its own size.
+          // Doesn't depend on parent layout at all.
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(640px, calc(100vw - 32px))',
           maxHeight: 'min(85vh, 720px)',
           overflowY: 'auto',
-          // Belt-and-braces: also tell the flex parent to center this
-          // child explicitly so any future backdrop tweak can't shift
-          // it back to the top.
-          alignSelf: 'center',
         }}
       >
         <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>

@@ -17,6 +17,11 @@ router.get('/teams', footballController.getTeamsByLeague);
 router.get('/leagues/search', footballController.searchLeagues);
 // GET /football/teams/search?query=chivas
 router.get('/teams/search', footballController.searchTeamsApi);
+// GET /football/teams/lookup?ids=541,529 — resolves api-football team
+// IDs to { id, name, logo, country } for the favorites editor's pills.
+router.get('/teams/lookup', footballController.lookupTeams);
+// GET /football/leagues/lookup?ids=2,140
+router.get('/leagues/lookup', footballController.lookupLeagues);
 // GET /football/fixtures/:id/events — goals, cards, substitutions (for live match)
 router.get('/fixtures/:id/events', footballController.getFixtureEvents);
 

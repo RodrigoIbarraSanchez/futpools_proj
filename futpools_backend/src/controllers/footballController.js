@@ -11,6 +11,42 @@ const {
 const League = require('../models/League');
 const Team = require('../models/Team');
 
+/**
+ * GET /football/teams/lookup?ids=541,529,33
+ * GET /football/leagues/lookup?ids=2,140,39
+ *
+ * Bulk metadata fetch for the desktop favorites editor — given a list
+ * of api-football IDs (typically the user's previously-saved customs
+ * read from localStorage as bare numbers), returns the corresponding
+ * { id, name, logo, country } so the UI can render proper pills.
+ *
+ * 1h cache server-side keeps repeated opens cheap.
+ */
+exports.lookupTeams = async (req, res) => {
+  try {
+    const ids = String(req.query.ids || '')
+      .split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+    if (ids.length === 0) return res.json([]);
+    const out = await apiFootball.lookupTeamsByIds(ids);
+    res.json(out);
+  } catch (err) {
+    console.warn('[Football] lookupTeams failed:', err.message);
+    res.json([]);
+  }
+};
+exports.lookupLeagues = async (req, res) => {
+  try {
+    const ids = String(req.query.ids || '')
+      .split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+    if (ids.length === 0) return res.json([]);
+    const out = await apiFootball.lookupLeaguesByIds(ids);
+    res.json(out);
+  } catch (err) {
+    console.warn('[Football] lookupLeagues failed:', err.message);
+    res.json([]);
+  }
+};
+
 exports.getMatchdayFixtures = async (req, res) => {
   try {
     const { id } = req.params;

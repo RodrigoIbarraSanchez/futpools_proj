@@ -848,6 +848,84 @@ const fetchFixturesFeed = async ({ date, leagueIds = [], teamIds = [], season, l
   return payload;
 };
 
+/**
+ * Lookup teams by api-football ID. Used by /football/teams/lookup so the
+ * desktop favorites editor can hydrate display metadata (name + logo +
+ * country) for IDs the user previously starred via search and persisted
+ * to localStorage as bare numbers.
+ *
+ * Cached 1h — team metadata is essentially static, no point hitting
+ * api-football repeatedly for the same IDs.
+ */
+const teamLookupCache = new Map();
+const LOOKUP_TTL_MS = 60 * 60 * 1000;
+const lookupTeamsByIds = async (ids = []) => {
+  const out = [];
+  const toFetch = [];
+  const now = Date.now();
+  for (const raw of ids) {
+    const id = Number(raw);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    const hit = teamLookupCache.get(id);
+    if (hit && now - hit.at < LOOKUP_TTL_MS) {
+      if (hit.payload) out.push(hit.payload);
+    } else {
+      toFetch.push(id);
+    }
+  }
+  // Each api-football /teams?id=X is a single team; parallelise.
+  await Promise.all(toFetch.map(async (id) => {
+    try {
+      const data = await apiFetch('/teams', { id });
+      const r = data?.response?.[0];
+      const payload = r?.team
+        ? { id: r.team.id, name: r.team.name, logo: r.team.logo, country: r.team.country }
+        : null;
+      teamLookupCache.set(id, { at: now, payload });
+      if (payload) out.push(payload);
+    } catch {
+      teamLookupCache.set(id, { at: now, payload: null });
+    }
+  }));
+  return out;
+};
+
+const leagueLookupCache = new Map();
+const lookupLeaguesByIds = async (ids = []) => {
+  const out = [];
+  const toFetch = [];
+  const now = Date.now();
+  for (const raw of ids) {
+    const id = Number(raw);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    const hit = leagueLookupCache.get(id);
+    if (hit && now - hit.at < LOOKUP_TTL_MS) {
+      if (hit.payload) out.push(hit.payload);
+    } else {
+      toFetch.push(id);
+    }
+  }
+  await Promise.all(toFetch.map(async (id) => {
+    try {
+      const data = await apiFetch('/leagues', { id });
+      const r = data?.response?.[0];
+      const payload = r?.league
+        ? {
+            id: r.league.id,
+            name: r.league.name,
+            logo: r.league.logo,
+            country: r.country?.name || null,
+          }
+        : null;
+      leagueLookupCache.set(id, { at: now, payload });
+      if (payload) out.push(payload);
+    } catch {
+      leagueLookupCache.set(id, { at: now, payload: null });
+    }
+  }));
+  return out;
+};
+
 module.exports = {
   fetchFixturesForMatchday,
   fetchFixturesByIds,
@@ -861,4 +939,6 @@ module.exports = {
   getFixturesByTeamAndDate,
   fetchFixturesFeed,
   startLivePolling,
+  lookupTeamsByIds,
+  lookupLeaguesByIds,
 };
