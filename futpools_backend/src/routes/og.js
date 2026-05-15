@@ -217,10 +217,20 @@ router.get('/p/:code', async (req, res) => {
 
   if (!pool) return res.redirect(302, frontendUrl);
 
+  // Description starts with the localized invite-friend prompt so the
+  // share-card preview (WhatsApp/Telegram/iMessage) leads with the
+  // emotional hook before the dry fixture list. Backend OG can't read
+  // the visitor's locale reliably (the viewer who clicks the share
+  // link is not the sharer), so default to Spanish — Mexico is the
+  // primary audience and ES is the project default per simple_version.
+  const inviteHook = '¡Invita a tus amigos a jugar!';
   const fixtures = (pool.fixtures || []).slice(0, 6);
-  const description = fixtures.length
+  const fixtureLine = fixtures.length
     ? fixtures.map(f => `${f.homeTeam} vs ${f.awayTeam}`).join(' · ')
-    : 'Join my FutPools quiniela!';
+    : '';
+  const description = fixtureLine
+    ? `${inviteHook} ${fixtureLine}`
+    : inviteHook;
 
   const title = `${pool.name} — FutPools`;
   const host = `${req.protocol}://${req.get('host')}`;

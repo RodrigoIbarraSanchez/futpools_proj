@@ -91,8 +91,16 @@ function ShareButton({ pool }) {
 
   const handleClick = async () => {
     if (isMobileShareAvailable) {
-      try { await navigator.share({ url }); return; }
-      catch { /* fall through to copy */ }
+      try {
+        // Pass text alongside url so chat targets that respect the
+        // Web Share Spec separation render '¡Invita a tus amigos a
+        // jugar!' as the message body and the URL as a preview card.
+        // Targets that ignore separation (older Android intents) may
+        // concatenate, but the resulting WhatsApp message reads
+        // naturally as 'invite + link' which is what we want here.
+        await navigator.share({ text: t(locale, 'Invite friends to play!'), url });
+        return;
+      } catch { /* fall through to copy */ }
     }
     await copyFallback();
   };
@@ -573,12 +581,18 @@ export function PoolDetail() {
                     )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
                       <TeamCrest name={f.homeTeam} logoURL={live?.logos?.home || f.homeLogo} size={32} />
+                      {/* Full team name with text-overflow ellipsis when
+                          longer than the row allows. flex:1 + minWidth:0
+                          on the parent lets the text truncate cleanly
+                          instead of pushing the score off the row. */}
                       <div style={{
                         fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
                         letterSpacing: 0.5, textTransform: 'uppercase',
-                      }}>{String(f.homeTeam).slice(0, 3)}</div>
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        minWidth: 0,
+                      }}>{f.homeTeam}</div>
                     </div>
                     {showScoreBlock ? (
                       <div style={{
@@ -598,11 +612,16 @@ export function PoolDetail() {
                         color: 'var(--fp-text-muted)',
                       }}>VS</div>
                     )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      flex: 1, justifyContent: 'flex-end', minWidth: 0,
+                    }}>
                       <div style={{
                         fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 700,
                         letterSpacing: 0.5, textTransform: 'uppercase',
-                      }}>{String(f.awayTeam).slice(0, 3)}</div>
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        minWidth: 0, textAlign: 'right',
+                      }}>{f.awayTeam}</div>
                       <TeamCrest name={f.awayTeam} logoURL={live?.logos?.away || f.awayLogo} size={32} />
                     </div>
                   </div>
@@ -650,10 +669,16 @@ export function PoolDetail() {
         )}
       </div>
 
-      {/* Sticky CTA */}
+      {/* Sticky CTA — pinned to the bottom edge of the viewport.
+          PoolDetail is a top-level route (outside MainTabs) so there
+          is no bottom tab bar to clear. The previous bottom: 104 was
+          inherited from the era when it lived inside MainTabs and
+          made the button float in the middle of the screen, covering
+          fixture rows. Now it sits flush at the bottom with a small
+          safe-area-friendly inset. */}
       <div style={{
         position: 'fixed',
-        bottom: 104, // clear the tab bar (88 + 16 margin)
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
         left: 0, right: 0,
         maxWidth: 430, margin: '0 auto',
         padding: '8px 16px 0',
