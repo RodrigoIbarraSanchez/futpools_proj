@@ -181,7 +181,17 @@ function TopBar({ crumbs, displayName, mini, onMenu, locale, setLocale }) {
   );
 }
 
-export function DesktopShell() {
+/**
+ * The visual chrome (sidebar + topbar + content area) without any
+ * router knowledge — accepts children directly so top-level routes
+ * (PoolDetail, QuinielaPick) can wrap themselves in the same shell
+ * the routed `<MainTabs>` children get.
+ *
+ * Use `crumbsOverride` when the URL → breadcrumbs mapping isn't
+ * sufficient (e.g. dynamic pool names). Pass `null` to hide the
+ * breadcrumb area entirely.
+ */
+export function DesktopShellChrome({ children, crumbsOverride }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -190,8 +200,9 @@ export function DesktopShell() {
 
   const displayName = user?.displayName || user?.email || 'Player';
   const isAdmin = !!user?.isAdmin;
-  const crumbs = useMemo(() => crumbsFor(location.pathname, locale),
-                         [location.pathname, locale]);
+  const defaultCrumbs = useMemo(() => crumbsFor(location.pathname, locale),
+                                [location.pathname, locale]);
+  const crumbs = crumbsOverride !== undefined ? crumbsOverride : defaultCrumbs;
 
   return (
     <div className={`fp-desktop-shell ${mini ? 'mini' : ''}`}>
@@ -205,7 +216,7 @@ export function DesktopShell() {
       />
       <main className="fp-desktop-main">
         <TopBar
-          crumbs={crumbs}
+          crumbs={crumbs || []}
           displayName={displayName}
           mini={mini}
           onMenu={() => setMini((m) => !m)}
@@ -213,9 +224,21 @@ export function DesktopShell() {
           setLocale={setLocale}
         />
         <div className="fp-desktop-content">
-          <Outlet />
+          {children}
         </div>
       </main>
     </div>
+  );
+}
+
+/**
+ * Routed-shell entry. Used as the `element` for /, /scores, /account.
+ * Just delegates to `DesktopShellChrome` with `<Outlet />` as children.
+ */
+export function DesktopShell() {
+  return (
+    <DesktopShellChrome>
+      <Outlet />
+    </DesktopShellChrome>
   );
 }

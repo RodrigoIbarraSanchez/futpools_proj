@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
 import { resolvePoolStatus } from '../../lib/poolStatus';
+import { DesktopShellChrome } from '../../desktop/DesktopShell';
 
 const WINNER_SHARE = 0.65;
 const FINISHED = new Set(['FT', 'AET', 'PEN', 'PST', 'CANC', 'ABD', 'AWD', 'WO']);
@@ -446,20 +447,19 @@ export function PoolDetailDesktop({
   const status = resolvePoolStatus(quiniela, liveByFixture);
   const [tab, setTab] = useState('overview');
 
+  // Wrap the page in the same sidebar+topbar shell that routed pages
+  // (Home, Scores, Account) get. PoolDetail is a top-level route to
+  // preserve anon share-link access; the chrome is identical either way.
+  // Breadcrumbs override 'Pools / Live' with the actual pool name.
   return (
-    // .fp-desktop-scope opts this top-level route into the same scoped
-    // styles the desktop shell uses (.fp-card, .fp-tabs, .fp-status,
-    // .fp-fixture, etc). Without this wrapper PoolDetail renders bare
-    // HTML because the desktop CSS rules require an ancestor with either
-    // .fp-desktop-shell or .fp-desktop-scope.
-    <div
-      className="fp-desktop-scope fp-desktop-wide"
-      style={{ padding: 'var(--app-space-8)' }}
+    <DesktopShellChrome
+      crumbsOverride={[t(locale, 'Pools'), quiniela?.name || '—']}
     >
-      <PoolHeader
-        quiniela={quiniela} status={status} locale={locale}
-        navigate={navigate} goBack={goBack} justPaid={justPaid}
-      />
+      <div className="fp-desktop-wide">
+        <PoolHeader
+          quiniela={quiniela} status={status} locale={locale}
+          navigate={navigate} goBack={goBack} justPaid={justPaid}
+        />
 
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 380px',
@@ -542,6 +542,7 @@ export function PoolDetailDesktop({
           )}
         </aside>
       </div>
-    </div>
+      </div>
+    </DesktopShellChrome>
   );
 }

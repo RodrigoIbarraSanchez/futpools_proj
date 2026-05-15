@@ -129,6 +129,7 @@ export const translations = {
     // QuinielaPickDesktop
     'Back to pool': 'Back to pool',
     'Create entry': 'Create entry',
+    'Make picks': 'Make picks',
     'Tap the team you think will win. If you think it will be a draw, tap':
       'Tap the team you think will win. If you think it will be a draw, tap',
     'Quick fill': 'Quick fill',
@@ -693,6 +694,7 @@ export const translations = {
     // QuinielaPickDesktop (es)
     'Back to pool': 'Volver a la quiniela',
     'Create entry': 'Crear apuesta',
+    'Make picks': 'Hacer pronósticos',
     'Tap the team you think will win. If you think it will be a draw, tap':
       'Toca al equipo que crees que ganará. Si crees que será empate, toca',
     'Quick fill': 'Llenado rápido',

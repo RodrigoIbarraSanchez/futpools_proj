@@ -16,6 +16,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from '../../context/LocaleContext';
 import { t } from '../../i18n/translations';
+import { DesktopShellChrome } from '../../desktop/DesktopShell';
 
 const WINNER_SHARE = 0.65;
 
@@ -118,8 +119,24 @@ function PickTile({ kind, team, picked, onClick, locale }) {
         minHeight: 72,
         justifyContent: isDraw ? 'center' : 'flex-start',
         flexDirection: isAway ? 'row-reverse' : 'row',
+        position: 'relative',
       }}
     >
+      {/* ✓ checkmark badge — appears top-right when this tile is the
+          selected pick. Matches the design's small green dot affordance
+          so a glance at a fixture row tells you 'I've already picked
+          here' without scanning the row colors. */}
+      {picked && (
+        <span style={{
+          position: 'absolute', top: 8, right: 8,
+          width: 18, height: 18, borderRadius: '50%',
+          background: 'var(--fp-primary)',
+          color: '#0B0F14',
+          display: 'grid', placeItems: 'center',
+          fontSize: 11, fontWeight: 800, lineHeight: 1,
+          boxShadow: '0 0 0 2px var(--fp-bg)',
+        }}>✓</span>
+      )}
       {!isDraw && crest}
       <div style={{
         display: 'flex', flexDirection: 'column',
@@ -338,10 +355,14 @@ export function QuinielaPickDesktop({
   const clear = () => setPicks({});
 
   return (
-    <div
-      className="fp-desktop-scope fp-desktop-wide"
-      style={{ padding: 'var(--app-space-8)' }}
+    <DesktopShellChrome
+      crumbsOverride={[
+        t(locale, 'Pools'),
+        quiniela?.name || '—',
+        t(locale, 'Make picks'),
+      ]}
     >
+      <div className="fp-desktop-wide">
       <button
         type="button"
         className="fp-btn ghost sm"
@@ -432,6 +453,7 @@ export function QuinielaPickDesktop({
           <DistributionCard fixtures={fixtures} picks={picks} locale={locale} />
         </aside>
       </div>
-    </div>
+      </div>
+    </DesktopShellChrome>
   );
 }
