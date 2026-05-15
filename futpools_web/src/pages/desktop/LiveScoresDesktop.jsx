@@ -804,11 +804,31 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
   };
 
   return (
-    <div className="fp-modal-backdrop" onClick={onClose}>
+    <div
+      className="fp-modal-backdrop"
+      onClick={onClose}
+      // Override the base .fp-modal-backdrop's `display: grid;
+      // place-items: center` with explicit flex centering. The grid
+      // version was top-anchoring this taller-than-default modal on
+      // some viewport heights — flex with align-items center is more
+      // predictable when the child uses max-height + overflow.
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <div
         className="fp-modal"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 640, maxHeight: '85vh', overflowY: 'auto' }}
+        style={{
+          width: '100%', maxWidth: 640, maxHeight: '85vh',
+          overflowY: 'auto',
+          // Belt-and-braces: also tell the flex parent to center this
+          // child explicitly so any future backdrop tweak can't shift
+          // it back to the top.
+          alignSelf: 'center',
+        }}
       >
         <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>
           {t(locale, 'Favorite teams & leagues')}
