@@ -637,10 +637,20 @@ function EmptyState({ tab, hasAnyFavorite, liveCount, locale, onEditFavorites })
   }
   if (tab === 'favorites' && liveCount > 0) {
     // Live football is happening, just none involves their favorites.
+    // Surface the editor here too so the user can add more without
+    // hunting for the small ghost button below the list (which doesn't
+    // render when the groups array is empty).
     return (
       <div className="fp-empty">
         <h4>{t(locale, 'No favorites playing now')}</h4>
         {t(locale, 'None of your favorite teams or leagues are live right now. Check back later.')}
+        <div style={{ marginTop: 16 }}>
+          <button
+            type="button"
+            className="fp-btn ghost sm"
+            onClick={onEditFavorites}
+          >✎ {t(locale, 'Edit favorites')}</button>
+        </div>
       </div>
     );
   }
