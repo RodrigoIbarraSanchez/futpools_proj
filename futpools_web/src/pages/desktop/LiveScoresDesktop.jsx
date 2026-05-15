@@ -663,8 +663,8 @@ function EmptyState({ tab, hasAnyFavorite, liveCount, locale, onEditFavorites })
 // ─────────────────────────────────────────────────────────────────────
 
 function EditFavoritesModal({ locale, onClose, onSaved }) {
-  // Initial state pulls the same enum keys the onboarding wrote so a
-  // returning user sees their existing selections checked.
+  // Initial state pulls the same enum keys + custom IDs the onboarding
+  // wrote so a returning user sees their existing selections checked.
   const [teamKeys, setTeamKeys] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('onboardingTeams') || '[]')); }
     catch { return new Set(); }
@@ -672,6 +672,24 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
   const [leagueKeys, setLeagueKeys] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('onboardingLeagues') || '[]')); }
     catch { return new Set(); }
+  });
+  // Custom selections from search results — keyed by api-football id.
+  // Value carries display metadata (name, logo) so the UI can render
+  // selected pills without a second fetch. The first time this modal
+  // opens we don't have the metadata for previously-saved customs (only
+  // their IDs are persisted), so the rendered chip falls back to the
+  // bare ID — that's acceptable; a re-search re-hydrates the metadata.
+  const [customTeams, setCustomTeams] = useState(() => {
+    try {
+      const ids = JSON.parse(localStorage.getItem('onboardingCustomTeamIDs') || '[]');
+      return new Map(ids.map((id) => [Number(id), { id: Number(id), name: '#' + id }]));
+    } catch { return new Map(); }
+  });
+  const [customLeagues, setCustomLeagues] = useState(() => {
+    try {
+      const ids = JSON.parse(localStorage.getItem('onboardingCustomLeagueIDs') || '[]');
+      return new Map(ids.map((id) => [Number(id), { id: Number(id), name: '#' + id }]));
+    } catch { return new Map(); }
   });
   const [saving, setSaving] = useState(false);
 
@@ -685,32 +703,86 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
     if (next.has(k)) next.delete(k); else next.add(k);
     return next;
   });
+  // Toggle a search result. If it matches a popular team enum, flip the
+  // enum key instead of duplicating into the custom map (mirrors the
+  // onboarding behaviour — keeps the visual selection state in sync).
+  const toggleCustomTeam = (team) => {
+    const popular = POPULAR_TEAMS.find((p) => p.id === team.id);
+    if (popular) { toggleTeam(popular.key); return; }
+    setCustomTeams((prev) => {
+      const next = new Map(prev);
+      if (next.has(team.id)) next.delete(team.id);
+      else next.set(team.id, team);
+      return next;
+    });
+  };
+  const toggleCustomLeague = (league) => {
+    const popular = POPULAR_LEAGUES.find((p) => p.id === league.id);
+    if (popular) { toggleLeague(popular.key); return; }
+    setCustomLeagues((prev) => {
+      const next = new Map(prev);
+      if (next.has(league.id)) next.delete(league.id);
+      else next.set(league.id, league);
+      return next;
+    });
+  };
+
+  // Search state. Debounced 350ms — matches WebOnboarding's PrefsScreen
+  // so a user who learned the cadence there isn't surprised here.
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [teamResults, setTeamResults] = useState([]);
+  const [leagueResults, setLeagueResults] = useState([]);
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setTeamResults([]); setLeagueResults([]); setSearching(false);
+      return undefined;
+    }
+    setSearching(true);
+    const handle = setTimeout(async () => {
+      try {
+        const [teams, leagues] = await Promise.all([
+          api.get(`/football/teams/search?query=${encodeURIComponent(trimmed)}`),
+          api.get(`/football/leagues/search?query=${encodeURIComponent(trimmed)}`),
+        ]);
+        setTeamResults(Array.isArray(teams) ? teams : []);
+        setLeagueResults(Array.isArray(leagues) ? leagues : []);
+      } catch {
+        setTeamResults([]); setLeagueResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 350);
+    return () => clearTimeout(handle);
+  }, [query]);
+  const hasQuery = query.trim().length >= 2;
 
   const save = async () => {
     setSaving(true);
     try {
       // localStorage is the source of truth for the desktop page; mobile
-      // LiveScores reads the same keys. Customs left as-is — this modal
-      // only edits the popular set; full search-based editing is a
-      // follow-up if needed.
+      // LiveScores reads the same keys. Customs are persisted as bare
+      // ID arrays so the existing readers don't need to change.
       localStorage.setItem('onboardingTeams', JSON.stringify(Array.from(teamKeys)));
       localStorage.setItem('onboardingLeagues', JSON.stringify(Array.from(leagueKeys)));
+      localStorage.setItem('onboardingCustomTeamIDs',
+        JSON.stringify(Array.from(customTeams.keys())));
+      localStorage.setItem('onboardingCustomLeagueIDs',
+        JSON.stringify(Array.from(customLeagues.keys())));
       // Best-effort sync to the backend so iOS picks it up too. Not
       // load-bearing — failure is silent.
       try {
-        // Same token key AuthContext writes to.
         const token = localStorage.getItem('futpools_token');
         if (token) {
-          const customTeams = JSON.parse(localStorage.getItem('onboardingCustomTeamIDs') || '[]');
-          const customLeagues = JSON.parse(localStorage.getItem('onboardingCustomLeagueIDs') || '[]');
           await api.put('/users/me/onboarding', {
             teams: [
               ...Array.from(teamKeys),
-              ...customTeams.map((id) => `api:${id}`),
+              ...Array.from(customTeams.keys()).map((id) => `api:${id}`),
             ],
             leagues: [
               ...Array.from(leagueKeys),
-              ...customLeagues.map((id) => `api:${id}`),
+              ...Array.from(customLeagues.keys()).map((id) => `api:${id}`),
             ],
           }, token);
         }
@@ -731,9 +803,201 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
         <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>
           {t(locale, 'Favorite teams & leagues')}
         </h3>
-        <p className="muted" style={{ fontSize: 13, margin: '0 0 18px' }}>
+        <p className="muted" style={{ fontSize: 13, margin: '0 0 14px' }}>
           {t(locale, 'Pick the ones you want to follow. We\'ll surface their live matches in the FAVORITOS tab.')}
         </p>
+
+        {/* Search bar — debounced 350ms hits /football/teams/search +
+            /football/leagues/search in parallel and renders results
+            grouped below. Same UX as WebOnboarding's PrefsScreen. */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 14px',
+          background: 'var(--fp-surface-alt)',
+          border: '1px solid var(--fp-stroke)',
+          borderRadius: 10,
+          marginBottom: 14,
+        }}>
+          <span style={{ color: 'var(--fp-text-muted)', fontSize: 14 }}>🔎</span>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t(locale, 'Search teams or leagues…')}
+            style={{
+              flex: 1, background: 'transparent', border: 'none',
+              outline: 'none', color: 'var(--fp-text)',
+              font: 'inherit', fontSize: 14,
+            }}
+          />
+          {searching && (
+            <span className="muted" style={{ fontSize: 11 }}>{t(locale, 'Searching…')}</span>
+          )}
+          {!searching && query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--fp-text-muted)', fontSize: 18, lineHeight: 1,
+              }}
+              aria-label="Clear"
+            >×</button>
+          )}
+        </div>
+
+        {/* Search results — only shown while there's a query (≥2 chars). */}
+        {hasQuery && (
+          <div style={{ marginBottom: 18 }}>
+            {teamResults.length === 0 && leagueResults.length === 0 && !searching && (
+              <p className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
+                {t(locale, 'No results — try a different search.')}
+              </p>
+            )}
+            {teamResults.length > 0 && (
+              <>
+                <h4 className="fp-section-title" style={{ marginBottom: 6, marginTop: 4 }}>
+                  ⚽ {t(locale, 'TEAM RESULTS')}
+                </h4>
+                <div style={{
+                  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  gap: 6, marginBottom: 10,
+                }}>
+                  {teamResults.slice(0, 12).map((tm) => {
+                    const popularKey = POPULAR_TEAMS.find((p) => p.id === tm.id)?.key;
+                    const active = popularKey
+                      ? teamKeys.has(popularKey)
+                      : customTeams.has(tm.id);
+                    return (
+                      <button
+                        key={tm.id}
+                        type="button"
+                        onClick={() => toggleCustomTeam(tm)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '8px 10px',
+                          background: active ? 'rgba(33,226,140,0.12)' : 'var(--fp-surface)',
+                          border: `1px solid ${active ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
+                          borderRadius: 8,
+                          color: 'var(--fp-text)',
+                          cursor: 'pointer', font: 'inherit', textAlign: 'left',
+                        }}
+                      >
+                        {tm.logo && (
+                          <img src={tm.logo} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+                        )}
+                        <span style={{
+                          flex: 1, fontSize: 12, fontWeight: 600,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{tm.name}{tm.country ? ` · ${tm.country}` : ''}</span>
+                        {active && <span style={{ color: 'var(--fp-primary)', fontWeight: 800 }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+            {leagueResults.length > 0 && (
+              <>
+                <h4 className="fp-section-title" style={{ marginBottom: 6 }}>
+                  🏆 {t(locale, 'LEAGUE RESULTS')}
+                </h4>
+                <div style={{
+                  display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  gap: 6,
+                }}>
+                  {leagueResults.slice(0, 12).map((lg) => {
+                    const popularKey = POPULAR_LEAGUES.find((p) => p.id === lg.id)?.key;
+                    const active = popularKey
+                      ? leagueKeys.has(popularKey)
+                      : customLeagues.has(lg.id);
+                    return (
+                      <button
+                        key={lg.id}
+                        type="button"
+                        onClick={() => toggleCustomLeague(lg)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '8px 10px',
+                          background: active ? 'rgba(33,226,140,0.12)' : 'var(--fp-surface)',
+                          border: `1px solid ${active ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
+                          borderRadius: 8,
+                          color: 'var(--fp-text)',
+                          cursor: 'pointer', font: 'inherit', textAlign: 'left',
+                        }}
+                      >
+                        {lg.logo && (
+                          <img src={lg.logo} alt="" style={{
+                            width: 20, height: 20, objectFit: 'contain',
+                            background: 'rgba(255,255,255,0.04)', borderRadius: 4, padding: 1,
+                          }} />
+                        )}
+                        <span style={{
+                          flex: 1, fontSize: 12, fontWeight: 600,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{lg.name}{lg.country ? ` · ${lg.country}` : ''}</span>
+                        {active && <span style={{ color: 'var(--fp-primary)', fontWeight: 800 }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Custom selections that aren't in the popular list — render
+            as removable chips so the user can see what they've added
+            without re-searching. */}
+        {(customTeams.size > 0 || customLeagues.size > 0) && (
+          <div style={{ marginBottom: 14 }}>
+            <h4 className="fp-section-title" style={{ marginBottom: 8 }}>
+              ⭐ {t(locale, 'YOUR EXTRA SELECTIONS')}
+            </h4>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {Array.from(customTeams.values()).map((tm) => (
+                <button
+                  key={`t-${tm.id}`}
+                  type="button"
+                  onClick={() => toggleCustomTeam(tm)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '4px 10px',
+                    background: 'rgba(33,226,140,0.12)',
+                    border: '1px solid var(--fp-primary)',
+                    borderRadius: 999,
+                    color: 'var(--fp-primary)',
+                    cursor: 'pointer', font: 'inherit', fontSize: 12, fontWeight: 600,
+                  }}
+                  title={t(locale, 'Remove')}
+                >
+                  {tm.logo && <img src={tm.logo} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                  {tm.name} ×
+                </button>
+              ))}
+              {Array.from(customLeagues.values()).map((lg) => (
+                <button
+                  key={`l-${lg.id}`}
+                  type="button"
+                  onClick={() => toggleCustomLeague(lg)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '4px 10px',
+                    background: 'rgba(33,226,140,0.12)',
+                    border: '1px solid var(--fp-primary)',
+                    borderRadius: 999,
+                    color: 'var(--fp-primary)',
+                    cursor: 'pointer', font: 'inherit', fontSize: 12, fontWeight: 600,
+                  }}
+                  title={t(locale, 'Remove')}
+                >
+                  {lg.logo && <img src={lg.logo} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                  {lg.name} ×
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ marginBottom: 18 }}>
           <h4 className="fp-section-title" style={{ marginBottom: 10 }}>
