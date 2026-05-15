@@ -12,8 +12,9 @@
 //   • No "balance" / "saldo" — pool entry is paid per-pool via Stripe.
 //   • The JOIN button uses the shared `canJoinPool` rule so a finalised
 //     pool whose fixtures have FT statuses is correctly locked here too.
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../../api/client';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
 import { resolvePoolStatus } from '../../lib/poolStatus';
@@ -442,6 +443,7 @@ export function PoolDetailDesktop({
   quiniela, liveByFixture, leaderboard, currentUserId,
   entryCount, alreadyEntered, canJoin, feeMXN,
   handleJoin, navigate, goBack, justPaid,
+  isAdmin = false, isOwner = false, token, onMutated,
 }) {
   const { locale } = useLocale();
   const status = resolvePoolStatus(quiniela, liveByFixture);
@@ -449,6 +451,10 @@ export function PoolDetailDesktop({
   // (leaderboard). The earlier OVERVIEW was redundant — it duplicated
   // the fixtures list with an arbitrary 'first 6' truncation.
   const [tab, setTab] = useState('partidos');
+  const [showEdit, setShowEdit] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
+  const [showCancel, setShowCancel] = useState(false);
+  const canAdmin = isAdmin || isOwner;
 
   // Wrap the page in the same sidebar+topbar shell that routed pages
   // (Home, Scores, Account) get. PoolDetail is a top-level route to
@@ -530,9 +536,331 @@ export function PoolDetailDesktop({
               </p>
             </div>
           )}
+
+          {/* Admin actions — only rendered for the pool owner OR an
+              ADMIN_EMAILS user. Three tools: edit name+description,
+              view all participants' picks, cancel pool + refund all. */}
+          {canAdmin && (
+            <AdminCard
+              quiniela={quiniela}
+              locale={locale}
+              onEdit={() => setShowEdit(true)}
+              onParticipants={() => setShowParticipants(true)}
+              onCancel={() => setShowCancel(true)}
+            />
+          )}
         </aside>
       </div>
       </div>
+
+      {showEdit && (
+        <EditPoolModal
+          quiniela={quiniela}
+          token={token}
+          locale={locale}
+          onClose={() => setShowEdit(false)}
+          onSaved={() => { setShowEdit(false); onMutated?.(); }}
+        />
+      )}
+      {showParticipants && (
+        <ParticipantsModal
+          quinielaId={quiniela._id}
+          token={token}
+          locale={locale}
+          onClose={() => setShowParticipants(false)}
+        />
+      )}
+      {showCancel && (
+        <CancelPoolModal
+          quiniela={quiniela}
+          token={token}
+          locale={locale}
+          onClose={() => setShowCancel(false)}
+          onCancelled={() => { setShowCancel(false); onMutated?.(); }}
+        />
+      )}
     </DesktopShellChrome>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Admin actions card + modals
+// ─────────────────────────────────────────────────────────────────────
+
+function AdminCard({ quiniela, locale, onEdit, onParticipants, onCancel }) {
+  const isCancelled = quiniela.settlementStatus === 'cancelled';
+  return (
+    <div className="fp-card" style={{
+      border: '1px solid color-mix(in srgb, var(--fp-accent) 40%, transparent)',
+      background: 'linear-gradient(180deg, color-mix(in srgb, var(--fp-accent) 6%, transparent), transparent 70%), var(--fp-surface)',
+    }}>
+      <h4 className="fp-section-title" style={{ color: 'var(--fp-accent)' }}>
+        ⚙ {t(locale, 'ADMIN ACTIONS')}
+      </h4>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+        <button type="button" className="fp-btn ghost block" onClick={onEdit}>
+          ✎ {t(locale, 'Edit name & description')}
+        </button>
+        <button type="button" className="fp-btn ghost block" onClick={onParticipants}>
+          👁 {t(locale, 'View all participants')}
+        </button>
+        <button
+          type="button"
+          className="fp-btn danger block"
+          onClick={onCancel}
+          disabled={isCancelled}
+        >
+          ⚠ {isCancelled ? t(locale, 'Already cancelled') : t(locale, 'Cancel pool & refund all')}
+        </button>
+      </div>
+      {isCancelled && (
+        <p className="muted" style={{ fontSize: 11, marginTop: 10, textAlign: 'center' }}>
+          {t(locale, 'This pool was cancelled and all entries were refunded.')}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function EditPoolModal({ quiniela, token, locale, onClose, onSaved }) {
+  const [name, setName] = useState(quiniela.name || '');
+  const [description, setDescription] = useState(quiniela.description || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const save = async () => {
+    setSaving(true); setError(null);
+    try {
+      await api.put(`/quinielas/${quiniela._id}`, {
+        name: name.trim(),
+        description: description.trim(),
+      }, token);
+      onSaved?.();
+    } catch (e) {
+      setError(e.message); setSaving(false);
+    }
+  };
+  return (
+    <div className="fp-modal-backdrop" onClick={onClose}>
+      <div className="fp-modal" onClick={(e) => e.stopPropagation()}>
+        <h3 style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 700 }}>
+          {t(locale, 'Edit pool')}
+        </h3>
+        <label style={{ display: 'block', marginBottom: 10 }}>
+          <div className="muted" style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
+            {t(locale, 'Name')}
+          </div>
+          <input
+            type="text" value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={{
+              width: '100%', padding: '10px 12px', fontSize: 15,
+              background: 'var(--fp-surface-alt)', border: '1px solid var(--fp-stroke)',
+              borderRadius: 10, color: 'var(--fp-text)', font: 'inherit', outline: 'none',
+            }}
+          />
+        </label>
+        <label style={{ display: 'block', marginBottom: 14 }}>
+          <div className="muted" style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
+            {t(locale, 'Description')}
+          </div>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            style={{
+              width: '100%', padding: '10px 12px', fontSize: 14,
+              background: 'var(--fp-surface-alt)', border: '1px solid var(--fp-stroke)',
+              borderRadius: 10, color: 'var(--fp-text)', font: 'inherit',
+              resize: 'vertical', outline: 'none',
+            }}
+          />
+        </label>
+        {error && (
+          <p style={{ color: 'var(--fp-danger)', fontSize: 12, margin: '0 0 12px' }}>{error}</p>
+        )}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="fp-btn ghost block" onClick={onClose}>
+            {t(locale, 'Cancel')}
+          </button>
+          <button
+            type="button" className="fp-btn primary block"
+            disabled={saving || !name.trim()}
+            onClick={save}
+          >{saving ? t(locale, 'Saving…') : t(locale, 'Save')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ParticipantsModal({ quinielaId, token, locale, onClose }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    api.get(`/quinielas/${quinielaId}/participants`, token)
+      .then((d) => { if (!cancelled) { setData(d); setLoading(false); } })
+      .catch((e) => { if (!cancelled) { setError(e.message); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [quinielaId, token]);
+  const participants = data?.participants || [];
+  const picksHidden = data?.picksHidden;
+  return (
+    <div className="fp-modal-backdrop" onClick={onClose}>
+      <div className="fp-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720, maxHeight: '80vh', overflow: 'auto' }}>
+        <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>
+          {t(locale, 'Participants')} <span className="muted" style={{ fontSize: 13, fontWeight: 500 }}>· {participants.length}</span>
+        </h3>
+        {picksHidden && (
+          <p className="muted" style={{ fontSize: 12, margin: '0 0 14px' }}>
+            {t(locale, 'Picks are hidden until the first kickoff so the creator can\'t moderate based on guesses.')}
+          </p>
+        )}
+        {loading && <p className="muted" style={{ fontSize: 13 }}>{t(locale, 'Loading…')}</p>}
+        {error && <p style={{ color: 'var(--fp-danger)', fontSize: 13 }}>{error}</p>}
+        {!loading && participants.length === 0 && (
+          <p className="muted" style={{ fontSize: 13 }}>{t(locale, 'No participants yet')}</p>
+        )}
+        {!loading && participants.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
+            {participants.map((p) => (
+              <div key={p.user.id} style={{
+                padding: 12, background: 'var(--fp-surface-alt)',
+                border: '1px solid var(--fp-stroke)', borderRadius: 10,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <strong>{p.user.displayName || p.user.username || 'Player'}</strong>
+                  <span className="muted" style={{ fontSize: 12 }}>
+                    {p.entryCount} {p.entryCount === 1 ? t(locale, 'entry') : t(locale, 'entries')}
+                  </span>
+                </div>
+                {p.entries.map((e) => (
+                  <div key={e._id} style={{ marginTop: 8, fontSize: 12 }}>
+                    <div className="muted" style={{ marginBottom: 4 }}>
+                      #{e.entryNumber} · {e.score ?? 0}/{e.totalPossible ?? '—'}
+                    </div>
+                    {e.picks && (
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {e.picks.map((pk) => (
+                          <span key={pk.fixtureId} style={{
+                            padding: '3px 8px', borderRadius: 6,
+                            background: 'rgba(33,226,140,0.16)', color: 'var(--fp-primary)',
+                            fontFamily: 'var(--app-font-mono)', fontSize: 11, fontWeight: 700,
+                          }}>{pk.pick}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end' }}>
+          <button type="button" className="fp-btn ghost" onClick={onClose}>{t(locale, 'Close')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CancelPoolModal({ quiniela, token, locale, onClose, onCancelled }) {
+  const [reason, setReason] = useState('');
+  const [confirmText, setConfirmText] = useState('');
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+  const armed = confirmText.trim().toUpperCase() === 'CANCELAR';
+
+  const run = async () => {
+    setRunning(true); setError(null);
+    try {
+      const res = await api.post(`/admin/pools/${quiniela._id}/cancel`, { reason: reason.trim() }, token);
+      setResult(res);
+    } catch (e) {
+      setError(e.message); setRunning(false);
+    }
+  };
+
+  if (result) {
+    const failed = (result.results || []).filter((r) => !r.ok).length;
+    return (
+      <div className="fp-modal-backdrop" onClick={onClose}>
+        <div className="fp-modal" onClick={(e) => e.stopPropagation()}>
+          <h3 style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 700 }}>
+            {t(locale, 'Pool cancelled')}
+          </h3>
+          <p style={{ fontSize: 14, margin: '0 0 12px' }}>
+            {tFormat(locale, '{n} entries processed', { n: result.entriesProcessed })}
+            {failed > 0 && (
+              <> · <span className="red">{tFormat(locale, '{n} refund failures', { n: failed })}</span></>
+            )}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="button" className="fp-btn primary" onClick={onCancelled}>
+              {t(locale, 'Done')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fp-modal-backdrop" onClick={onClose}>
+      <div className="fp-modal" onClick={(e) => e.stopPropagation()}>
+        <h3 style={{ margin: '0 0 10px', fontSize: 18, fontWeight: 700, color: 'var(--fp-danger)' }}>
+          ⚠ {t(locale, 'Cancel pool & refund all')}
+        </h3>
+        <p style={{ fontSize: 13, margin: '0 0 14px', color: 'var(--fp-text-dim)' }}>
+          {t(locale, 'This will refund every entry via Stripe and mark the pool cancelled. Cannot be undone.')}
+        </p>
+        <label style={{ display: 'block', marginBottom: 10 }}>
+          <div className="muted" style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
+            {t(locale, 'Reason (visible in admin log)')}
+          </div>
+          <input
+            type="text" value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t(locale, 'e.g. fixture cancelled by league')}
+            style={{
+              width: '100%', padding: '10px 12px', fontSize: 14,
+              background: 'var(--fp-surface-alt)', border: '1px solid var(--fp-stroke)',
+              borderRadius: 10, color: 'var(--fp-text)', font: 'inherit', outline: 'none',
+            }}
+          />
+        </label>
+        <label style={{ display: 'block', marginBottom: 14 }}>
+          <div className="muted" style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
+            {t(locale, 'Type CANCELAR to confirm')}
+          </div>
+          <input
+            type="text" value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            style={{
+              width: '100%', padding: '10px 12px', fontSize: 14,
+              background: 'var(--fp-surface-alt)',
+              border: `1px solid ${armed ? 'var(--fp-danger)' : 'var(--fp-stroke)'}`,
+              borderRadius: 10, color: 'var(--fp-text)', font: 'inherit', outline: 'none',
+              letterSpacing: 2, textAlign: 'center', textTransform: 'uppercase',
+            }}
+          />
+        </label>
+        {error && (
+          <p style={{ color: 'var(--fp-danger)', fontSize: 12, margin: '0 0 12px' }}>{error}</p>
+        )}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="fp-btn ghost block" onClick={onClose}>
+            {t(locale, 'Keep pool')}
+          </button>
+          <button
+            type="button" className="fp-btn danger block"
+            disabled={!armed || running}
+            onClick={run}
+          >{running ? t(locale, 'Refunding…') : t(locale, 'Confirm cancel')}</button>
+        </div>
+      </div>
+    </div>
   );
 }

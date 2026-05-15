@@ -107,7 +107,7 @@ const quinielaSchema = new mongoose.Schema({
   // Settlement tracking for the cron.
   settlementStatus: {
     type: String,
-    enum: ['pending', 'settled', 'refunded'],
+    enum: ['pending', 'settled', 'refunded', 'cancelled'],
     default: 'pending',
     index: true,
   },
@@ -134,6 +134,11 @@ const quinielaSchema = new mongoose.Schema({
   // Free-text record of the payout (e.g. "SPEI ref ABC123, 2026-05-15").
   // Not parsed by code — operational paper trail only.
   winnerPaidNote: { type: String, default: null },
+  // Set when admin cancels the pool via /admin/pools/:id/cancel. Refunds
+  // are dispatched per-entry; this field marks the pool as no longer
+  // active. cancelledReason carries the admin's free-text justification.
+  cancelledAt: { type: Date, default: null },
+  cancelledReason: { type: String, default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

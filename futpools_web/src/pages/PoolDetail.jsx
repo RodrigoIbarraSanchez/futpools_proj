@@ -361,6 +361,10 @@ export function PoolDetail() {
         navigate={navigate}
         goBack={goBack}
         justPaid={justPaid}
+        isAdmin={!!user?.isAdmin}
+        isOwner={isOwner}
+        token={token}
+        onMutated={load}
       />
     );
   }

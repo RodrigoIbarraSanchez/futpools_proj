@@ -14,6 +14,7 @@
 const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const User = require('../models/User');
+const { refundEntry } = require('../services/poolPaymentService');
 
 /**
  * GET /admin/payouts — pools whose settlementStatus = 'settled' AND
@@ -91,6 +92,66 @@ exports.getPendingPayouts = async (req, res) => {
  * Idempotent: re-marking an already-paid pool returns 200 with a flag
  * so the admin UI can reflect "already done" without throwing.
  */
+/**
+ * POST /admin/pools/:id/cancel
+ *
+ * Cancel a pool and refund every active entry via Stripe. Used when the
+ * underlying league cancels/postpones fixtures, an admin error needs
+ * undoing, etc. Destructive — flips the pool to settlementStatus
+ * 'cancelled' and stamps cancelledAt/cancelledReason; the discovery list
+ * filters cancelled pools out.
+ *
+ * Idempotent at the entry level — refundEntry skips already-refunded
+ * entries — so re-running this on a partially-refunded pool finishes
+ * the rest. Returns a per-entry result array so the admin UI can show
+ * which refunds succeeded vs failed.
+ */
+exports.cancelPool = async (req, res) => {
+  try {
+    const pool = await Quiniela.findById(req.params.id);
+    if (!pool) return res.status(404).json({ message: 'Pool not found' });
+    const reason = (req.body?.reason || '').toString().trim().slice(0, 500);
+
+    const entries = await QuinielaEntry.find({ quiniela: pool._id }).lean();
+    const results = [];
+    for (const e of entries) {
+      try {
+        if (!e.stripePaymentIntentId) {
+          // Entry from before Stripe (legacy or seed). Mark refunded
+          // anyway so settlement won't try to score it.
+          await QuinielaEntry.updateOne(
+            { _id: e._id },
+            { $set: { refundedAt: new Date(), refundId: 'NO_INTENT' } },
+          );
+          results.push({ entryId: String(e._id), ok: true, skipped: true });
+          continue;
+        }
+        const out = await refundEntry(e._id, 'requested_by_customer');
+        results.push({ entryId: String(e._id), ok: true, ...out });
+      } catch (err) {
+        console.warn(`[admin/cancel] refund failed entry=${e._id}:`, err.message);
+        results.push({ entryId: String(e._id), ok: false, error: err.message });
+      }
+    }
+
+    pool.settlementStatus = 'cancelled';
+    pool.cancelledAt = new Date();
+    pool.cancelledReason = reason;
+    await pool.save();
+    console.log(`[admin/cancel] pool=${pool._id} cancelled by ${req.user.email} — ${results.length} entries processed, reason="${reason}"`);
+
+    res.json({
+      ok: true,
+      cancelledAt: pool.cancelledAt,
+      entriesProcessed: results.length,
+      results,
+    });
+  } catch (err) {
+    console.error('[admin/cancel] error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.markPoolPaid = async (req, res) => {
   try {
     const pool = await Quiniela.findById(req.params.id);

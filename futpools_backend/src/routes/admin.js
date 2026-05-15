@@ -17,5 +17,7 @@ router.get('/ledger', adminController.getLedger);
 // mark them paid after a manual bank transfer.
 router.get('/payouts', adminPayoutsController.getPendingPayouts);
 router.post('/pools/:id/mark-paid', adminPayoutsController.markPoolPaid);
+// Destructive — cancels the pool and refunds every entry via Stripe.
+router.post('/pools/:id/cancel', adminPayoutsController.cancelPool);
 
 module.exports = router;
