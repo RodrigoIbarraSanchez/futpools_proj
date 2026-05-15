@@ -357,13 +357,17 @@ function LeaderboardTab({ leaderboard, currentUserId, locale }) {
   );
 }
 
-function OverviewTab({ quiniela, liveByFixture, leaderboard, currentUserId, entryCount, locale, navigate }) {
+// Unified Partidos tab. Replaces the original Overview+Fixtures split —
+// having two tabs that both showed fixtures was redundant. This one
+// stacks the user's entries summary (when participating) on top of the
+// full grouped-by-day fixture list, so a single tap surfaces everything
+// you'd expect on a pool's main view.
+function PartidosTab({ quiniela, liveByFixture, leaderboard, currentUserId, entryCount, locale, navigate }) {
   const yourEntries = leaderboardRows(leaderboard).filter(
     (r) => String(r.userId) === String(currentUserId)
   );
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-6)' }}>
-      {/* Your entries summary (only if user is participating) */}
       {entryCount > 0 && yourEntries.length > 0 && (
         <div className="fp-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{
@@ -412,24 +416,14 @@ function OverviewTab({ quiniela, liveByFixture, leaderboard, currentUserId, entr
         </div>
       )}
 
-      {/* Fixtures preview — first 6 in a 2-col grid */}
-      <div>
-        <h4 className="fp-section-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          ⚽ {t(locale, 'Fixtures')}
-          <span className="accent">{quiniela.fixtures?.length ?? 0} {t(locale, 'predictions')}</span>
-        </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {(quiniela.fixtures || []).slice(0, 6).map((f) => (
-            <FixtureRow
-              key={f.fixtureId}
-              fixture={f}
-              live={liveByFixture[f.fixtureId]}
-              locale={locale}
-              navigate={navigate}
-            />
-          ))}
-        </div>
-      </div>
+      {/* Full fixture list — grouped by day so a 12-fixture pool reads
+          as 'Wed / Thu / Sat' rather than a flat list. */}
+      <FixturesTab
+        quiniela={quiniela}
+        liveByFixture={liveByFixture}
+        locale={locale}
+        navigate={navigate}
+      />
     </div>
   );
 }
@@ -445,7 +439,10 @@ export function PoolDetailDesktop({
 }) {
   const { locale } = useLocale();
   const status = resolvePoolStatus(quiniela, liveByFixture);
-  const [tab, setTab] = useState('overview');
+  // Two tabs: PARTIDOS (entries summary + grouped fixtures) and TABLA
+  // (leaderboard). The earlier OVERVIEW was redundant — it duplicated
+  // the fixtures list with an arbitrary 'first 6' truncation.
+  const [tab, setTab] = useState('partidos');
 
   // Wrap the page in the same sidebar+topbar shell that routed pages
   // (Home, Scores, Account) get. PoolDetail is a top-level route to
@@ -469,13 +466,8 @@ export function PoolDetailDesktop({
           <div className="fp-tabs">
             <button
               type="button"
-              className={tab === 'overview' ? 'active' : ''}
-              onClick={() => setTab('overview')}
-            >{t(locale, 'Overview')}</button>
-            <button
-              type="button"
-              className={tab === 'fixtures' ? 'active' : ''}
-              onClick={() => setTab('fixtures')}
+              className={tab === 'partidos' ? 'active' : ''}
+              onClick={() => setTab('partidos')}
             >{t(locale, 'Fixtures')} · {quiniela.fixtures?.length ?? 0}</button>
             <button
               type="button"
@@ -484,21 +476,13 @@ export function PoolDetailDesktop({
             >{t(locale, 'Leaderboard')}</button>
           </div>
           <div style={{ marginTop: 'var(--app-space-5)' }}>
-            {tab === 'overview' && (
-              <OverviewTab
+            {tab === 'partidos' && (
+              <PartidosTab
                 quiniela={quiniela}
                 liveByFixture={liveByFixture}
                 leaderboard={leaderboard}
                 currentUserId={currentUserId}
                 entryCount={entryCount}
-                locale={locale}
-                navigate={navigate}
-              />
-            )}
-            {tab === 'fixtures' && (
-              <FixturesTab
-                quiniela={quiniela}
-                liveByFixture={liveByFixture}
                 locale={locale}
                 navigate={navigate}
               />
