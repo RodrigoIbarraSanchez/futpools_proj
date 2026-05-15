@@ -13,6 +13,7 @@
 // Page width capped to 960px so the score column stays close to the
 // teams (a row at 1920-wide drifted the score ~1500px from the left).
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useLocale } from '../../context/LocaleContext';
@@ -859,31 +860,29 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
     }
   };
 
-  return (
+  // Portal the modal to document.body so no ancestor (the desktop
+  // shell, fp-desktop-content's overflow context, the topbar's
+  // backdrop-filter) can mess with the centering. Inside the portal
+  // we use grid place-items center on the backdrop, which is the
+  // simplest possible centering and works reliably outside of any
+  // containing-block weirdness.
+  return createPortal(
     <div
       className="fp-modal-backdrop"
       onClick={onClose}
-      // Strip the base 'display: grid; place-items: center' — we're
-      // positioning the modal absolutely inside the backdrop instead.
-      // The grid centering was unreliable on tall monitors because the
-      // modal's max-height interacted weirdly with grid track sizing
-      // and produced a top-anchored result.
       style={{
-        display: 'block',
+        // Override the base padding so a tall modal can use the full
+        // viewport height before triggering its own internal scroll.
         padding: 0,
+        // Belt-and-braces: explicit grid centering, both axes.
+        display: 'grid',
+        placeItems: 'center',
       }}
     >
       <div
         className="fp-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
-          // Bulletproof centering: position fixed against viewport,
-          // top/left 50%, then translate self by half its own size.
-          // Doesn't depend on parent layout at all.
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
           width: 'min(640px, calc(100vw - 32px))',
           maxHeight: 'min(85vh, 720px)',
           overflowY: 'auto',
@@ -1190,6 +1189,7 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
           >{saving ? t(locale, 'Saving…') : t(locale, 'Save')}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
