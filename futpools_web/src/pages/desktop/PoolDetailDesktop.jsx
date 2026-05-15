@@ -193,7 +193,13 @@ function FixtureRow({ fixture, live, locale, navigate }) {
     <button
       type="button"
       onClick={() => navigate(`/fixture/${fixture.fixtureId}`)}
-      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%' }}
+      style={{
+        background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%',
+        // color: inherit so the .fp-fixture children pick up the white
+        // text from the desktop scope. Without this the user-agent
+        // 'buttontext' default washes everything out to grey.
+        color: 'inherit', font: 'inherit',
+      }}
     >
       <div className="fp-fixture">
         <div className="fp-fixture-team">

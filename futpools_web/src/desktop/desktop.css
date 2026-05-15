@@ -433,6 +433,10 @@
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-team .name {
   font-size: 14px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* Set explicitly: the parent <button> wrapper resets color to
+     buttontext (user-agent), so inheritance from the desktop scope
+     doesn't carry through. Same reason for the score numerals below. */
+  color: var(--fp-text);
 }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -442,7 +446,10 @@
   display: flex; align-items: baseline; gap: 8px;
   font-variant-numeric: tabular-nums;
 }
-:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .nums .n { font-size: 22px; font-weight: 800; }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .nums .n {
+  font-size: 22px; font-weight: 800;
+  color: var(--fp-text);
+}
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .nums .dash { color: var(--fp-text-muted); }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .meta { font-size: 11px; color: var(--fp-text-dim); }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-fixture-score .vs {
