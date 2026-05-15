@@ -20,6 +20,7 @@ import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
 import { HudFrame, SectionLabel } from '../arena-ui/primitives';
 import { useIsDesktop } from '../desktop/useIsDesktop';
+import { LiveScoresDesktop } from './desktop/LiveScoresDesktop';
 
 // ── Popular enum → api-football ID maps. Mirrors POPULAR_TEAMS/LEAGUES
 //    in WebOnboarding.jsx and OnbTeam/OnboardingLeague on iOS so reading
@@ -527,6 +528,11 @@ export function LiveScores() {
 
   const hasFavorites = favoriteTeamIDs.length > 0 || favoriteLeagueIDs.length > 0;
   const isDesktop = useIsDesktop();
+
+  // Desktop variant — full design_handoff_live_scores layout (4 tabs,
+  // per-fixture favorites, league groups as unified cards). Mobile keeps
+  // the existing in-frame layout below.
+  if (isDesktop) return <LiveScoresDesktop />;
 
   // Desktop reduces the chrome (no big sticky header — the topbar already
   // shows the breadcrumb) and widens the fixture rows into a 2-col
