@@ -862,11 +862,21 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
 
   // Portal the modal to document.body so no ancestor (the desktop
   // shell, fp-desktop-content's overflow context, the topbar's
-  // backdrop-filter) can mess with the centering. Inside the portal
-  // we use grid place-items center on the backdrop, which is the
-  // simplest possible centering and works reliably outside of any
-  // containing-block weirdness.
+  // backdrop-filter) can mess with the centering. The outer wrapper
+  // carries `.fp-desktop-scope` so all the desktop-scoped CSS rules
+  // (.fp-modal-backdrop, .fp-modal, .fp-card, .fp-btn, .fp-chip,
+  // .fp-section-title) still apply — without it the portaled tree
+  // would render as unstyled HTML.
   return createPortal(
+    // .fp-desktop-scope provides the CSS scope so the modal's classed
+    // children (.fp-modal-backdrop, .fp-modal, .fp-section-title,
+    // .fp-btn) get their styles. We zero out the scope's own
+    // background + min-height so the wrapper itself is transparent —
+    // it's just a CSS-cascade carrier, not a visible element.
+    <div
+      className="fp-desktop-scope"
+      style={{ background: 'none', minHeight: 0 }}
+    >
     <div
       className="fp-modal-backdrop"
       onClick={onClose}
@@ -1189,6 +1199,7 @@ function EditFavoritesModal({ locale, onClose, onSaved }) {
           >{saving ? t(locale, 'Saving…') : t(locale, 'Save')}</button>
         </div>
       </div>
+    </div>
     </div>,
     document.body,
   );
