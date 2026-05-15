@@ -355,26 +355,38 @@ export function LiveScoresDesktop() {
   );
   const hasAnyFavorite = favoriteTeamIDs.length > 0 || favoriteLeagueIDs.length > 0;
 
-  // Refresh the live feed. Used on mount and every 30s by the poll.
-  const refresh = useCallback(async (silent = false) => {
+  const [lastRefreshAt, setLastRefreshAt] = useState(null);
+  const [forcing, setForcing] = useState(false);
+
+  // Refresh the live feed. `force` bypasses the 10s server cache so a
+  // manual 'refresh now' click gets the freshest api-football data even
+  // when another user just primed the cache. Used silently every 20s.
+  const refresh = useCallback(async ({ silent = false, force = false } = {}) => {
     if (!silent) setLoading(true);
+    if (force) setForcing(true);
     try {
-      const data = await api.get('/football/fixtures/feed?live=true');
+      const path = force
+        ? `/football/fixtures/feed?live=true&nocache=1&_t=${Date.now()}`
+        : '/football/fixtures/feed?live=true';
+      const data = await api.get(path);
       setLiveFixtures(Array.isArray(data) ? data : []);
+      setLastRefreshAt(Date.now());
     } catch {
       // Silent — keep previous snapshot so a flaky network doesn't blank
       // the UI mid-poll.
     } finally {
       if (!silent) setLoading(false);
+      if (force) setForcing(false);
     }
   }, []);
 
-  // Reload + 30s poll on mount. The poll is silent so it doesn't flicker
-  // the loading state.
+  // Reload + 20s poll on mount. The poll is silent so it doesn't flicker
+  // the loading state. 20s + 10s server cache means worst-case staleness
+  // is ~30s — the minute counter never falls more than one tick behind.
   useEffect(() => {
-    refresh(false);
+    refresh({ silent: false });
     if (pollTimer.current) clearInterval(pollTimer.current);
-    pollTimer.current = setInterval(() => refresh(true), 30_000);
+    pollTimer.current = setInterval(() => refresh({ silent: true }), 20_000);
     return () => { if (pollTimer.current) clearInterval(pollTimer.current); };
   }, [refresh]);
 
@@ -457,7 +469,10 @@ export function LiveScoresDesktop() {
     // edge of a 1920-wide monitor — the user's eye should track at most
     // ~960px to read a row, not the full viewport.
     <div style={{ maxWidth: 960, marginInline: 'auto' }}>
-      {/* Page head — title, sub, and right-aligned LIVE pill */}
+      {/* Page head — title, sub, and a right-side cluster with the
+          force-refresh button + LIVE pill. The force button bypasses
+          the backend's 10s cache so the user can pull fresh
+          api-football data on demand when minute/score look stuck. */}
       <div className="fp-desktop-page-head">
         <div>
           <h1 className="fp-desktop-page-title">{t(locale, 'Live scores')}</h1>
@@ -465,13 +480,32 @@ export function LiveScoresDesktop() {
             {t(locale, 'Live football and your active pools at a glance.')}
           </p>
         </div>
-        {totals.live > 0 && (
-          <span className="fp-status live" style={{ padding: '6px 14px', fontSize: 13 }}>
-            <span className="pulse" />
-            {tFormat(locale, '{n} live', { n: totals.live })}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            type="button"
+            className="fp-btn ghost sm"
+            disabled={forcing}
+            onClick={() => refresh({ force: true })}
+            title={lastRefreshAt
+              ? `${t(locale, 'Last update')}: ${new Date(lastRefreshAt).toLocaleTimeString()}`
+              : t(locale, 'Refresh now')}
+          >
+            <span style={{
+              display: 'inline-block',
+              animation: forcing ? 'fp-rotate 0.8s linear infinite' : undefined,
+            }}>↻</span>
+            {forcing ? t(locale, 'Refreshing…') : t(locale, 'Refresh now')}
+          </button>
+          {totals.live > 0 && (
+            <span className="fp-status live" style={{ padding: '6px 14px', fontSize: 13 }}>
+              <span className="pulse" />
+              {tFormat(locale, '{n} live', { n: totals.live })}
+            </span>
+          )}
+        </div>
       </div>
+      {/* Spinner keyframes for the ↻ glyph during a forced refresh. */}
+      <style>{`@keyframes fp-rotate { to { transform: rotate(360deg); } }`}</style>
 
       {/* Tabs */}
       <div style={{

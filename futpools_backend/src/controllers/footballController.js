@@ -132,8 +132,12 @@ exports.getFixturesFeed = async (req, res) => {
     // Live-all mode: ?live=true returns every globally-live fixture,
     // ignores leagues/teams/date. The iOS LIVE tab uses this so users
     // see all in-progress football, not just their favorites.
+    // ?nocache=1 bypasses the 10s server cache so a manual 'refresh
+    // now' button gets the freshest possible api-football data.
     if (String(req.query.live || '').toLowerCase() === 'true') {
-      const out = await apiFootball.fetchFixturesFeed({ live: true });
+      const noCache = String(req.query.nocache || '').toLowerCase() === '1'
+        || String(req.query.nocache || '').toLowerCase() === 'true';
+      const out = await apiFootball.fetchFixturesFeed({ live: true, noCache });
       return res.json(out);
     }
     const date = String(req.query.date || '').trim()

@@ -794,17 +794,22 @@ const getFixturesByTeamAndDate = async (teamId, date) => {
  */
 const fixturesFeedCache = new Map();
 const FIXTURES_FEED_TTL_MS = 30_000;
-const FIXTURES_LIVE_TTL_MS = 15_000;
+// Live data moves fast — minute counter ticks every 60s, scores can flip
+// at any time. Keep the cache tight enough that a 20s poll from two
+// clients can't both observe minute X for more than one tick.
+const FIXTURES_LIVE_TTL_MS = 10_000;
 
-const fetchFixturesFeed = async ({ date, leagueIds = [], teamIds = [], season, live = false } = {}) => {
+const fetchFixturesFeed = async ({ date, leagueIds = [], teamIds = [], season, live = false, noCache = false } = {}) => {
   // Live-all mode: one api-football call, returns the in-progress games
   // worldwide. Much cheaper than fan-out and matches what users expect
   // on the LIVE tab — they want to see ALL live football, not just the
   // intersection of their favorites.
   if (live) {
     const cacheKey = 'LIVE_ALL';
-    const hit = fixturesFeedCache.get(cacheKey);
-    if (hit && Date.now() - hit.updatedAt < FIXTURES_LIVE_TTL_MS) return hit.payload;
+    if (!noCache) {
+      const hit = fixturesFeedCache.get(cacheKey);
+      if (hit && Date.now() - hit.updatedAt < FIXTURES_LIVE_TTL_MS) return hit.payload;
+    }
     const data = await apiFetch('/fixtures', { live: 'all' }).catch(() => null);
     const out = (data?.response || []).map(mapFixturePreview).sort(fixturePreviewSort);
     fixturesFeedCache.set(cacheKey, { updatedAt: Date.now(), payload: out });
