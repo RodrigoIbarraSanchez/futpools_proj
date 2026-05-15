@@ -208,6 +208,7 @@ export const translations = {
     'entries': 'entries',
     // HomeDesktop hero + grid
     'FEATURED POOL': 'FEATURED POOL',
+    'NEXT POOL': 'NEXT POOL',
     'Play now': 'Play now',
     'View details': 'View details',
     'Closes in': 'Closes in',
@@ -802,6 +803,7 @@ export const translations = {
     'entries': 'entradas',
     // HomeDesktop hero + grid (es)
     'FEATURED POOL': 'QUINIELA DESTACADA',
+    'NEXT POOL': 'PRÓXIMA QUINIELA',
     'Play now': 'Jugar ahora',
     'View details': 'Ver detalle',
     'Closes in': 'Cierra en',

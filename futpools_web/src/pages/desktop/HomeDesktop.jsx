@@ -84,13 +84,22 @@ function Countdown({ iso, locale }) {
 // Hero — featured pool with prize-glow trophy on the right
 // ─────────────────────────────────────────────────────────────────────
 
-function Hero({ pool, locale, navigate }) {
+function Hero({ pool, kind, locale, navigate }) {
   if (!pool) return null;
   const prize = prizePoolMxn(pool);
+  // Tag honesty: only say 'QUINIELA DESTACADA' when an admin explicitly
+  // flipped the featured flag. Auto-picks (live or upcoming fallback)
+  // get a status-accurate tag so we don't claim a closed pool is
+  // 'destacada' when it's just the only thing left in the list.
+  const tagText = kind === 'featured'
+    ? `⚡ ${t(locale, 'FEATURED POOL')}`
+    : kind === 'live'
+      ? `🔴 ${t(locale, 'LIVE NOW')}`
+      : `▶ ${t(locale, 'NEXT POOL')}`;
   return (
     <section className="fp-hero">
       <div>
-        <span className="tag">⚡ {t(locale, 'FEATURED POOL')}</span>
+        <span className="tag">{tagText}</span>
         <h2>{pool.name}</h2>
         {pool.description ? (
           <p>{pool.description}</p>
@@ -304,23 +313,32 @@ export function HomeDesktop() {
     return () => { if (pollTimer.current) clearInterval(pollTimer.current); };
   }, [refreshLive, quinielas.length]);
 
-  // Featured pick: explicit `featured` flag wins, then the first live or
-  // upcoming public pool — same algorithm as mobile Home so users see a
-  // consistent hero across breakpoints.
-  const featured = useMemo(() => {
+  // Hero pool selection. Returns { pool, kind } so the tag in the
+  // header is honest about WHY this pool is in the hero:
+  //   featured → admin pinned it via Edit pool
+  //   live     → no featured, but something's playing now
+  //   next     → no featured / no live, but something's joinable soon
+  //   null     → nothing worth heroing, hide the section entirely
+  // Closed pools never get heroed (the previous publicPools[0] fallback
+  // surfaced them, which made an unfeatured closed pool look featured).
+  const heroPick = useMemo(() => {
     const publicPools = quinielas.filter((q) => (q.visibility ?? 'public') !== 'private');
     const adminFeatured = publicPools.find((q) => q.featured);
-    if (adminFeatured) return adminFeatured;
+    if (adminFeatured) return { pool: adminFeatured, kind: 'featured' };
     const live = publicPools.find((q) => poolStatus(q, liveFixtures) === 'live');
-    if (live) return live;
+    if (live) return { pool: live, kind: 'live' };
     const upcoming = [...publicPools]
-      .filter((q) => poolStatus(q, liveFixtures) === 'upcoming' || poolStatus(q, liveFixtures) === 'open')
+      .filter((q) => {
+        const s = poolStatus(q, liveFixtures);
+        return s === 'upcoming' || s === 'open';
+      })
       .sort((a, b) => {
         const ad = a.startDate ? new Date(a.startDate).getTime() : Infinity;
         const bd = b.startDate ? new Date(b.startDate).getTime() : Infinity;
         return ad - bd;
       })[0];
-    return upcoming || publicPools[0] || null;
+    if (upcoming) return { pool: upcoming, kind: 'next' };
+    return { pool: null, kind: null };
   }, [quinielas, liveFixtures]);
 
   const filtered = useMemo(() => {
@@ -356,7 +374,14 @@ export function HomeDesktop() {
 
   return (
     <div className="fp-desktop-wide">
-      {featured && <Hero pool={featured} locale={locale} navigate={navigate} />}
+      {heroPick.pool && (
+        <Hero
+          pool={heroPick.pool}
+          kind={heroPick.kind}
+          locale={locale}
+          navigate={navigate}
+        />
+      )}
 
       <div style={{
         display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
