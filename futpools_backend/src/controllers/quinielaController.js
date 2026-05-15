@@ -372,11 +372,15 @@ exports.getQuinielas = async (req, res) => {
     // When the caller is authenticated, also includes:
     //   - any private pool they created
     //   - any private pool they have an entry in (joined via invite code)
+    // When the caller is an admin (ADMIN_EMAILS allowlist), the visibility
+    // filter is bypassed entirely — admins curate the platform and need
+    // to see every private pool too (debugging, payouts, support).
     //
     // The 'entry-as-membership' clause is what fixes the bug where a user
-    // who paid \$50 to join a private pool didn't see it on their Home —
+    // who paid $50 to join a private pool didn't see it on their Home —
     // private pools were only surfaced for their creator, not their
     // participants. Once you have at least one pick stored, you're in.
+    const isAdmin = isAdminUser(req.user);
     const visibilityClauses = [{ visibility: 'public' }, { visibility: { $exists: false } }];
     let entryPoolIdSet = new Set();
     if (req.user?._id) {
@@ -392,7 +396,9 @@ exports.getQuinielas = async (req, res) => {
         visibilityClauses.push({ _id: { $in: entryPoolIds } });
       }
     }
-    const filter = { $or: visibilityClauses };
+    // Admin bypass: drop the visibility constraint entirely. Pinning by
+    // user-entry still happens below in the sort.
+    const filter = isAdmin ? {} : { $or: visibilityClauses };
     // Optional ?realPrize=1 — surface only pools that carry a real-
     // world prize. Used by the Home "WEEKLY POOL · REAL PRIZE" teaser
     // and the dedicated real-prize list view.
