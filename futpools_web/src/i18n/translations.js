@@ -226,6 +226,8 @@ export const translations = {
     'No favorites': 'No favorites',
     'Come back later for upcoming matches.': 'Come back later for upcoming matches.',
     'Tap the star on a match to save it here.': 'Tap the star on a match to save it here.',
+    'No favorites yet — tap the star on any match to save it here.':
+      'No favorites yet — tap the star on any match to save it here.',
     '{n} live': '{n} live',
     '{n} matches': '{n} matches',
     '1 match': '1 match',
@@ -836,6 +838,8 @@ export const translations = {
     'No favorites': 'Sin favoritos',
     'Come back later for upcoming matches.': 'Vuelve más tarde para ver los próximos encuentros.',
     'Tap the star on a match to save it here.': 'Toca la estrella de un partido para guardarlo aquí.',
+    'No favorites yet — tap the star on any match to save it here.':
+      'Aún no tienes favoritos — toca la estrella de un partido para guardarlo aquí.',
     '{n} live': '{n} en vivo',
     '{n} matches': '{n} partidos',
     '1 match': '1 partido',
