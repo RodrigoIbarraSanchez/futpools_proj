@@ -673,7 +673,10 @@ function EmptyState({ tab, hasAnyFavorite, liveCount, locale, onEditFavorites })
 // is the source of truth for this page either way.
 // ─────────────────────────────────────────────────────────────────────
 
-function EditFavoritesModal({ locale, onClose, onSaved }) {
+// Exported so mobile LiveScores can mount the same modal — both
+// platforms share the localStorage source of truth, so the editor
+// works identically on either viewport.
+export function EditFavoritesModal({ locale, onClose, onSaved }) {
   // Initial state pulls the same enum keys + custom IDs the onboarding
   // wrote so a returning user sees their existing selections checked.
   const [teamKeys, setTeamKeys] = useState(() => {

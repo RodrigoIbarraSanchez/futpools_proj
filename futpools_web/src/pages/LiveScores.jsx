@@ -20,7 +20,7 @@ import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
 import { HudFrame, SectionLabel } from '../arena-ui/primitives';
 import { useIsDesktop } from '../desktop/useIsDesktop';
-import { LiveScoresDesktop } from './desktop/LiveScoresDesktop';
+import { LiveScoresDesktop, EditFavoritesModal } from './desktop/LiveScoresDesktop';
 
 // ── Popular enum → api-football ID maps. Mirrors POPULAR_TEAMS/LEAGUES
 //    in WebOnboarding.jsx and OnbTeam/OnboardingLeague on iOS so reading
@@ -412,12 +412,18 @@ export function LiveScores() {
   const [fixtures, setFixtures] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activePools, setActivePools] = useState([]);
+  // EditFavoritesModal state — same modal mobile + desktop share.
+  // favoritesVersion bumps after a save so the favoriteTeamIDs/LeagueIDs
+  // reads re-fetch from localStorage and the FAVORITES tab refreshes.
+  const [showEditFavorites, setShowEditFavorites] = useState(false);
+  const [favoritesVersion, setFavoritesVersion] = useState(0);
   const pollTimer = useRef(null);
 
   // Snapshot of favorites once per render — re-read on tab change so a user
   // who just updated their picks in onboarding sees the new set.
-  const favoriteTeamIDs = useMemo(() => readFavoriteTeamIDs(), [tab]);
-  const favoriteLeagueIDs = useMemo(() => readFavoriteLeagueIDs(), [tab]);
+  // favoritesVersion in deps so saving the modal triggers a re-read.
+  const favoriteTeamIDs = useMemo(() => readFavoriteTeamIDs(), [tab, favoritesVersion]);
+  const favoriteLeagueIDs = useMemo(() => readFavoriteLeagueIDs(), [tab, favoritesVersion]);
 
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -598,7 +604,13 @@ export function LiveScores() {
           }}>{t(locale, 'LOADING FIXTURES…')}</div>
         </div>
       ) : groups.length === 0 ? (
-        <EmptyState tab={tab} hasFavorites={hasFavorites} locale={locale} navigate={navigate} />
+        <EmptyState
+          tab={tab}
+          hasFavorites={hasFavorites}
+          locale={locale}
+          navigate={navigate}
+          onEditFavorites={() => setShowEditFavorites(true)}
+        />
       ) : (
         <div style={{ paddingBottom: 24 }}>
           {groups.map((group) => (
@@ -615,7 +627,38 @@ export function LiveScores() {
               </div>
             </section>
           ))}
+          {tab === 'favorites' && (
+            <div style={{
+              display: 'flex', justifyContent: 'center',
+              padding: '8px 16px 16px',
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowEditFavorites(true)}
+                style={{
+                  padding: '8px 14px',
+                  background: 'var(--fp-surface)',
+                  color: 'var(--fp-text)',
+                  border: '1px solid var(--fp-stroke)',
+                  clipPath: 'var(--fp-clip-sm)',
+                  fontFamily: 'var(--fp-display)', fontSize: 11, fontWeight: 700,
+                  letterSpacing: 1.5, cursor: 'pointer',
+                }}
+              >✎ {t(locale, 'EDIT FAVORITES')}</button>
+            </div>
+          )}
         </div>
+      )}
+
+      {showEditFavorites && (
+        <EditFavoritesModal
+          locale={locale}
+          onClose={() => setShowEditFavorites(false)}
+          onSaved={() => {
+            setShowEditFavorites(false);
+            setFavoritesVersion((n) => n + 1);
+          }}
+        />
       )}
     </div>
   );
@@ -625,7 +668,7 @@ export function LiveScores() {
 // Empty state — distinct copy per tab (mirrors iOS).
 // ─────────────────────────────────────────────────────────────────────
 
-function EmptyState({ tab, hasFavorites, locale, navigate }) {
+function EmptyState({ tab, hasFavorites, locale, navigate, onEditFavorites }) {
   if (tab === 'live') {
     return (
       <div style={{
@@ -664,10 +707,15 @@ function EmptyState({ tab, hasFavorites, locale, navigate }) {
           ? t(locale, 'Nothing scheduled in your leagues today. Try TOMORROW.')
           : t(locale, 'Add favorite teams or leagues from your profile to see live scores.')}
       </div>
-      {!hasFavorites && (
+      {/* Always offer the editor on the FAVORITES tab — both when the
+          user has nothing yet (CTA call to action) and when they have
+          favorites but none are scheduled (lets them add more). On the
+          other tabs the button only shows when no favorites exist
+          (matches the original mobile UX). */}
+      {(tab === 'favorites' || !hasFavorites) && onEditFavorites && (
         <button
           type="button"
-          onClick={() => navigate('/onboarding')}
+          onClick={onEditFavorites}
           style={{
             marginTop: 8,
             padding: '8px 16px',
@@ -678,7 +726,9 @@ function EmptyState({ tab, hasFavorites, locale, navigate }) {
             fontFamily: 'var(--fp-display)', fontSize: 11, fontWeight: 800,
             letterSpacing: 2, cursor: 'pointer',
           }}
-        >▶ {t(locale, 'PICK FAVORITES')}</button>
+        >▶ {hasFavorites
+            ? t(locale, 'EDIT FAVORITES')
+            : t(locale, 'PICK FAVORITES')}</button>
       )}
     </div>
   );

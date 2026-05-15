@@ -111,6 +111,7 @@ export const translations = {
     'Add favorite teams or leagues from your profile to see live scores.':
       'Add favorite teams or leagues from your profile to see live scores.',
     'PICK FAVORITES': 'PICK FAVORITES',
+    'EDIT FAVORITES': 'EDIT FAVORITES',
     'Live football and your active pools at a glance.':
       'Live football and your active pools at a glance.',
     'My account': 'My account',
@@ -743,6 +744,7 @@ export const translations = {
     'Add favorite teams or leagues from your profile to see live scores.':
       'Agrega equipos o ligas favoritas desde tu perfil para ver marcadores en vivo.',
     'PICK FAVORITES': 'ELEGIR FAVORITOS',
+    'EDIT FAVORITES': 'EDITAR FAVORITOS',
     'Live football and your active pools at a glance.':
       'Fútbol en vivo y tus quinielas activas a la mano.',
     'My account': 'Mi cuenta',
