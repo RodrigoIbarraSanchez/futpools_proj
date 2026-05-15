@@ -25,12 +25,31 @@ function formatEntryFee(q) {
   }
   return q?.cost && String(q.cost).trim() !== '0' ? q.cost : '—';
 }
+// Returns the prize as a number when the pool uses simple_version's
+// entryFeeMXN flow. Returns null for legacy pools (master-mode coin
+// economy) so callers can fall back to the string `q.prize` field.
+// Returns 0 when the pool is on the new flow but nobody has entered
+// yet — that's a real value, not 'unknown', so the UI should render
+// it as $0 instead of '—'.
 function prizePoolMxn(q) {
   if (typeof q?.entryFeeMXN === 'number' && q.entryFeeMXN > 0) {
     const entries = q?.entriesCount ?? 0;
     return Math.floor(entries * q.entryFeeMXN * WINNER_SHARE);
   }
   return null;
+}
+
+// Display string for the prize. Falls back to the legacy `q.prize`
+// field for pools that predate the entryFeeMXN migration. Mirrors the
+// mobile Home formatter so the two surfaces never disagree.
+function prizeDisplay(q, locale) {
+  const mxn = prizePoolMxn(q);
+  if (mxn !== null) {
+    if (mxn > 0) return formatMxn(mxn);
+    // 0 entries on a paid pool — be explicit instead of showing '—'.
+    return locale === 'es' ? '$0 MXN' : '$0 MXN';
+  }
+  return q?.prize || '—';
 }
 
 // Delegates to the shared helper. The previous local implementation
@@ -86,7 +105,17 @@ function Countdown({ iso, locale }) {
 
 function Hero({ pool, kind, locale, navigate }) {
   if (!pool) return null;
-  const prize = prizePoolMxn(pool);
+  // Prize for the trophy block. Three states:
+  //   • simple_version pool with entries → real $ amount
+  //   • simple_version pool with 0 entries → '$0' + 'sé el primero' sub
+  //   • legacy pool without entryFeeMXN → use the legacy q.prize string
+  const prizeMxn = prizePoolMxn(pool);
+  const prizeMain = prizeMxn !== null
+    ? (prizeMxn > 0 ? formatMxn(prizeMxn) : '$0')
+    : (pool.prize || '—');
+  const prizeSub = prizeMxn === 0
+    ? t(locale, 'be the first to enter')
+    : t(locale, 'paid to the winner');
   // Tag honesty: only say 'QUINIELA DESTACADA' when an admin explicitly
   // flipped the featured flag. Auto-picks (live or upcoming fallback)
   // get a status-accurate tag so we don't claim a closed pool is
@@ -141,8 +170,8 @@ function Hero({ pool, kind, locale, navigate }) {
           <div className="ring2" />
           <div className="prize-num">
             <div className="lbl">{t(locale, 'PRIZE POOL')}</div>
-            <div className="v">{prize ? formatMxn(prize) : '—'}</div>
-            <div className="sub">{t(locale, 'paid to the winner')}</div>
+            <div className="v">{prizeMain}</div>
+            <div className="sub">{prizeSub}</div>
           </div>
         </div>
       </div>
@@ -159,7 +188,7 @@ function PoolCard({ q, liveFixtures, locale, navigate }) {
   const isClosed = status === 'completed';
   const previewFixtures = (q.fixtures || []).slice(0, 3);
   const more = (q.fixtures?.length || 0) - previewFixtures.length;
-  const prize = prizePoolMxn(q);
+  const prizeStr = prizeDisplay(q, locale);
   return (
     <div
       className="fp-card hoverable"
@@ -198,7 +227,7 @@ function PoolCard({ q, liveFixtures, locale, navigate }) {
               {t(locale, 'Prize')}
             </div>
             <div className="gold num" style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>
-              {prize ? formatMxn(prize) : '—'}
+              {prizeStr}
             </div>
           </div>
           <div>

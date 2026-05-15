@@ -214,6 +214,7 @@ export const translations = {
     'Closes in': 'Closes in',
     'closed': 'closed',
     'paid to the winner': 'paid to the winner',
+    'be the first to enter': 'be the first to enter',
     'Make your picks before the first kickoff. Winner takes 65% of the pot, paid by bank transfer.':
       'Make your picks before the first kickoff. Winner takes 65% of the pot, paid by bank transfer.',
     'players': 'players',
@@ -809,6 +810,7 @@ export const translations = {
     'Closes in': 'Cierra en',
     'closed': 'cerrada',
     'paid to the winner': 'al ganador',
+    'be the first to enter': 'sé el primero en jugar',
     'Make your picks before the first kickoff. Winner takes 65% of the pot, paid by bank transfer.':
       'Haz tus pronósticos antes del primer partido. El ganador se lleva el 65% del premio acumulado, vía transferencia bancaria.',
     'players': 'jugadores',
