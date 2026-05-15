@@ -558,6 +558,7 @@ export function PoolDetailDesktop({
           quiniela={quiniela}
           token={token}
           locale={locale}
+          isAdmin={isAdmin}
           onClose={() => setShowEdit(false)}
           onSaved={() => { setShowEdit(false); onMutated?.(); }}
         />
@@ -622,18 +623,24 @@ function AdminCard({ quiniela, locale, onEdit, onParticipants, onCancel }) {
   );
 }
 
-function EditPoolModal({ quiniela, token, locale, onClose, onSaved }) {
+function EditPoolModal({ quiniela, token, locale, isAdmin, onClose, onSaved }) {
   const [name, setName] = useState(quiniela.name || '');
   const [description, setDescription] = useState(quiniela.description || '');
+  // Backend gates `featured` to admins regardless of ownership (see
+  // updateQuiniela), so the toggle only renders when isAdmin === true.
+  // Pool owners who aren't admins won't see this row.
+  const [featured, setFeatured] = useState(!!quiniela.featured);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const save = async () => {
     setSaving(true); setError(null);
     try {
-      await api.put(`/quinielas/${quiniela._id}`, {
+      const body = {
         name: name.trim(),
         description: description.trim(),
-      }, token);
+      };
+      if (isAdmin) body.featured = featured;
+      await api.put(`/quinielas/${quiniela._id}`, body, token);
       onSaved?.();
     } catch (e) {
       setError(e.message); setSaving(false);
@@ -675,6 +682,60 @@ function EditPoolModal({ quiniela, token, locale, onClose, onSaved }) {
             }}
           />
         </label>
+
+        {/* ⚡ Featured toggle — admin only. When true, the pool is pinned
+            as the Home hero ('QUINIELA DESTACADA'). The backend gates
+            `featured` to admins, so non-admin owners never see this. */}
+        {isAdmin && (
+          <label style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 12, marginBottom: 14,
+            padding: '12px 14px',
+            background: featured
+              ? 'color-mix(in srgb, var(--fp-primary) 10%, var(--fp-surface-alt))'
+              : 'var(--fp-surface-alt)',
+            border: `1px solid ${featured ? 'rgba(33,226,140,0.5)' : 'var(--fp-stroke)'}`,
+            borderRadius: 10,
+            cursor: 'pointer',
+            transition: 'all 120ms ease',
+          }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
+                ⚡ {t(locale, 'Featured pool')}
+              </div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                {t(locale, 'Pin this pool as the Home hero for everyone.')}
+              </div>
+            </div>
+            {/* Custom switch — checkbox is hidden but accessible. */}
+            <input
+              type="checkbox"
+              checked={featured}
+              onChange={(e) => setFeatured(e.target.checked)}
+              style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+            />
+            <span
+              role="switch"
+              aria-checked={featured}
+              style={{
+                width: 42, height: 24, borderRadius: 999,
+                background: featured ? 'var(--fp-primary)' : 'var(--fp-stroke)',
+                position: 'relative',
+                transition: 'background 120ms ease',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: 3,
+                left: featured ? 21 : 3,
+                width: 18, height: 18, borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 140ms ease',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              }} />
+            </span>
+          </label>
+        )}
         {error && (
           <p style={{ color: 'var(--fp-danger)', fontSize: 12, margin: '0 0 12px' }}>{error}</p>
         )}
