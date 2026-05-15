@@ -232,6 +232,12 @@ export const translations = {
     'No favorites playing now': 'No favorites playing now',
     'None of your favorite teams or leagues are live right now. Check back later.':
       'None of your favorite teams or leagues are live right now. Check back later.',
+    'Edit favorites': 'Edit favorites',
+    'Favorite teams & leagues': 'Favorite teams & leagues',
+    "Pick the ones you want to follow. We'll surface their live matches in the FAVORITOS tab.":
+      "Pick the ones you want to follow. We'll surface their live matches in the FAVORITOS tab.",
+    'TEAMS': 'TEAMS',
+    'LEAGUES': 'LEAGUES',
     '{n} live': '{n} live',
     '{n} matches': '{n} matches',
     '1 match': '1 match',
@@ -848,6 +854,12 @@ export const translations = {
     'No favorites playing now': 'Ninguno de tus favoritos está jugando ahora',
     'None of your favorite teams or leagues are live right now. Check back later.':
       'Ninguno de tus equipos o ligas favoritas está en juego ahora mismo. Vuelve más tarde.',
+    'Edit favorites': 'Editar favoritos',
+    'Favorite teams & leagues': 'Equipos y ligas favoritas',
+    "Pick the ones you want to follow. We'll surface their live matches in the FAVORITOS tab.":
+      'Elige los que quieras seguir. Te mostraremos sus partidos en vivo en la pestaña FAVORITOS.',
+    'TEAMS': 'EQUIPOS',
+    'LEAGUES': 'LIGAS',
     '{n} live': '{n} en vivo',
     '{n} matches': '{n} partidos',
     '1 match': '1 partido',

@@ -24,15 +24,35 @@ import { t, tFormat } from '../../i18n/translations';
 // produces a double shell. Top-level routes (PoolDetail, QuinielaPick)
 // are the ones that need DesktopShellChrome.
 
-// Same popular-key → api-football ID maps used by mobile LiveScores. Kept
-// inline rather than imported so this file is self-contained.
-const POPULAR_TEAM_IDS = {
-  realMadrid: 541, barcelona: 529, manUnited: 33, psg: 85,
-  manCity: 50, liverpool: 40, bayern: 157, juventus: 496, chelsea: 49,
-};
-const POPULAR_LEAGUE_IDS = {
-  ligaMX: 262, champions: 2, laLiga: 140, premier: 39, mls: 253, worldCup: 1,
-};
+// Popular team + league catalogs — the same ones WebOnboarding offers.
+// Kept inline rather than imported so this file is self-contained AND so
+// the EditFavoritesModal below can render the picker rows without
+// pulling onboarding internals.
+const POPULAR_TEAMS = [
+  { id: 541, key: 'realMadrid', name: 'Real Madrid' },
+  { id: 529, key: 'barcelona',  name: 'Barcelona' },
+  { id: 33,  key: 'manUnited',  name: 'Manchester United' },
+  { id: 85,  key: 'psg',        name: 'PSG' },
+  { id: 50,  key: 'manCity',    name: 'Manchester City' },
+  { id: 40,  key: 'liverpool',  name: 'Liverpool' },
+  { id: 157, key: 'bayern',     name: 'Bayern Munich' },
+  { id: 496, key: 'juventus',   name: 'Juventus' },
+  { id: 49,  key: 'chelsea',    name: 'Chelsea' },
+];
+const POPULAR_LEAGUES = [
+  { id: 1,   key: 'worldCup',  name: 'World Cup',         flag: '🏆' },
+  { id: 262, key: 'ligaMX',    name: 'Liga MX',           flag: '🇲🇽' },
+  { id: 2,   key: 'champions', name: 'Champions League',  flag: '⚽' },
+  { id: 140, key: 'laLiga',    name: 'LaLiga',            flag: '🇪🇸' },
+  { id: 39,  key: 'premier',   name: 'Premier League',    flag: '🇬🇧' },
+  { id: 253, key: 'mls',       name: 'MLS',               flag: '🇺🇸' },
+];
+// Lookup tables used by readFavoriteTeamIDs/LeagueIDs to resolve enum
+// rawValues ('realMadrid' → 541) into api-football IDs.
+const POPULAR_TEAM_IDS = Object.fromEntries(POPULAR_TEAMS.map((t) => [t.key, t.id]));
+const POPULAR_LEAGUE_IDS = Object.fromEntries(POPULAR_LEAGUES.map((l) => [l.key, l.id]));
+const teamLogo = (id) => `https://media.api-sports.io/football/teams/${id}.png`;
+const leagueLogo = (id) => `https://media.api-sports.io/football/leagues/${id}.png`;
 const LIVE_CODES = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT']);
 const isLiveStatus = (s) => LIVE_CODES.has(String(s || '').toUpperCase());
 
@@ -310,6 +330,10 @@ export function LiveScoresDesktop() {
   const navigate = useNavigate();
   const { locale } = useLocale();
   const [tab, setTab] = useState('live');
+  const [showEditFavorites, setShowEditFavorites] = useState(false);
+  // Bumped after the EditFavoritesModal saves so the useMemo readers
+  // for favoriteTeamIDs/LeagueIDs re-fetch from localStorage.
+  const [favoritesVersion, setFavoritesVersion] = useState(0);
 
   // Single feed: all globally-live fixtures. Both EN VIVO and FAVORITOS
   // render from this list — favorites just filters by the user's
@@ -319,10 +343,16 @@ export function LiveScoresDesktop() {
   const pollTimer = useRef(null);
 
   // Onboarding-derived favorites. WebOnboarding writes these to
-  // localStorage at signup; recompute on every render so toggling
-  // selections in another tab/page reflects here without a reload.
-  const favoriteTeamIDs = useMemo(() => readFavoriteTeamIDs(), [tab, liveFixtures]);
-  const favoriteLeagueIDs = useMemo(() => readFavoriteLeagueIDs(), [tab, liveFixtures]);
+  // localStorage at signup; the EditFavoritesModal below also writes
+  // them. favoritesVersion is bumped after a save so these re-read.
+  const favoriteTeamIDs = useMemo(
+    () => readFavoriteTeamIDs(),
+    [tab, liveFixtures, favoritesVersion],
+  );
+  const favoriteLeagueIDs = useMemo(
+    () => readFavoriteLeagueIDs(),
+    [tab, liveFixtures, favoritesVersion],
+  );
   const hasAnyFavorite = favoriteTeamIDs.length > 0 || favoriteLeagueIDs.length > 0;
 
   // Refresh the live feed. Used on mount and every 30s by the poll.
@@ -514,7 +544,7 @@ export function LiveScoresDesktop() {
           hasAnyFavorite={hasAnyFavorite}
           liveCount={liveFixtures.length}
           locale={locale}
-          navigate={navigate}
+          onEditFavorites={() => setShowEditFavorites(true)}
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-6)' }}>
@@ -526,15 +556,35 @@ export function LiveScoresDesktop() {
               locale={locale}
             />
           ))}
+          {tab === 'favorites' && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+              <button
+                type="button"
+                className="fp-btn ghost sm"
+                onClick={() => setShowEditFavorites(true)}
+              >✎ {t(locale, 'Edit favorites')}</button>
+            </div>
+          )}
         </div>
+      )}
+
+      {showEditFavorites && (
+        <EditFavoritesModal
+          locale={locale}
+          onClose={() => setShowEditFavorites(false)}
+          onSaved={() => {
+            setShowEditFavorites(false);
+            setFavoritesVersion((n) => n + 1);
+          }}
+        />
       )}
     </div>
   );
 }
 
-function EmptyState({ tab, hasAnyFavorite, liveCount, locale, navigate }) {
+function EmptyState({ tab, hasAnyFavorite, liveCount, locale, onEditFavorites }) {
   // FAVORITOS-specific empty states distinguish the two failure modes:
-  //   • user has 0 favorites → CTA to onboarding
+  //   • user has 0 favorites → CTA opens the in-place editor modal
   //   • user has favorites but none are playing right now → wait copy
   if (tab === 'favorites' && !hasAnyFavorite) {
     return (
@@ -545,7 +595,7 @@ function EmptyState({ tab, hasAnyFavorite, liveCount, locale, navigate }) {
           <button
             type="button"
             className="fp-btn primary"
-            onClick={() => navigate('/onboarding')}
+            onClick={onEditFavorites}
           >▶ {t(locale, 'PICK FAVORITES')}</button>
         </div>
       </div>
@@ -565,6 +615,194 @@ function EmptyState({ tab, hasAnyFavorite, liveCount, locale, navigate }) {
     <div className="fp-empty">
       <h4>{t(locale, 'No live matches')}</h4>
       {t(locale, 'Come back later for upcoming matches.')}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// EditFavoritesModal — in-place editor for the user's favorite teams +
+// leagues. Reuses the same localStorage keys WebOnboarding writes
+// (onboardingTeams / onboardingLeagues / onboardingCustom*IDs) so the
+// changes flow back to mobile too. POSTs to /users/me/onboarding when
+// a token is available — silently best-effort, the localStorage write
+// is the source of truth for this page either way.
+// ─────────────────────────────────────────────────────────────────────
+
+function EditFavoritesModal({ locale, onClose, onSaved }) {
+  // Initial state pulls the same enum keys the onboarding wrote so a
+  // returning user sees their existing selections checked.
+  const [teamKeys, setTeamKeys] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('onboardingTeams') || '[]')); }
+    catch { return new Set(); }
+  });
+  const [leagueKeys, setLeagueKeys] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('onboardingLeagues') || '[]')); }
+    catch { return new Set(); }
+  });
+  const [saving, setSaving] = useState(false);
+
+  const toggleTeam = (k) => setTeamKeys((prev) => {
+    const next = new Set(prev);
+    if (next.has(k)) next.delete(k); else next.add(k);
+    return next;
+  });
+  const toggleLeague = (k) => setLeagueKeys((prev) => {
+    const next = new Set(prev);
+    if (next.has(k)) next.delete(k); else next.add(k);
+    return next;
+  });
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      // localStorage is the source of truth for the desktop page; mobile
+      // LiveScores reads the same keys. Customs left as-is — this modal
+      // only edits the popular set; full search-based editing is a
+      // follow-up if needed.
+      localStorage.setItem('onboardingTeams', JSON.stringify(Array.from(teamKeys)));
+      localStorage.setItem('onboardingLeagues', JSON.stringify(Array.from(leagueKeys)));
+      // Best-effort sync to the backend so iOS picks it up too. Not
+      // load-bearing — failure is silent.
+      try {
+        // Same token key AuthContext writes to.
+        const token = localStorage.getItem('futpools_token');
+        if (token) {
+          const customTeams = JSON.parse(localStorage.getItem('onboardingCustomTeamIDs') || '[]');
+          const customLeagues = JSON.parse(localStorage.getItem('onboardingCustomLeagueIDs') || '[]');
+          await api.put('/users/me/onboarding', {
+            teams: [
+              ...Array.from(teamKeys),
+              ...customTeams.map((id) => `api:${id}`),
+            ],
+            leagues: [
+              ...Array.from(leagueKeys),
+              ...customLeagues.map((id) => `api:${id}`),
+            ],
+          }, token);
+        }
+      } catch { /* silent */ }
+      onSaved?.();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fp-modal-backdrop" onClick={onClose}>
+      <div
+        className="fp-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 640, maxHeight: '85vh', overflowY: 'auto' }}
+      >
+        <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>
+          {t(locale, 'Favorite teams & leagues')}
+        </h3>
+        <p className="muted" style={{ fontSize: 13, margin: '0 0 18px' }}>
+          {t(locale, 'Pick the ones you want to follow. We\'ll surface their live matches in the FAVORITOS tab.')}
+        </p>
+
+        <div style={{ marginBottom: 18 }}>
+          <h4 className="fp-section-title" style={{ marginBottom: 10 }}>
+            ⚽ {t(locale, 'TEAMS')}
+          </h4>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            gap: 8,
+          }}>
+            {POPULAR_TEAMS.map((p) => {
+              const active = teamKeys.has(p.key);
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => toggleTeam(p.key)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px',
+                    background: active
+                      ? 'rgba(33,226,140,0.12)'
+                      : 'var(--fp-surface-alt)',
+                    border: `1px solid ${active ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
+                    borderRadius: 10,
+                    color: 'var(--fp-text)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    textAlign: 'left',
+                    transition: 'all 120ms ease',
+                  }}
+                >
+                  <img
+                    src={teamLogo(p.id)} alt=""
+                    style={{ width: 24, height: 24, objectFit: 'contain' }}
+                  />
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{p.name}</span>
+                  {active && (
+                    <span style={{ color: 'var(--fp-primary)', fontWeight: 800, fontSize: 13 }}>✓</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <h4 className="fp-section-title" style={{ marginBottom: 10 }}>
+            🏆 {t(locale, 'LEAGUES')}
+          </h4>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            gap: 8,
+          }}>
+            {POPULAR_LEAGUES.map((p) => {
+              const active = leagueKeys.has(p.key);
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => toggleLeague(p.key)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px',
+                    background: active
+                      ? 'rgba(33,226,140,0.12)'
+                      : 'var(--fp-surface-alt)',
+                    border: `1px solid ${active ? 'var(--fp-primary)' : 'var(--fp-stroke)'}`,
+                    borderRadius: 10,
+                    color: 'var(--fp-text)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    textAlign: 'left',
+                    transition: 'all 120ms ease',
+                  }}
+                >
+                  <img
+                    src={leagueLogo(p.id)} alt=""
+                    style={{
+                      width: 24, height: 24, objectFit: 'contain',
+                      background: 'rgba(255,255,255,0.04)', borderRadius: 4, padding: 1,
+                    }}
+                  />
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{p.name}</span>
+                  {active && (
+                    <span style={{ color: 'var(--fp-primary)', fontWeight: 800, fontSize: 13 }}>✓</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+          <button type="button" className="fp-btn ghost block" onClick={onClose}>
+            {t(locale, 'Cancel')}
+          </button>
+          <button
+            type="button" className="fp-btn primary block"
+            disabled={saving}
+            onClick={save}
+          >{saving ? t(locale, 'Saving…') : t(locale, 'Save')}</button>
+        </div>
+      </div>
     </div>
   );
 }
