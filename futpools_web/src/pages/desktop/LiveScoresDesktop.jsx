@@ -1,23 +1,17 @@
-// LiveScoresDesktop — desktop layout for /scores per design_handoff_live_scores.
+// LiveScoresDesktop — desktop layout for /scores.
 //
-// Mirrors the handoff bundle's screen-live.jsx 1:1:
-//   • 4 tabs: En vivo / Hoy / Mañana / Favoritos (each with a count chip;
-//     LIVE tab shows a pulsing red dot when there's any live fixture)
-//   • League groups: header with colored badge (initial) + name · country
-//     + 'N partidos' right-aligned, then a unified card holding compact
-//     rows for every fixture in that league
-//   • Compact row layout: [⭐ fav] [time] [home/away stacked] [score]
-//   • Per-fixture favorites — starred IDs persist to localStorage; the
-//     'Favoritos' tab unions live + today + tomorrow filtered by starred set
-//   • 30s polling for the LIVE tab (matches the backend feed cache)
+// Two tabs only — both operate on the same global live-feed:
+//   • EN VIVO — every live football fixture worldwide
+//     (/football/fixtures/feed?live=true)
+//   • FAVORITOS — that same feed filtered to the user's favorite TEAMS
+//     and LEAGUES picked at onboarding. There is no per-fixture
+//     favoriting on this page — favorites = onboarding selections,
+//     stored in localStorage by WebOnboarding under
+//     onboardingTeams / onboardingLeagues / onboardingCustom*IDs.
 //
-// Adapted for simple_version data:
-//   • LIVE tab → /football/fixtures/feed?live=true (all global live fixtures)
-//   • TODAY/TOMORROW → /football/fixtures/feed?date=...&leagues=...&teams=...
-//     scoped to the user's favorite leagues + teams from onboarding
-//     (so the "all leagues" claim is bounded — full-firehose isn't usable)
-//   • FAVORITES → fetch live + today + tomorrow once and intersect with the
-//     starred-fixture set
+// 30s polling silent (matches the backend feed cache).
+// Page width capped to 960px so the score column stays close to the
+// teams (a row at 1920-wide drifted the score ~1500px from the left).
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
@@ -41,22 +35,6 @@ const POPULAR_LEAGUE_IDS = {
 };
 const LIVE_CODES = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT']);
 const isLiveStatus = (s) => LIVE_CODES.has(String(s || '').toUpperCase());
-
-const FAV_STORAGE_KEY = 'fp:liveFavorites';
-
-function readFavorites() {
-  try {
-    const raw = localStorage.getItem(FAV_STORAGE_KEY);
-    if (!raw) return new Set();
-    const arr = JSON.parse(raw);
-    return new Set(Array.isArray(arr) ? arr.map(String) : []);
-  } catch { return new Set(); }
-}
-function writeFavorites(set) {
-  try {
-    localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify(Array.from(set)));
-  } catch { /* private mode etc */ }
-}
 
 function readFavoriteTeamIDs() {
   try {
@@ -94,19 +72,6 @@ function hueFor(name) {
   let h = 0;
   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) % 360;
   return h;
-}
-
-function StarIcon({ filled }) {
-  return (
-    <svg
-      width="14" height="14" viewBox="0 0 24 24"
-      fill={filled ? 'var(--fp-warning, #F5B82E)' : 'none'}
-      stroke={filled ? 'var(--fp-warning, #F5B82E)' : 'var(--fp-text-faint)'}
-      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-    >
-      <path d="m12 2 3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z" />
-    </svg>
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -176,7 +141,7 @@ function TeamCrest({ name, logo }) {
 // Score row — compact single line per fixture.
 // ─────────────────────────────────────────────────────────────────────
 
-function ScoreRow({ fixture, isFav, onToggleFav, onTap }) {
+function ScoreRow({ fixture, onTap }) {
   const live = isLiveStatus(fixture.status);
   const home = fixture.teams?.home;
   const away = fixture.teams?.away;
@@ -185,7 +150,7 @@ function ScoreRow({ fixture, isFav, onToggleFav, onTap }) {
       onClick={onTap}
       style={{
         display: 'grid',
-        gridTemplateColumns: '32px 64px 1fr 64px',
+        gridTemplateColumns: '64px 1fr 64px',
         alignItems: 'center', gap: 14,
         padding: '12px 16px',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -195,24 +160,6 @@ function ScoreRow({ fixture, isFav, onToggleFav, onTap }) {
       onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
     >
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onToggleFav(fixture.fixtureId); }}
-        title={isFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-        aria-pressed={isFav}
-        style={{
-          width: 30, height: 30, borderRadius: 8,
-          background: 'transparent', border: 'none',
-          display: 'grid', placeItems: 'center',
-          cursor: 'pointer',
-          transition: 'background 120ms ease',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-      >
-        <StarIcon filled={isFav} />
-      </button>
-
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
         {live ? (
           <>
@@ -295,7 +242,7 @@ function ScoreRow({ fixture, isFav, onToggleFav, onTap }) {
 // League group — header + unified row card.
 // ─────────────────────────────────────────────────────────────────────
 
-function LeagueGroup({ group, favorites, onToggleFav, onTap, locale }) {
+function LeagueGroup({ group, onTap, locale }) {
   const country = group.country || '';
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -341,8 +288,6 @@ function LeagueGroup({ group, favorites, onToggleFav, onTap, locale }) {
             >
               <ScoreRow
                 fixture={fx}
-                isFav={favorites.has(String(fx.fixtureId))}
-                onToggleFav={onToggleFav}
                 onTap={() => onTap(fx.fixtureId)}
               />
             </div>
@@ -365,27 +310,20 @@ export function LiveScoresDesktop() {
   const navigate = useNavigate();
   const { locale } = useLocale();
   const [tab, setTab] = useState('live');
-  const [favorites, setFavorites] = useState(() => readFavorites());
 
   // Single feed: all globally-live fixtures. Both EN VIVO and FAVORITOS
-  // operate on the same dataset (favorites just intersects with the
-  // starred set), so one fetch + one poll covers both tabs.
+  // render from this list — favorites just filters by the user's
+  // onboarding-selected teams + leagues.
   const [liveFixtures, setLiveFixtures] = useState([]);
   const [loading, setLoading] = useState(false);
   const pollTimer = useRef(null);
 
-  // Persist starred fixtures.
-  useEffect(() => { writeFavorites(favorites); }, [favorites]);
-
-  const toggleFav = (id) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      const key = String(id);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
+  // Onboarding-derived favorites. WebOnboarding writes these to
+  // localStorage at signup; recompute on every render so toggling
+  // selections in another tab/page reflects here without a reload.
+  const favoriteTeamIDs = useMemo(() => readFavoriteTeamIDs(), [tab, liveFixtures]);
+  const favoriteLeagueIDs = useMemo(() => readFavoriteLeagueIDs(), [tab, liveFixtures]);
+  const hasAnyFavorite = favoriteTeamIDs.length > 0 || favoriteLeagueIDs.length > 0;
 
   // Refresh the live feed. Used on mount and every 30s by the poll.
   const refresh = useCallback(async (silent = false) => {
@@ -401,8 +339,8 @@ export function LiveScoresDesktop() {
     }
   }, []);
 
-  // Reload + 30s poll on tab change. The poll is silent so it doesn't
-  // flicker the loading state.
+  // Reload + 30s poll on mount. The poll is silent so it doesn't flicker
+  // the loading state.
   useEffect(() => {
     refresh(false);
     if (pollTimer.current) clearInterval(pollTimer.current);
@@ -410,20 +348,33 @@ export function LiveScoresDesktop() {
     return () => { if (pollTimer.current) clearInterval(pollTimer.current); };
   }, [refresh]);
 
-  // Filtered live set for the favorites tab. When the user has no
-  // favorites yet, fall through to the full live list so the tab isn't
-  // a dead end — they can star fixtures from there directly. The empty-
-  // state hint banner explains this so it doesn't look like a bug.
-  const favoriteLive = useMemo(
-    () => liveFixtures.filter((fx) => favorites.has(String(fx.fixtureId))),
-    [liveFixtures, favorites],
-  );
+  // Live fixtures matching ANY of the user's favorite teams or leagues.
+  // Spec: "FAVORITOS = solo partidos en vivo de los favoritos". Match
+  // is OR — home or away in favorite teams, OR fixture's league in
+  // favorite leagues. That way a Real Madrid fan sees their match even
+  // when LaLiga isn't in their league favorites, and an MLS fan sees
+  // every MLS match without having to add every team.
+  const favoriteLive = useMemo(() => {
+    if (!hasAnyFavorite) return [];
+    const teamSet = new Set(favoriteTeamIDs);
+    const leagueSet = new Set(favoriteLeagueIDs);
+    return liveFixtures.filter((fx) => {
+      const h = fx?.teams?.home?.id;
+      const a = fx?.teams?.away?.id;
+      const l = fx?.league?.id;
+      return (h != null && teamSet.has(h))
+        || (a != null && teamSet.has(a))
+        || (l != null && leagueSet.has(l));
+    });
+  }, [liveFixtures, favoriteTeamIDs, favoriteLeagueIDs, hasAnyFavorite]);
   const visible = useMemo(() => {
     if (tab === 'live') return liveFixtures;
-    // favorites tab: starred-live if any, else all live (so user can star).
-    return favoriteLive.length > 0 ? favoriteLive : liveFixtures;
+    // FAVORITOS: only live fixtures matching the user's favorite teams
+    // or leagues. We do NOT fall through to the full list — the spec is
+    // explicit that this tab shows ONLY favorites' live games. Empty
+    // state below explains why nothing's there + how to add favorites.
+    return favoriteLive;
   }, [tab, liveFixtures, favoriteLive]);
-  const showFavEmptyHint = tab === 'favorites' && favoriteLive.length === 0 && liveFixtures.length > 0;
 
   // Group visible fixtures by league. Sort leagues by earliest fixture;
   // within each, fixtures by kickoff (live ones are already up top from
@@ -459,9 +410,8 @@ export function LiveScoresDesktop() {
     return arr;
   }, [visible]);
 
-  // Tab counts. Both reflect the live feed because that's the only
-  // dataset we hold — favorites count means 'starred fixtures currently
-  // in play', not 'starred fixtures across all time'.
+  // Tab counts. Both come from the live feed; FAVORITOS count is how
+  // many of those live fixtures involve a favorite team or league.
   const totals = useMemo(() => ({
     live: liveFixtures.length,
     favorites: favoriteLive.length,
@@ -559,33 +509,19 @@ export function LiveScoresDesktop() {
           letterSpacing: 2,
         }}>{t(locale, 'LOADING FIXTURES…')}</div>
       ) : groups.length === 0 ? (
-        <EmptyState tab={tab} locale={locale} />
+        <EmptyState
+          tab={tab}
+          hasAnyFavorite={hasAnyFavorite}
+          liveCount={liveFixtures.length}
+          locale={locale}
+          navigate={navigate}
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-6)' }}>
-          {/* On the favorites tab, when nothing's starred yet, the page
-              shows the full live list so the user can star from here.
-              The hint banner explains why the count is 0 and the list
-              is full. */}
-          {showFavEmptyHint && (
-            <div style={{
-              padding: '12px 16px',
-              borderRadius: 12,
-              background: 'rgba(245,184,46,0.08)',
-              border: '1px solid rgba(245,184,46,0.32)',
-              color: 'var(--fp-text-dim)',
-              fontSize: 13,
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <span style={{ color: '#F5B82E', fontSize: 16 }}>⭐</span>
-              {t(locale, 'No favorites yet — tap the star on any match to save it here.')}
-            </div>
-          )}
           {groups.map((group) => (
             <LeagueGroup
               key={group.id}
               group={group}
-              favorites={favorites}
-              onToggleFav={toggleFav}
               onTap={(id) => navigate(`/fixture/${id}`)}
               locale={locale}
             />
@@ -596,10 +532,35 @@ export function LiveScoresDesktop() {
   );
 }
 
-function EmptyState({ tab, locale }) {
-  // Reaches this branch only when the live feed itself is empty (no
-  // football live anywhere). Both tabs share the same copy because in
-  // both cases the cause is the same — nothing's playing.
+function EmptyState({ tab, hasAnyFavorite, liveCount, locale, navigate }) {
+  // FAVORITOS-specific empty states distinguish the two failure modes:
+  //   • user has 0 favorites → CTA to onboarding
+  //   • user has favorites but none are playing right now → wait copy
+  if (tab === 'favorites' && !hasAnyFavorite) {
+    return (
+      <div className="fp-empty">
+        <h4>{t(locale, 'No favorite teams or leagues yet')}</h4>
+        {t(locale, 'Pick your favorite teams and leagues so we can surface their live matches here.')}
+        <div style={{ marginTop: 16 }}>
+          <button
+            type="button"
+            className="fp-btn primary"
+            onClick={() => navigate('/onboarding')}
+          >▶ {t(locale, 'PICK FAVORITES')}</button>
+        </div>
+      </div>
+    );
+  }
+  if (tab === 'favorites' && liveCount > 0) {
+    // Live football is happening, just none involves their favorites.
+    return (
+      <div className="fp-empty">
+        <h4>{t(locale, 'No favorites playing now')}</h4>
+        {t(locale, 'None of your favorite teams or leagues are live right now. Check back later.')}
+      </div>
+    );
+  }
+  // EN VIVO empty (or favorites empty because nothing live anywhere).
   return (
     <div className="fp-empty">
       <h4>{t(locale, 'No live matches')}</h4>

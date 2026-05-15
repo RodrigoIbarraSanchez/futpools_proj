@@ -226,8 +226,12 @@ export const translations = {
     'No favorites': 'No favorites',
     'Come back later for upcoming matches.': 'Come back later for upcoming matches.',
     'Tap the star on a match to save it here.': 'Tap the star on a match to save it here.',
-    'No favorites yet — tap the star on any match to save it here.':
-      'No favorites yet — tap the star on any match to save it here.',
+    'No favorite teams or leagues yet': 'No favorite teams or leagues yet',
+    'Pick your favorite teams and leagues so we can surface their live matches here.':
+      'Pick your favorite teams and leagues so we can surface their live matches here.',
+    'No favorites playing now': 'No favorites playing now',
+    'None of your favorite teams or leagues are live right now. Check back later.':
+      'None of your favorite teams or leagues are live right now. Check back later.',
     '{n} live': '{n} live',
     '{n} matches': '{n} matches',
     '1 match': '1 match',
@@ -838,8 +842,12 @@ export const translations = {
     'No favorites': 'Sin favoritos',
     'Come back later for upcoming matches.': 'Vuelve más tarde para ver los próximos encuentros.',
     'Tap the star on a match to save it here.': 'Toca la estrella de un partido para guardarlo aquí.',
-    'No favorites yet — tap the star on any match to save it here.':
-      'Aún no tienes favoritos — toca la estrella de un partido para guardarlo aquí.',
+    'No favorite teams or leagues yet': 'Aún no tienes equipos ni ligas favoritas',
+    'Pick your favorite teams and leagues so we can surface their live matches here.':
+      'Elige tus equipos y ligas favoritas para ver aquí sus partidos en vivo.',
+    'No favorites playing now': 'Ninguno de tus favoritos está jugando ahora',
+    'None of your favorite teams or leagues are live right now. Check back later.':
+      'Ninguno de tus equipos o ligas favoritas está en juego ahora mismo. Vuelve más tarde.',
     '{n} live': '{n} en vivo',
     '{n} matches': '{n} partidos',
     '1 match': '1 partido',
