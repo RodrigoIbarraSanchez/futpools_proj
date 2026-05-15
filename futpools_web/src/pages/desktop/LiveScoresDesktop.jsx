@@ -23,7 +23,12 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
-import { DesktopShellChrome } from '../../desktop/DesktopShell';
+
+// NOTE: do NOT wrap this page in <DesktopShellChrome>. /scores is a
+// nested route under MainTabs which already mounts the desktop shell
+// (sidebar + topbar) via the routed <DesktopShell>. Wrapping again
+// produces a double shell. Top-level routes (PoolDetail, QuinielaPick)
+// are the ones that need DesktopShellChrome.
 
 // Same popular-key → api-football ID maps used by mobile LiveScores. Kept
 // inline rather than imported so this file is self-contained.
@@ -500,9 +505,7 @@ export function LiveScoresDesktop() {
   };
 
   return (
-    <DesktopShellChrome
-      crumbsOverride={[t(locale, 'Pools'), t(locale, 'Live')]}
-    >
+    <>
       {/* Page head — title, sub, and right-aligned LIVE pill */}
       <div className="fp-desktop-page-head">
         <div>
@@ -600,7 +603,7 @@ export function LiveScoresDesktop() {
           ))}
         </div>
       )}
-    </DesktopShellChrome>
+    </>
   );
 }
 
