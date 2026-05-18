@@ -513,6 +513,10 @@
   filter: blur(20px);
   pointer-events: none;
 }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-tags {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin-bottom: 4px;
+}
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero .tag {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px;
@@ -522,6 +526,22 @@
   border-radius: 999px;
   font-size: 12px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.06em;
+}
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero .tag.live {
+  background: rgba(255,93,93,0.12);
+  border-color: rgba(255,93,93,0.5);
+  color: var(--fp-danger, #FF5D5D);
+}
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero .tag.live .pulse {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--fp-danger, #FF5D5D);
+  box-shadow: 0 0 0 0 rgba(255,93,93,0.55);
+  animation: fp-hero-live-pulse 1.4s ease-out infinite;
+}
+@keyframes fp-hero-live-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(255,93,93,0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(255,93,93,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(255,93,93,0);   }
 }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero h2 {
   font-size: 40px; font-weight: 700; letter-spacing: -0.025em;
@@ -567,44 +587,88 @@
   align-items: center; justify-content: center;
 }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy {
-  width: 280px; height: 280px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255,215,0,0.4), transparent 60%),
-    radial-gradient(circle at 60% 70%, rgba(33,226,140,0.3), transparent 60%);
+  width: 300px; height: 300px;
   display: grid; place-items: center;
   position: relative;
 }
-:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .ring {
+/* Soft ambient halo behind the medallion. Static gradient + a very
+   gentle opacity pulse — no rotation, no dashed rings. */
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .halo {
+  position: absolute; inset: -20px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(33,226,140,0.28), transparent 62%);
+  filter: blur(22px);
+  animation: fp-halo-pulse 8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes fp-halo-pulse {
+  0%, 100% { opacity: 0.65; transform: scale(0.98); }
+  50%      { opacity: 1;    transform: scale(1.02); }
+}
+/* The medallion itself: glass disc with a thin gradient rim (green →
+   cyan) and a subtle inner highlight. No rotating elements. */
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .medallion {
+  position: relative;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255,255,255,0.06), transparent 55%),
+    radial-gradient(circle at 50% 70%, rgba(33,226,140,0.10), transparent 60%),
+    linear-gradient(155deg, rgba(20,32,42,0.92), rgba(11,18,26,0.92));
+  display: grid; place-items: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -20px 40px rgba(0,0,0,0.4),
+    0 24px 60px rgba(0,0,0,0.45);
+}
+/* Gradient rim drawn via a masked pseudo-element so the rim itself
+   carries the green→cyan blend without tinting the disc fill. */
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .medallion::before {
+  content: '';
   position: absolute; inset: 0;
   border-radius: 50%;
-  border: 1px dashed rgba(255,215,0,0.32);
-  animation: fp-rotate 24s linear infinite;
+  padding: 1.5px;
+  background: conic-gradient(
+    from 200deg,
+    rgba(33,226,140,0.85),
+    rgba(54,233,255,0.7),
+    rgba(33,226,140,0.4),
+    rgba(33,226,140,0.85)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
 }
-:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .ring2 {
-  position: absolute; inset: 24px;
-  border-radius: 50%;
-  border: 1px solid rgba(33,226,140,0.32);
-  animation: fp-rotate 18s linear infinite reverse;
-}
-@keyframes fp-rotate { to { transform: rotate(360deg); } }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num {
   position: relative;
   text-align: center;
+  padding: 0 24px;
 }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num .lbl {
-  font-size: 12px; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--fp-gold);
+  font-size: 11px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--fp-text-muted);
   font-weight: 700;
 }
+:where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num .divider {
+  width: 36px; height: 1px;
+  margin: 10px auto;
+  background: linear-gradient(90deg, transparent, rgba(33,226,140,0.55), transparent);
+}
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num .v {
-  font-size: 52px; font-weight: 800; letter-spacing: -0.02em;
+  font-size: 48px; font-weight: 700; letter-spacing: -0.025em;
   color: #fff;
-  text-shadow: 0 4px 24px rgba(255,215,0,0.4);
+  text-shadow: 0 2px 18px rgba(33,226,140,0.25);
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 :where(.fp-desktop-shell, .fp-desktop-scope) .fp-hero-trophy .prize-num .sub {
-  font-size: 13px; color: var(--fp-text-dim); margin-top: 4px;
+  font-size: 12px; color: var(--fp-text-muted);
+  margin-top: 10px;
+  letter-spacing: 0.04em;
 }
 
 /* ─── Tables ───────────────────────────────────────────────────────────── */

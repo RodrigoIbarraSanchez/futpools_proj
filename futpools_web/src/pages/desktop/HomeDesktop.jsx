@@ -103,7 +103,7 @@ function Countdown({ iso, locale }) {
 // Hero — featured pool with prize-glow trophy on the right
 // ─────────────────────────────────────────────────────────────────────
 
-function Hero({ pool, kind, locale, navigate }) {
+function Hero({ pool, kind, isLive, locale, navigate }) {
   if (!pool) return null;
   // Prize for the trophy block. Three states:
   //   • simple_version pool with entries → real $ amount
@@ -117,18 +117,26 @@ function Hero({ pool, kind, locale, navigate }) {
     ? t(locale, 'be the first to enter')
     : t(locale, 'paid to the winner');
   // Tag honesty: only say 'QUINIELA DESTACADA' when an admin explicitly
-  // flipped the featured flag. Auto-picks (live or upcoming fallback)
-  // get a status-accurate tag so we don't claim a closed pool is
-  // 'destacada' when it's just the only thing left in the list.
-  const tagText = kind === 'featured'
+  // flipped the featured flag. Auto-picks (upcoming fallback) get a
+  // status-accurate tag. The LIVE indicator is rendered separately so a
+  // featured pool that's also live shows BOTH tags side by side.
+  const primaryTag = kind === 'featured'
     ? `⚡ ${t(locale, 'FEATURED POOL')}`
     : kind === 'live'
-      ? `🔴 ${t(locale, 'LIVE NOW')}`
+      ? null  // LIVE tag below covers this
       : `▶ ${t(locale, 'NEXT POOL')}`;
   return (
     <section className="fp-hero">
       <div>
-        <span className="tag">{tagText}</span>
+        <div className="fp-hero-tags">
+          {primaryTag && <span className="tag">{primaryTag}</span>}
+          {isLive && (
+            <span className="tag live">
+              <span className="pulse" />
+              {t(locale, 'LIVE NOW')}
+            </span>
+          )}
+        </div>
         <h2>{pool.name}</h2>
         {pool.description ? (
           <p>{pool.description}</p>
@@ -166,12 +174,14 @@ function Hero({ pool, kind, locale, navigate }) {
       </div>
       <div className="fp-hero-right">
         <div className="fp-hero-trophy">
-          <div className="ring" />
-          <div className="ring2" />
-          <div className="prize-num">
-            <div className="lbl">{t(locale, 'PRIZE POOL')}</div>
-            <div className="v">{prizeMain}</div>
-            <div className="sub">{prizeSub}</div>
+          <div className="halo" />
+          <div className="medallion">
+            <div className="prize-num">
+              <div className="lbl">{t(locale, 'PRIZE POOL')}</div>
+              <div className="divider" />
+              <div className="v">{prizeMain}</div>
+              <div className="sub">{prizeSub}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -374,27 +384,35 @@ export function HomeDesktop() {
     return { pool: null, kind: null };
   }, [quinielas, liveFixtures]);
 
+  // Strip the hero pool from the grid below — it's already showcased
+  // up top, repeating it just adds visual noise. Applies to every
+  // filter (including 'mine' and 'live') since the hero represents it.
+  const heroId = heroPick.pool?._id;
   const filtered = useMemo(() => {
-    if (filter === 'all') return quinielas;
+    const base = quinielas.filter((q) => q._id !== heroId);
+    if (filter === 'all') return base;
     if (filter === 'mine' && user?._id) {
       // Mine = pools I created OR pools I have entries in. The /quinielas
       // endpoint already returns the union (controller pins user-entry
       // pools to the top), so a simple filter by createdBy keeps this
       // honest with the mobile filter.
-      return quinielas.filter((q) => q.createdBy === user._id);
+      return base.filter((q) => q.createdBy === user._id);
     }
-    return quinielas.filter((q) => poolStatus(q, liveFixtures) === filter);
-  }, [filter, quinielas, liveFixtures, user]);
+    return base.filter((q) => poolStatus(q, liveFixtures) === filter);
+  }, [filter, quinielas, liveFixtures, user, heroId]);
 
+  // Counts mirror what the grid actually shows — the hero pool is
+  // excluded everywhere so the chip number matches the cards below.
   const counts = useMemo(() => {
-    const c = { all: quinielas.length, mine: 0, open: 0, live: 0, upcoming: 0, completed: 0 };
-    for (const q of quinielas) {
+    const list = quinielas.filter((q) => q._id !== heroId);
+    const c = { all: list.length, mine: 0, open: 0, live: 0, upcoming: 0, completed: 0 };
+    for (const q of list) {
       const s = poolStatus(q, liveFixtures);
       c[s] = (c[s] || 0) + 1;
       if (user?._id && q.createdBy === user._id) c.mine += 1;
     }
     return c;
-  }, [quinielas, liveFixtures, user]);
+  }, [quinielas, liveFixtures, user, heroId]);
 
   const filterChips = [
     { id: 'all',       label: t(locale, 'All') },
@@ -411,6 +429,7 @@ export function HomeDesktop() {
         <Hero
           pool={heroPick.pool}
           kind={heroPick.kind}
+          isLive={poolStatus(heroPick.pool, liveFixtures) === 'live'}
           locale={locale}
           navigate={navigate}
         />
