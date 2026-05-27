@@ -198,7 +198,19 @@ exports.getCalendar = async (req, res) => {
 
     const filename = lang === 'es' ? 'mundial-2026.ics' : 'world-cup-2026.ics';
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    // Only force attachment when the caller is the explicit "Download .ics"
+    // button (?download=1). Google Calendar's `cid=` subscriber and
+    // webcal:// clients refuse to add a feed served with
+    // `Content-Disposition: attachment` — they treat it as a one-time
+    // download and bail out with the redirect loop the user saw. Serving
+    // inline by default lets all calendar apps subscribe correctly; the
+    // frontend's <a download="…"> attribute still forces the file save
+    // for the Outlook button.
+    if (String(req.query.download || '') === '1') {
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    } else {
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    }
     // CDN-friendly: 1h browser, 6h CDN. Schedule is essentially static.
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=21600');
     res.send(ics);

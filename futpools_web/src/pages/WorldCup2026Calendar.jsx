@@ -132,10 +132,23 @@ export function WorldCup2026Calendar() {
     return `/world-cup-2026/calendar.ics?${params.toString()}`;
   }, [scope, selectedTeams, needsTeams, locale]);
 
-  const downloadHref = `${API_BASE}${calendarPath}`;
+  // Two flavors of the .ics URL:
+  //   - subscribeHttp: served inline (Content-Disposition: inline). Used
+  //     by webcal://, Google Calendar `cid=`, and Android — all three are
+  //     subscription flows that refuse `attachment` (Google loops on the
+  //     redirect when it sees `attachment`).
+  //   - downloadHref: same URL with ?download=1 → server adds the
+  //     attachment disposition so the Outlook button saves a real file.
   const absoluteHttp = `${absoluteApiBase()}${calendarPath}`;
+  const downloadHref = `${API_BASE}${calendarPath}${calendarPath.includes('?') ? '&' : '?'}download=1`;
   const webcalHref = absoluteHttp.replace(/^https?:\/\//, 'webcal://');
-  const googleHref = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(absoluteHttp)}`;
+  // Google Calendar's official "add by URL" endpoint. The /u/0/r path is
+  // the canonical one Google currently uses for share-add flows; the
+  // older /calendar/r alias still works but goes through more redirects
+  // before landing on the same screen. cid must be the HTTPS URL,
+  // url-encoded once. The `pli=1` hint suppresses an extra
+  // account-picker step when the user is signed into a single account.
+  const googleHref = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(absoluteHttp)}&pli=1`;
 
   return (
     <div className="fp-wc26">
