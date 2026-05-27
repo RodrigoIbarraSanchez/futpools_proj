@@ -60,6 +60,20 @@ const detectDefaultTz = () => {
   return 'America/Mexico_City';
 };
 
+// Color palette offered to the user — these get baked into the .ics
+// COLOR / X-APPLE-CALENDAR-COLOR header. Google Calendar respects the
+// color only on FIRST add; if the user already subscribed they have
+// to change it manually in Google (we tell them in the helper text).
+const CALENDAR_COLORS = [
+  { value: '#21E28C', label_es: 'Verde',    label_en: 'Green',  cssKey: 'green' },
+  { value: '#36E9FF', label_es: 'Cian',     label_en: 'Cyan',   cssKey: 'cyan' },
+  { value: '#3B82F6', label_es: 'Azul',     label_en: 'Blue',   cssKey: 'blue' },
+  { value: '#A855F7', label_es: 'Morado',   label_en: 'Purple', cssKey: 'purple' },
+  { value: '#FF2BD6', label_es: 'Rosa',     label_en: 'Pink',   cssKey: 'magenta' },
+  { value: '#FF6B35', label_es: 'Naranja',  label_en: 'Orange', cssKey: 'orange' },
+  { value: '#FFD166', label_es: 'Amarillo', label_en: 'Yellow', cssKey: 'yellow' },
+];
+
 export function WorldCup2026Calendar() {
   const { locale, setLocale } = useLocale();
   const c = (es, en) => (locale === 'es' ? es : en);
@@ -74,6 +88,7 @@ export function WorldCup2026Calendar() {
   const [selectedTeams, setSelectedTeams] = useState(new Set());
   const [teamSearch, setTeamSearch] = useState('');
   const [tz, setTz] = useState(detectDefaultTz);
+  const [color, setColor] = useState(CALENDAR_COLORS[0].value); // default: green
   const [copied, setCopied] = useState(false);
   // Toast shown after Google/Android click: "URL copied — paste with Cmd+V".
   // Google Calendar's addbyurl page doesn't auto-fill the input from
@@ -134,8 +149,10 @@ export function WorldCup2026Calendar() {
       params.set('teams', Array.from(selectedTeams).join(','));
     }
     params.set('lang', locale === 'es' ? 'es' : 'en');
+    if (tz && tz !== 'UTC') params.set('tz', tz);
+    if (color) params.set('color', color);
     return `/world-cup-2026/calendar.ics?${params.toString()}`;
-  }, [scope, selectedTeams, needsTeams, locale]);
+  }, [scope, selectedTeams, needsTeams, locale, tz, color]);
 
   // Two flavors of the .ics URL:
   //   - subscribeHttp: served inline (Content-Disposition: inline). Used
@@ -373,6 +390,37 @@ export function WorldCup2026Calendar() {
                 'Tu calendario mostrará los horarios automáticamente en tu zona local — esta selección es sólo para el preview.',
                 "Your calendar will display kickoff times in your local zone automatically — this picker is just for the preview below."
               )}
+            </div>
+
+            {/* Color picker — embedded in the .ics so Google/Apple
+                Calendar pick this hue on first subscription. Google
+                ignores updates after the initial add, so we hint that
+                in the helper text. */}
+            <div className="wc-color-block">
+              <div className="wc-step-kicker wc-color-label">
+                ◆ {c('COLOR DEL CALENDARIO', 'CALENDAR COLOR')}
+              </div>
+              <div className="wc-color-grid" role="radiogroup">
+                {CALENDAR_COLORS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    role="radio"
+                    aria-checked={color === opt.value}
+                    title={c(opt.label_es, opt.label_en)}
+                    className={`wc-color-swatch ${color === opt.value ? 'on' : ''}`}
+                    style={{ background: opt.value }}
+                    onClick={() => setColor(opt.value)}
+                  >
+                    {color === opt.value && <span className="wc-color-check">✓</span>}
+                  </button>
+                ))}
+              </div>
+              <div className="wc-tz-note">
+                {c(
+                  'Tip: si ya tienes el calendario suscrito, Google Calendar conserva el color anterior — cámbialo manualmente en "Otros calendarios" (3 puntos → Color).',
+                  'Heads-up: if you\'re already subscribed, Google Calendar keeps your old color — change it manually in "Other calendars" (3-dot menu → Color).'
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -991,6 +1039,44 @@ const WC_CSS = `
   font-family: var(--mono); font-size: 10px;
   color: var(--text-muted); letter-spacing: 0.5px;
   margin-top: 8px; max-width: 640px; line-height: 1.5;
+}
+
+/* ──────────────── COLOR PICKER (mobile base) ──────────────── */
+.fp-wc26 .wc-color-block {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--stroke);
+}
+.fp-wc26 .wc-color-label { margin-bottom: 10px; }
+.fp-wc26 .wc-color-grid {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 8px;
+}
+.fp-wc26 .wc-color-swatch {
+  width: 40px; height: 40px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+  transition: transform 0.1s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.fp-wc26 .wc-color-swatch:active { transform: scale(0.95); }
+.fp-wc26 .wc-color-swatch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.fp-wc26 .wc-color-swatch.on {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
+}
+.fp-wc26 .wc-color-check {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #061018; font-weight: 900; font-size: 18px;
+  font-family: var(--ox);
+  text-shadow: 0 0 4px rgba(255,255,255,0.5);
 }
 
 /* ──────────────── EXPORTS (mobile base) ──────────────── */

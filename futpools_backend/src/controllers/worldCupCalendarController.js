@@ -97,7 +97,7 @@ const toIcsDate = (iso) => {
   );
 };
 
-const buildIcs = (fixtures, lang = 'en') => {
+const buildIcs = (fixtures, lang = 'en', { tz = 'UTC', color = '' } = {}) => {
   const copy = COPY[lang] || COPY.en;
   const nowStamp = toIcsDate(new Date().toISOString());
   const lines = [
@@ -108,8 +108,20 @@ const buildIcs = (fixtures, lang = 'en') => {
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${icsEscape(copy.calName)}`,
     `X-WR-CALDESC:${icsEscape(copy.calDesc)}`,
-    'X-WR-TIMEZONE:UTC',
+    // X-WR-TIMEZONE drives the "default timezone" label Google/Apple
+    // show when you inspect the subscribed calendar. Event DTSTARTs
+    // remain in UTC (with the Z suffix) so display still localizes
+    // per-user automatically — this is just metadata.
+    `X-WR-TIMEZONE:${tz}`,
   ];
+  // RFC 7986 COLOR + Apple's X- variant. Google Calendar honors COLOR
+  // only on first add (subsequent refreshes don't overwrite the user's
+  // pick). Apple respects X-APPLE-CALENDAR-COLOR similarly. Accepts
+  // CSS color keywords ("green") or hex strings ("#21E28C").
+  if (color) {
+    lines.push(`COLOR:${color}`);
+    if (color.startsWith('#')) lines.push(`X-APPLE-CALENDAR-COLOR:${color}`);
+  }
 
   for (const f of fixtures) {
     const start = toIcsDate(f.date);
@@ -154,6 +166,27 @@ const parseScope = (raw) => {
 };
 
 const parseLang = (raw) => (String(raw || '').toLowerCase() === 'es' ? 'es' : 'en');
+
+// Whitelist of valid IANA timezones we accept from query params. Avoids
+// passing arbitrary strings into X-WR-TIMEZONE (which calendar clients
+// just display verbatim — no harm but also no value).
+const parseTz = (raw) => {
+  const v = String(raw || 'UTC').trim();
+  // Loose validation — IANA zones are "Region/City" or single tokens
+  // like UTC. We don't need a full lookup, just stop obvious junk.
+  if (!/^[A-Za-z]+(?:\/[A-Za-z_]+){0,2}$/.test(v)) return 'UTC';
+  return v;
+};
+
+// Accept CSS color keywords ("green", "blue") or 3/6-digit hex colors.
+// Anything else falls back to no color (calendar client picks default).
+const parseColor = (raw) => {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return '';
+  if (/^#[0-9a-f]{3}$|^#[0-9a-f]{6}$/.test(v)) return v;
+  if (/^[a-z]+$/.test(v) && v.length <= 20) return v;
+  return '';
+};
 
 // Soft-failure: the upstream provider (api-football) is third-party and
 // can return 403 / 429 (key rotation, rate limit, free-tier without WC
@@ -202,6 +235,8 @@ exports.getCalendar = async (req, res) => {
     const scope = parseScope(req.query.scope);
     const teams = parseTeams(req.query.teams);
     const lang = parseLang(req.query.lang);
+    const tz = parseTz(req.query.tz);
+    const color = parseColor(req.query.color);
 
     let fixtures = [];
     try {
@@ -216,7 +251,7 @@ exports.getCalendar = async (req, res) => {
       // recovers, the same subscription URL starts returning events.
     }
 
-    const ics = buildIcs(fixtures, lang);
+    const ics = buildIcs(fixtures, lang, { tz, color });
 
     const filename = lang === 'es' ? 'mundial-2026.ics' : 'world-cup-2026.ics';
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
