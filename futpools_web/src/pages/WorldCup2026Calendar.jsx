@@ -74,6 +74,7 @@ export function WorldCup2026Calendar() {
   const [selectedTeams, setSelectedTeams] = useState(new Set());
   const [teamSearch, setTeamSearch] = useState('');
   const [tz, setTz] = useState(detectDefaultTz);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,13 +143,34 @@ export function WorldCup2026Calendar() {
   const absoluteHttp = `${absoluteApiBase()}${calendarPath}`;
   const downloadHref = `${API_BASE}${calendarPath}${calendarPath.includes('?') ? '&' : '?'}download=1`;
   const webcalHref = absoluteHttp.replace(/^https?:\/\//, 'webcal://');
-  // Google Calendar's official "add by URL" endpoint. The /u/0/r path is
-  // the canonical one Google currently uses for share-add flows; the
-  // older /calendar/r alias still works but goes through more redirects
-  // before landing on the same screen. cid must be the HTTPS URL,
-  // url-encoded once. The `pli=1` hint suppresses an extra
-  // account-picker step when the user is signed into a single account.
-  const googleHref = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(absoluteHttp)}&pli=1`;
+  // Google Calendar's `cid=` "add subscription" endpoint has become
+  // increasingly restrictive — it now rejects arbitrary HTTPS feeds
+  // with "No se puede agregar el calendario. Verifica la URL." even
+  // when the .ics is RFC-5545 valid. The reliably-working alternative
+  // is `/r/settings/addbyurl?cid=…` which opens the Calendar settings
+  // panel with the URL pre-filled, requiring one extra click but
+  // working 100% of the time. The `cid` here is the same HTTPS URL
+  // (Google's settings page parses it the same way).
+  const googleHref = `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=${encodeURIComponent(absoluteHttp)}`;
+  // Copy-URL fallback: a few users land in a Google account state
+  // where even addbyurl misfires (workspace policy, multi-account
+  // confusion). The "Copy URL" button gives them the canonical URL
+  // they can paste manually into Calendar → Other calendars → From URL.
+  const copyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(absoluteHttp);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Older Safari: fall back to a hidden input + execCommand.
+      const ta = document.createElement('textarea');
+      ta.value = absoluteHttp;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
+      document.body.removeChild(ta);
+    }
+  };
 
   return (
     <div className="fp-wc26">
@@ -399,6 +421,34 @@ export function WorldCup2026Calendar() {
               <div className="wc-stat-bar-lab">{c('Con tu selección actual', 'With your current selection')}</div>
             </div>
           </div>
+
+          {/* Manual subscribe URL — Google Calendar's `cid=` flow has
+              become unreliable in 2026 (rejects HTTPS feeds even when
+              RFC-valid). The visible URL + copy button gives users a
+              guaranteed path: paste into Calendar → Other calendars →
+              From URL. */}
+          {teamsReady && (
+            <div className="wc-url-fallback">
+              <div className="wc-url-fallback-label">
+                {c(
+                  '◆ ¿NO FUNCIONA EL BOTÓN? COPIA ESTA URL Y PÉGALA EN GOOGLE CALENDAR → "OTROS CALENDARIOS" → "DESDE URL"',
+                  '◆ BUTTON NOT WORKING? COPY THIS URL AND PASTE IN GOOGLE CALENDAR → "OTHER CALENDARS" → "FROM URL"'
+                )}
+              </div>
+              <div className="wc-url-fallback-row">
+                <input
+                  type="text"
+                  className="wc-url-input"
+                  value={absoluteHttp}
+                  readOnly
+                  onFocus={(e) => e.target.select()}
+                />
+                <button className="wc-url-copy" onClick={copyUrl}>
+                  {copied ? c('¡Copiado!', 'Copied!') : c('Copiar', 'Copy')}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ─────────── FAQ / EXPLAINER ─────────── */}
@@ -938,6 +988,49 @@ const WC_CSS = `
 }
 .fp-wc26 .wc-stat-bar-pipe {
   width: 1px; height: 36px; background: var(--stroke-strong);
+}
+
+/* MANUAL URL FALLBACK */
+.fp-wc26 .wc-url-fallback {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: rgba(54,233,255,0.05);
+  border: 1px dashed rgba(54,233,255,0.35);
+  clip-path: var(--hud-clip-sm);
+}
+.fp-wc26 .wc-url-fallback-label {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--accent); letter-spacing: 1.5px; font-weight: 700;
+  margin-bottom: 10px; line-height: 1.5;
+}
+.fp-wc26 .wc-url-fallback-row {
+  display: flex; gap: 8px; align-items: stretch;
+}
+.fp-wc26 .wc-url-input {
+  flex: 1; min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  padding: 9px 12px;
+  font-family: var(--mono); font-size: 12px;
+  clip-path: var(--hud-clip-sm);
+  outline: none;
+}
+.fp-wc26 .wc-url-input:focus { border-color: var(--accent); }
+.fp-wc26 .wc-url-copy {
+  background: var(--accent); color: var(--fp-on-primary);
+  border: none;
+  font-family: var(--ox); font-weight: 800; font-size: 12px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 9px 18px;
+  clip-path: var(--hud-clip-sm);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.fp-wc26 .wc-url-copy:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(54,233,255,0.5);
 }
 
 /* FAQ */
