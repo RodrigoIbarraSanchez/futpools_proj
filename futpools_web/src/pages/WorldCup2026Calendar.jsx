@@ -75,6 +75,10 @@ export function WorldCup2026Calendar() {
   const [teamSearch, setTeamSearch] = useState('');
   const [tz, setTz] = useState(detectDefaultTz);
   const [copied, setCopied] = useState(false);
+  // Toast shown after Google/Android click: "URL copied — paste with Cmd+V".
+  // Google Calendar's addbyurl page doesn't auto-fill the input from
+  // ?cid=, so we copy + open + tell the user to paste.
+  const [pasteToast, setPasteToast] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,24 +156,47 @@ export function WorldCup2026Calendar() {
   // working 100% of the time. The `cid` here is the same HTTPS URL
   // (Google's settings page parses it the same way).
   const googleHref = `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=${encodeURIComponent(absoluteHttp)}`;
-  // Copy-URL fallback: a few users land in a Google account state
-  // where even addbyurl misfires (workspace policy, multi-account
-  // confusion). The "Copy URL" button gives them the canonical URL
-  // they can paste manually into Calendar → Other calendars → From URL.
-  const copyUrl = async () => {
+  // Single helper used by both the dedicated "Copy" button and the
+  // Google/Android click handlers. Returns true on success.
+  const writeToClipboard = async (text) => {
     try {
-      await navigator.clipboard.writeText(absoluteHttp);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      await navigator.clipboard.writeText(text);
+      return true;
     } catch {
-      // Older Safari: fall back to a hidden input + execCommand.
+      // Older Safari + insecure-context fallback.
       const ta = document.createElement('textarea');
-      ta.value = absoluteHttp;
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.left = '-9999px';
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch {}
       document.body.removeChild(ta);
+      return ok;
     }
+  };
+
+  const copyUrl = async () => {
+    if (await writeToClipboard(absoluteHttp)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }
+  };
+
+  // Click handler for Google/Android: copies the URL, opens Google
+  // Calendar's addbyurl page in a new tab, and shows a toast telling
+  // the user to paste. Google's settings page does NOT prefill the
+  // input from the cid= param (confirmed in user testing), so the
+  // paste is mandatory.
+  const handleGoogleClick = async (e) => {
+    e.preventDefault();
+    if (!teamsReady) return;
+    await writeToClipboard(absoluteHttp);
+    window.open(googleHref, '_blank', 'noopener,noreferrer');
+    setPasteToast(true);
+    // Toast stays up long enough for the user to switch tabs, see the
+    // empty field, and paste. 8s is plenty.
+    setTimeout(() => setPasteToast(false), 8000);
   };
 
   return (
@@ -379,20 +406,22 @@ export function WorldCup2026Calendar() {
             <ExportCard
               disabled={!teamsReady}
               href={teamsReady ? googleHref : undefined}
+              onClick={teamsReady ? handleGoogleClick : undefined}
               icon="📅"
               brand="google"
               title="Google Calendar"
-              desc={c('Añade el calendario a tu cuenta de Google.', 'Add the calendar to your Google account.')}
+              desc={c('Copiamos la URL y abrimos Google. Solo pega y guarda.', 'We copy the URL and open Google. Just paste and save.')}
               cta={c('Añadir', 'Add')}
               target="_blank"
             />
             <ExportCard
               disabled={!teamsReady}
               href={teamsReady ? googleHref : undefined}
+              onClick={teamsReady ? handleGoogleClick : undefined}
               icon="🤖"
               brand="android"
               title="Android"
-              desc={c('Usa Google Calendar — se sincroniza con tu Android.', 'Uses Google Calendar — syncs straight to your Android.')}
+              desc={c('Usa Google Calendar — copiamos la URL automáticamente.', 'Uses Google Calendar — we copy the URL automatically.')}
               cta={c('Suscribirse', 'Subscribe')}
               target="_blank"
             />
@@ -504,6 +533,26 @@ export function WorldCup2026Calendar() {
         <div>© 2026 FUTPOOLS · futpools.com</div>
         <div>{c('Datos de partidos: FIFA / API-Football', 'Match data: FIFA / API-Football')}</div>
       </footer>
+
+      {/* Paste toast — shown after Google/Android click. Persistent
+          enough that the user sees it after switching to the new tab. */}
+      {pasteToast && (
+        <div className="wc-paste-toast" role="status">
+          <div className="wc-paste-toast-icon">📋</div>
+          <div className="wc-paste-toast-body">
+            <div className="wc-paste-toast-title">
+              {c('¡URL copiada al portapapeles!', 'URL copied to clipboard!')}
+            </div>
+            <div className="wc-paste-toast-text">
+              {c(
+                'Pega con ⌘V (o Ctrl+V) en el campo "URL del calendario" de Google y haz clic en "Agregar calendario".',
+                'Paste with ⌘V (or Ctrl+V) into the "Calendar URL" field on Google and click "Add calendar".'
+              )}
+            </div>
+          </div>
+          <button className="wc-paste-toast-close" onClick={() => setPasteToast(false)} aria-label="Close">×</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -520,11 +569,17 @@ function ScopeCard({ active, onClick, badge, icon, title, desc }) {
   );
 }
 
-function ExportCard({ disabled, href, icon, brand, title, desc, cta, target, download }) {
+function ExportCard({ disabled, href, onClick, icon, brand, title, desc, cta, target, download }) {
   const Tag = disabled ? 'div' : 'a';
   const props = disabled
     ? {}
-    : { href, target, rel: target ? 'noopener noreferrer' : undefined, download: download ? '' : undefined };
+    : {
+        href,
+        target,
+        rel: target ? 'noopener noreferrer' : undefined,
+        download: download ? '' : undefined,
+        onClick,
+      };
   return (
     <Tag className={`wc-export wc-export-${brand} ${disabled ? 'is-disabled' : ''}`} {...props}>
       <div className="wc-export-icon">{icon}</div>
@@ -1106,6 +1161,48 @@ const WC_CSS = `
   color: var(--text-muted); letter-spacing: 1px;
   flex-wrap: wrap; gap: 12px;
 }
+
+/* PASTE TOAST */
+.fp-wc26 .wc-paste-toast {
+  position: fixed;
+  bottom: 22px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  clip-path: var(--hud-clip);
+  padding: 16px 18px 16px 16px;
+  max-width: 460px; width: calc(100vw - 32px);
+  box-shadow: 0 0 32px rgba(33,226,140,0.45), 0 16px 40px rgba(0,0,0,0.5);
+  animation: fpToastIn 0.25s ease-out;
+}
+@keyframes fpToastIn {
+  from { transform: translate(-50%, 20px); opacity: 0; }
+  to   { transform: translate(-50%, 0); opacity: 1; }
+}
+.fp-wc26 .wc-paste-toast-icon {
+  font-size: 26px; line-height: 1; flex-shrink: 0;
+  background: rgba(33,226,140,0.12);
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+.fp-wc26 .wc-paste-toast-body { flex: 1; min-width: 0; }
+.fp-wc26 .wc-paste-toast-title {
+  font-family: var(--ox); font-weight: 800; font-size: 14px;
+  color: var(--primary); letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.fp-wc26 .wc-paste-toast-text {
+  font-size: 12px; line-height: 1.5; color: var(--text-dim);
+}
+.fp-wc26 .wc-paste-toast-close {
+  background: none; border: none;
+  color: var(--text-muted); font-size: 22px; line-height: 1;
+  cursor: pointer; padding: 0 4px; align-self: flex-start;
+}
+.fp-wc26 .wc-paste-toast-close:hover { color: var(--text); }
 
 /* RESPONSIVE */
 @media (max-width: 720px) {
