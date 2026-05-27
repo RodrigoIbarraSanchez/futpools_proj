@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import { api } from '../api/client';
 
@@ -63,6 +63,24 @@ const detectDefaultTz = () => {
 export function WorldCup2026Calendar() {
   const { locale, setLocale } = useLocale();
   const c = (es, en) => (locale === 'es' ? es : en);
+  const location = useLocation();
+
+  // URL-based locale override: the Spanish slug forces `es`, the English
+  // slug forces `en`. Runs once per route change so users arriving from
+  // search results land on the right language without having to toggle.
+  // The nav toggle still works afterwards — it overwrites localStorage,
+  // which our setLocale persists.
+  useEffect(() => {
+    const path = location.pathname.toLowerCase();
+    if (path.startsWith('/calendariomundial2026') && locale !== 'es') {
+      setLocale('es');
+    } else if (path.startsWith('/worldcup2026calendar') && locale !== 'en') {
+      setLocale('en');
+    }
+    // Intentionally only depend on pathname — re-running when locale
+    // changes would fight the user's manual toggle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const [teams, setTeams] = useState([]);
   const [fixturesCount, setFixturesCount] = useState(null);
