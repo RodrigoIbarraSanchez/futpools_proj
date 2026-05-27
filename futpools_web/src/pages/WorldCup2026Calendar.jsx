@@ -417,8 +417,8 @@ export function WorldCup2026Calendar() {
               </div>
               <div className="wc-tz-note">
                 {c(
-                  'Tip: si ya tienes el calendario suscrito, Google Calendar conserva el color anterior — cámbialo manualmente en "Otros calendarios" (3 puntos → Color).',
-                  'Heads-up: if you\'re already subscribed, Google Calendar keeps your old color — change it manually in "Other calendars" (3-dot menu → Color).'
+                  '⚠️ Importante: Apple Calendar y Outlook respetan tu color. Google Calendar lo ignora y asigna uno automáticamente — cámbialo manualmente: en "Otros calendarios" pasa el cursor sobre "Mundial FIFA 2026", click los 3 puntos (⋮) → escoge el color.',
+                  '⚠️ Important: Apple Calendar and Outlook honor your color. Google Calendar ignores it and assigns one automatically — change it manually: under "Other calendars", hover over "Mundial FIFA 2026", click the 3-dot menu (⋮) → pick a color.'
                 )}
               </div>
             </div>
