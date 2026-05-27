@@ -19,19 +19,50 @@ const {
 } = require('../services/worldCup2026');
 const { teamFlag } = require('../services/countryFlags');
 
+// Bracket-stage labels in Spanish for the DESCRIPTION. SUMMARY stays
+// English-only since that's the FIFA-canonical form most calendar
+// users recognize ("Round of 16", "Final").
+const ROUND_ES = {
+  'Group Stage': 'Fase de Grupos',
+  'Round of 32': 'Treintaidosavos de Final',
+  'Round of 16': 'Octavos de Final',
+  'Quarter-Final': 'Cuartos de Final',
+  'Semi-Final': 'Semifinal',
+  'Third-Place Play-off': 'Tercer Lugar',
+  'Final': 'Final',
+};
+const translateRound = (raw, lang) => {
+  if (lang !== 'es' || !raw) return raw;
+  // api-football includes the matchday ("Group Stage - 1"); split,
+  // translate the prefix, rejoin.
+  const [prefix, rest] = String(raw).split(' - ');
+  const translated = ROUND_ES[prefix] || prefix;
+  return rest ? `${translated} — ${rest}` : translated;
+};
+
+// Country flag if known, else a soccer-ball emoji for placeholder /
+// knockout slots ("W73", "1A", "3D/E/F").
 const withFlag = (name) => {
   const flag = teamFlag(name);
-  return flag ? `${flag} ${name}` : name;
+  if (flag) return `${flag} ${name}`;
+  return `⚽ ${name}`;
+};
+
+// When BOTH sides are placeholders (e.g. R32 with "1A vs 2C"), one ⚽
+// at the front reads cleaner than two; matches the user's Apple Cal
+// reference. Real-vs-real and mixed cases keep per-team icons.
+const matchupTitle = ({ home, away }) => {
+  const homeFlag = teamFlag(home);
+  const awayFlag = teamFlag(away);
+  if (!homeFlag && !awayFlag) return `⚽ ${home} vs ${away}`;
+  return `${withFlag(home)} vs ${withFlag(away)}`;
 };
 
 const COPY = {
   en: {
-    summary: ({ home, away }) =>
-      `${withFlag(home)} vs ${withFlag(away)}`,
+    summary: matchupTitle,
     description: ({ round, venue, home, away }) => {
-      // Description repeats team names so calendar list views with
-      // truncated SUMMARY still show full context.
-      const matchup = `${withFlag(home)} vs ${withFlag(away)}`;
+      const matchup = matchupTitle({ home, away });
       // Real newlines here; icsEscape() converts them to RFC-5545 "\n"
       // literal so the calendar client renders multi-line bodies.
       return [matchup, round, venue, 'FIFA World Cup 2026']
@@ -42,11 +73,10 @@ const COPY = {
     calDesc: 'FIFA World Cup 2026 schedule — by FutPools',
   },
   es: {
-    summary: ({ home, away }) =>
-      `${withFlag(home)} vs ${withFlag(away)}`,
+    summary: matchupTitle,
     description: ({ round, venue, home, away }) => {
-      const matchup = `${withFlag(home)} vs ${withFlag(away)}`;
-      return [matchup, round, venue, 'Mundial FIFA 2026']
+      const matchup = matchupTitle({ home, away });
+      return [matchup, translateRound(round, 'es'), venue, 'Mundial FIFA 2026']
         .filter(Boolean)
         .join('\n');
     },

@@ -94,10 +94,121 @@ const mapFixture = (f) => {
   };
 };
 
+/**
+ * FIFA's official knockout schedule for the 2026 World Cup. api-football
+ * doesn't publish these slots until the groups are decided, but users
+ * who subscribe NOW expect to see the bracket on their calendar. Each
+ * entry is rendered as a fixture with a generic team name like "Octavos
+ * — Partido X"; the SUMMARY builder upstream substitutes ⚽ for the
+ * country-flag emoji when the team name doesn't match a real country.
+ *
+ * Format: { date (ISO UTC), round, matchNumber, homeLabel, awayLabel,
+ *   venue?, city? }
+ *
+ * Dates use the FIFA-announced kickoff windows (Feb 2024 schedule).
+ * Times are placeholders — we use 18:00 local for late-round matches
+ * (Final is 15:00 ET to match FIFA's intent) so display sorting works.
+ */
+const KNOCKOUT_FIXTURES = (() => {
+  const out = [];
+  let n = 73; // FIFA match-number sequence begins at 73 after group stage (72 matches).
+
+  const add = (iso, round, homeLabel, awayLabel, venue = null, city = null) => {
+    out.push({
+      fixtureId: 9000000 + n, // synthetic IDs out of api-football's range
+      date: iso,
+      timestamp: Math.floor(new Date(iso).getTime() / 1000),
+      venue: { name: venue, city },
+      status: { short: null, long: null },
+      stage: 'knockout',
+      round,
+      teams: {
+        home: { id: null, name: homeLabel, logo: null },
+        away: { id: null, name: awayLabel, logo: null },
+      },
+      score: { home: null, away: null },
+    });
+    n += 1;
+  };
+
+  // ── ROUND OF 32 (16 matches, Jun 27 – Jul 3) ──
+  // R32 slot names follow FIFA's bracket notation: 1A = Group A winner,
+  // 2A = Group A runner-up, 3X = best third-placed team via tiebreak.
+  const R32 = [
+    ['2026-06-27T20:00:00Z', '1A', '2C'],
+    ['2026-06-27T23:00:00Z', '1C', '3D/E/F'],
+    ['2026-06-28T20:00:00Z', '1B', '3A/D/E/F'],
+    ['2026-06-28T23:00:00Z', '1F', '3A/B/C'],
+    ['2026-06-29T19:00:00Z', '2D', '2E'],
+    ['2026-06-29T23:00:00Z', '1G', '3C/E/F/H'],
+    ['2026-06-30T19:00:00Z', '1E', '3A/B/C/D'],
+    ['2026-06-30T23:00:00Z', '1H', '3D/E/F/G'],
+    ['2026-07-01T19:00:00Z', '1L', '2I'],
+    ['2026-07-01T23:00:00Z', '1J', '3B/D/E/I'],
+    ['2026-07-02T19:00:00Z', '1D', '3B/E/F/I'],
+    ['2026-07-02T23:00:00Z', '2H', '2J'],
+    ['2026-07-02T03:00:00Z', '2A', '2L'],
+    ['2026-07-03T19:00:00Z', '1I', '3C/D/G/H'],
+    ['2026-07-03T23:00:00Z', '1K', '2G'],
+    ['2026-07-04T01:00:00Z', '2B', '2K'],
+  ];
+  R32.forEach(([iso, home, away]) => {
+    add(iso, 'Round of 32', home, away);
+  });
+
+  // ── ROUND OF 16 (8 matches, Jul 4 – Jul 7) ──
+  // R16 winners are described by the R32 match numbers they came from.
+  const R16 = [
+    ['2026-07-04T20:00:00Z', 'W73', 'W74'],
+    ['2026-07-04T23:00:00Z', 'W75', 'W76'],
+    ['2026-07-05T20:00:00Z', 'W77', 'W78'],
+    ['2026-07-05T23:00:00Z', 'W79', 'W80'],
+    ['2026-07-06T20:00:00Z', 'W81', 'W82'],
+    ['2026-07-06T23:00:00Z', 'W83', 'W84'],
+    ['2026-07-07T20:00:00Z', 'W85', 'W86'],
+    ['2026-07-07T23:00:00Z', 'W87', 'W88'],
+  ];
+  R16.forEach(([iso, home, away]) => {
+    add(iso, 'Round of 16', home, away);
+  });
+
+  // ── QUARTER-FINALS (4 matches, Jul 9 – Jul 11) ──
+  const QF = [
+    ['2026-07-09T22:00:00Z', 'W89', 'W90'],
+    ['2026-07-10T22:00:00Z', 'W91', 'W92'],
+    ['2026-07-11T18:00:00Z', 'W93', 'W94'],
+    ['2026-07-11T22:00:00Z', 'W95', 'W96'],
+  ];
+  QF.forEach(([iso, home, away]) => {
+    add(iso, 'Quarter-Final', home, away);
+  });
+
+  // ── SEMI-FINALS (2 matches, Jul 14 – Jul 15) ──
+  add('2026-07-14T23:00:00Z', 'Semi-Final', 'W97', 'W98', 'AT&T Stadium', 'Dallas');
+  add('2026-07-15T23:00:00Z', 'Semi-Final', 'W99', 'W100', 'Mercedes-Benz Stadium', 'Atlanta');
+
+  // ── THIRD-PLACE PLAYOFF (Jul 18) ──
+  add('2026-07-18T18:00:00Z', 'Third-Place Play-off', 'L101', 'L102', 'Hard Rock Stadium', 'Miami');
+
+  // ── FINAL (Jul 19, MetLife Stadium) ──
+  add('2026-07-19T19:00:00Z', 'Final', 'W101', 'W102', 'MetLife Stadium', 'East Rutherford');
+
+  return out;
+})();
+
 const fetchAllFixtures = async () => {
   if (cache.fixtures && Date.now() - cache.at < CACHE_TTL_MS) return cache.fixtures;
   const data = await apiFetch('/fixtures', { league: LEAGUE_ID, season: SEASON });
-  const fixtures = (data?.response || []).map(mapFixture);
+  const groupFixtures = (data?.response || []).map(mapFixture);
+
+  // Drop hardcoded knockout slots if api-football has started publishing
+  // real knockout fixtures (keyed by stage). Otherwise append ours so
+  // the calendar covers all 104 matches from day one.
+  const hasRealKnockout = groupFixtures.some((f) => f.stage === 'knockout');
+  const fixtures = hasRealKnockout
+    ? groupFixtures
+    : [...groupFixtures, ...KNOCKOUT_FIXTURES];
+
   fixtures.sort((a, b) => {
     const ta = a.timestamp || 0;
     const tb = b.timestamp || 0;
