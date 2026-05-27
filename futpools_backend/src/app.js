@@ -25,6 +25,7 @@ const sweepstakesRoutes = require('./routes/sweepstakes');
 const poolPaymentsRoutes = require('./routes/poolPayments');
 const publicRoutes = require('./routes/public');
 const ogRoutes = require('./routes/og');
+const worldCup2026Routes = require('./routes/worldCup2026');
 
 const app = express();
 
@@ -91,6 +92,11 @@ app.use('/pools', poolPaymentsRoutes);
 // Unauthenticated read-only endpoints used by the iOS onboarding
 // "App Demo" screen (real fixtures before signup).
 app.use('/public', publicRoutes);
+
+// Public World Cup 2026 calendar — powers /calendariomundial2026 on the
+// web. No auth: visitors export an .ics feed of all 104 matches (or a
+// filtered subset by team / knockout stage).
+app.use('/world-cup-2026', worldCup2026Routes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true, mode: isSimpleMode() ? 'simple' : 'master' });

@@ -12,7 +12,7 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
 import { t } from '../../i18n/translations';
-import { resolvePoolStatus } from '../../lib/poolStatus';
+import { resolvePoolStatus, canJoinPool } from '../../lib/poolStatus';
 
 const WINNER_SHARE = 0.65;
 
@@ -103,7 +103,7 @@ function Countdown({ iso, locale }) {
 // Hero — featured pool with prize-glow trophy on the right
 // ─────────────────────────────────────────────────────────────────────
 
-function Hero({ pool, kind, isLive, locale, navigate }) {
+function Hero({ pool, kind, isLive, canJoin, locale, navigate }) {
   if (!pool) return null;
   // Prize for the trophy block. Three states:
   //   • simple_version pool with entries → real $ amount
@@ -160,16 +160,29 @@ function Hero({ pool, kind, isLive, locale, navigate }) {
           </div>
         </div>
         <div className="fp-hero-cta">
-          <button
-            type="button"
-            className="fp-btn primary lg"
-            onClick={() => navigate(`/pool/${pool._id}/pick`)}
-          >⚽ {t(locale, 'Play now')}</button>
-          <button
-            type="button"
-            className="fp-btn ghost lg"
-            onClick={() => navigate(`/pool/${pool._id}`)}
-          >{t(locale, 'View details')} ›</button>
+          {/* Once picks are locked there's no point sending the user to
+              the pick screen — it would only tell them participation is
+              closed. View details becomes the sole primary CTA. */}
+          {canJoin ? (
+            <>
+              <button
+                type="button"
+                className="fp-btn primary lg"
+                onClick={() => navigate(`/pool/${pool._id}/pick`)}
+              >⚽ {t(locale, 'Play now')}</button>
+              <button
+                type="button"
+                className="fp-btn ghost lg"
+                onClick={() => navigate(`/pool/${pool._id}`)}
+              >{t(locale, 'View details')} ›</button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="fp-btn primary lg"
+              onClick={() => navigate(`/pool/${pool._id}`)}
+            >{t(locale, 'View details')} ›</button>
+          )}
         </div>
       </div>
       <div className="fp-hero-right">
@@ -430,6 +443,7 @@ export function HomeDesktop() {
           pool={heroPick.pool}
           kind={heroPick.kind}
           isLive={poolStatus(heroPick.pool, liveFixtures) === 'live'}
+          canJoin={canJoinPool(heroPick.pool, liveFixtures)}
           locale={locale}
           navigate={navigate}
         />

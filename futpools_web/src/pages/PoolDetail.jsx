@@ -181,6 +181,10 @@ export function PoolDetail() {
   // Map fixtureId → "1"|"X"|"2" so we can pass the user's pick into LiveMatch
   // when they tap a fixture. Mirrors iOS loadMyPicks.
   const [myPicks, setMyPicks] = useState({});
+  // Raw entry list with picks per entry — used by the desktop "Tus entradas"
+  // expandable rows so the user can reveal their own picks inline without
+  // jumping into another screen.
+  const [myEntries, setMyEntries] = useState([]);
   // Map fixtureId → live fixture payload (status, score, elapsed). Polled
   // every 30s with a smart skip: only hit the API if the pool has at least
   // one fixture that's live or within ±3h of kickoff — otherwise the data
@@ -280,15 +284,17 @@ export function PoolDetail() {
   useEffect(() => {
     if (id && token) {
       api.get(`/quinielas/${id}/entries/me`, token).then(entries => {
-        setEntryCount(entries?.length ?? 0);
+        const arr = entries || [];
+        setEntryCount(arr.length);
+        setMyEntries(arr);
         // Latest entry's picks win if the user has multiple entries.
-        const latest = (entries || [])
+        const latest = arr
           .slice()
           .sort((a, b) => (b.entryNumber ?? 0) - (a.entryNumber ?? 0))[0];
         const map = {};
         for (const p of latest?.picks || []) map[p.fixtureId] = p.pick;
         setMyPicks(map);
-      }).catch(() => { setEntryCount(0); setMyPicks({}); });
+      }).catch(() => { setEntryCount(0); setMyPicks({}); setMyEntries([]); });
     }
     if (id) {
       api.get(`/quinielas/${id}/leaderboard`).then(setLeaderboard).catch(() => setLeaderboard(null));
@@ -374,6 +380,7 @@ export function PoolDetail() {
         isAdmin={!!user?.isAdmin}
         isOwner={isOwner}
         token={token}
+        myEntries={myEntries}
         onMutated={load}
       />
     );

@@ -17,6 +17,7 @@ import { LiveScores } from './pages/LiveScores';
 import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
 import { LandingPage } from './pages/LandingPage';
+import { WorldCup2026Calendar } from './pages/WorldCup2026Calendar';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -70,6 +71,13 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/arena" element={<ArenaApp />} />
+
+            {/* Public World Cup 2026 calendar tool — no auth required. The
+                page is bilingual (ES/EN) and lets visitors export the FIFA
+                WC 2026 schedule to iPhone, Google Calendar, Android, or
+                Outlook. Backed by /world-cup-2026/* on the API. */}
+            <Route path="/calendariomundial2026" element={<WorldCup2026Calendar />} />
+            <Route path="/worldcup2026calendar" element={<WorldCup2026Calendar />} />
 
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
