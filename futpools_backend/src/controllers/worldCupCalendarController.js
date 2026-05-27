@@ -17,19 +17,39 @@ const {
   getTeams,
   filterFixtures,
 } = require('../services/worldCup2026');
+const { teamFlag } = require('../services/countryFlags');
+
+const withFlag = (name) => {
+  const flag = teamFlag(name);
+  return flag ? `${flag} ${name}` : name;
+};
 
 const COPY = {
   en: {
-    summary: ({ home, away }) => `FIFA WC 2026: ${home} vs ${away}`,
-    description: ({ round, venue }) =>
-      [round, venue].filter(Boolean).join(' — '),
+    summary: ({ home, away }) =>
+      `${withFlag(home)} vs ${withFlag(away)}`,
+    description: ({ round, venue, home, away }) => {
+      // Description repeats team names so calendar list views with
+      // truncated SUMMARY still show full context.
+      const matchup = `${withFlag(home)} vs ${withFlag(away)}`;
+      // Real newlines here; icsEscape() converts them to RFC-5545 "\n"
+      // literal so the calendar client renders multi-line bodies.
+      return [matchup, round, venue, 'FIFA World Cup 2026']
+        .filter(Boolean)
+        .join('\n');
+    },
     calName: 'FIFA World Cup 2026',
     calDesc: 'FIFA World Cup 2026 schedule — by FutPools',
   },
   es: {
-    summary: ({ home, away }) => `Mundial 2026: ${home} vs ${away}`,
-    description: ({ round, venue }) =>
-      [round, venue].filter(Boolean).join(' — '),
+    summary: ({ home, away }) =>
+      `${withFlag(home)} vs ${withFlag(away)}`,
+    description: ({ round, venue, home, away }) => {
+      const matchup = `${withFlag(home)} vs ${withFlag(away)}`;
+      return [matchup, round, venue, 'Mundial FIFA 2026']
+        .filter(Boolean)
+        .join('\n');
+    },
     calName: 'Mundial FIFA 2026',
     calDesc: 'Calendario Mundial FIFA 2026 — por FutPools',
   },
@@ -98,9 +118,11 @@ const buildIcs = (fixtures, lang = 'en') => {
     const endDate = new Date(new Date(f.date).getTime() + 2 * 60 * 60 * 1000);
     const end = toIcsDate(endDate.toISOString());
     const uid = `wc2026-${f.fixtureId}@futpools.com`;
-    const summary = copy.summary({ home: f.teams.home.name, away: f.teams.away.name });
+    const home = f.teams.home.name;
+    const away = f.teams.away.name;
+    const summary = copy.summary({ home, away });
     const venue = [f.venue?.name, f.venue?.city].filter(Boolean).join(', ');
-    const description = copy.description({ round: f.round, venue });
+    const description = copy.description({ round: f.round, venue, home, away });
     const event = [
       'BEGIN:VEVENT',
       foldLine(`UID:${uid}`),

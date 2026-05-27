@@ -1343,11 +1343,15 @@ const WC_CSS = `
 
 /* ════════════════════════════════════════════════════════════════
  * lg — 960px+ : desktop
- *   3-column scope, 4-column exports, larger grid background.
+ *   3-column scope, 4-column exports laid out vertically (icon on
+ *   top, title + desc centered, CTA at bottom). The horizontal
+ *   layout that mobile/tablet use breaks at 4-col widths — titles
+ *   like "iPhone · iPad · Mac" wrap to 3 lines when the body
+ *   column is only ~70px wide.
  * ════════════════════════════════════════════════════════════════ */
 @media (min-width: 960px) {
-  .fp-wc26 .wc-grid-bg { height: 60%; opacity: 0.6; }
   .fp-wc26 .wc-grid-bg {
+    height: 60%; opacity: 0.6;
     background:
       repeating-linear-gradient(0deg, transparent 0, transparent 39px, rgba(33,226,140,0.22) 39px, rgba(33,226,140,0.22) 40px),
       repeating-linear-gradient(90deg, transparent 0, transparent 39px, rgba(33,226,140,0.22) 39px, rgba(33,226,140,0.22) 40px);
@@ -1355,7 +1359,41 @@ const WC_CSS = `
   }
 
   .fp-wc26 .wc-scope-grid { grid-template-columns: repeat(3, 1fr); }
+
+  /* Vertical export cards (4-up) — fix for the squished horizontal
+     layout when the grid drops below ~280px per column. */
   .fp-wc26 .wc-export-grid { grid-template-columns: repeat(4, 1fr); }
+  .fp-wc26 .wc-export {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+    padding: 20px 18px 18px;
+    gap: 12px;
+    min-height: 168px;
+  }
+  .fp-wc26 .wc-export-icon {
+    width: 48px; height: 48px; font-size: 26px;
+  }
+  .fp-wc26 .wc-export-body {
+    flex: 1;
+  }
+  .fp-wc26 .wc-export-title {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .fp-wc26 .wc-export-desc {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .fp-wc26 .wc-export-cta {
+    margin-top: auto;
+    align-self: flex-start;
+    padding-top: 4px;
+  }
+  /* Arrow nudge feels right pointing forward when CTA sits below. */
+  .fp-wc26 .wc-export:not(.is-disabled):hover .wc-export-arrow {
+    transform: translateX(4px);
+  }
 }
 `;
 
