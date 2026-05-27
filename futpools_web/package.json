@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "cp dist/index.html dist/404.html && mkdir -p dist/calendariomundial2026 dist/worldcup2026calendar && cp dist/index.html dist/calendariomundial2026/index.html && cp dist/index.html dist/worldcup2026calendar/index.html",
+    "postbuild": "node scripts/build-i18n-shells.js",
     "preview": "vite preview"
   },
   "dependencies": {
