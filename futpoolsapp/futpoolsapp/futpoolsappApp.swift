@@ -49,6 +49,7 @@ struct AppLanguageWrapper<Content: View>: View {
 struct futpoolsappApp: App {
     @StateObject private var auth = AuthService()
     @StateObject private var inviteRouter = InviteRouter()
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         // Apply the persisted language BEFORE the first view body is
@@ -57,6 +58,10 @@ struct futpoolsappApp: App {
         // touches a setting.
         let saved = UserDefaults.standard.string(forKey: kAppLanguageKey) ?? ""
         AppLanguage.setLanguage(saved)
+
+        // Register the prize_ladder background-refresh handler. MUST happen
+        // before the app finishes launching, so it lives here in init().
+        LadderBackgroundRefresh.register()
     }
 
     var body: some Scene {
@@ -77,6 +82,11 @@ struct futpoolsappApp: App {
                     }
             }
             .preferredColorScheme(.dark)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Queue a background refresh whenever we leave the foreground so
+            // prize_ladder notifications can land while the app is closed.
+            if phase == .background { LadderBackgroundRefresh.schedule() }
         }
     }
 }

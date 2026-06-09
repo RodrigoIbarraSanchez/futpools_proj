@@ -9,6 +9,7 @@ import {
   HudFrame, HudChip, XpBar, TeamCrest, ArcadeButton, IconButton,
 } from '../arena-ui/primitives';
 import { useSafeBack } from '../lib/safeBack';
+import { isFreePool } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { QuinielaPickDesktop } from './desktop/QuinielaPickDesktop';
 
@@ -33,6 +34,9 @@ export function QuinielaPick() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  // Once the SPEI intent is created, we switch this screen to the transfer
+  // instructions (CLABE + reference). Holds the backend's intent response.
+  const [speiInfo, setSpeiInfo] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -64,14 +68,12 @@ export function QuinielaPick() {
   };
 
   /**
-   * Hand off to Stripe Checkout. The backend creates the session with picks
-   * embedded in metadata; on payment success the webhook reconstructs and
-   * persists the QuinielaEntry, then redirects the browser back to
-   * /pool/:id?paid=1 where PoolDetail shows the success state.
+   * Create a manual-SPEI payment intent (replaces Stripe — account closed).
+   * The backend stashes the picks + mints a reference and returns the
+   * destination CLABE. We then show the transfer instructions; the entry is
+   * created later when an admin confirms the transfer arrived.
    *
-   * Note: we don't need to retain picks in localStorage. If the user
-   * abandons checkout, returning to this page is a fresh entry — Stripe
-   * sessions expire in 24h and we never created a server-side entry.
+   * Admins get { freeEntry: true } and skip straight to the success screen.
    */
   const handleSubmit = async () => {
     if (!token) { setError(t(locale, 'Please sign in to submit picks.')); return; }
@@ -83,28 +85,25 @@ export function QuinielaPick() {
           .filter(f => ['1','X','2'].includes(picks[f.fixtureId]))
           .map(f => ({ fixtureId: f.fixtureId, pick: picks[f.fixtureId] })),
       };
-      const res = await api.post(`/pools/${id}/checkout-session`, payload, token);
-      // Two response shapes:
-      //   • Regular user → { url, sessionId } — full-page redirect to
-      //     Stripe Checkout, which on success bounces back to
-      //     /pool/:id?paid=1.
-      //   • Admin (ADMIN_EMAILS) → { ok: true, freeEntry: true,
-      //     entryId } — backend created the entry inline, no payment
-      //     needed. We just navigate to the success URL ourselves so
-      //     the user lands on the same post-paid screen.
+      const res = await api.post(`/pools/${id}/spei-intent`, payload, token);
       if (res?.freeEntry) {
         navigate(`/pool/${id}?paid=1`);
         return;
       }
-      const { url } = res || {};
-      if (!url) throw new Error('Stripe URL missing');
-      // Full-page redirect — Stripe Checkout is hosted on their domain.
-      window.location.href = url;
+      // Switch this screen to the SPEI transfer instructions.
+      setSpeiInfo(res);
     } catch (e) {
       setError(e.message);
+    } finally {
       setSubmitting(false);
     }
   };
+
+  // Once the SPEI intent exists, this screen becomes the transfer
+  // instructions — same view on mobile and desktop.
+  if (speiInfo) {
+    return <SpeiInstructions info={speiInfo} locale={locale} isDesktop={isDesktop} token={token} onDone={() => navigate(`/pool/${id}`)} />;
+  }
 
   if (loading || !quiniela) {
     return (
@@ -292,11 +291,150 @@ export function QuinielaPick() {
             disabled={!complete || submitting}
             onClick={handleSubmit}
           >
-            {submitting ? t(locale, 'REDIRECTING TO PAYMENT…')
-              : complete ? `▶ ${t(locale, 'PAY')} $${feeMXN} MXN`
-              : `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`}
+            {submitting ? t(locale, 'PROCESSING…')
+              : !complete ? `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`
+              : isFreePool(quiniela) ? `▶ ${t(locale, 'PLAY FREE')}`
+              : `▶ ${t(locale, 'PAY')} $${feeMXN} MXN`}
           </ArcadeButton>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Tap-to-copy field for the SPEI account details.
+function CopyField({ label, value, locale, big }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    if (!value) return;
+    navigator.clipboard?.writeText(String(value))
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })
+      .catch(() => {});
+  };
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5, color: 'var(--fp-text-muted)', marginBottom: 4 }}>{label}</div>
+      <div onClick={copy} style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+        padding: '10px 12px', background: 'var(--fp-bg2)', border: '1px solid var(--fp-stroke)',
+        clipPath: 'var(--fp-clip-sm)', cursor: value ? 'pointer' : 'default',
+      }}>
+        <span style={{
+          fontFamily: 'var(--fp-mono)', fontSize: big ? 20 : 14, fontWeight: big ? 800 : 600,
+          color: 'var(--fp-text)', letterSpacing: big ? 2 : 0.5, userSelect: 'all', wordBreak: 'break-all',
+        }}>{value || '—'}</span>
+        {value && (
+          <span style={{
+            fontFamily: 'var(--fp-display)', fontSize: 10, fontWeight: 800, letterSpacing: 1,
+            color: copied ? 'var(--fp-primary)' : 'var(--fp-accent)', flexShrink: 0,
+          }}>{copied ? t(locale, 'Copied!') : t(locale, 'Copy')}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// SPEI transfer instructions — shown after a payment intent is created.
+// Same view on mobile and desktop.
+function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
+  const configured = !!info?.clabe;
+  const [note, setNote] = useState('');
+  const [marking, setMarking] = useState(false);
+  const [marked, setMarked] = useState(false);
+  const [markError, setMarkError] = useState(null);
+
+  const markPaid = async () => {
+    if (marking || !info?.paymentId) return;
+    setMarking(true);
+    setMarkError(null);
+    try {
+      await api.post(`/pools/spei/${info.paymentId}/mark-paid`, { note }, token);
+      setMarked(true);
+    } catch (e) {
+      setMarkError(e?.message || 'Error');
+    } finally {
+      setMarking(false);
+    }
+  };
+
+  return (
+    <div className={isDesktop ? 'fp-desktop-scope fp-pool-deep' : 'fp-pool-deep'}>
+      {!isDesktop && <AppBackground />}
+      <div style={{ padding: '18px 16px 120px', maxWidth: 520, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800, letterSpacing: 3, marginBottom: 6 }}>
+          {t(locale, 'PAY BY SPEI')}
+        </div>
+        {info?.poolName && (
+          <div style={{ textAlign: 'center', fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-muted)', marginBottom: 16 }}>{info.poolName}</div>
+        )}
+
+        <HudFrame glow="var(--fp-primary)" brackets>
+          <div style={{ padding: 16, textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>{t(locale, 'Transfer exactly this amount to:')}</div>
+            <div style={{ fontFamily: 'var(--fp-display)', fontSize: 38, fontWeight: 900, color: 'var(--fp-primary)', marginTop: 4 }}>${Number(info?.amountMXN || 0).toLocaleString('en-US')} MXN</div>
+          </div>
+        </HudFrame>
+
+        <div style={{ height: 16 }} />
+
+        {configured ? (
+          <>
+            <CopyField label={t(locale, 'BENEFICIARY')} value={info.beneficiary} locale={locale} />
+            <CopyField label={t(locale, 'BANK')} value={info.bank} locale={locale} />
+            <CopyField label="CLABE" value={info.clabe} locale={locale} />
+            <CopyField label={t(locale, 'REFERENCE / CONCEPT')} value={info.reference} locale={locale} big />
+            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)', lineHeight: 1.5, margin: '4px 0 14px' }}>
+              ◆ {t(locale, 'Put this reference in the transfer concept so we can match your payment.')}
+            </div>
+            <div style={{ padding: '10px 12px', background: 'color-mix(in srgb, var(--fp-accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--fp-accent) 35%, transparent)', clipPath: 'var(--fp-clip-sm)', fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-accent)', marginBottom: 16 }}>
+              {t(locale, "You'll join the pool once we confirm your transfer.")}
+            </div>
+          </>
+        ) : (
+          <div style={{ padding: 14, background: 'color-mix(in srgb, var(--fp-danger) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--fp-danger) 40%, transparent)', clipPath: 'var(--fp-clip-sm)', fontFamily: 'var(--fp-mono)', fontSize: 12, color: 'var(--fp-danger)', marginBottom: 16 }}>
+            {t(locale, 'SPEI payments are not set up yet. Contact the admin.')}
+            <div style={{ marginTop: 8, color: 'var(--fp-text-dim)' }}>{t(locale, 'REFERENCE / CONCEPT')}: <b style={{ color: 'var(--fp-text)' }}>{info?.reference}</b></div>
+          </div>
+        )}
+
+        {/* Let the payer signal they completed the transfer so the
+            organizer knows to verify it. */}
+        {marked ? (
+          <div style={{
+            padding: '12px 14px', marginBottom: 14,
+            background: 'color-mix(in srgb, var(--fp-primary) 14%, transparent)',
+            border: '1px solid var(--fp-primary)', clipPath: 'var(--fp-clip-sm)',
+            fontFamily: 'var(--fp-mono)', fontSize: 12, color: 'var(--fp-primary)',
+          }}>
+            ✓ {t(locale, "Got it — we'll verify your payment shortly.")}
+          </div>
+        ) : (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5, color: 'var(--fp-text-muted)', marginBottom: 4 }}>
+              {t(locale, 'SPEI tracking key (optional)')}
+            </div>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t(locale, "e.g. your bank's tracking key (clave de rastreo)")}
+              maxLength={200}
+              style={{
+                width: '100%', padding: '10px 12px', background: 'var(--fp-bg2)',
+                border: '1px solid var(--fp-stroke)', color: 'var(--fp-text)',
+                fontFamily: 'var(--fp-mono)', fontSize: 13, outline: 'none',
+                boxSizing: 'border-box', clipPath: 'var(--fp-clip-sm)', marginBottom: 8,
+              }}
+            />
+            {markError && (
+              <div style={{ color: 'var(--fp-danger)', fontFamily: 'var(--fp-mono)', fontSize: 11, marginBottom: 8 }}>{markError}</div>
+            )}
+            <ArcadeButton size="md" fullWidth onClick={markPaid} disabled={marking}>
+              {marking ? t(locale, 'SENDING…') : `✓ ${t(locale, "I'VE TRANSFERRED")}`}
+            </ArcadeButton>
+          </div>
+        )}
+
+        <ArcadeButton size="lg" fullWidth variant="ghost" onClick={onDone}>{t(locale, 'BACK TO POOL')}</ArcadeButton>
       </div>
     </div>
   );

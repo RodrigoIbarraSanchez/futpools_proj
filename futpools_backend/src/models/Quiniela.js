@@ -36,6 +36,23 @@ const realPrizeSchema = new mongoose.Schema({
   deliveryNote: { type: String, default: '' },
 }, { _id: false });
 
+/**
+ * One rung of a prize_ladder pool. "If your correct-pick count is in
+ * [min, max], you win prizeMXN pesos." Ranges let the spec's
+ * "1–7 aciertos → $0" collapse into one tier, and ranges are
+ * deliberately NOT assumed monotonic — the "0 aciertos → $100"
+ * consolation sits below the dead zone. See src/lib/prizeLadder.js
+ * for the lookup + validation helpers.
+ */
+const prizeTierSchema = new mongoose.Schema({
+  min: { type: Number, required: true },
+  max: { type: Number, required: true },
+  prizeMXN: { type: Number, required: true, default: 0 },
+  // Optional admin-set display label; clients otherwise build their own
+  // localized label from min/max + prizeMXN.
+  label: { type: String, default: '' },
+}, { _id: false });
+
 const quinielaSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   description: { type: String, default: '' },
@@ -64,6 +81,24 @@ const quinielaSchema = new mongoose.Schema({
   // Free-text label for MVP user-pools ("the loser buys pizza"). Not money.
   // Legacy `prize` field is still used for admin-curated pools with cash prizes.
   prizeLabel: { type: String, default: '' },
+
+  // ── Pool format (competition type) ────────────────────────────────────
+  // Orthogonal to `fundingModel` (which describes WHO funds the prize).
+  // `poolType` describes the SCORING/PAYOUT format:
+  //   standard     — one winner takes the pot (existing behavior).
+  //   prize_ladder — every player wins a fixed prize based on their
+  //                  number of correct picks ("aciertos"), per `prizeLadder`.
+  //                  Platform-funded: prizes are paid regardless of pot size.
+  // Absent/empty on legacy pools → treated as 'standard'.
+  poolType: {
+    type: String,
+    enum: ['standard', 'prize_ladder'],
+    default: 'standard',
+    index: true,
+  },
+  // The tiered payout table for prize_ladder pools (empty for standard).
+  // Stored desc by `min` for top-to-bottom thermometer display.
+  prizeLadder: { type: [prizeTierSchema], default: [] },
 
   // ── Economy / prize pool (Phase 2) ────────────────────────────────────
   // How the prize is funded:

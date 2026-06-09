@@ -225,6 +225,31 @@ export function Account() {
               </div>
             </HudFrame>
           </Link>
+          <Link to="/admin/spei" style={{ textDecoration: 'none' }}>
+            <HudFrame>
+              <div style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36,
+                  background: 'var(--fp-surface-alt)',
+                  border: '1px solid var(--fp-stroke-strong)',
+                  clipPath: 'var(--fp-clip-sm)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18,
+                }}>🏦</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
+                    color: 'var(--fp-text-muted)',
+                  }}>{t(locale, 'ADMIN')}</div>
+                  <div style={{
+                    fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 800,
+                    color: 'var(--fp-text)', letterSpacing: 0.5,
+                  }}>{t(locale, 'SPEI PAYMENTS')}</div>
+                </div>
+                <span style={{ color: 'var(--fp-text-muted)', fontSize: 22 }}>›</span>
+              </div>
+            </HudFrame>
+          </Link>
         </div>
       )}
 
@@ -404,6 +429,9 @@ function AccountDesktopLayout({
                 </Link>
                 <Link to="/admin/payouts" className="fp-btn ghost block">
                   💸 {t(locale, 'Pending payouts')}
+                </Link>
+                <Link to="/admin/spei" className="fp-btn ghost block">
+                  🏦 {t(locale, 'SPEI payments')}
                 </Link>
               </div>
             </div>

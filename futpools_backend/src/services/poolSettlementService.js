@@ -20,6 +20,7 @@
 const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const { fetchFixturesByIds } = require('./apiFootball');
+const { prizeForCorrect } = require('../lib/prizeLadder');
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']);
 
@@ -70,8 +71,11 @@ async function settlePool(pool) {
 
   if (entries.length === 0) return { settled: false, reason: 'NO_ENTRIES' };
 
+  const isLadder = pool.poolType === 'prize_ladder';
+
   let bestScore = -1;
   let winnerEntry = null;
+  const ladderWinnerIds = []; // prize_ladder: every entry that won > $0
   for (const entry of entries) {
     let score = 0;
     for (const pick of entry.picks || []) {
@@ -82,6 +86,12 @@ async function settlePool(pool) {
     entry.scoredAt = new Date();
     entry.score = score;
     entry.totalPossibleAtScoring = fixtureIds.length;
+    if (isLadder) {
+      // Each player wins a fixed prize from the ladder — no single winner.
+      const prize = prizeForCorrect(pool.prizeLadder, score);
+      entry.prizeMXN = prize;
+      if (prize > 0 && entry.user?._id) ladderWinnerIds.push(entry.user._id);
+    }
     await entry.save();
     if (score > bestScore) {
       bestScore = score;
@@ -92,9 +102,17 @@ async function settlePool(pool) {
 
   pool.settlementStatus = 'settled';
   pool.settledAt = new Date();
-  pool.winnerUserIds = [winnerEntry.user?._id].filter(Boolean);
+  // prize_ladder: winnerUserIds holds everyone who won a prize (the admin
+  // payout dashboard pays each per-entry). standard: the single top entry.
+  pool.winnerUserIds = isLadder
+    ? ladderWinnerIds
+    : [winnerEntry.user?._id].filter(Boolean);
   await pool.save();
 
+  if (isLadder) {
+    console.log(`[PoolSettlement] settled ladder pool=${pool._id} winners=${ladderWinnerIds.length}/${entries.length} entries`);
+    return { settled: true, ladder: true, winners: ladderWinnerIds.length, entries: entries.length };
+  }
   console.log(`[PoolSettlement] settled pool=${pool._id} winner=${winnerEntry.user?._id} score=${bestScore}/${fixtureIds.length}`);
   return { settled: true, winnerEntryId: String(winnerEntry._id), bestScore };
 }

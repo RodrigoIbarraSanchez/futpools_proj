@@ -11,15 +11,17 @@ import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
-import { t } from '../../i18n/translations';
-import { resolvePoolStatus, canJoinPool } from '../../lib/poolStatus';
+import { t, tFormat } from '../../i18n/translations';
+import { maxPrize, topTiers, formatMXN } from '../../lib/prizeLadder';
+import { resolvePoolStatus, canJoinPool, isFreePool } from '../../lib/poolStatus';
 
 const WINNER_SHARE = 0.65;
 
 function formatMxn(n) {
   return '$' + Number(n).toLocaleString('es-MX');
 }
-function formatEntryFee(q) {
+function formatEntryFee(q, locale) {
+  if (isFreePool(q)) return t(locale, 'FREE');
   if (typeof q?.entryFeeMXN === 'number' && q.entryFeeMXN > 0) {
     return `$${q.entryFeeMXN} MXN`;
   }
@@ -43,6 +45,13 @@ function prizePoolMxn(q) {
 // field for pools that predate the entryFeeMXN migration. Mirrors the
 // mobile Home formatter so the two surfaces never disagree.
 function prizeDisplay(q, locale) {
+  // Free ($0) pools have no prize.
+  if (isFreePool(q)) return t(locale, 'NO PRIZE');
+  // prize_ladder pools don't have a pot — show the headline "up to" prize.
+  if (q?.poolType === 'prize_ladder') {
+    const top = maxPrize(q.prizeLadder || []);
+    return top > 0 ? `${t(locale, 'UP TO')} ${formatMXN(top)}` : '—';
+  }
   const mxn = prizePoolMxn(q);
   if (mxn !== null) {
     if (mxn > 0) return formatMxn(mxn);
@@ -109,13 +118,26 @@ function Hero({ pool, kind, isLive, canJoin, locale, navigate }) {
   //   • simple_version pool with entries → real $ amount
   //   • simple_version pool with 0 entries → '$0' + 'sé el primero' sub
   //   • legacy pool without entryFeeMXN → use the legacy q.prize string
+  // prize_ladder pools: the medallion shows the headline "win up to" prize
+  // (the pot math gives a misleading $0 with no entries) and a mini ladder
+  // of the top tiers sits under the description.
+  const isLadder = pool.poolType === 'prize_ladder';
+  const isFree = isFreePool(pool);
+  const ladder = pool.prizeLadder || [];
+  const ladderTop = maxPrize(ladder);
+
   const prizeMxn = prizePoolMxn(pool);
-  const prizeMain = prizeMxn !== null
-    ? (prizeMxn > 0 ? formatMxn(prizeMxn) : '$0')
-    : (pool.prize || '—');
-  const prizeSub = prizeMxn === 0
-    ? t(locale, 'be the first to enter')
-    : t(locale, 'paid to the winner');
+  const medallionLbl = isFree ? t(locale, 'TEST POOL') : isLadder ? t(locale, 'WIN UP TO') : t(locale, 'PRIZE POOL');
+  const prizeMain = isFree
+    ? t(locale, 'FREE')
+    : isLadder
+      ? formatMXN(ladderTop)
+      : (prizeMxn !== null ? (prizeMxn > 0 ? formatMxn(prizeMxn) : '$0') : (pool.prize || '—'));
+  const prizeSub = isFree
+    ? t(locale, 'NO PRIZE')
+    : isLadder
+      ? t(locale, 'PRIZE LADDER')
+      : (prizeMxn === 0 ? t(locale, 'be the first to enter') : t(locale, 'paid to the winner'));
   // Tag honesty: only say 'QUINIELA DESTACADA' when an admin explicitly
   // flipped the featured flag. Auto-picks (upcoming fallback) get a
   // status-accurate tag. The LIVE indicator is rendered separately so a
@@ -140,15 +162,34 @@ function Hero({ pool, kind, isLive, canJoin, locale, navigate }) {
         <h2>{pool.name}</h2>
         {pool.description ? (
           <p>{pool.description}</p>
+        ) : isLadder ? (
+          <p>{tFormat(locale, 'Win a fixed prize based on your correct picks — up to {prize}.', { prize: formatMXN(ladderTop) })}</p>
         ) : (
           <p>
             {t(locale, 'Make your picks before the first kickoff. Winner takes 65% of the pot, paid by bank transfer.')}
           </p>
         )}
+        {/* Mini prize ladder — the top paying tiers as chips. */}
+        {isLadder && ladderTop > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '2px 0 16px' }}>
+            {topTiers(ladder, 4).map((tr, i) => (
+              <span key={i} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px',
+                borderRadius: 8,
+                background: 'color-mix(in srgb, var(--fp-primary) 12%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--fp-primary) 30%, transparent)',
+                fontFamily: 'var(--fp-mono)', fontSize: 12,
+              }}>
+                <b style={{ color: 'var(--fp-text-dim)' }}>{tr.min === tr.max ? tr.max : `${tr.min}–${tr.max}`}✓</b>
+                <span style={{ color: 'var(--fp-primary)', fontWeight: 800 }}>{formatMXN(tr.prizeMXN)}</span>
+              </span>
+            ))}
+          </div>
+        )}
         <div className="fp-hero-stats">
           <div className="cell">
             <div className="label">{t(locale, 'Entry')}</div>
-            <div className="value">{formatEntryFee(pool)}</div>
+            <div className="value">{formatEntryFee(pool, locale)}</div>
           </div>
           <div className="cell">
             <div className="label">{t(locale, 'Players').toUpperCase()}</div>
@@ -190,7 +231,7 @@ function Hero({ pool, kind, isLive, canJoin, locale, navigate }) {
           <div className="halo" />
           <div className="medallion">
             <div className="prize-num">
-              <div className="lbl">{t(locale, 'PRIZE POOL')}</div>
+              <div className="lbl">{medallionLbl}</div>
               <div className="divider" />
               <div className="v">{prizeMain}</div>
               <div className="sub">{prizeSub}</div>
@@ -257,7 +298,7 @@ function PoolCard({ q, liveFixtures, locale, navigate }) {
             <div className="muted" style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {t(locale, 'Entry')}
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{formatEntryFee(q)}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{formatEntryFee(q, locale)}</div>
           </div>
           <div>
             <div className="muted" style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>

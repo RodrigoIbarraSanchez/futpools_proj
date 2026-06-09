@@ -6,6 +6,7 @@ const { fetchFixturesByIds } = require('../services/apiFootball');
 const { isAdminUser } = require('../middleware/auth');
 const { applyScoringToQuiniela } = require('./ratingController');
 const { debitOrFail, applyDelta } = require('../services/transactionService');
+const { prizeForCorrect, validateLadder, DEFAULT_LADDER } = require('../lib/prizeLadder');
 
 /**
  * Resolve the coin cost a participant pays/paid for a single entry in the
@@ -139,6 +140,9 @@ exports.createQuiniela = async (req, res) => {
       entryCostCoins: rawEntryCost,
       prizeCoins: rawPrizeCoins,
       realPrize: rawRealPrize,
+      poolType: rawPoolType,
+      prizeLadder: rawPrizeLadder,
+      entryFeeMXN: rawEntryFeeMXN,
     } = req.body || {};
 
     // Real-world prize attached to a normal pool. Admin-only — non-
@@ -187,7 +191,14 @@ exports.createQuiniela = async (req, res) => {
       const isFinished = FINISHED_STATUSES.has(status);
       const withinWindow = kickoff.getTime() > now.getTime() - LIVE_TOLERANCE_MS;
       if (isFinished) {
-        return res.status(400).json({ message: 'Finished fixtures cannot be added to a pool' });
+        // FINISHED_STATUSES also covers CANC/ABD — a cancelled fixture keeps
+        // a future kickoff but can never be played. Name it so the admin
+        // knows exactly which row to remove (the old generic message read as
+        // a bug when every date looked future).
+        const label = (f.homeTeam && f.awayTeam) ? ` (${f.homeTeam} vs ${f.awayTeam})` : '';
+        return res.status(400).json({
+          message: `A finished or cancelled fixture can't be added to a pool${label}`,
+        });
       }
       if (kickoff <= now && !isLive && !withinWindow) {
         return res.status(400).json({ message: 'All fixture kickoffs must be in the future or live' });
@@ -215,6 +226,29 @@ exports.createQuiniela = async (req, res) => {
     // regardless of what the client sends — keeps the "public" surface curated.
     const vis = visibility === 'public' && isAdminUser(req.user) ? 'public' : 'private';
 
+    // ── prize_ladder pool type (admin-only) ─────────────────────────────
+    // Second pool format: every player wins a fixed prize based on their
+    // number of correct picks (`prizeLadder`), platform-funded. Falls back
+    // to the spec default ladder if the admin doesn't send a custom one.
+    const wantsLadder = String(rawPoolType || '') === 'prize_ladder' && isAdminUser(req.user);
+    let poolType = 'standard';
+    let prizeLadder = [];
+    if (wantsLadder) {
+      const ladderInput = Array.isArray(rawPrizeLadder) && rawPrizeLadder.length
+        ? rawPrizeLadder
+        : DEFAULT_LADDER;
+      const v = validateLadder(ladderInput, normalizedFixtures.length);
+      if (!v.ok) {
+        return res.status(400).json({ message: v.error, code: 'INVALID_LADDER' });
+      }
+      poolType = 'prize_ladder';
+      prizeLadder = v.ladder;
+    }
+    // Stripe entry fee in MXN pesos. Admin-configurable; defaults to the
+    // $50 simple_version spec when absent or invalid.
+    const feeNum = Number(rawEntryFeeMXN);
+    const entryFeeMXN = Number.isFinite(feeNum) && feeNum >= 1 ? Math.round(feeNum) : 50;
+
     // Entry-cost gating (v3 peer pool, 3-tier simplification):
     //   25   — Casual
     //   100  — Standard
@@ -239,7 +273,10 @@ exports.createQuiniela = async (req, res) => {
     }
 
     // Pick the funding model + min participants for the chosen economy.
-    const fundingModel = prizeCoins > 0 ? 'sponsored' : (entryCostCoins > 0 ? 'peer' : 'none');
+    // prize_ladder pools are always platform-funded (the platform pays the
+    // fixed prizes regardless of the pot), overriding coin economics.
+    const fundingModel = poolType === 'prize_ladder' ? 'platform'
+      : (prizeCoins > 0 ? 'sponsored' : (entryCostCoins > 0 ? 'peer' : 'none'));
     // Sponsored needs at least 2 participants (else no contest). Peer also 2.
     // For a thicker default on sponsored, we scale with fixture count — a
     // 12-fixture pool should gather more players to feel legit.
@@ -281,7 +318,10 @@ exports.createQuiniela = async (req, res) => {
       prize: '',           // legacy field unused in v3
       prizeLabel: String(prizeLabel || '').trim(),
       cost: String(entryCostCoins),  // mirror into legacy field for UI back-compat
-      currency: 'COIN',
+      currency: poolType === 'prize_ladder' ? 'MXN' : 'COIN',
+      poolType,
+      prizeLadder,
+      entryFeeMXN,
       startDate: dates[0],
       endDate: dates[dates.length - 1],
       fixtures: normalizedFixtures,
@@ -668,11 +708,21 @@ exports.updateQuiniela = async (req, res) => {
     // Prefer the doc already loaded by requireOwnerOrAdmin when present.
     const quiniela = req.resource || await Quiniela.findById(req.params.id);
     if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
-    const { name, description, prize, prizeLabel, cost, currency, fixtures, featured, visibility } = req.body || {};
+    const { name, description, prize, prizeLabel, cost, currency, fixtures, featured, visibility, entryFeeMXN } = req.body || {};
 
     // Field-level guard: `featured` is admin-only regardless of ownership.
     if (featured !== undefined && !isAdminUser(req.user)) {
       return res.status(403).json({ message: 'Only admins can change the featured flag' });
+    }
+
+    // Entry fee in MXN. 0 is allowed and means a free / no-prize ("test")
+    // pool — the join flow skips SPEI entirely for it.
+    if (entryFeeMXN !== undefined) {
+      const fee = Number(entryFeeMXN);
+      if (!Number.isFinite(fee) || fee < 0) {
+        return res.status(400).json({ message: 'Entry fee must be 0 or more' });
+      }
+      quiniela.entryFeeMXN = Math.round(fee);
     }
 
     if (name !== undefined) quiniela.name = String(name).trim();
@@ -795,6 +845,12 @@ exports.getLeaderboard = async (req, res) => {
     // points-shown-vs-points-possible reality of the moment.
     const totalPossible = liveResults.size;
 
+    // prize_ladder pools: map each entry's correct-pick count → fixed prize.
+    // settledPrizeMXN reflects FT-only (final) results; livePrizeMXN folds in
+    // in-progress fixtures so the thermometer can show "premio en vivo".
+    const isLadder = quiniela.poolType === 'prize_ladder';
+    const ladder = isLadder ? (quiniela.prizeLadder || []) : null;
+
     const rows = entries.map((entry) => {
       let score = 0;
       let liveScore = 0;
@@ -813,6 +869,9 @@ exports.getLeaderboard = async (req, res) => {
         liveDelta: liveScore - score, // points currently "in play"
         isLive: liveScore !== score,  // row has at least one live pick paying off
         totalPossible,
+        // prize_ladder only (null on standard pools).
+        settledPrizeMXN: isLadder ? prizeForCorrect(ladder, score) : null,
+        livePrizeMXN: isLadder ? prizeForCorrect(ladder, liveScore) : null,
       };
     });
 
@@ -847,6 +906,8 @@ exports.getLeaderboard = async (req, res) => {
           liveDelta: userRow.liveDelta,
           totalPossible: userRow.totalPossible,
           displayName: userRow.displayName,
+          settledPrizeMXN: userRow.settledPrizeMXN,
+          livePrizeMXN: userRow.livePrizeMXN,
         };
       }
     }
@@ -858,6 +919,13 @@ exports.getLeaderboard = async (req, res) => {
       hasLiveFixtures,
       liveFixtureCount,
       userEntry,
+      // Pool format + ladder so clients render the thermometer / prize
+      // chips without a second round-trip. null/[] for standard pools.
+      poolType: quiniela.poolType || 'standard',
+      prizeLadder: isLadder ? ladder : [],
+      // Total fixtures in the pool — the thermometer's denominator (vs
+      // totalPossible, which only counts fixtures with a result so far).
+      fixtureCount: (quiniela.fixtures || []).length,
     });
 
     // Fire-and-forget scoring hook: once all fixtures are FT, `applyScoringToQuiniela`

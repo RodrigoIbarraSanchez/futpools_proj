@@ -34,6 +34,16 @@ const isLiveCode = (s) => LIVE_STATUS_CODES.has(norm(s));
 const isFinishedCode = (s) => FINISHED_STATUS_CODES.has(norm(s));
 
 /**
+ * A free / no-prize ("test") pool: a standard pool with a $0 entry fee.
+ * prize_ladder pools are never "free" in this sense — they have fixed
+ * platform-funded prizes regardless of the entry fee, so they're excluded.
+ */
+export function isFreePool(quiniela) {
+  if (quiniela?.poolType === 'prize_ladder') return false;
+  return Number(quiniela?.entryFeeMXN) === 0;
+}
+
+/**
  * Returns true if the user can submit a new entry for this pool.
  *
  * Mirrors the backend's POOL_STARTED gate (poolPaymentService.js) plus a

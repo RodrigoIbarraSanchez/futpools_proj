@@ -17,8 +17,10 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
-import { resolvePoolStatus } from '../../lib/poolStatus';
+import { resolvePoolStatus, isFreePool } from '../../lib/poolStatus';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
+import { ThermometerLadder } from '../../arena-ui/ThermometerLadder';
+import { LadderParticipants } from '../../arena-ui/LadderParticipants';
 
 const WINNER_SHARE = 0.65;
 const FINISHED = new Set(['FT', 'AET', 'PEN', 'PST', 'CANC', 'ABD', 'AWD', 'WO']);
@@ -220,22 +222,27 @@ function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid }) {
 
 function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMXN, onJoin, status, isAdmin }) {
   const closed = !canJoin;
+  const isFree = isFreePool(quiniela);
   const prizePot = (quiniela.entriesCount ?? 0) * (quiniela.entryFeeMXN ?? 50) * WINNER_SHARE;
   // Prize line — '—' would lie when entries === 0; show '$0 MXN' so
   // the user understands the pot is empty waiting for first entry.
-  const prizeStr = prizePot > 0
-    ? fmtMxn(prizePot)
-    : `$0 MXN`;
-  // Admins enter free (backend skips Stripe), so we drop the price tag
+  // Free ($0) pools have no prize at all → say so.
+  const prizeStr = isFree
+    ? t(locale, 'NO PRIZE')
+    : (prizePot > 0 ? fmtMxn(prizePot) : `$0 MXN`);
+  const entryStr = isFree ? t(locale, 'FREE') : `$${feeMXN} MXN`;
+  // Admins enter free (backend skips payment), so we drop the price tag
   // from the CTA and swap the disclaimer to call out the bypass — no
-  // surprise 'free!' for anyone else.
+  // surprise 'free!' for anyone else. Free pools join for free too.
   const ctaLabel = closed
     ? (status === 'completed' ? t(locale, 'Pool closed') : t(locale, 'POOL LOCKED'))
     : isAdmin
       ? (alreadyEntered ? `+ ${t(locale, 'NEW ENTRY')} · ${t(locale, 'ADMIN FREE')}` : `▶ ${t(locale, 'JOIN')} · ${t(locale, 'ADMIN FREE')}`)
-      : alreadyEntered
-        ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
-        : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`;
+      : isFree
+        ? `▶ ${alreadyEntered ? t(locale, 'NEW ENTRY') : t(locale, 'PLAY FREE')}`
+        : alreadyEntered
+          ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
+          : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`;
   return (
     <div className="fp-card" style={{
       background: 'linear-gradient(180deg, rgba(33,226,140,0.08), transparent 70%), var(--fp-surface)',
@@ -255,7 +262,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
           <div className="muted" style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>
             {t(locale, 'Entry')}
           </div>
-          <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>${feeMXN} MXN</div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2, color: isFree ? 'var(--fp-accent)' : undefined }}>{entryStr}</div>
         </div>
         <div>
           <div className="muted" style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>
@@ -266,7 +273,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
           </div>
         </div>
       </div>
-      {alreadyEntered && (
+      {alreadyEntered && !isFree && (
         <div style={{
           padding: '10px 12px',
           background: 'rgba(33,226,140,0.08)',
@@ -290,7 +297,9 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
       <p className="muted" style={{ fontSize: 11, lineHeight: 1.5, margin: '12px 0 0', textAlign: 'center' }}>
         {isAdmin
           ? t(locale, 'Admin entry — picks register immediately, no payment required.')
-          : t(locale, 'Picks are submitted on the next screen and confirmed via Stripe.')}
+          : isFree
+            ? t(locale, 'Free pool — picks register immediately, no payment required.')
+            : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
       </p>
     </div>
   );
@@ -615,6 +624,14 @@ export function PoolDetailDesktop({
   // (leaderboard). The earlier OVERVIEW was redundant — it duplicated
   // the fixtures list with an arbitrary 'first 6' truncation.
   const [tab, setTab] = useState('partidos');
+
+  // prize_ladder pools swap the classic leaderboard for the thermometer
+  // hero + participants list. User's live position comes from userEntry.
+  const isLadder = quiniela.poolType === 'prize_ladder';
+  const ladderData = quiniela.prizeLadder || leaderboard?.prizeLadder || [];
+  const ladderUserLive = leaderboard?.userEntry?.liveScore ?? 0;
+  const ladderUserSettled = leaderboard?.userEntry?.score ?? 0;
+  const ladderHasLive = !!leaderboard?.hasLiveFixtures;
   const [showEdit, setShowEdit] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
@@ -639,6 +656,20 @@ export function PoolDetailDesktop({
         gap: 'var(--app-space-6)', alignItems: 'flex-start',
       }}>
         <div>
+          {/* prize_ladder hero — the thermometer sits above the tabs so
+              the player's live prize is always in view. */}
+          {isLadder && (
+            <div style={{ marginBottom: 'var(--app-space-5)' }}>
+              <ThermometerLadder
+                ladder={ladderData}
+                liveScore={ladderUserLive}
+                settledScore={ladderUserSettled}
+                fixtureCount={(quiniela.fixtures || []).length}
+                hasLiveFixtures={ladderHasLive}
+                locale={locale}
+              />
+            </div>
+          )}
           <div className="fp-tabs">
             <button
               type="button"
@@ -649,7 +680,7 @@ export function PoolDetailDesktop({
               type="button"
               className={tab === 'leaderboard' ? 'active' : ''}
               onClick={() => setTab('leaderboard')}
-            >{t(locale, 'Leaderboard')}</button>
+            >{isLadder ? t(locale, 'Participants') : t(locale, 'Leaderboard')}</button>
           </div>
           <div style={{ marginTop: 'var(--app-space-5)' }}>
             {tab === 'partidos' && (
@@ -665,11 +696,19 @@ export function PoolDetailDesktop({
               />
             )}
             {tab === 'leaderboard' && (
-              <LeaderboardTab
-                leaderboard={leaderboard}
-                currentUserId={currentUserId}
-                locale={locale}
-              />
+              isLadder
+                ? <LadderParticipants
+                    quinielaId={quiniela._id || quiniela.id}
+                    locale={locale}
+                    hasLiveFixtures={ladderHasLive}
+                    ladder={ladderData}
+                    currentUserId={currentUserId}
+                  />
+                : <LeaderboardTab
+                    leaderboard={leaderboard}
+                    currentUserId={currentUserId}
+                    locale={locale}
+                  />
             )}
           </div>
         </div>
@@ -799,14 +838,19 @@ function EditPoolModal({ quiniela, token, locale, isAdmin, onClose, onSaved }) {
   // updateQuiniela), so the toggle only renders when isAdmin === true.
   // Pool owners who aren't admins won't see this row.
   const [featured, setFeatured] = useState(!!quiniela.featured);
+  // Entry fee (MXN). $0 = free / no-prize ("test") pool.
+  const [entryFeeMXN, setEntryFeeMXN] = useState(String(quiniela.entryFeeMXN ?? 50));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const isLadder = quiniela.poolType === 'prize_ladder';
+  const feeNum = Math.max(0, Math.round(Number(entryFeeMXN) || 0));
   const save = async () => {
     setSaving(true); setError(null);
     try {
       const body = {
         name: name.trim(),
         description: description.trim(),
+        entryFeeMXN: feeNum,
       };
       if (isAdmin) body.featured = featured;
       await api.put(`/quinielas/${quiniela._id}`, body, token);
@@ -850,6 +894,35 @@ function EditPoolModal({ quiniela, token, locale, isAdmin, onClose, onSaved }) {
               resize: 'vertical', outline: 'none',
             }}
           />
+        </label>
+
+        {/* Entry fee — editable for every pool type. $0 makes a STANDARD
+            pool free / no-prize ("test"). On a prize_ladder pool $0 just
+            means free entry; the prizes still come from the ladder. */}
+        <label style={{ display: 'block', marginBottom: 14 }}>
+          <div className="muted" style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
+            {t(locale, 'Entry fee (MXN)')}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--fp-primary)' }}>$</span>
+            <input
+              type="number" min="0" step="1" value={entryFeeMXN}
+              onChange={(e) => setEntryFeeMXN(e.target.value.replace(/[^\d]/g, ''))}
+              style={{
+                width: 120, padding: '10px 12px', fontSize: 16, fontWeight: 700, textAlign: 'center',
+                background: 'var(--fp-surface-alt)', border: '1px solid var(--fp-stroke)',
+                borderRadius: 10, color: 'var(--fp-text)', font: 'inherit', outline: 'none',
+              }}
+            />
+            <span className="muted" style={{ fontSize: 13, fontWeight: 700 }}>MXN</span>
+          </div>
+          <div className="muted" style={{ fontSize: 11, marginTop: 6 }}>
+            {feeNum === 0
+              ? (isLadder
+                  ? `🎟️ ${t(locale, 'Free entry — prizes still come from the ladder.')}`
+                  : `🎟️ ${t(locale, 'Free pool — no prize (test / practice).')}`)
+              : t(locale, 'Each participant pays this via SPEI to join.')}
+          </div>
         </label>
 
         {/* ⚡ Featured toggle — admin only. When true, the pool is pinned

@@ -11,6 +11,7 @@ import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
 import { CreatePool, InviteResolver } from './pages/CreatePool';
 import { AdminPayouts } from './pages/admin/AdminPayouts';
+import { AdminSpeiPayments } from './pages/admin/AdminSpeiPayments';
 import { WebOnboarding } from './pages/onboarding/WebOnboarding';
 import { LiveMatch } from './pages/LiveMatch';
 import { LiveScores } from './pages/LiveScores';
@@ -108,6 +109,7 @@ export default function App() {
                 the route as a regular user just bounces back to /. */}
             <Route path="/admin/pools/new" element={<AdminRoute><CreatePool /></AdminRoute>} />
             <Route path="/admin/payouts" element={<AdminRoute><AdminPayouts /></AdminRoute>} />
+            <Route path="/admin/spei" element={<AdminRoute><AdminSpeiPayments /></AdminRoute>} />
 
             {/* Pool invite deep link — public so unauthenticated friends
                 can land on the join page. */}

@@ -15,6 +15,7 @@ const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const User = require('../models/User');
 const { refundEntry } = require('../services/poolPaymentService');
+const { prizeForCorrect } = require('../lib/prizeLadder');
 
 /**
  * GET /admin/payouts — pools whose settlementStatus = 'settled' AND
@@ -46,20 +47,80 @@ exports.getPendingPayouts = async (req, res) => {
       : [];
     const usersById = new Map(users.map((u) => [String(u._id), u]));
 
-    // Counts per pool to compute the prize live (entries × fee × 0.65).
+    // Counts per pool to compute the standard prize live (entries × fee × 0.65).
+    const poolIds = pools.map((p) => p._id);
     const counts = await QuinielaEntry.aggregate([
-      { $match: { quiniela: { $in: pools.map((p) => p._id) }, refundedAt: null } },
+      { $match: { quiniela: { $in: poolIds }, refundedAt: null } },
       { $group: { _id: '$quiniela', count: { $sum: 1 } } },
     ]);
     const countsByPool = new Map(counts.map((c) => [String(c._id), c.count]));
 
+    // prize_ladder pools pay each entry individually — pull every paid entry
+    // with its persisted prizeMXN (+ user) so the admin sees the full payout
+    // table, not a single "winner takes the pot" line.
+    const ladderPoolIds = pools.filter((p) => p.poolType === 'prize_ladder').map((p) => p._id);
+    const ladderByPool = new Map();
+    if (ladderPoolIds.length > 0) {
+      const ladderEntries = await QuinielaEntry.find({
+        quiniela: { $in: ladderPoolIds },
+        refundedAt: null,
+      }).populate('user', '_id email displayName username').lean();
+      for (const e of ladderEntries) {
+        const key = String(e.quiniela);
+        if (!ladderByPool.has(key)) ladderByPool.set(key, []);
+        ladderByPool.get(key).push(e);
+      }
+    }
+
     const WINNER_SHARE = 0.65;
     const payload = pools.map((pool) => {
-      const entries = countsByPool.get(String(pool._id)) ?? 0;
+      const id = String(pool._id);
+      const entries = countsByPool.get(id) ?? 0;
       const fee = pool.entryFeeMXN ?? 0;
+      const base = {
+        id,
+        name: pool.name,
+        poolType: pool.poolType || 'standard',
+        startDate: pool.startDate,
+        settledAt: pool.settledAt,
+        entryFeeMXN: fee,
+        entriesCount: entries,
+      };
+
+      if (pool.poolType === 'prize_ladder') {
+        // Per-entry payout rows, highest prize first. Only entries that
+        // actually won money need a transfer.
+        const rows = (ladderByPool.get(id) || [])
+          .map((e) => {
+            const u = e.user || {};
+            const prize = e.prizeMXN != null
+              ? e.prizeMXN
+              : prizeForCorrect(pool.prizeLadder, e.score || 0);
+            return {
+              entryId: String(e._id),
+              userId: u._id ? String(u._id) : null,
+              email: u.email || null,
+              displayName: u.displayName || u.username || u.email || 'Participant',
+              username: u.username || null,
+              score: e.score ?? 0,
+              prizeMXN: prize,
+            };
+          })
+          .filter((r) => r.prizeMXN > 0)
+          .sort((a, b) => b.prizeMXN - a.prizeMXN || b.score - a.score);
+        const totalPrizeMXN = rows.reduce((s, r) => s + r.prizeMXN, 0);
+        return {
+          ...base,
+          // Total MXN the platform owes for this pool (sum of all rungs hit).
+          prizeMXN: totalPrizeMXN,
+          ladderPayouts: rows,
+        };
+      }
+
+      // standard: single winner takes 65% of the pot.
       const prize = Math.floor(entries * fee * WINNER_SHARE);
       const winners = (pool.winnerUserIds || [])
-        .map((id) => usersById.get(String(id)))
+        .map((wid) => usersById.get(String(wid)))
         .filter(Boolean)
         .map((u) => ({
           id: String(u._id),
@@ -67,16 +128,7 @@ exports.getPendingPayouts = async (req, res) => {
           displayName: u.displayName || u.username || u.email,
           username: u.username || null,
         }));
-      return {
-        id: String(pool._id),
-        name: pool.name,
-        startDate: pool.startDate,
-        settledAt: pool.settledAt,
-        entryFeeMXN: fee,
-        entriesCount: entries,
-        prizeMXN: prize,
-        winners,
-      };
+      return { ...base, prizeMXN: prize, winners };
     });
     res.json(payload);
   } catch (err) {

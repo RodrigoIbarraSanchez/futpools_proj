@@ -1,6 +1,78 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "aciertos_word": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "correct" } },
+        "es": { "stringUnit": { "state": "translated", "value": "aciertos" } }
+      }
+    },
+    "players_word": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "players" } },
+        "es": { "stringUnit": { "state": "translated", "value": "jugadores" } }
+      }
+    },
+    "YOUR LIVE PRIZE": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "YOUR LIVE PRIZE" } },
+        "es": { "stringUnit": { "state": "translated", "value": "TU PREMIO EN VIVO" } }
+      }
+    },
+    "YOUR PRIZE": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "YOUR PRIZE" } },
+        "es": { "stringUnit": { "state": "translated", "value": "TU PREMIO" } }
+      }
+    },
+    "LIVE · MAY CHANGE": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "LIVE · MAY CHANGE" } },
+        "es": { "stringUnit": { "state": "translated", "value": "EN VIVO · PUEDE CAMBIAR" } }
+      }
+    },
+    "PARTICIPANTS": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "PARTICIPANTS" } },
+        "es": { "stringUnit": { "state": "translated", "value": "PARTICIPANTES" } }
+      }
+    },
+    "No participants yet": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No participants yet" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Aún no hay participantes" } }
+      }
+    },
+    "YOU": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "YOU" } },
+        "es": { "stringUnit": { "state": "translated", "value": "TÚ" } }
+      }
+    },
+    "New prize unlocked!": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "New prize unlocked!" } },
+        "es": { "stringUnit": { "state": "translated", "value": "¡Nuevo premio desbloqueado!" } }
+      }
+    },
+    "Keep going!": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Keep going!" } },
+        "es": { "stringUnit": { "state": "translated", "value": "¡Sigue así!" } }
+      }
+    },
+    "You nailed your last pick! You have %lld correct, your current prize is: %@": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "You nailed your last pick! You have %lld correct, your current prize is: %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "¡Acertaste tu último pronóstico! Llevas %lld aciertos, tu premio actual es: %@" } }
+      }
+    },
+    "You need %lld more correct to reach %@": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "You need %lld more correct to reach %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Necesitas %lld aciertos más para conseguir %@" } }
+      }
+    },
     "": {},
     "-": {},
     "–": {},

@@ -1,6 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
 const adminPayoutsController = require('../controllers/adminPayoutsController');
+const adminSpeiController = require('../controllers/adminSpeiController');
 const { auth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -19,5 +20,11 @@ router.get('/payouts', adminPayoutsController.getPendingPayouts);
 router.post('/pools/:id/mark-paid', adminPayoutsController.markPoolPaid);
 // Destructive — cancels the pool and refunds every entry via Stripe.
 router.post('/pools/:id/cancel', adminPayoutsController.cancelPool);
+
+// Manual-SPEI cobros — list pending transfers, confirm (creates the entry)
+// or reject. Replaces Stripe Checkout.
+router.get('/spei-payments', adminSpeiController.listSpeiPayments);
+router.post('/spei-payments/:id/confirm', adminSpeiController.confirmSpeiPayment);
+router.post('/spei-payments/:id/reject', adminSpeiController.rejectSpeiPayment);
 
 module.exports = router;

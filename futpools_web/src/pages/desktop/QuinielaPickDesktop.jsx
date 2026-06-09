@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { useLocale } from '../../context/LocaleContext';
 import { t } from '../../i18n/translations';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
+import { isFreePool } from '../../lib/poolStatus';
 
 const WINNER_SHARE = 0.65;
 
@@ -217,17 +218,19 @@ function FixtureCard({ fixture, idx, picks, setPick, locale }) {
 
 function SummaryCard({
   count, total, complete, submitting, error,
-  feeMXN, prizeMxn, onSubmit, locale, isAdmin,
+  feeMXN, prizeMxn, onSubmit, locale, isAdmin, isFree,
 }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   // Admin CTA drops the price (no payment) and reads as a confirm —
-  // the backend will create the entry inline without Stripe.
+  // the backend creates the entry inline. Free ($0) pools join free too.
   const ctaLabel = submitting
     ? t(locale, 'Sending…')
     : complete
       ? (isAdmin
           ? t(locale, 'Confirm (admin free entry)')
-          : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
+          : isFree
+            ? t(locale, 'PLAY FREE')
+            : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
       : `${t(locale, 'Missing')} ${total - count} ${total - count === 1 ? t(locale, 'pick') : t(locale, 'picks')}`;
   return (
     <div className="fp-card">
@@ -260,12 +263,14 @@ function SummaryCard({
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span className="muted">{t(locale, 'Entry')}</span>
-          <span className="num" style={{ fontWeight: 600 }}>${feeMXN} MXN</span>
+          <span className="num" style={{ fontWeight: 600, color: isFree ? 'var(--fp-accent)' : undefined }}>
+            {isFree ? t(locale, 'FREE') : `$${feeMXN} MXN`}
+          </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span className="muted">{t(locale, 'Prize')}</span>
           <span className="gold num" style={{ fontWeight: 700 }}>
-            {prizeMxn > 0 ? fmtMxn(prizeMxn) : '—'}
+            {isFree ? t(locale, 'NO PRIZE') : (prizeMxn > 0 ? fmtMxn(prizeMxn) : '—')}
           </span>
         </div>
       </div>
@@ -283,7 +288,9 @@ function SummaryCard({
       }}>
         {isAdmin
           ? t(locale, 'Admin entry — picks register immediately, no payment required.')
-          : t(locale, 'Picks are submitted on the next screen and confirmed via Stripe.')}
+          : isFree
+            ? t(locale, 'Free pool — picks register immediately, no payment required.')
+            : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
       </p>
       {error && (
         <p style={{
@@ -456,6 +463,7 @@ export function QuinielaPickDesktop({
             onSubmit={onSubmit}
             locale={locale}
             isAdmin={isAdmin}
+            isFree={isFreePool(quiniela)}
           />
           <DistributionCard fixtures={fixtures} picks={picks} locale={locale} />
         </aside>

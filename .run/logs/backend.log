@@ -10,3 +10,5 @@
 [DailyPick] scheduler started (1-minute tick)
 Server running on port 3000
 MongoDB connected
+[poolPayment] free entry ($0 pool) — pool=6a2877638fa20e1e5c5fb1ae user=6a03c529ac28ff93f897c00b entry=6a289ac0e91b5ec9be0b7825
+[poolPayment] admin free entry (spei path) — pool=6a2877638fa20e1e5c5fb1ae user=69e833d4497af8109ea3fed9 entry=6a289ad9e91b5ec9be0b785b

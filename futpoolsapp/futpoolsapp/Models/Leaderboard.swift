@@ -15,6 +15,11 @@ struct LeaderboardResponse: Decodable {
     let hasLiveFixtures: Bool?
     let liveFixtureCount: Int?
     let userEntry: UserLeaderboardEntry?
+    /// prize_ladder pools only: format + ladder + fixture count so the
+    /// client can render the thermometer without a second round-trip.
+    let poolType: String?
+    let prizeLadder: [PrizeTier]?
+    let fixtureCount: Int?
 }
 
 struct UserLeaderboardEntry: Decodable {
@@ -24,6 +29,9 @@ struct UserLeaderboardEntry: Decodable {
     let liveDelta: Int?
     let totalPossible: Int
     let displayName: String
+    /// prize_ladder: prize won from settled / live aciertos (nil on standard).
+    let settledPrizeMXN: Int?
+    let livePrizeMXN: Int?
 }
 
 struct LeaderboardEntry: Decodable, Identifiable {
@@ -41,6 +49,9 @@ struct LeaderboardEntry: Decodable, Identifiable {
     /// points from in-progress matches; UI shows it as a `+N` pulse.
     let liveDelta: Int?
     let totalPossible: Int
+    /// prize_ladder pools only: prize won from settled / live aciertos.
+    let settledPrizeMXN: Int?
+    let livePrizeMXN: Int?
 
     var id: String { entryId }
 
@@ -60,6 +71,8 @@ struct LeaderboardEntry: Decodable, Identifiable {
         case liveScore
         case liveDelta
         case totalPossible
+        case settledPrizeMXN
+        case livePrizeMXN
     }
 
     init(from decoder: Decoder) throws {
@@ -73,9 +86,11 @@ struct LeaderboardEntry: Decodable, Identifiable {
         liveScore = try c.decodeIfPresent(Int.self, forKey: .liveScore)
         liveDelta = try c.decodeIfPresent(Int.self, forKey: .liveDelta)
         totalPossible = try c.decode(Int.self, forKey: .totalPossible)
+        settledPrizeMXN = try c.decodeIfPresent(Int.self, forKey: .settledPrizeMXN)
+        livePrizeMXN = try c.decodeIfPresent(Int.self, forKey: .livePrizeMXN)
     }
 
-    init(rank: Int, entryId: String, entryNumber: Int, userId: String?, displayName: String, score: Int, liveScore: Int? = nil, liveDelta: Int? = nil, totalPossible: Int) {
+    init(rank: Int, entryId: String, entryNumber: Int, userId: String?, displayName: String, score: Int, liveScore: Int? = nil, liveDelta: Int? = nil, totalPossible: Int, settledPrizeMXN: Int? = nil, livePrizeMXN: Int? = nil) {
         self.rank = rank
         self.entryId = entryId
         self.entryNumber = entryNumber
@@ -85,5 +100,7 @@ struct LeaderboardEntry: Decodable, Identifiable {
         self.liveScore = liveScore
         self.liveDelta = liveDelta
         self.totalPossible = totalPossible
+        self.settledPrizeMXN = settledPrizeMXN
+        self.livePrizeMXN = livePrizeMXN
     }
 }
