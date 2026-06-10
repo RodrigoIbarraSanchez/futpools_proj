@@ -12,7 +12,7 @@ import { ThermometerLadder } from '../arena-ui/ThermometerLadder';
 import { LadderParticipants } from '../arena-ui/LadderParticipants';
 import { useLiveAcertoNotifier } from '../lib/ladderNotify';
 import { useSafeBack } from '../lib/safeBack';
-import { canJoinPool, isFreePool, freeToEnter } from '../lib/poolStatus';
+import { canJoinPool, isFreePool, freeToEnter, orderFixturesByStatus } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { PoolDetailDesktop } from './desktop/PoolDetailDesktop';
 
@@ -631,7 +631,7 @@ export function PoolDetail() {
 
       {/* Tab content */}
       <div style={{ padding: '6px 16px 140px' }}>
-        {tab === 'fixtures' && (quiniela.fixtures || []).map((f) => {
+        {tab === 'fixtures' && orderFixturesByStatus(quiniela.fixtures, liveByFixture).map((f) => {
           const live = liveByFixture[f.fixtureId];
           const isLive = live?.status?.isLive === true;
           const isHT = (live?.status?.short || '').toUpperCase() === 'HT';

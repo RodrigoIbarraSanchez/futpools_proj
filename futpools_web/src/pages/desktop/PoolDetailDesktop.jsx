@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
-import { resolvePoolStatus, isFreePool, freeToEnter } from '../../lib/poolStatus';
+import { resolvePoolStatus, isFreePool, freeToEnter, groupFixturesByStatus } from '../../lib/poolStatus';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
 import { ThermometerLadder } from '../../arena-ui/ThermometerLadder';
 import { LadderParticipants } from '../../arena-ui/LadderParticipants';
@@ -250,7 +250,6 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
     <div className="fp-card" style={{
       background: 'linear-gradient(180deg, rgba(33,226,140,0.08), transparent 70%), var(--fp-surface)',
       border: '1px solid rgba(33,226,140,0.28)',
-      position: 'sticky', top: 'var(--app-space-8)',
     }}>
       <h4 className="fp-section-title">
         {alreadyEntered
@@ -372,43 +371,43 @@ function FixtureRow({ fixture, live, locale, navigate }) {
   );
 }
 
+const FIXTURE_GROUP_META = {
+  live: { icon: '🔴', label: 'Live now' },
+  upcoming: { icon: '⏳', label: 'Upcoming' },
+  finished: { icon: '🏁', label: 'Finished' },
+};
+
 function FixturesTab({ quiniela, liveByFixture, locale, navigate }) {
-  // Group by day so a 9-fixture pool reads as 'Sat / Sun / Mon' rather
-  // than a flat list.
-  const byDay = (() => {
-    const groups = {};
-    for (const f of (quiniela.fixtures || [])) {
-      const day = f.kickoff
-        ? new Date(f.kickoff).toLocaleDateString(undefined, { weekday: 'long', day: '2-digit', month: 'short' })
-        : t(locale, 'Date TBD');
-      (groups[day] ||= []).push(f);
-    }
-    return groups;
-  })();
+  // Order by status: live on top, then upcoming (soonest first), then
+  // finished at the bottom — so an in-progress pool surfaces what matters.
+  const groups = groupFixturesByStatus(quiniela.fixtures, liveByFixture);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-6)' }}>
-      {Object.entries(byDay).map(([day, list]) => (
-        <div key={day}>
-          <h4 className="fp-section-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            🕐 {day}
-            <span className="accent">
-              {list.length} {list.length === 1 ? t(locale, 'fixture') : t(locale, 'fixtures')}
-            </span>
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {list.map((f) => (
-              <FixtureRow
-                key={f.fixtureId}
-                fixture={f}
-                live={liveByFixture[f.fixtureId]}
-                locale={locale}
-                navigate={navigate}
-              />
-            ))}
+      {groups.map(({ key, fixtures }) => {
+        const meta = FIXTURE_GROUP_META[key];
+        return (
+          <div key={key}>
+            <h4 className="fp-section-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {meta.icon} {t(locale, meta.label)}
+              <span className="accent">
+                {fixtures.length} {fixtures.length === 1 ? t(locale, 'fixture') : t(locale, 'fixtures')}
+              </span>
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {fixtures.map((f) => (
+                <FixtureRow
+                  key={f.fixtureId}
+                  fixture={f}
+                  live={liveByFixture[f.fixtureId]}
+                  locale={locale}
+                  navigate={navigate}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -716,7 +715,12 @@ export function PoolDetailDesktop({
           </div>
         </div>
 
-        <aside style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-5)' }}>
+        <aside style={{
+          display: 'flex', flexDirection: 'column', gap: 'var(--app-space-5)',
+          // Whole column sticks together so the invite-code + admin boxes
+          // follow on scroll, not just the play card.
+          position: 'sticky', top: 'var(--app-space-6)', alignSelf: 'flex-start',
+        }}>
           <PlayCard
             quiniela={quiniela}
             locale={locale}

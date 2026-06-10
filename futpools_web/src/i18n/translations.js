@@ -1,5 +1,8 @@
 export const translations = {
   en: {
+    // ── fixture status sections ──
+    'Live now': 'Live now',
+    'Finished': 'Finished',
     // ── free / test pools ──
     'FREE': 'FREE',
     'NO PRIZE': 'NO PRIZE',
@@ -708,6 +711,9 @@ export const translations = {
     'JUGADORES': 'PLAYERS',
   },
   es: {
+    // ── fixture status sections ──
+    'Live now': 'En vivo',
+    'Finished': 'Finalizados',
     // ── free / test pools ──
     'FREE': 'GRATIS',
     'NO PRIZE': 'SIN PREMIO',
