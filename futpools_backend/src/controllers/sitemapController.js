@@ -44,6 +44,9 @@ async function generate() {
   const web = webBase();
   const out = [];
   out.push('<?xml version="1.0" encoding="UTF-8"?>');
+  // Human-friendly rendering in browsers. Crawlers ignore it. Relative path
+  // resolves to the WEB host (futpools.com/sitemap.xsl) once snapshotted.
+  out.push('<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>');
   out.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">');
 
   for (const r of STATIC_ROUTES) {
