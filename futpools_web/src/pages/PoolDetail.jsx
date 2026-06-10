@@ -12,7 +12,7 @@ import { ThermometerLadder } from '../arena-ui/ThermometerLadder';
 import { LadderParticipants } from '../arena-ui/LadderParticipants';
 import { useLiveAcertoNotifier } from '../lib/ladderNotify';
 import { useSafeBack } from '../lib/safeBack';
-import { canJoinPool, isFreePool } from '../lib/poolStatus';
+import { canJoinPool, isFreePool, freeToEnter } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { PoolDetailDesktop } from './desktop/PoolDetailDesktop';
 
@@ -32,7 +32,7 @@ function formatLeaderboardName(displayName, entryNumber, maxBaseLength = 14) {
 /// Same helpers as Home.jsx — shows entry fee in MXN when the pool has
 /// the new entryFeeMXN field, falls back to the legacy `cost` string.
 function formatPoolEntry(quiniela, locale) {
-  if (isFreePool(quiniela)) return t(locale, 'FREE');
+  if (freeToEnter(quiniela)) return t(locale, 'FREE');
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     return `$${quiniela.entryFeeMXN} MXN`;
   }
@@ -352,7 +352,11 @@ export function PoolDetail() {
       }).catch(() => { setEntryCount(0); setMyPicks({}); setMyEntries([]); });
     }
     if (id) {
-      api.get(`/quinielas/${id}/leaderboard`).then(setLeaderboard).catch(() => setLeaderboard(null));
+      // Pass the token: the leaderboard route is optionalAuth, and `userEntry`
+      // (which the prize-ladder thermometer reads for the live prize) is only
+      // populated when the request is authenticated. Without it the hero is
+      // stuck at 0 aciertos / the consolation prize.
+      api.get(`/quinielas/${id}/leaderboard`, token).then(setLeaderboard).catch(() => setLeaderboard(null));
     }
   }, [id, token]);
 
@@ -380,7 +384,9 @@ export function PoolDetail() {
     };
 
     const refresh = () => {
-      api.get(`/quinielas/${id}/leaderboard`)
+      // Token needed so `userEntry` (the thermometer's live prize) refreshes
+      // too, not just the table rows.
+      api.get(`/quinielas/${id}/leaderboard`, token)
         .then(setLeaderboard)
         .catch(() => { /* keep previous snapshot */ });
     };
@@ -389,7 +395,7 @@ export function PoolDetail() {
       if (isWorthPolling()) refresh();
     }, 30000);
     return () => clearInterval(interval);
-  }, [id, quiniela, liveByFixture]);
+  }, [id, quiniela, liveByFixture, token]);
 
   // Local notification for prize_ladder pools — toast + Web Notification
   // when the player's live aciertos tick up. Called unconditionally (rules
@@ -431,6 +437,7 @@ export function PoolDetail() {
   // comes from the leaderboard's userEntry (null until they join).
   const isLadder = quiniela.poolType === 'prize_ladder';
   const isFree = isFreePool(quiniela);
+  const freeEntry = freeToEnter(quiniela);
   const ladderData = quiniela.prizeLadder || leaderboard?.prizeLadder || [];
   const ladderUserLive = leaderboard?.userEntry?.liveScore ?? 0;
   const ladderUserSettled = leaderboard?.userEntry?.score ?? 0;
@@ -799,7 +806,7 @@ export function PoolDetail() {
           {/* Already-entered hint surfaces the user's status without
               taking the CTA out of action. Multiple entries are allowed
               — the button stays tappable. */}
-          {alreadyEntered && canJoin() && !isFree && (
+          {alreadyEntered && canJoin() && !freeEntry && (
             <div style={{
               fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
               letterSpacing: 1.4, color: 'var(--fp-primary)',
@@ -818,7 +825,7 @@ export function PoolDetail() {
           >
             {!canJoin()
               ? t(locale, 'POOL LOCKED')
-              : isFree
+              : freeEntry
                 ? `▶ ${alreadyEntered ? t(locale, 'NEW ENTRY') : t(locale, 'PLAY FREE')}`
                 : alreadyEntered
                   ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`

@@ -34,9 +34,19 @@ const isLiveCode = (s) => LIVE_STATUS_CODES.has(norm(s));
 const isFinishedCode = (s) => FINISHED_STATUS_CODES.has(norm(s));
 
 /**
- * A free / no-prize ("test") pool: a standard pool with a $0 entry fee.
- * prize_ladder pools are never "free" in this sense — they have fixed
- * platform-funded prizes regardless of the entry fee, so they're excluded.
+ * Free to ENTER — a $0 entry fee, regardless of pool type. Drives the
+ * entry display ("GRATIS"), the join CTA, and the no-payment join flow. A
+ * prize_ladder pool can be free-to-enter and still pay ladder prizes.
+ */
+export function freeToEnter(quiniela) {
+  return Number(quiniela?.entryFeeMXN) === 0;
+}
+
+/**
+ * A free / no-PRIZE ("test") pool: a STANDARD pool with a $0 entry fee.
+ * prize_ladder pools are excluded — their prizes come from the ladder, not
+ * the entry pot, so a $0 ladder pool is "free entry, real prizes", not a
+ * "no prize" pool. Drives the prize display + the "test pool" hero badge.
  */
 export function isFreePool(quiniela) {
   if (quiniela?.poolType === 'prize_ladder') return false;

@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
 import { maxPrize, topTiers, formatMXN } from '../../lib/prizeLadder';
-import { resolvePoolStatus, canJoinPool, isFreePool } from '../../lib/poolStatus';
+import { resolvePoolStatus, canJoinPool, isFreePool, freeToEnter } from '../../lib/poolStatus';
 
 const WINNER_SHARE = 0.65;
 
@@ -21,7 +21,7 @@ function formatMxn(n) {
   return '$' + Number(n).toLocaleString('es-MX');
 }
 function formatEntryFee(q, locale) {
-  if (isFreePool(q)) return t(locale, 'FREE');
+  if (freeToEnter(q)) return t(locale, 'FREE');
   if (typeof q?.entryFeeMXN === 'number' && q.entryFeeMXN > 0) {
     return `$${q.entryFeeMXN} MXN`;
   }

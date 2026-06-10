@@ -9,7 +9,7 @@ import {
   HudFrame, HudChip, XpBar, TeamCrest, ArcadeButton, IconButton,
 } from '../arena-ui/primitives';
 import { useSafeBack } from '../lib/safeBack';
-import { isFreePool } from '../lib/poolStatus';
+import { freeToEnter } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { QuinielaPickDesktop } from './desktop/QuinielaPickDesktop';
 
@@ -293,7 +293,7 @@ export function QuinielaPick() {
           >
             {submitting ? t(locale, 'PROCESSING…')
               : !complete ? `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`
-              : isFreePool(quiniela) ? `▶ ${t(locale, 'PLAY FREE')}`
+              : freeToEnter(quiniela) ? `▶ ${t(locale, 'PLAY FREE')}`
               : `▶ ${t(locale, 'PAY')} $${feeMXN} MXN`}
           </ArcadeButton>
         </div>

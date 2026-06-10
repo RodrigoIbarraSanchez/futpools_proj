@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { useLocale } from '../../context/LocaleContext';
 import { t } from '../../i18n/translations';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
-import { isFreePool } from '../../lib/poolStatus';
+import { isFreePool, freeToEnter } from '../../lib/poolStatus';
 
 const WINNER_SHARE = 0.65;
 
@@ -218,17 +218,18 @@ function FixtureCard({ fixture, idx, picks, setPick, locale }) {
 
 function SummaryCard({
   count, total, complete, submitting, error,
-  feeMXN, prizeMxn, onSubmit, locale, isAdmin, isFree,
+  feeMXN, prizeMxn, onSubmit, locale, isAdmin, isFree, entryFree,
 }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
-  // Admin CTA drops the price (no payment) and reads as a confirm —
-  // the backend creates the entry inline. Free ($0) pools join free too.
+  // entryFree = $0 to join (drives CTA/entry/disclaimer). isFree = standard
+  // pool with no prize (drives the "no prize" line). A ladder pool can be
+  // entryFree but still have prizes.
   const ctaLabel = submitting
     ? t(locale, 'Sending…')
     : complete
       ? (isAdmin
           ? t(locale, 'Confirm (admin free entry)')
-          : isFree
+          : entryFree
             ? t(locale, 'PLAY FREE')
             : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
       : `${t(locale, 'Missing')} ${total - count} ${total - count === 1 ? t(locale, 'pick') : t(locale, 'picks')}`;
@@ -263,8 +264,8 @@ function SummaryCard({
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span className="muted">{t(locale, 'Entry')}</span>
-          <span className="num" style={{ fontWeight: 600, color: isFree ? 'var(--fp-accent)' : undefined }}>
-            {isFree ? t(locale, 'FREE') : `$${feeMXN} MXN`}
+          <span className="num" style={{ fontWeight: 600, color: entryFree ? 'var(--fp-accent)' : undefined }}>
+            {entryFree ? t(locale, 'FREE') : `$${feeMXN} MXN`}
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
@@ -288,7 +289,7 @@ function SummaryCard({
       }}>
         {isAdmin
           ? t(locale, 'Admin entry — picks register immediately, no payment required.')
-          : isFree
+          : entryFree
             ? t(locale, 'Free pool — picks register immediately, no payment required.')
             : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
       </p>
@@ -464,6 +465,7 @@ export function QuinielaPickDesktop({
             locale={locale}
             isAdmin={isAdmin}
             isFree={isFreePool(quiniela)}
+            entryFree={freeToEnter(quiniela)}
           />
           <DistributionCard fixtures={fixtures} picks={picks} locale={locale} />
         </aside>

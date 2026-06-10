@@ -7,3 +7,28 @@
 
   ➜  Local:   http://localhost:5174/
   ➜  Network: use --host to expose
+5:03:33 PM [vite] hmr update /src/pages/QuinielaPick.jsx, /src/pages/Home.jsx, /src/pages/PoolDetail.jsx, /src/pages/desktop/QuinielaPickDesktop.jsx, /src/pages/desktop/HomeDesktop.jsx, /src/pages/desktop/PoolDetailDesktop.jsx
+5:03:39 PM [vite] hmr update /src/pages/Home.jsx
+5:03:45 PM [vite] hmr update /src/pages/Home.jsx
+5:03:52 PM [vite] hmr update /src/pages/desktop/HomeDesktop.jsx
+5:03:58 PM [vite] hmr update /src/pages/desktop/HomeDesktop.jsx
+5:04:06 PM [vite] hmr update /src/pages/PoolDetail.jsx
+5:04:17 PM [vite] hmr update /src/pages/PoolDetail.jsx
+5:05:26 PM [vite] hmr update /src/pages/desktop/PoolDetailDesktop.jsx
+5:05:46 PM [vite] hmr update /src/pages/desktop/PoolDetailDesktop.jsx
+5:05:54 PM [vite] hmr update /src/pages/desktop/PoolDetailDesktop.jsx
+5:06:03 PM [vite] hmr update /src/pages/desktop/PoolDetailDesktop.jsx
+5:06:09 PM [vite] hmr update /src/pages/desktop/PoolDetailDesktop.jsx
+5:06:28 PM [vite] hmr update /src/pages/PoolDetail.jsx
+5:06:34 PM [vite] hmr update /src/pages/PoolDetail.jsx
+5:06:42 PM [vite] hmr update /src/pages/PoolDetail.jsx
+5:06:51 PM [vite] hmr update /src/pages/QuinielaPick.jsx
+5:06:55 PM [vite] hmr update /src/pages/QuinielaPick.jsx
+5:07:07 PM [vite] hmr update /src/pages/desktop/QuinielaPickDesktop.jsx
+5:07:17 PM [vite] hmr update /src/pages/desktop/QuinielaPickDesktop.jsx
+5:07:27 PM [vite] hmr update /src/pages/desktop/QuinielaPickDesktop.jsx
+5:07:38 PM [vite] hmr update /src/pages/desktop/QuinielaPickDesktop.jsx
+5:07:44 PM [vite] hmr update /src/pages/desktop/QuinielaPickDesktop.jsx
+8:21:04 PM [vite] hmr update /src/pages/PoolDetail.jsx
+8:21:10 PM [vite] hmr update /src/pages/PoolDetail.jsx
+8:21:32 PM [vite] hmr update /src/pages/PoolDetail.jsx

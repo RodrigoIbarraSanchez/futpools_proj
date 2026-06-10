@@ -11,7 +11,7 @@ import {
 } from '../arena-ui/primitives';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { HomeDesktop } from './desktop/HomeDesktop';
-import { resolvePoolStatus, isFreePool } from '../lib/poolStatus';
+import { resolvePoolStatus, isFreePool, freeToEnter } from '../lib/poolStatus';
 
 // ──────────────────────────────────────────────────────────────
 // Live/state helpers (shared across Home sub-components)
@@ -66,7 +66,7 @@ function formatDate(d) {
 /// `cost` (e.g. "$15"). Prefer the new field; fall back to cost; finally
 /// show "—" so empty fields don't render an awkward blank cell.
 function formatEntryFee(quiniela, locale) {
-  if (isFreePool(quiniela)) return t(locale, 'FREE');
+  if (freeToEnter(quiniela)) return t(locale, 'FREE');
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     return `$${quiniela.entryFeeMXN} MXN`;
   }

@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
-import { resolvePoolStatus, isFreePool } from '../../lib/poolStatus';
+import { resolvePoolStatus, isFreePool, freeToEnter } from '../../lib/poolStatus';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
 import { ThermometerLadder } from '../../arena-ui/ThermometerLadder';
 import { LadderParticipants } from '../../arena-ui/LadderParticipants';
@@ -222,23 +222,26 @@ function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid }) {
 
 function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMXN, onJoin, status, isAdmin }) {
   const closed = !canJoin;
-  const isFree = isFreePool(quiniela);
+  // freeEntry = $0 to join (any pool type) → drives entry/CTA/disclaimer.
+  // noPrize = standard pool with no prize ("test"). isLadder shows the
+  // ladder's headline prize instead of the (irrelevant) pot.
+  const freeEntry = freeToEnter(quiniela);
+  const noPrize = isFreePool(quiniela);
+  const isLadder = quiniela.poolType === 'prize_ladder';
+  const ladderMax = Math.max(0, ...(quiniela.prizeLadder || []).map((tr) => Number(tr.prizeMXN) || 0));
   const prizePot = (quiniela.entriesCount ?? 0) * (quiniela.entryFeeMXN ?? 50) * WINNER_SHARE;
-  // Prize line — '—' would lie when entries === 0; show '$0 MXN' so
-  // the user understands the pot is empty waiting for first entry.
-  // Free ($0) pools have no prize at all → say so.
-  const prizeStr = isFree
-    ? t(locale, 'NO PRIZE')
-    : (prizePot > 0 ? fmtMxn(prizePot) : `$0 MXN`);
-  const entryStr = isFree ? t(locale, 'FREE') : `$${feeMXN} MXN`;
-  // Admins enter free (backend skips payment), so we drop the price tag
-  // from the CTA and swap the disclaimer to call out the bypass — no
-  // surprise 'free!' for anyone else. Free pools join for free too.
+  const prizeStr = isLadder
+    ? (ladderMax > 0 ? `${t(locale, 'UP TO')} $${ladderMax.toLocaleString('en-US')}` : '—')
+    : noPrize
+      ? t(locale, 'NO PRIZE')
+      : (prizePot > 0 ? fmtMxn(prizePot) : `$0 MXN`);
+  const entryStr = freeEntry ? t(locale, 'FREE') : `$${feeMXN} MXN`;
+  // Admins enter free (backend skips payment); $0 pools join free too.
   const ctaLabel = closed
     ? (status === 'completed' ? t(locale, 'Pool closed') : t(locale, 'POOL LOCKED'))
     : isAdmin
       ? (alreadyEntered ? `+ ${t(locale, 'NEW ENTRY')} · ${t(locale, 'ADMIN FREE')}` : `▶ ${t(locale, 'JOIN')} · ${t(locale, 'ADMIN FREE')}`)
-      : isFree
+      : freeEntry
         ? `▶ ${alreadyEntered ? t(locale, 'NEW ENTRY') : t(locale, 'PLAY FREE')}`
         : alreadyEntered
           ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
@@ -262,7 +265,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
           <div className="muted" style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>
             {t(locale, 'Entry')}
           </div>
-          <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2, color: isFree ? 'var(--fp-accent)' : undefined }}>{entryStr}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2, color: freeEntry ? 'var(--fp-accent)' : undefined }}>{entryStr}</div>
         </div>
         <div>
           <div className="muted" style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>
@@ -273,7 +276,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
           </div>
         </div>
       </div>
-      {alreadyEntered && !isFree && (
+      {alreadyEntered && !freeEntry && (
         <div style={{
           padding: '10px 12px',
           background: 'rgba(33,226,140,0.08)',
@@ -297,7 +300,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
       <p className="muted" style={{ fontSize: 11, lineHeight: 1.5, margin: '12px 0 0', textAlign: 'center' }}>
         {isAdmin
           ? t(locale, 'Admin entry — picks register immediately, no payment required.')
-          : isFree
+          : freeEntry
             ? t(locale, 'Free pool — picks register immediately, no payment required.')
             : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
       </p>
