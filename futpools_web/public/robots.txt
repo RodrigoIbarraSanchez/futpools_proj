@@ -1,0 +1,17 @@
+# robots.txt — futpools.com
+# Vite copies /public/* to the build root, so this is served at
+# https://futpools.com/robots.txt
+
+User-agent: *
+Allow: /
+
+# Authenticated / dynamic areas — no SEO value, keep crawlers out.
+Disallow: /admin/
+Disallow: /account
+Disallow: /settings
+Disallow: /onboarding
+Disallow: /leaderboard
+Disallow: /fixture/
+Disallow: /pool/*/pick
+
+Sitemap: https://futpools.com/sitemap.xml

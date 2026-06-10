@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  sitemap.xml — futpools.com
+  Public, indexable routes only. Authenticated/dynamic pages (/account,
+  /admin/*, /pool/:id, ...) are intentionally excluded. The World Cup 2026
+  calendar is bilingual: each variant declares its ES/EN alternates via
+  xhtml:link so search engines serve the right language.
+  Update <lastmod> when these pages change materially.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <url>
+    <loc>https://futpools.com/</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/calendariomundial2026</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/calendariomundial2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/worldcup2026calendar" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/calendariomundial2026" />
+  </url>
+
+  <url>
+    <loc>https://futpools.com/worldcup2026calendar</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/calendariomundial2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/worldcup2026calendar" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/calendariomundial2026" />
+  </url>
+
+  <url>
+    <loc>https://futpools.com/register</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/login</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>

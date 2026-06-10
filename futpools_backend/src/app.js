@@ -18,6 +18,7 @@ const adminRoutes = require('./routes/admin');
 const adsRoutes = require('./routes/ads');
 const paymentsRoutes = require('./routes/payments');
 const paymentsController = require('./controllers/paymentsController');
+const sitemapController = require('./controllers/sitemapController');
 const challengeRoutes = require('./routes/challenges');
 const ticketsRoutes = require('./routes/tickets');
 const dailyPickRoutes = require('./routes/dailyPick');
@@ -47,6 +48,11 @@ app.post(
 );
 
 app.use(express.json());
+
+// Dynamic sitemap (public). URLs point at the WEB host; the web build
+// snapshots this into dist/sitemap.xml so futpools.com/sitemap.xml is
+// same-host + deploy-fresh. Public, no auth.
+app.get('/sitemap.xml', sitemapController.getSitemap);
 
 // OG share pages — must be registered before API routes so crawlers
 // (WhatsApp, Telegram, iMessage) receive the meta-tag HTML, not JSON.
