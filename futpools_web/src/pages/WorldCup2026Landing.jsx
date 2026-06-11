@@ -1,13 +1,18 @@
 /**
  * /calendario-mundial-2026 (ES) · /world-cup-2026-calendar (EN)
  *
- * Bottom-of-funnel SEO landing page for the World Cup 2026 calendar. Built
- * on the "[Keyword] | keywords" template: H1 = primary keyword, an intro
- * that leads with the keyword, a primary CTA, several H2 content sections
- * (short, punchy copy + bullets, each paired with an on-brand HUD visual),
- * an FAQ with FAQPage/BreadcrumbList JSON-LD, and a repeated CTA. The CTA
- * navigates to the actual tool (/calendario-mundial-2026/agregar) — the
- * content here is what ranks; the tool converts the search intent.
+ * Bottom-of-funnel SEO landing page for the World Cup 2026 calendar, built
+ * on the Reverb-style template: H1 = primary keyword, an intro that leads
+ * with the keyword, a primary CTA, then a RHYTHM of centered "statement"
+ * sections interleaved with two-column copy+visual sections, an FAQ with
+ * FAQPage/BreadcrumbList JSON-LD, and a repeated CTA. The CTA navigates to
+ * the actual tool (/calendario-mundial-2026/agregar).
+ *
+ * All tournament data is factual (FIFA World Cup 2026): 104 matches split
+ * USA 78 / Mexico 13 / Canada 13, 16 host cities (11 US, 3 MX, 2 CA),
+ * opener at Estadio Azteca (Jun 11), final at NY/NJ MetLife (Jul 19). No
+ * specific group matchups are shown (those depend on the draw) — only real
+ * dates, stages, venues and distribution.
  *
  * Section visuals are hand-built SVG/CSS (no raster assets) so they match
  * the WC26 HUD aesthetic, stay crisp on any DPI, and add zero image weight.
@@ -36,7 +41,6 @@ export function WorldCup2026Landing() {
   const toolPath = locale === 'es' ? '/calendario-mundial-2026/agregar' : '/world-cup-2026-calendar/add';
   const canonical = ORIGIN + landingPath;
 
-  // ── SEO head (title, description, canonical) + JSON-LD ──
   useEffect(() => {
     document.title = c(
       'Calendario Mundial 2026 — Partidos, horarios y fechas | FutPools',
@@ -47,7 +51,6 @@ export function WorldCup2026Landing() {
       'Complete World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook — free.'
     ));
     setCanonical(canonical);
-
     const faq = FAQS(c).map(({ q, a }) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } }));
     setJsonLd('wc26-landing-jsonld', {
       '@context': 'https://schema.org',
@@ -92,11 +95,11 @@ export function WorldCup2026Landing() {
           <h1>{c('Calendario del Mundial 2026', 'World Cup 2026 Calendar')}</h1>
           <p className="wc-sub wc-lead">
             {c(
-              'El calendario del Mundial 2026 ya está aquí: los 104 partidos, 48 selecciones y 16 sedes en México, Estados Unidos y Canadá. Consulta las fechas y los horarios en tu zona, y añade los partidos a tu calendario en segundos. Es gratis, sin app ni registro.',
-              'The World Cup 2026 calendar is here: all 104 matches, 48 teams and 16 host cities across Mexico, the USA and Canada. Check the dates and kickoff times in your timezone, and add the matches to your calendar in seconds. It’s free — no app, no sign-up.'
+              'El calendario del Mundial 2026 ya está aquí: los 104 partidos, 48 selecciones y 16 sedes en Estados Unidos, México y Canadá. Consulta las fechas y los horarios en tu zona, y añade los partidos a tu calendario en segundos. Es gratis, sin app ni registro.',
+              'The World Cup 2026 calendar is here: all 104 matches, 48 teams and 16 host cities across the USA, Mexico and Canada. Check the dates and kickoff times in your timezone, and add the matches to your calendar in seconds. It’s free — no app, no sign-up.'
             )}
           </p>
-          <div className="wc-cta-row">{ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}</div>
+          <div className="wc-cta-row" style={{ justifyContent: 'center' }}>{ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}</div>
           <div className="wc-hero-stats">
             <div className="wc-stat"><div className="wc-stat-num">104</div><div className="wc-stat-lab">{c('Partidos', 'Matches')}</div></div>
             <div className="wc-stat"><div className="wc-stat-num">48</div><div className="wc-stat-lab">{c('Selecciones', 'Teams')}</div></div>
@@ -106,53 +109,77 @@ export function WorldCup2026Landing() {
         </div>
       </header>
 
-      {/* ─────────── CONTENT (H2 sections, copy + visual) ─────────── */}
       <main className="wc-main wc-content">
 
-        <SplitSection title={c('El calendario completo del Mundial 2026', 'The complete World Cup 2026 calendar')} visual={<FixturesVisual c={c} />}>
+        {/* statement */}
+        <Statement
+          kicker={c('11 JUNIO – 19 JULIO 2026', 'JUNE 11 – JULY 19, 2026')}
+          title={c('El Mundial más grande de la historia', 'The biggest World Cup in history')}
+        >
+          {c(
+            'Por primera vez, 48 selecciones y 104 partidos repartidos en tres países anfitriones. Aquí tienes todo el calendario, y lo añades a tu teléfono en segundos.',
+            'For the first time, 48 teams and 104 matches across three host countries. Here’s the full calendar — and you add it to your phone in seconds.'
+          )}
+        </Statement>
+
+        {/* two-column: complete calendar + match distribution */}
+        <Split title={c('El calendario completo del Mundial 2026', 'The complete World Cup 2026 calendar')} visual={<DistributionVisual c={c} />}>
           <p>{c(
-            'El Mundial 2026 se juega del 11 de junio al 19 de julio de 2026. Es el primero con 48 selecciones y 104 partidos: el más grande de la historia.',
-            'The World Cup 2026 runs from June 11 to July 19, 2026. It’s the first with 48 teams and 104 matches — the biggest in history.'
+            'El Mundial 2026 se juega del 11 de junio al 19 de julio de 2026. Los 104 partidos se reparten entre los tres anfitriones:',
+            'The World Cup 2026 runs from June 11 to July 19, 2026. The 104 matches are split across the three hosts:'
           )}</p>
           <ul className="wc-ul">
-            <li>{c('104 partidos en total', '104 matches in total')}</li>
-            <li>{c('48 selecciones clasificadas', '48 qualified teams')}</li>
-            <li>{c('16 sedes en 3 países: México, EE.UU. y Canadá', '16 host cities across 3 countries: Mexico, USA and Canada')}</li>
-            <li>{c('39 días de fútbol — del 11 de junio al 19 de julio de 2026', '39 days of football — June 11 to July 19, 2026')}</li>
+            <li>{c('Estados Unidos: 78 partidos', 'United States: 78 matches')}</li>
+            <li>{c('México: 13 partidos · Canadá: 13 partidos', 'Mexico: 13 matches · Canada: 13 matches')}</li>
+            <li>{c('48 selecciones en 12 grupos de 4', '48 teams in 12 groups of 4')}</li>
+            <li>{c('La inauguración es en el Estadio Azteca (CDMX) el 11 de junio', 'The opening match is at Estadio Azteca (Mexico City) on June 11')}</li>
           </ul>
-        </SplitSection>
+        </Split>
 
-        <SplitSection flip title={c('Fechas y fases: de la fase de grupos a la final', 'Dates and stages: from the groups to the final')} visual={<PhasesVisual c={c} />}>
+        {/* two-column flip: stages */}
+        <Split flip title={c('Fechas y fases: de la fase de grupos a la final', 'Dates and stages: from the groups to the final')} visual={<PhasesVisual c={c} />}>
           <p>{c(
-            'El torneo se divide en fase de grupos y eliminatorias. Estas son las ventanas clave del calendario oficial:',
-            'The tournament splits into a group stage and the knockout rounds. These are the key windows of the official schedule:'
+            'El torneo se divide en fase de grupos y eliminatorias. Estas son las ventanas del calendario oficial:',
+            'The tournament splits into a group stage and the knockout rounds. These are the windows of the official schedule:'
           )}</p>
           <ul className="wc-ul">
             <li>{c('Fase de grupos: 11 – 27 de junio', 'Group stage: June 11 – 27')}</li>
             <li>{c('Dieciseisavos (ronda de 32): 28 de junio – 3 de julio', 'Round of 32: June 28 – July 3')}</li>
-            <li>{c('Octavos de final: 4 – 7 de julio', 'Round of 16: July 4 – 7')}</li>
-            <li>{c('Cuartos de final: 9 – 11 de julio', 'Quarter-finals: July 9 – 11')}</li>
+            <li>{c('Octavos: 4 – 7 de julio · Cuartos: 9 – 11 de julio', 'Round of 16: July 4 – 7 · Quarter-finals: July 9 – 11')}</li>
             <li>{c('Semifinales: 14 – 15 de julio', 'Semi-finals: July 14 – 15')}</li>
-            <li>{c('Tercer puesto: 18 de julio · Final: 19 de julio', 'Third place: July 18 · Final: July 19')}</li>
+            <li>{c('Tercer puesto: 18 de julio · Final: 19 de julio (Nueva York/NJ)', 'Third place: July 18 · Final: July 19 (New York/NJ)')}</li>
           </ul>
-        </SplitSection>
+        </Split>
 
-        <SplitSection title={c('Sedes y estadios del Mundial 2026', 'Host cities and stadiums of the World Cup 2026')} visual={<HostMapVisual c={c} />}>
+        {/* statement */}
+        <Statement
+          kicker={c('SIN COSTO', 'NO COST')}
+          title={c('Gratis. Sin app. Sin registro.', 'Free. No app. No sign-up.')}
+        >
+          {c(
+            'Añade el calendario oficial a tu calendario y olvídate de buscar horarios. Si la FIFA mueve un partido, el tuyo se actualiza solo.',
+            'Add the official schedule to your calendar and stop hunting for kickoff times. If FIFA moves a match, yours updates automatically.'
+          )}
+        </Statement>
+
+        {/* two-column: host cities + map */}
+        <Split title={c('Sedes y estadios del Mundial 2026', 'Host cities and stadiums of the World Cup 2026')} visual={<HostMapVisual c={c} />}>
           <p>{c(
-            '16 ciudades sede en tres países reciben el Mundial 2026. El partido inaugural es en México y la final en Estados Unidos.',
-            '16 host cities across three countries welcome the World Cup 2026. The opening match is in Mexico and the final in the USA.'
+            '16 ciudades sede en tres países reciben el Mundial 2026. La inauguración es en México y la final en Estados Unidos.',
+            '16 host cities across three countries welcome the World Cup 2026. The opener is in Mexico and the final in the USA.'
           )}</p>
           <ul className="wc-ul">
-            <li>{c('México (3): Ciudad de México, Guadalajara, Monterrey', 'Mexico (3): Mexico City, Guadalajara, Monterrey')}</li>
-            <li>{c('EE.UU. (11): Nueva York/Nueva Jersey, Los Ángeles, Dallas, San Francisco, Miami, Atlanta, Seattle, Houston, Filadelfia, Kansas City, Boston', 'USA (11): New York/New Jersey, Los Angeles, Dallas, San Francisco, Miami, Atlanta, Seattle, Houston, Philadelphia, Kansas City, Boston')}</li>
+            <li>{c('EE.UU. (11): Atlanta, Boston, Dallas, Houston, Kansas City, Los Ángeles, Miami, Nueva York/NJ, Filadelfia, San Francisco y Seattle', 'USA (11): Atlanta, Boston, Dallas, Houston, Kansas City, Los Angeles, Miami, New York/NJ, Philadelphia, San Francisco and Seattle')}</li>
+            <li>{c('México (3): Ciudad de México, Guadalajara y Monterrey', 'Mexico (3): Mexico City, Guadalajara and Monterrey')}</li>
             <li>{c('Canadá (2): Toronto y Vancouver', 'Canada (2): Toronto and Vancouver')}</li>
           </ul>
-        </SplitSection>
+        </Split>
 
-        <SplitSection flip title={c('Horarios del Mundial 2026 en tu país', 'World Cup 2026 kickoff times in your country')} visual={<TimezoneVisual c={c} />}>
+        {/* two-column flip: timezones */}
+        <Split flip title={c('Horarios del Mundial 2026 en tu país', 'World Cup 2026 kickoff times in your country')} visual={<TimezoneVisual c={c} />}>
           <p>{c(
-            'Los partidos se juegan en horarios de América. Nuestra herramienta los muestra en TU zona horaria, y tu calendario los ajusta automáticamente.',
-            'Matches kick off on American time. Our tool shows them in YOUR timezone, and your calendar adjusts them automatically.'
+            'Los partidos se juegan en horarios de América. La herramienta los muestra en TU zona horaria, y tu calendario los ajusta automáticamente.',
+            'Matches kick off on American time. The tool shows them in YOUR timezone, and your calendar adjusts them automatically.'
           )}</p>
           <ul className="wc-ul">
             <li>{c('México: CDMX, Norte y Pacífico', 'Mexico: Central, North and Pacific')}</li>
@@ -160,18 +187,29 @@ export function WorldCup2026Landing() {
             <li>{c('Latinoamérica: Argentina, Brasil, Colombia, Perú, Chile', 'Latin America: Argentina, Brazil, Colombia, Peru, Chile')}</li>
             <li>{c('Europa: España y Reino Unido', 'Europe: Spain and the United Kingdom')}</li>
           </ul>
-        </SplitSection>
+        </Split>
 
-        <SplitSection title={c('Cómo añadir el calendario del Mundial 2026 a tu teléfono', 'How to add the World Cup 2026 calendar to your phone')} visual={<PhoneCalendarVisual c={c} />}>
+        {/* two-column: how to add + phone */}
+        <Split title={c('Cómo añadir el calendario del Mundial 2026 a tu teléfono', 'How to add the World Cup 2026 calendar to your phone')} visual={<PhoneCalendarVisual c={c} />}>
           <p>{c('Añade todos los partidos en 3 pasos, sin instalar nada:', 'Add every match in 3 steps, with nothing to install:')}</p>
           <ul className="wc-ul">
             <li>{c('1. Elige qué partidos: los 104, sólo tus selecciones, o tus selecciones + eliminatorias.', '1. Choose which matches: all 104, only your teams, or your teams + the knockout stage.')}</li>
             <li>{c('2. Elige tu zona horaria para ver los horarios correctos.', '2. Pick your timezone to see the correct kickoff times.')}</li>
             <li>{c('3. Suscríbete en iPhone, Google Calendar o Android, o descarga el .ics para Outlook.', '3. Subscribe on iPhone, Google Calendar or Android, or download the .ics for Outlook.')}</li>
-            <li>{c('Se actualiza solo: si la FIFA mueve un horario, tu calendario también.', 'It stays in sync: if FIFA shifts a kickoff, your calendar updates too.')}</li>
           </ul>
           <div className="wc-cta-row">{ctaTool(c('Abrir la herramienta del calendario', 'Open the calendar tool'))}</div>
-        </SplitSection>
+        </Split>
+
+        {/* statement */}
+        <Statement
+          kicker={c('VÍVELO COMPLETO', 'LIVE IT ALL')}
+          title={c('Tu compañero para el Mundial 2026', 'Your companion for the World Cup 2026')}
+        >
+          {c(
+            'No te pierdas un solo partido de tu selección — desde el primer silbatazo en el Azteca hasta la final.',
+            'Don’t miss a single match of your team — from the first whistle at the Azteca to the final.'
+          )}
+        </Statement>
 
         {/* ── FAQ ── */}
         <section className="wc-faq">
@@ -213,8 +251,19 @@ export function WorldCup2026Landing() {
   );
 }
 
-// ── Section shell: copy on one side, visual on the other (alternates). ──
-function SplitSection({ title, visual, flip, children }) {
+// ── Centered "statement" section (Reverb rhythm: divides the two-column ones). ──
+function Statement({ kicker, title, children }) {
+  return (
+    <section className="wc-statement">
+      {kicker && <div className="wc-st-kicker">{kicker}</div>}
+      <h2>{title}</h2>
+      <p>{children}</p>
+    </section>
+  );
+}
+
+// ── Two-column section: copy on one side, visual on the other (alternates). ──
+function Split({ title, visual, flip, children }) {
   return (
     <section className="wc-content-section">
       <div className={`wc-split ${flip ? 'flip' : ''}`}>
@@ -228,30 +277,27 @@ function SplitSection({ title, visual, flip, children }) {
   );
 }
 
-// ─────────────── On-brand HUD visuals (SVG/CSS, no raster) ───────────────
+// ─────────────── On-brand HUD visuals (SVG/CSS, factual data) ───────────────
 
-function FixturesVisual({ c }) {
+function DistributionVisual({ c }) {
   const rows = [
-    { d: '11 JUN', t: '20:00', h: 'MEX', a: 'CAN', hf: '🇲🇽', af: '🇨🇦', tag: c('INAUGURAL', 'OPENER'), tone: 'green' },
-    { d: '13 JUN', t: '18:00', h: 'ARG', a: 'ESP', hf: '🇦🇷', af: '🇪🇸', tag: 'A' },
-    { d: '16 JUN', t: '14:00', h: 'BRA', a: 'GER', hf: '🇧🇷', af: '🇩🇪', tag: 'C' },
-    { d: '21 JUN', t: '11:00', h: 'FRA', a: 'ENG', hf: '🇫🇷', af: '🏴', tag: 'F' },
-    { d: '19 JUL', t: '15:00', h: '1°', a: '2°', hf: '🏆', af: '🏆', tag: c('FINAL', 'FINAL'), tone: 'gold' },
+    { f: '🇺🇸', n: c('Estados Unidos', 'United States'), v: 78, w: 100, tone: '#21E28C' },
+    { f: '🇲🇽', n: c('México', 'Mexico'), v: 13, w: 18, tone: '#FF2BD6' },
+    { f: '🇨🇦', n: c('Canadá', 'Canada'), v: 13, w: 18, tone: '#36E9FF' },
   ];
   return (
     <div className="wc-viz">
-      <div className="wc-viz-head"><span>◆ 104 {c('PARTIDOS', 'MATCHES')}</span><span className="wc-viz-live"><i /> {c('EN VIVO', 'LIVE')}</span></div>
-      <div className="wc-fx">
+      <div className="wc-viz-head"><span>◆ 104 {c('PARTIDOS · 3 PAÍSES', 'MATCHES · 3 COUNTRIES')}</span></div>
+      <div className="wc-dist">
         {rows.map((r, i) => (
-          <div className={`wc-fx-row ${r.tone || ''}`} key={i}>
-            <div className="wc-fx-date">{r.d}<span>{r.t}</span></div>
-            <div className="wc-fx-team"><span className="wc-fx-flag">{r.hf}</span>{r.h}</div>
-            <div className="wc-fx-vs">–</div>
-            <div className="wc-fx-team r">{r.a}<span className="wc-fx-flag">{r.af}</span></div>
-            <div className="wc-fx-tag">{r.tag}</div>
+          <div className="wc-dist-row" key={i}>
+            <div className="wc-dist-lbl"><span className="wc-fx-flag">{r.f}</span>{r.n}</div>
+            <div className="wc-dist-bar"><span style={{ width: `${r.w}%`, background: r.tone, boxShadow: `0 0 12px ${r.tone}88`, animationDelay: `${i * 120}ms` }} /></div>
+            <div className="wc-dist-val">{r.v}</div>
           </div>
         ))}
       </div>
+      <div className="wc-dist-foot">{c('Total: 104 partidos · 48 selecciones', 'Total: 104 matches · 48 teams')}</div>
     </div>
   );
 }
@@ -277,40 +323,39 @@ function PhasesVisual({ c }) {
 }
 
 function HostMapVisual({ c }) {
-  // Dots positioned to suggest North-American geography (viewBox 0..320 x 0..230).
+  // 16 dots positioned to suggest North-American geography (11 US, 3 MX, 2 CA).
   const cities = [
-    { x: 70, y: 38, k: 'ca' }, { x: 205, y: 30, k: 'ca' },                      // Vancouver, Toronto
-    { x: 52, y: 92, k: 'us' }, { x: 60, y: 70, k: 'us' }, { x: 44, y: 110, k: 'us' }, // SF, Seattle, LA
-    { x: 120, y: 96, k: 'us' }, { x: 150, y: 110, k: 'us' }, { x: 150, y: 130, k: 'us' }, // Denver/KC, Dallas, Houston
-    { x: 205, y: 120, k: 'us' }, { x: 235, y: 96, k: 'us' }, { x: 250, y: 78, k: 'us' }, // Atlanta, NY, Boston
-    { x: 240, y: 110, k: 'us' }, { x: 230, y: 150, k: 'us' },                    // Philly, Miami
-    { x: 95, y: 165, k: 'mx' }, { x: 110, y: 185, k: 'mx' }, { x: 130, y: 158, k: 'mx' }, // GDL, CDMX, MTY
+    { x: 70, y: 38, k: 'ca' }, { x: 205, y: 30, k: 'ca' },                          // Vancouver, Toronto
+    { x: 60, y: 70, k: 'us' }, { x: 52, y: 92, k: 'us' }, { x: 44, y: 110, k: 'us' }, // Seattle, SF, LA
+    { x: 120, y: 96, k: 'us' }, { x: 150, y: 112, k: 'us' }, { x: 150, y: 132, k: 'us' }, // KC, Dallas, Houston
+    { x: 205, y: 120, k: 'us' }, { x: 235, y: 96, k: 'us' }, { x: 252, y: 78, k: 'us' }, // Atlanta, NY/NJ, Boston
+    { x: 242, y: 110, k: 'us' }, { x: 230, y: 150, k: 'us' },                        // Philadelphia, Miami
+    { x: 95, y: 165, k: 'mx' }, { x: 112, y: 186, k: 'mx' }, { x: 132, y: 158, k: 'mx' }, // GDL, CDMX, MTY
   ];
   const tone = { ca: '#36E9FF', us: '#21E28C', mx: '#FF2BD6' };
   return (
     <div className="wc-viz wc-viz-map">
       <div className="wc-viz-head"><span>◆ {c('16 SEDES · 3 PAÍSES', '16 HOST CITIES · 3 COUNTRIES')}</span></div>
-      <svg viewBox="0 0 320 230" className="wc-map-svg" role="img" aria-label={c('Mapa de sedes', 'Host map')}>
+      <svg viewBox="0 0 320 230" className="wc-map-svg" role="img" aria-label={c('Mapa de sedes del Mundial 2026', 'World Cup 2026 host map')}>
         <defs>
           <pattern id="wcgrid" width="20" height="20" patternUnits="userSpaceOnUse">
             <path d="M20 0H0V20" fill="none" stroke="rgba(33,226,140,0.12)" strokeWidth="0.5" />
           </pattern>
         </defs>
         <rect width="320" height="230" fill="url(#wcgrid)" />
-        {/* abstract country regions */}
         <ellipse cx="150" cy="40" rx="140" ry="34" fill="rgba(54,233,255,0.06)" stroke="rgba(54,233,255,0.25)" strokeWidth="0.7" />
         <ellipse cx="150" cy="105" rx="135" ry="46" fill="rgba(33,226,140,0.06)" stroke="rgba(33,226,140,0.28)" strokeWidth="0.7" />
         <ellipse cx="115" cy="175" rx="58" ry="30" fill="rgba(255,43,214,0.06)" stroke="rgba(255,43,214,0.28)" strokeWidth="0.7" />
         {cities.map((p, i) => (
-          <g key={i} style={{ animationDelay: `${i * 60}ms` }} className="wc-map-dot">
+          <g key={i} style={{ animationDelay: `${i * 55}ms` }} className="wc-map-dot">
             <circle cx={p.x} cy={p.y} r="6" fill={tone[p.k]} opacity="0.18" />
             <circle cx={p.x} cy={p.y} r="2.6" fill={tone[p.k]} />
           </g>
         ))}
       </svg>
       <div className="wc-map-legend">
-        <span><i style={{ background: tone.mx }} /> {c('México 3', 'Mexico 3')}</span>
         <span><i style={{ background: tone.us }} /> {c('EE.UU. 11', 'USA 11')}</span>
+        <span><i style={{ background: tone.mx }} /> {c('México 3', 'Mexico 3')}</span>
         <span><i style={{ background: tone.ca }} /> {c('Canadá 2', 'Canada 2')}</span>
       </div>
     </div>
@@ -319,20 +364,18 @@ function HostMapVisual({ c }) {
 
 function TimezoneVisual({ c }) {
   const zs = [
-    { z: 'CDMX', t: '19:00' }, { z: 'Bogotá', t: '20:00' },
-    { z: 'Nueva York', t: '21:00' }, { z: 'Buenos Aires', t: '22:00' },
-    { z: 'Los Ángeles', t: '18:00' }, { z: 'Madrid', t: '03:00' },
+    c('México — CDMX, Norte y Pacífico', 'Mexico — Central, North & Pacific'),
+    c('EE.UU. — Este, Centro, Montaña, Pacífico', 'USA — Eastern, Central, Mountain, Pacific'),
+    c('Latinoamérica — ARG · BRA · COL · PER · CHI', 'Latin America — ARG · BRA · COL · PER · CHI'),
+    c('Europa — España y Reino Unido', 'Europe — Spain & UK'),
   ];
   return (
     <div className="wc-viz">
-      <div className="wc-viz-head"><span>◆ {c('MISMO PARTIDO · TU HORA', 'SAME MATCH · YOUR TIME')}</span></div>
-      <div className="wc-tz-match"><span className="wc-fx-flag">🇲🇽</span> MEX <b>–</b> CAN <span className="wc-fx-flag">🇨🇦</span></div>
-      <div className="wc-tz-grid">
+      <div className="wc-viz-head"><span>◆ {c('TU ZONA · AUTOMÁTICO', 'YOUR ZONE · AUTOMATIC')}</span></div>
+      <div className="wc-tz-note2">{c('Cada partido se muestra en tu hora local — sin convertir nada a mano.', 'Every match shows in your local time — no manual conversion.')}</div>
+      <div className="wc-tz-list">
         {zs.map((z, i) => (
-          <div className="wc-tz-chip" key={i}>
-            <span className="wc-tz-z">{z.z}</span>
-            <span className="wc-tz-t">{z.t}</span>
-          </div>
+          <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 80}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>
         ))}
       </div>
     </div>
@@ -341,16 +384,16 @@ function TimezoneVisual({ c }) {
 
 function PhoneCalendarVisual({ c }) {
   const items = [
-    { d: 'JUN 11', m: 'MEX vs CAN', f: '🇲🇽' },
-    { d: 'JUN 13', m: 'ARG vs ESP', f: '🇦🇷' },
-    { d: 'JUN 16', m: 'BRA vs GER', f: '🇧🇷' },
-    { d: 'JUN 21', m: 'FRA vs ENG', f: '🇫🇷' },
+    { d: 'JUN 11', m: c('Inauguración · Azteca', 'Opening · Azteca'), f: '🇲🇽' },
+    { d: 'JUN 11–27', m: c('Fase de grupos', 'Group stage'), f: '⚽' },
+    { d: 'JUL 4–7', m: c('Octavos de final', 'Round of 16'), f: '🔥' },
+    { d: 'JUL 19', m: c('Final · Nueva York', 'Final · New York'), f: '🏆' },
   ];
   return (
     <div className="wc-viz wc-viz-phone-wrap">
       <div className="wc-phone">
         <div className="wc-phone-notch" />
-        <div className="wc-phone-head">{c('JUNIO 2026', 'JUNE 2026')} · {c('MUNDIAL', 'WORLD CUP')}</div>
+        <div className="wc-phone-head">{c('MUNDIAL 2026', 'WORLD CUP 2026')}</div>
         <div className="wc-phone-list">
           {items.map((it, i) => (
             <div className="wc-phone-row" key={i}>
@@ -367,11 +410,11 @@ function PhoneCalendarVisual({ c }) {
 
 const FAQS = (c) => [
   { q: c('¿El calendario del Mundial 2026 es gratis?', 'Is the World Cup 2026 calendar free?'), a: c('Sí. 100% gratis. Sin cuenta, sin app, sin anuncios.', 'Yes. 100% free. No account, no app, no ads.') },
+  { q: c('¿Cuántos partidos tiene el Mundial 2026?', 'How many matches does the World Cup 2026 have?'), a: c('104 partidos: 78 en Estados Unidos, 13 en México y 13 en Canadá. Es el primer Mundial con 48 selecciones.', '104 matches: 78 in the USA, 13 in Mexico and 13 in Canada. It’s the first World Cup with 48 teams.') },
   { q: c('¿Se actualizan los horarios automáticamente?', 'Do kickoff times update automatically?'), a: c('Sí. La suscripción se sincroniza con la fuente oficial de la FIFA — si cambia un horario, tu calendario también.', 'Yes. The subscription syncs with the official FIFA source — if a kickoff changes, your calendar updates too.') },
   { q: c('¿En qué dispositivos funciona?', 'Which devices does it work on?'), a: c('iPhone, iPad, Mac, Android, Google Calendar y Outlook (archivo .ics estándar).', 'iPhone, iPad, Mac, Android, Google Calendar and Outlook (standard .ics file).') },
   { q: c('¿Puedo añadir sólo mi selección?', 'Can I add only my national team?'), a: c('Sí. Elige tus selecciones y, si quieres, suma toda la fase de eliminatorias.', 'Yes. Pick your teams and, if you like, add the entire knockout stage too.') },
-  { q: c('¿Cómo elimino el calendario?', 'How do I remove the calendar?'), a: c('iPhone: Ajustes → Calendario → Cuentas → elimina la suscripción. Google: Calendar → Otros calendarios → "X".', 'iPhone: Settings → Calendar → Accounts → remove subscription. Google: Calendar → Other calendars → "X".') },
-  { q: c('¿Quién está detrás?', 'Who’s behind this?'), a: c('FutPools — quinielas del Mundial en línea para LATAM, con premios reales.', 'FutPools — online World Cup pools for LATAM, with real prizes.') },
+  { q: c('¿Cuándo y dónde es la final del Mundial 2026?', 'When and where is the World Cup 2026 final?'), a: c('El 19 de julio de 2026 en el MetLife Stadium, Nueva York/Nueva Jersey.', 'On July 19, 2026 at MetLife Stadium, New York/New Jersey.') },
 ];
 
 // ── tiny SEO head helpers ──
@@ -392,43 +435,44 @@ function setJsonLd(id, obj) {
 }
 
 const LANDING_CSS = `
-.fp-wc26 .wc-content { gap: 14px; }
+.fp-wc26 .wc-content { gap: 0; padding-top: 8px; }
 .fp-wc26 .wc-lead { max-width: 720px; }
 .fp-wc26 .wc-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 4px; }
-.fp-wc26 .wc-content-section { background: var(--surface); border: 1px solid var(--stroke); clip-path: var(--hud-clip); padding: 18px 16px 20px; }
-.fp-wc26 .wc-h2 { font-family: var(--ox); font-weight: 800; font-size: 18px; letter-spacing: 0.3px; margin: 0 0 10px; color: var(--text); line-height: 1.25; }
-.fp-wc26 .wc-content-section p { font-size: 14px; line-height: 1.6; color: var(--text-dim); margin: 0 0 10px; }
 .fp-wc26 .wc-ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .fp-wc26 .wc-ul li { position: relative; padding-left: 20px; font-size: 13.5px; line-height: 1.5; color: var(--text-dim); }
 .fp-wc26 .wc-ul li::before { content: '◆'; position: absolute; left: 0; top: 0; color: var(--primary); font-size: 10px; line-height: 1.7; }
 .fp-wc26 .wc-btn-secondary { display: inline-flex; align-items: center; gap: 6px; font-family: var(--ox); font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--text); text-decoration: none; padding: 13px 18px; background: transparent; border: 1px solid var(--stroke-strong); clip-path: var(--hud-clip-sm); transition: border-color 0.15s, color 0.15s; }
 .fp-wc26 .wc-btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
 
-/* ── split layout (copy + visual) ── */
-.fp-wc26 .wc-split { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
+/* ── centered statement section (open, no card) ── */
+.fp-wc26 .wc-statement { text-align: center; max-width: 680px; margin: 0 auto; padding: 40px 16px 36px; }
+.fp-wc26 .wc-st-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 2.5px; color: var(--primary); font-weight: 700; margin-bottom: 12px; }
+.fp-wc26 .wc-statement h2 { font-family: var(--ox); font-weight: 900; font-size: clamp(22px, 5.5vw, 30px); line-height: 1.12; letter-spacing: -0.3px; margin: 0 0 12px; color: var(--text); }
+.fp-wc26 .wc-statement p { font-size: 15px; line-height: 1.6; color: var(--text-dim); margin: 0; }
+
+/* ── two-column section (open, divider above; visual carries the frame) ── */
+.fp-wc26 .wc-content-section { padding: 40px 0; border-top: 1px solid var(--stroke); }
+.fp-wc26 .wc-split { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: center; }
 .fp-wc26 .wc-split-copy { min-width: 0; }
+.fp-wc26 .wc-h2 { font-family: var(--ox); font-weight: 800; font-size: 19px; letter-spacing: 0.2px; margin: 0 0 12px; color: var(--text); line-height: 1.22; }
+.fp-wc26 .wc-split-copy p { font-size: 14px; line-height: 1.6; color: var(--text-dim); margin: 0 0 12px; }
 
 /* ── visual frame ── */
-.fp-wc26 .wc-viz { background: linear-gradient(180deg, rgba(33,226,140,0.04), transparent 60%), var(--surface-alt); border: 1px solid var(--stroke); clip-path: var(--hud-clip-sm); padding: 12px 12px 14px; position: relative; overflow: hidden; }
+.fp-wc26 .wc-viz { background: linear-gradient(180deg, rgba(33,226,140,0.04), transparent 60%), var(--surface-alt); border: 1px solid var(--stroke); clip-path: var(--hud-clip-sm); padding: 14px; position: relative; overflow: hidden; }
 .fp-wc26 .wc-viz::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px); }
-.fp-wc26 .wc-viz-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; margin-bottom: 10px; }
+.fp-wc26 .wc-viz-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; }
 .fp-wc26 .wc-viz-sub { color: var(--accent); }
-.fp-wc26 .wc-viz-live { display: inline-flex; align-items: center; gap: 5px; color: var(--fp-danger, #FF3B5C); }
-.fp-wc26 .wc-viz-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--fp-danger, #FF3B5C); box-shadow: 0 0 8px var(--fp-danger, #FF3B5C); animation: wcPulse 1.4s infinite; }
-@keyframes wcPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-
-/* fixtures */
-.fp-wc26 .wc-fx { display: flex; flex-direction: column; gap: 6px; }
-.fp-wc26 .wc-fx-row { display: grid; grid-template-columns: 52px 1fr 14px 1fr 34px; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%); padding: 7px 8px; }
-.fp-wc26 .wc-fx-row.green { border-color: rgba(33,226,140,0.4); }
-.fp-wc26 .wc-fx-row.gold { border-color: rgba(255,209,102,0.45); }
-.fp-wc26 .wc-fx-date { font-family: var(--mono); font-size: 8.5px; line-height: 1.2; color: var(--text-muted); letter-spacing: 0.5px; }
-.fp-wc26 .wc-fx-date span { display: block; color: var(--accent); }
-.fp-wc26 .wc-fx-team { display: flex; align-items: center; gap: 5px; font-family: var(--ox); font-weight: 800; font-size: 12px; color: var(--text); }
-.fp-wc26 .wc-fx-team.r { justify-content: flex-end; }
 .fp-wc26 .wc-fx-flag { font-size: 13px; line-height: 1; }
-.fp-wc26 .wc-fx-vs { text-align: center; color: var(--text-muted); font-size: 11px; }
-.fp-wc26 .wc-fx-tag { font-family: var(--mono); font-size: 7.5px; font-weight: 800; letter-spacing: 0.5px; color: var(--primary); text-align: right; }
+
+/* distribution bars */
+.fp-wc26 .wc-dist { display: flex; flex-direction: column; gap: 12px; }
+.fp-wc26 .wc-dist-row { display: grid; grid-template-columns: 110px 1fr 28px; align-items: center; gap: 8px; }
+.fp-wc26 .wc-dist-lbl { display: flex; align-items: center; gap: 7px; font-family: var(--ox); font-weight: 700; font-size: 12px; color: var(--text); }
+.fp-wc26 .wc-dist-bar { position: relative; height: 14px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%); display: flex; align-items: center; }
+.fp-wc26 .wc-dist-bar span { display: block; height: 100%; clip-path: polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%); transform-origin: left; animation: wcGrow 0.7s ease forwards; }
+.fp-wc26 .wc-dist-val { font-family: var(--ox); font-weight: 900; font-size: 16px; color: var(--primary); text-align: right; }
+.fp-wc26 .wc-dist-foot { margin-top: 12px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 1px; color: var(--text-muted); text-align: center; }
+@keyframes wcGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* phases */
 .fp-wc26 .wc-ph { display: flex; flex-wrap: wrap; gap: 4px 0; align-items: flex-start; }
@@ -447,12 +491,10 @@ const LANDING_CSS = `
 .fp-wc26 .wc-map-legend i { width: 8px; height: 8px; border-radius: 50%; }
 
 /* timezone */
-.fp-wc26 .wc-tz-match { font-family: var(--ox); font-weight: 800; font-size: 16px; color: var(--text); text-align: center; margin: 4px 0 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.fp-wc26 .wc-tz-match b { color: var(--text-muted); font-weight: 700; }
-.fp-wc26 .wc-tz-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-.fp-wc26 .wc-tz-chip { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%); padding: 8px 10px; }
-.fp-wc26 .wc-tz-z { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
-.fp-wc26 .wc-tz-t { font-family: var(--ox); font-weight: 800; font-size: 14px; color: var(--accent); }
+.fp-wc26 .wc-tz-note2 { font-size: 12px; line-height: 1.5; color: var(--text-dim); margin-bottom: 12px; }
+.fp-wc26 .wc-tz-list { display: flex; flex-direction: column; gap: 7px; }
+.fp-wc26 .wc-tz-item { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--accent); clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); padding: 9px 10px; font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); opacity: 0; animation: wcRise 0.45s ease forwards; }
+.fp-wc26 .wc-tz-clock { color: var(--accent); font-size: 13px; }
 
 /* phone */
 .fp-wc26 .wc-viz-phone-wrap { display: flex; justify-content: center; background: none; border: none; clip-path: none; padding: 6px 0; }
@@ -462,16 +504,18 @@ const LANDING_CSS = `
 .fp-wc26 .wc-phone-head { font-family: var(--ox); font-weight: 800; font-size: 10px; letter-spacing: 1px; color: var(--primary); text-align: center; margin: 6px 0 10px; }
 .fp-wc26 .wc-phone-list { display: flex; flex-direction: column; gap: 6px; }
 .fp-wc26 .wc-phone-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border-left: 2px solid var(--primary); padding: 7px 9px; clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); }
-.fp-wc26 .wc-phone-date { font-family: var(--mono); font-size: 8.5px; color: var(--text-muted); white-space: nowrap; }
-.fp-wc26 .wc-phone-evt { display: flex; align-items: center; gap: 5px; font-family: var(--ox); font-weight: 700; font-size: 11px; color: var(--text); }
-.fp-wc26 .wc-phone-foot { display: flex; justify-content: center; gap: 12px; margin-top: 12px; font-size: 16px; filter: grayscale(0.2); }
+.fp-wc26 .wc-phone-date { font-family: var(--mono); font-size: 8px; color: var(--text-muted); white-space: nowrap; }
+.fp-wc26 .wc-phone-evt { display: flex; align-items: center; gap: 5px; font-family: var(--ox); font-weight: 700; font-size: 10.5px; color: var(--text); }
+.fp-wc26 .wc-phone-foot { display: flex; justify-content: center; gap: 12px; margin-top: 12px; font-size: 16px; }
 
 @media (min-width: 860px) {
-  .fp-wc26 .wc-split { grid-template-columns: 1.05fr 0.95fr; gap: 28px; }
+  .fp-wc26 .wc-split { grid-template-columns: 1.05fr 0.95fr; gap: 36px; }
   .fp-wc26 .wc-split.flip .wc-split-copy { order: 2; }
   .fp-wc26 .wc-split.flip .wc-split-visual { order: 1; }
-  .fp-wc26 .wc-content-section { padding: 26px 26px 28px; }
-  .fp-wc26 .wc-h2 { font-size: 21px; }
-  .fp-wc26 .wc-content-section p { font-size: 15px; }
+  .fp-wc26 .wc-content-section { padding: 52px 0; }
+  .fp-wc26 .wc-statement { padding: 56px 16px 48px; }
+  .fp-wc26 .wc-h2 { font-size: 23px; }
+  .fp-wc26 .wc-split-copy p { font-size: 15px; }
+  .fp-wc26 .wc-viz { padding: 18px; }
 }
 `;
