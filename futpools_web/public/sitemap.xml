@@ -39,6 +39,26 @@
   </url>
 
   <url>
+    <loc>https://futpools.com/mexico-mundial-2026</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/mexico-mundial-2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/mexico-world-cup-2026" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/mexico-mundial-2026" />
+  </url>
+
+  <url>
+    <loc>https://futpools.com/mexico-world-cup-2026</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/mexico-mundial-2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/mexico-world-cup-2026" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/mexico-mundial-2026" />
+  </url>
+
+  <url>
     <loc>https://futpools.com/calendario-mundial-2026/agregar</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>weekly</changefreq>

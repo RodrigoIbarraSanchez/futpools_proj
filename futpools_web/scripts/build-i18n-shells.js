@@ -23,6 +23,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { wc26JsonLd } from '../src/seo/wc26Landing.js';
+import { mexicoJsonLd } from '../src/seo/mexicoWc26.js';
 
 const distDir = path.resolve(process.cwd(), 'dist');
 const baseHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
@@ -128,7 +129,72 @@ fs.writeFileSync(
   withSeo(enHtml, EN_SLUG, 'en')
 );
 
+// ── Mexico team landing shells ──
+// We string-swap the calendar head (present in baseHtml) → Mexico's, per
+// locale, then inject canonical + JSON-LD. swap() warns if a source string
+// drifts (so we notice when index.html changes and a shell silently stops
+// updating). For many landings, factor this into a data table.
+const MX_ES_SLUG = 'mexico-mundial-2026';
+const MX_EN_SLUG = 'mexico-world-cup-2026';
+const CAL = {
+  title: '<title>Calendario Mundial 2026 — Partidos, horarios y fechas | FutPools</title>',
+  desc: '<meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook — gratis." />',
+  ogTitle: '<meta property="og:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
+  ogDesc: '<meta property="og:description" content="Calendario del Mundial 2026: los 104 partidos con fechas y horarios en tu zona. Añádelos a iPhone, Google Calendar, Android u Outlook. Gratis." />',
+  ogUrl: '<meta property="og:url" content="https://futpools.com/calendario-mundial-2026" />',
+  twTitle: '<meta name="twitter:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
+  twDesc: '<meta name="twitter:description" content="Calendario del Mundial 2026: 104 partidos con fechas y horarios en tu zona. Gratis, sin app." />',
+  hrefBlock: '<link rel="alternate" hreflang="es" href="https://futpools.com/calendario-mundial-2026" />\n    <link rel="alternate" hreflang="en" href="https://futpools.com/world-cup-2026-calendar" />\n    <link rel="alternate" hreflang="x-default" href="https://futpools.com/calendario-mundial-2026" />',
+  ogLocale: '<meta property="og:locale" content="es_MX" />',
+  ogLocaleAlt: '<meta property="og:locale:alternate" content="en_US" />',
+};
+const swap = (html, from, to, label) => {
+  if (!html.includes(from)) { console.warn(`[mx shell] missing source string: ${label}`); return html; }
+  return html.replace(from, to);
+};
+function mexicoShell(locale) {
+  const es = locale === 'es';
+  const slug = es ? MX_ES_SLUG : MX_EN_SLUG;
+  const h = es ? {
+    title: 'Partidos de México en el Mundial 2026 — Fechas y horarios | FutPools',
+    desc: 'Todos los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios — añádelos a tu calendario gratis.',
+    ogTitle: 'Partidos de México en el Mundial 2026 — fechas y horarios',
+    ogDesc: 'Los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios. Gratis.',
+    twDesc: 'México en el Mundial 2026: Grupo A, 3 partidos con fechas y sedes. Añádelos a tu calendario gratis.',
+  } : {
+    title: 'Mexico at the World Cup 2026 — Matches, Dates & Times | FutPools',
+    desc: 'All of Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times — add them to your calendar free.',
+    ogTitle: 'Mexico at the World Cup 2026 — matches, dates & times',
+    ogDesc: 'Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times. Free.',
+    twDesc: 'Mexico at the World Cup 2026: Group A, 3 matches with dates and venues. Add them to your calendar free.',
+  };
+  let html = baseHtml;
+  html = swap(html, CAL.title, `<title>${h.title}</title>`, 'title');
+  html = swap(html, CAL.desc, `<meta name="description" content="${h.desc}" />`, 'description');
+  html = swap(html, CAL.ogTitle, `<meta property="og:title" content="${h.ogTitle}" />`, 'og:title');
+  html = swap(html, CAL.ogDesc, `<meta property="og:description" content="${h.ogDesc}" />`, 'og:description');
+  html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${slug}" />`, 'og:url');
+  html = swap(html, CAL.twTitle, `<meta name="twitter:title" content="${h.ogTitle}" />`, 'twitter:title');
+  html = swap(html, CAL.twDesc, `<meta name="twitter:description" content="${h.twDesc}" />`, 'twitter:description');
+  html = swap(html, CAL.hrefBlock,
+    `<link rel="alternate" hreflang="es" href="https://futpools.com/${MX_ES_SLUG}" />\n    <link rel="alternate" hreflang="en" href="https://futpools.com/${MX_EN_SLUG}" />\n    <link rel="alternate" hreflang="x-default" href="https://futpools.com/${MX_ES_SLUG}" />`,
+    'hreflang');
+  if (!es) {
+    html = swap(html, CAL.ogLocale, '<meta property="og:locale" content="en_US" />', 'og:locale');
+    html = swap(html, CAL.ogLocaleAlt, '<meta property="og:locale:alternate" content="es_MX" />', 'og:locale:alternate');
+  }
+  return html.replace('</head>',
+    `    <link rel="canonical" href="https://futpools.com/${slug}" />\n` +
+    `    <script type="application/ld+json">${JSON.stringify(mexicoJsonLd(locale))}</script>\n  </head>`);
+}
+ensureDir(path.join(distDir, MX_ES_SLUG));
+ensureDir(path.join(distDir, MX_EN_SLUG));
+fs.writeFileSync(path.join(distDir, `${MX_ES_SLUG}/index.html`), mexicoShell('es'));
+fs.writeFileSync(path.join(distDir, `${MX_EN_SLUG}/index.html`), mexicoShell('en'));
+
 console.log('[i18n shells] wrote:');
 console.log(`  dist/${ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${EN_SLUG}/index.html  (en)`);
+console.log(`  dist/${MX_ES_SLUG}/index.html  (es)`);
+console.log(`  dist/${MX_EN_SLUG}/index.html  (en)`);
 console.log('  dist/404.html                          (es)');

@@ -21,11 +21,16 @@ const webBase = () => (process.env.WEB_APP_BASE_URL || 'https://futpools.com').r
 // both bilingual. Each declares its ES/EN/x-default alternates.
 const WC_LANDING_ALT = [['es', '/calendario-mundial-2026'], ['en', '/world-cup-2026-calendar'], ['x-default', '/calendario-mundial-2026']];
 const WC_TOOL_ALT = [['es', '/calendario-mundial-2026/agregar'], ['en', '/world-cup-2026-calendar/add'], ['x-default', '/calendario-mundial-2026/agregar']];
+// Team landings (topic-cluster children of the calendar landing).
+const MX_LANDING_ALT = [['es', '/mexico-mundial-2026'], ['en', '/mexico-world-cup-2026'], ['x-default', '/mexico-mundial-2026']];
 const STATIC_ROUTES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   // Keyword landing pages (highest-value SEO).
   { path: '/calendario-mundial-2026', changefreq: 'weekly', priority: '0.9', alternates: WC_LANDING_ALT },
   { path: '/world-cup-2026-calendar', changefreq: 'weekly', priority: '0.9', alternates: WC_LANDING_ALT },
+  // Team landings.
+  { path: '/mexico-mundial-2026', changefreq: 'weekly', priority: '0.8', alternates: MX_LANDING_ALT },
+  { path: '/mexico-world-cup-2026', changefreq: 'weekly', priority: '0.8', alternates: MX_LANDING_ALT },
   // The export tool (utility, lower priority).
   { path: '/calendario-mundial-2026/agregar', changefreq: 'weekly', priority: '0.6', alternates: WC_TOOL_ALT },
   { path: '/world-cup-2026-calendar/add', changefreq: 'weekly', priority: '0.6', alternates: WC_TOOL_ALT },

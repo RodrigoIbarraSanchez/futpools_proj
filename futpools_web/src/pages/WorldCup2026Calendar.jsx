@@ -137,6 +137,21 @@ export function WorldCup2026Calendar() {
     link.setAttribute('href', href);
   }, [locale]);
 
+  // Pre-select a team from the URL (?team=mexico) so team landing pages can
+  // deep-link straight into a filtered calendar. Best-effort: matches by name
+  // once the team list loads; no-ops if the team/data isn't present.
+  useEffect(() => {
+    const wanted = new URLSearchParams(location.search).get('team');
+    if (!wanted || !teams.length) return;
+    const q = wanted.trim().toLowerCase();
+    const match = teams.find((t) => t.name.toLowerCase().includes(q));
+    if (match) {
+      setScope('teams');
+      setSelectedTeams(new Set([match.id]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teams, location.search]);
+
   // Path back to the keyword landing page (for the breadcrumb).
   const landingPath = locale === 'es' ? '/calendario-mundial-2026' : '/world-cup-2026-calendar';
 

@@ -20,6 +20,7 @@ import ArenaApp from './arena/ArenaApp';
 import { LandingPage } from './pages/LandingPage';
 import { WorldCup2026Calendar } from './pages/WorldCup2026Calendar';
 import { WorldCup2026Landing } from './pages/WorldCup2026Landing';
+import { MexicoWorldCup2026 } from './pages/MexicoWorldCup2026';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -84,6 +85,9 @@ export default function App() {
             {/* The calendar tool (3-step export) lives under the landing. */}
             <Route path="/calendario-mundial-2026/agregar" element={<WorldCup2026Calendar />} />
             <Route path="/world-cup-2026-calendar/add" element={<WorldCup2026Calendar />} />
+            {/* Team landing (topic-cluster child of the calendar landing). */}
+            <Route path="/mexico-mundial-2026" element={<MexicoWorldCup2026 />} />
+            <Route path="/mexico-world-cup-2026" element={<MexicoWorldCup2026 />} />
             {/* Legacy concatenated slugs → 301 at the host (_redirects); this
                 client-side Navigate covers any in-app navigation. */}
             <Route path="/calendariomundial2026" element={<Navigate to="/calendario-mundial-2026" replace />} />

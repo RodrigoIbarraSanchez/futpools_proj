@@ -40,6 +40,7 @@ export function WorldCup2026Landing() {
 
   const landingPath = locale === 'es' ? '/calendario-mundial-2026' : '/world-cup-2026-calendar';
   const toolPath = locale === 'es' ? '/calendario-mundial-2026/agregar' : '/world-cup-2026-calendar/add';
+  const mexPath = locale === 'es' ? '/mexico-mundial-2026' : '/mexico-world-cup-2026';
   const canonical = ORIGIN + landingPath;
 
   useEffect(() => {
@@ -124,6 +125,12 @@ export function WorldCup2026Landing() {
             <li>{c('48 selecciones en 12 grupos de 4', '48 teams in 12 groups of 4')}</li>
             <li>{c('La inauguración es en el Estadio Azteca (CDMX) el 11 de junio', 'The opening match is at Estadio Azteca (Mexico City) on June 11')}</li>
           </ul>
+          <p style={{ marginTop: 10 }}>
+            {c('¿Sigues a una selección? Mira los ', 'Following a team? See ')}
+            <Link to={mexPath} style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}>
+              {c('partidos de México en el Mundial 2026', 'Mexico’s World Cup 2026 matches')}
+            </Link>.
+          </p>
         </Split>
 
         {/* two-column flip: stages */}
@@ -242,7 +249,7 @@ export function WorldCup2026Landing() {
 }
 
 // ── Centered "statement" section (Reverb rhythm: divides the two-column ones). ──
-function Statement({ kicker, title, children }) {
+export function Statement({ kicker, title, children }) {
   return (
     <section className="wc-statement">
       {kicker && <div className="wc-st-kicker">{kicker}</div>}
@@ -253,7 +260,7 @@ function Statement({ kicker, title, children }) {
 }
 
 // ── Two-column section: copy on one side, visual on the other (alternates). ──
-function Split({ title, visual, flip, children }) {
+export function Split({ title, visual, flip, children }) {
   return (
     <section className="wc-content-section">
       <div className={`wc-split ${flip ? 'flip' : ''}`}>
@@ -399,23 +406,23 @@ function PhoneCalendarVisual({ c }) {
 }
 
 // ── tiny SEO head helpers ──
-function setMeta(name, content) {
+export function setMeta(name, content) {
   let el = document.querySelector(`meta[name="${name}"]`);
   if (!el) { el = document.createElement('meta'); el.setAttribute('name', name); document.head.appendChild(el); }
   el.setAttribute('content', content);
 }
-function setCanonical(href) {
+export function setCanonical(href) {
   let el = document.querySelector('link[rel="canonical"]');
   if (!el) { el = document.createElement('link'); el.setAttribute('rel', 'canonical'); document.head.appendChild(el); }
   el.setAttribute('href', href);
 }
-function setJsonLd(id, obj) {
+export function setJsonLd(id, obj) {
   let el = document.getElementById(id);
   if (!el) { el = document.createElement('script'); el.id = id; el.type = 'application/ld+json'; document.head.appendChild(el); }
   el.textContent = JSON.stringify(obj);
 }
 
-const LANDING_CSS = `
+export const LANDING_CSS = `
 .fp-wc26 .wc-content { gap: 0; padding-top: 8px; }
 .fp-wc26 .wc-lead { max-width: 720px; }
 .fp-wc26 .wc-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 4px; }

@@ -145,6 +145,31 @@ sitemap, correct `<title>`); run Google's **Rich Results Test** on each locale.
 
 ---
 
+## 7b. Validated patterns (shipped landings)
+
+**Reuse the shared primitives** — they're exported from `WorldCup2026Landing.jsx`:
+`Statement`, `Split`, `LANDING_CSS`, `setMeta`, `setCanonical`, `setJsonLd`
+(and `WC_CSS` from `WorldCup2026Calendar.jsx`). A new landing = import these +
+write copy + 2–3 page-specific SVG visuals + a `MX_CSS`-style block. Don't
+re-implement the rhythm or head helpers.
+
+**Team / topic-cluster landings** (e.g. `MexicoWorldCup2026.jsx`,
+`/mexico-mundial-2026` · `/mexico-world-cup-2026`):
+- They are **children** of the pillar calendar landing. Cross-link both ways:
+  pillar → cluster (contextual link in a section) and cluster → pillar
+  (secondary CTA). Plus the public-home footer links each one. This is the
+  topic cluster — it's what makes the IA from the video pay off.
+- The CTA **deep-links into the shared tool pre-filtered**:
+  `…/agregar?team=mexico`. The tool reads `?team=` and selects the matching
+  team on load (`WorldCup2026Calendar.jsx`). One tool, many entry points.
+- Data lives in `src/seo/<team>.js` (verified fixtures + FAQ + JSON-LD),
+  imported by the component AND the shell script — single source.
+
+**Additional shells** in `build-i18n-shells.js` = string-swap the calendar head
+(present in `baseHtml`) → the new page's, per locale, via the `swap()` helper
+(it warns if a source string drifts). Inject canonical + JSON-LD. Add both
+slugs to the sitemap (`sitemapController.js` + `public/sitemap.xml`).
+
 ## 7. Honest defaults / decisions baked in
 
 - **Tool pages are self-canonical** (different intent: "add to Google Calendar"
