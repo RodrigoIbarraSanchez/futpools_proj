@@ -5,10 +5,10 @@
  * language for each URL, and Render serves a 200 OK at those paths
  * (rather than the 404 it returns for _redirects-rewritten routes).
  *
- *   dist/index.html                          → default (Spanish)
- *   dist/404.html                            → SPA fallback (Spanish)
- *   dist/calendariomundial2026/index.html    → Spanish shell
- *   dist/worldcup2026calendar/index.html     → ENGLISH shell
+ *   dist/index.html                            → default (Spanish)
+ *   dist/404.html                              → SPA fallback (Spanish)
+ *   dist/calendario-mundial-2026/index.html    → Spanish landing shell
+ *   dist/world-cup-2026-calendar/index.html    → ENGLISH landing shell
  *
  * The SPA bundle is locale-aware at runtime via the URL-based locale
  * override; this script's only job is to swap the static <title>,
@@ -36,24 +36,24 @@ const ES_TO_EN = [
     '<html lang="en">',
   ],
   [
-    '<title>FutPools — Calendario Mundial 2026</title>',
-    '<title>FutPools — World Cup 2026 Calendar</title>',
+    '<title>Calendario Mundial 2026 — Partidos, horarios y fechas | FutPools</title>',
+    '<title>World Cup 2026 Calendar — Schedule, Fixtures & Dates | FutPools</title>',
   ],
   [
-    '<meta name="description" content="Añade los 104 partidos del Mundial 2026 a tu calendario en 3 pasos. Gratis. iPhone, Google Calendar, Android, Outlook." />',
-    '<meta name="description" content="Add all 104 FIFA World Cup 2026 matches to your calendar in 3 steps. Free. iPhone, Google Calendar, Android, Outlook." />',
+    '<meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook — gratis." />',
+    '<meta name="description" content="Complete World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook — free." />',
   ],
   [
-    '<meta property="og:title" content="Calendario Mundial 2026 — añade todos los partidos a tu calendario" />',
-    '<meta property="og:title" content="World Cup 2026 Calendar — add every match to your calendar" />',
+    '<meta property="og:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
+    '<meta property="og:title" content="World Cup 2026 Calendar — schedule, fixtures & dates" />',
   ],
   [
-    '<meta property="og:description" content="Sincroniza los 104 partidos del Mundial FIFA 2026 con iPhone, Google Calendar, Android u Outlook en 3 pasos. Gratis." />',
-    '<meta property="og:description" content="Sync all 104 FIFA World Cup 2026 matches to iPhone, Google Calendar, Android, or Outlook in 3 steps. Free." />',
+    '<meta property="og:description" content="Calendario del Mundial 2026: los 104 partidos con fechas y horarios en tu zona. Añádelos a iPhone, Google Calendar, Android u Outlook. Gratis." />',
+    '<meta property="og:description" content="World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook. Free." />',
   ],
   [
-    '<meta property="og:url" content="https://futpools.com/calendariomundial2026" />',
-    '<meta property="og:url" content="https://futpools.com/worldcup2026calendar" />',
+    '<meta property="og:url" content="https://futpools.com/calendario-mundial-2026" />',
+    '<meta property="og:url" content="https://futpools.com/world-cup-2026-calendar" />',
   ],
   [
     '<meta property="og:image:alt" content="Vista de calendario con los 104 partidos del Mundial 2026, cada uno con la bandera de su selección." />',
@@ -68,12 +68,12 @@ const ES_TO_EN = [
     '<meta property="og:locale:alternate" content="es_MX" />',
   ],
   [
-    '<meta name="twitter:title" content="Calendario Mundial 2026 — añade todos los partidos a tu calendario" />',
-    '<meta name="twitter:title" content="World Cup 2026 Calendar — add every match to your calendar" />',
+    '<meta name="twitter:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
+    '<meta name="twitter:title" content="World Cup 2026 Calendar — schedule, fixtures & dates" />',
   ],
   [
-    '<meta name="twitter:description" content="Sincroniza los 104 partidos del Mundial 2026 con tu calendario en 3 pasos. Gratis, sin app." />',
-    '<meta name="twitter:description" content="Sync all 104 World Cup 2026 matches to your calendar in 3 steps. Free, no app needed." />',
+    '<meta name="twitter:description" content="Calendario del Mundial 2026: 104 partidos con fechas y horarios en tu zona. Gratis, sin app." />',
+    '<meta name="twitter:description" content="World Cup 2026 calendar: 104 matches with dates and kickoff times in your timezone. Free, no app." />',
   ],
   [
     '<meta name="twitter:image:alt" content="Vista de calendario con los 104 partidos del Mundial 2026 y las banderas de cada selección." />',
@@ -97,17 +97,31 @@ if (missing) {
 
 const ensureDir = (p) => fs.mkdirSync(p, { recursive: true });
 
-ensureDir(path.join(distDir, 'calendariomundial2026'));
-ensureDir(path.join(distDir, 'worldcup2026calendar'));
+// Inject a self-referencing canonical into a shell (the base index.html /
+// root has none on purpose — it's the home, not the calendar).
+const withCanonical = (html, url) =>
+  html.replace('</head>', `    <link rel="canonical" href="${url}" />\n  </head>`);
 
-// Spanish shells (identical to base)
-fs.writeFileSync(path.join(distDir, 'calendariomundial2026/index.html'), baseHtml);
+const ES_SLUG = 'calendario-mundial-2026';
+const EN_SLUG = 'world-cup-2026-calendar';
+
+ensureDir(path.join(distDir, ES_SLUG));
+ensureDir(path.join(distDir, EN_SLUG));
+
+// Spanish shell (ES strings + ES canonical)
+fs.writeFileSync(
+  path.join(distDir, `${ES_SLUG}/index.html`),
+  withCanonical(baseHtml, `https://futpools.com/${ES_SLUG}`)
+);
 fs.writeFileSync(path.join(distDir, '404.html'), baseHtml);
 
-// English shell
-fs.writeFileSync(path.join(distDir, 'worldcup2026calendar/index.html'), enHtml);
+// English shell (EN strings + EN canonical)
+fs.writeFileSync(
+  path.join(distDir, `${EN_SLUG}/index.html`),
+  withCanonical(enHtml, `https://futpools.com/${EN_SLUG}`)
+);
 
 console.log('[i18n shells] wrote:');
-console.log('  dist/calendariomundial2026/index.html  (es)');
-console.log('  dist/worldcup2026calendar/index.html   (en)');
+console.log(`  dist/${ES_SLUG}/index.html  (es)`);
+console.log(`  dist/${EN_SLUG}/index.html  (en)`);
 console.log('  dist/404.html                          (es)');

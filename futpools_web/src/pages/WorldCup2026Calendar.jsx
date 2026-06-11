@@ -72,9 +72,9 @@ export function WorldCup2026Calendar() {
   // which our setLocale persists.
   useEffect(() => {
     const path = location.pathname.toLowerCase();
-    if (path.startsWith('/calendariomundial2026') && locale !== 'es') {
+    if (path.startsWith('/calendario-mundial-2026') && locale !== 'es') {
       setLocale('es');
-    } else if (path.startsWith('/worldcup2026calendar') && locale !== 'en') {
+    } else if (path.startsWith('/world-cup-2026-calendar') && locale !== 'en') {
       setLocale('en');
     }
     // Intentionally only depend on pathname — re-running when locale
@@ -122,6 +122,23 @@ export function WorldCup2026Calendar() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // SEO: this is the TOOL page (utility intent). Self-canonical to its own
+  // hyphenated URL + a tool-specific title; the keyword-rich landing page
+  // is what ranks for "calendario mundial 2026".
+  useEffect(() => {
+    document.title = c(
+      'Añadir el Mundial 2026 a tu calendario — iPhone, Google, Android | FutPools',
+      'Add the World Cup 2026 to your calendar — iPhone, Google, Android | FutPools'
+    );
+    const href = 'https://futpools.com' + (locale === 'es' ? '/calendario-mundial-2026/agregar' : '/world-cup-2026-calendar/add');
+    let link = document.querySelector('link[rel="canonical"]');
+    if (!link) { link = document.createElement('link'); link.rel = 'canonical'; document.head.appendChild(link); }
+    link.setAttribute('href', href);
+  }, [locale]);
+
+  // Path back to the keyword landing page (for the breadcrumb).
+  const landingPath = locale === 'es' ? '/calendario-mundial-2026' : '/world-cup-2026-calendar';
 
   const filteredTeams = useMemo(() => {
     const q = teamSearch.trim().toLowerCase();
@@ -238,6 +255,14 @@ export function WorldCup2026Calendar() {
       <header className="wc-hero">
         <div className="wc-grid-bg" />
         <div className="wc-hero-inner">
+          <Link
+            to={landingPath}
+            style={{
+              display: 'inline-block', marginBottom: 10,
+              fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: 1,
+              color: 'var(--text-dim)', textDecoration: 'none',
+            }}
+          >← {c('Calendario del Mundial 2026', 'World Cup 2026 Calendar')}</Link>
           <div className="wc-kicker">◆ {c('CALENDARIO OFICIAL · MUNDIAL 2026', 'OFFICIAL SCHEDULE · WORLD CUP 2026')}</div>
           <h1>
             <span>{c('AÑADE TODOS LOS PARTIDOS', 'ADD EVERY MATCH')}</span><br />
@@ -638,7 +663,7 @@ const scopeCount = (scope, teamCount, total) => {
  *   sm      (min-width:640)            2-col grids, roomier padding
  *   lg      (min-width:960)            3-col grids, full hero, max-width clamp
  */
-const WC_CSS = `
+export const WC_CSS = `
 .fp-wc26 {
   --bg: var(--fp-bg);
   --surface: var(--fp-surface);

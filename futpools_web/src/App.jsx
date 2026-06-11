@@ -19,6 +19,7 @@ import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
 import ArenaApp from './arena/ArenaApp';
 import { LandingPage } from './pages/LandingPage';
 import { WorldCup2026Calendar } from './pages/WorldCup2026Calendar';
+import { WorldCup2026Landing } from './pages/WorldCup2026Landing';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -77,8 +78,16 @@ export default function App() {
                 page is bilingual (ES/EN) and lets visitors export the FIFA
                 WC 2026 schedule to iPhone, Google Calendar, Android, or
                 Outlook. Backed by /world-cup-2026/* on the API. */}
-            <Route path="/calendariomundial2026" element={<WorldCup2026Calendar />} />
-            <Route path="/worldcup2026calendar" element={<WorldCup2026Calendar />} />
+            {/* SEO landing pages (content) — the CTA navigates to the tool. */}
+            <Route path="/calendario-mundial-2026" element={<WorldCup2026Landing />} />
+            <Route path="/world-cup-2026-calendar" element={<WorldCup2026Landing />} />
+            {/* The calendar tool (3-step export) lives under the landing. */}
+            <Route path="/calendario-mundial-2026/agregar" element={<WorldCup2026Calendar />} />
+            <Route path="/world-cup-2026-calendar/add" element={<WorldCup2026Calendar />} />
+            {/* Legacy concatenated slugs → 301 at the host (_redirects); this
+                client-side Navigate covers any in-app navigation. */}
+            <Route path="/calendariomundial2026" element={<Navigate to="/calendario-mundial-2026" replace />} />
+            <Route path="/worldcup2026calendar" element={<Navigate to="/world-cup-2026-calendar" replace />} />
 
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
