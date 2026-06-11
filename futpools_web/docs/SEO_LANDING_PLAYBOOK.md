@@ -1,0 +1,157 @@
+# FutPools — SEO Landing Page Playbook
+
+> Reusable rules + structure for shipping bottom-of-funnel SEO landing pages.
+> Canonical reference implementation: **`src/pages/WorldCup2026Landing.jsx`**
+> (the World Cup 2026 calendar landing). Copy it; don't reinvent it.
+>
+> **Every landing ships bilingual (ES + EN)** — both URLs are submitted to
+> Google Search Console. No exceptions.
+
+---
+
+## 0. The model (one page = one keyword, content + CTA → tool)
+
+Based on the "bottom-of-funnel SEO landing page" template (Compact Keywords).
+A landing is **content that ranks**; its CTA sends the visitor to the **tool**
+that satisfies the intent. The landing is NOT a thin doorway — it carries real
+content (sections, bullets, FAQ), so it ranks AND converts.
+
+```
+Search → Landing (/keyword-slug, content + H1 + CTA) → Tool (/keyword-slug/action) → Conversion
+```
+
+Architecture (information architecture / IA):
+- **Landing** = the SEO page, e.g. `/calendario-mundial-2026` (priority 0.9).
+- **Tool** = the utility under it, e.g. `/calendario-mundial-2026/agregar` (0.6, self-canonical).
+- Keep a rational parent/child hierarchy so you can scale (`/calendario-mundial-2026/mexico`, etc.).
+
+---
+
+## 1. Content template (what goes on the page)
+
+Fill this out (ES + EN) BEFORE writing code — it's the authoring template:
+
+| Field | Rule |
+|---|---|
+| **Primary keyword** | One per page. The whole page targets it. |
+| **Secondary keywords** | 2–5 related terms; weave into H2s + copy. |
+| **URL slug** | The keyword, **hyphen-separated, lowercase** (`calendario-mundial-2026`). Never run words together in a path. |
+| **`<title>`** | `[Primary Keyword] — [kw2], [kw3] \| FutPools`. Keyword first. ≤ 60 chars ideal. |
+| **Meta description** | Lead with the keyword. Compelling. ~150–160 chars. |
+| **H1** | The primary keyword (exactly one `<h1>` on the page). |
+| **Intro** | First sentence **leads with the keyword**. ~3 sentences, short and punchy. |
+| **Primary CTA (top)** | Button → the tool. Right after the intro. |
+| **H2 sections** | As many as needed (≥4). Each: 1–2 punchy sentences + a bullet list. Put the keyword in several H2s. |
+| **CTA (bottom)** | Repeat the primary CTA. Add a secondary conversion CTA (e.g. → onboarding). |
+| **FAQ** | 4–6 Q&A. Powers FAQ rich results via JSON-LD. |
+
+Copy style (from the video): sentences **short and punchy** (often one line),
+paragraphs of 1–3 sentences, **bullets everywhere**. No fluff.
+
+**Section rhythm (Reverb-style):** alternate centered **statement** sections
+(`<Statement>` — no visual, big centered H2 + 1 sentence) with two-column
+**copy + visual** sections (`<Split>`, visual side alternates via `flip`). This
+gives variety instead of a wall of identical cards.
+
+---
+
+## 2. Technical SEO checklist (every landing)
+
+- [ ] **Canonical** — self-referencing, per locale. Baked into the static shell **and** set client-side. (`build-i18n-shells.js` + `setCanonical`)
+- [ ] **hreflang** — `es`, `en`, `x-default` in `index.html` + the EN shell.
+- [ ] **Open Graph + Twitter Card** — title/description/image per locale (`index.html` base + `build-i18n-shells.js` ES→EN map).
+- [ ] **JSON-LD** — `FAQPage` + `BreadcrumbList`, per locale, **baked into the shell** (not only client-side) so non-JS crawlers see it. Single source: a `src/seo/<page>.js` module imported by BOTH the component and `build-i18n-shells.js`.
+- [ ] **Per-locale static shell** — `dist/<es-slug>/index.html` + `dist/<en-slug>/index.html` with correct `<title>`/meta/canonical/JSON-LD, so crawlers get the right language without running JS.
+- [ ] **Sitemap** — add both slugs to `sitemapController.js` (`STATIC_ROUTES`) with hreflang alternates (landing 0.9, tool 0.6) **and** to `public/sitemap.xml` (static fallback). All `<loc>` use `https://futpools.com`.
+- [ ] **robots.txt** — already points to the sitemap; ensure the landing isn't disallowed.
+- [ ] **301 on URL change** — never rename a live slug without a 301 in `public/_redirects` (before the catch-all) + a client `<Navigate>` in `App.jsx`.
+- [ ] **Internal links (NO ORPHANS)** — link the landing from the public home (`LandingPage.jsx` nav + footer), locale-aware. An orphan page (only in the sitemap) under-ranks. This is the easiest gap to forget.
+- [ ] **Bilingual** — every string via `c(es, en)`; both URLs submitted to Search Console.
+- [ ] **Image alts** — SVG/CSS visuals: `role="img"` + bilingual `aria-label` on the visual root (decorative inner SVG → `aria-hidden`).
+
+---
+
+## 3. Design system & visuals
+
+Reuse the **WC26 HUD aesthetic** — do NOT introduce a new look per page:
+- Import `WC_CSS` from `WorldCup2026Calendar.jsx` (shared nav/hero/footer/CTA/buttons + tokens: Oxanium display, neon green `#21E28C`, cyan `#36E9FF`, magenta `#FF2BD6`, clip-path corner-cuts, scanlines, perspective grid).
+- Add a page-specific `LANDING_CSS` block for the content sections.
+
+**Visuals = hand-built SVG/CSS, never raster.** They stay crisp at any DPI,
+weigh ~0 KB, cause no layout shift, and stay on-brand. Patterns in the WC26 page
+you can reuse: distribution bars, a phases stepper, a dotted region map, a
+timezone list, a phone mockup. One well-orchestrated staggered load
+(`animation-delay`) beats scattered micro-animations.
+
+**Accuracy is non-negotiable.** Never invent data (e.g. specific match
+fixtures that depend on a draw). Use only verified facts (dates, venues,
+distribution). Web-search to confirm before publishing.
+
+---
+
+## 4. File map (where each thing lives)
+
+| Concern | File |
+|---|---|
+| Landing component (reference) | `src/pages/WorldCup2026Landing.jsx` |
+| Tool component | `src/pages/WorldCup2026Calendar.jsx` (exports `WC_CSS`) |
+| FAQ + JSON-LD (shared source) | `src/seo/wc26Landing.js` |
+| Routes + legacy `<Navigate>` | `src/App.jsx` |
+| 301 redirects | `public/_redirects` |
+| Per-locale shells + canonical + JSON-LD | `scripts/build-i18n-shells.js` |
+| Base `<title>`/meta/OG/hreflang | `index.html` |
+| Sitemap (dynamic) | `futpools_backend/src/controllers/sitemapController.js` |
+| Sitemap (static fallback) | `public/sitemap.xml` |
+| Internal link from public home | `src/pages/LandingPage.jsx` (nav + footer) |
+
+---
+
+## 5. Ship a new landing — step by step
+
+1. **Fill the content template** (§1) in ES + EN: keyword, slugs, title, meta, H1, intro, H2s, FAQ.
+2. **Copy `WorldCup2026Landing.jsx`** → new component. Replace copy/visuals; keep the `Statement`/`Split` rhythm and the SEO head helpers.
+3. **Create `src/seo/<page>.js`** (copy `wc26Landing.js`): FAQ data `{ q:{es,en}, a:{es,en} }` + `<page>JsonLd(locale)`. Import it in the component AND the shell script.
+4. **Routes** in `App.jsx`: landing (es/en) → component; tool (es/en) → tool; legacy `<Navigate>` if replacing a URL.
+5. **Shells** in `build-i18n-shells.js`: add the ES→EN substitutions for the new title/meta/OG, the new shell dirs, canonical + JSON-LD injection per locale.
+6. **`index.html`**: keyword-led `<title>`/meta/OG/hreflang for the new landing (if it's the primary share target).
+7. **Sitemap**: add both slugs to `sitemapController.js` + `public/sitemap.xml` (landing 0.9 + hreflang, tool 0.6).
+8. **301** in `public/_redirects` if you renamed a live slug.
+9. **Internal link**: add to `LandingPage.jsx` nav + footer (locale-aware). **Do not skip.**
+10. **QA** (§6) → deploy → submit both URLs in Search Console + Rich Results Test.
+
+---
+
+## 6. Pre-publish QA (run before deploy)
+
+```bash
+# Build generates the per-locale shells + sitemap snapshot
+SITEMAP_API_URL=http://localhost:3000 npm run build
+
+# Shells exist with the right title + canonical + per-locale JSON-LD
+grep -o '<title>[^<]*' dist/<es-slug>/index.html dist/<en-slug>/index.html
+grep -c 'application/ld+json' dist/<es-slug>/index.html dist/<en-slug>/index.html
+
+# Sitemap has both slugs (+ hreflang) and is valid XML
+curl -s http://localhost:3000/sitemap.xml | grep -c '<loc>'
+python3 -c "import xml.dom.minidom as m; m.parse('dist/sitemap.xml'); print('valid')"
+
+# Exactly one <h1>; CTAs top + bottom; internal link present
+grep -c '<h1' src/pages/<Component>.jsx
+grep -rn '<es-slug>\|<en-slug>' src/pages/LandingPage.jsx   # internal link wired
+```
+
+After deploy: `curl -sI` the old slug → expect **301**; open both URLs (table-styled
+sitemap, correct `<title>`); run Google's **Rich Results Test** on each locale.
+
+---
+
+## 7. Honest defaults / decisions baked in
+
+- **Tool pages are self-canonical** (different intent: "add to Google Calendar"
+  long-tail), lower sitemap priority. They don't compete with the landing's head term.
+- **The root `/` shell has no canonical/JSON-LD** for a specific landing — it's
+  the home (`LandingPage`), not a landing. Only the landing shells get them.
+- **`build-sitemap.js` race on first deploy:** the web build fetches the backend
+  sitemap; if the backend is mid-deploy it may snapshot the old one (or fall back
+  to `public/sitemap.xml`). Re-deploy the web after the backend is live, or rely
+  on the static fallback (which we keep current).

@@ -18,6 +18,9 @@ import { useLocale } from '../context/LocaleContext';
 export function LandingPage() {
   const { locale, setLocale } = useLocale();
   const c = (es, en) => (locale === 'es' ? es : en);
+  // Locale-aware internal link to the World Cup 2026 calendar SEO landing —
+  // links it from the highest-authority public page so it isn't orphaned.
+  const wcPath = locale === 'es' ? '/calendario-mundial-2026' : '/world-cup-2026-calendar';
 
   // Smooth-scroll for in-page anchor links (#how, #features, …). React Router
   // only handles route changes, so we intercept the click ourselves.
@@ -48,6 +51,7 @@ export function LandingPage() {
           <a href="#features">{c('Features', 'Features')}</a>
           <a href="#gamify">{c('Progresión', 'Progression')}</a>
           <a href="#screens">{c('App', 'App')}</a>
+          <Link to={wcPath}>{c('Calendario Mundial', 'World Cup Calendar')}</Link>
         </div>
         <div className="nav-right">
           <div className="lang-switch">
@@ -291,6 +295,7 @@ export function LandingPage() {
       <footer>
         <div>© 2026 FUTPOOLS · futpools.com</div>
         <div className="links">
+          <Link to={wcPath}>{c('Calendario Mundial 2026', 'World Cup 2026 Calendar')}</Link>
           <a href="#">{c('Privacidad', 'Privacy')}</a>
           <a href="#">{c('Términos', 'Terms')}</a>
           <a href="#">{c('Contacto', 'Contact')}</a>

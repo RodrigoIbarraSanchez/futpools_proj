@@ -22,6 +22,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { wc26JsonLd } from '../src/seo/wc26Landing.js';
 
 const distDir = path.resolve(process.cwd(), 'dist');
 const baseHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
@@ -97,10 +98,16 @@ if (missing) {
 
 const ensureDir = (p) => fs.mkdirSync(p, { recursive: true });
 
-// Inject a self-referencing canonical into a shell (the base index.html /
-// root has none on purpose — it's the home, not the calendar).
-const withCanonical = (html, url) =>
-  html.replace('</head>', `    <link rel="canonical" href="${url}" />\n  </head>`);
+// Inject a self-referencing canonical + the FAQPage/BreadcrumbList JSON-LD
+// into a landing shell. The base index.html / root keeps neither on purpose
+// (it's the home, not the calendar). Baking the JSON-LD in (rather than only
+// client-side) means non-JS crawlers also get the structured data.
+const withSeo = (html, slug, locale) => {
+  const ld = JSON.stringify(wc26JsonLd(locale));
+  return html.replace('</head>',
+    `    <link rel="canonical" href="https://futpools.com/${slug}" />\n` +
+    `    <script type="application/ld+json">${ld}</script>\n  </head>`);
+};
 
 const ES_SLUG = 'calendario-mundial-2026';
 const EN_SLUG = 'world-cup-2026-calendar';
@@ -108,17 +115,17 @@ const EN_SLUG = 'world-cup-2026-calendar';
 ensureDir(path.join(distDir, ES_SLUG));
 ensureDir(path.join(distDir, EN_SLUG));
 
-// Spanish shell (ES strings + ES canonical)
+// Spanish landing shell (ES strings + ES canonical + ES JSON-LD)
 fs.writeFileSync(
   path.join(distDir, `${ES_SLUG}/index.html`),
-  withCanonical(baseHtml, `https://futpools.com/${ES_SLUG}`)
+  withSeo(baseHtml, ES_SLUG, 'es')
 );
 fs.writeFileSync(path.join(distDir, '404.html'), baseHtml);
 
-// English shell (EN strings + EN canonical)
+// English landing shell (EN strings + EN canonical + EN JSON-LD)
 fs.writeFileSync(
   path.join(distDir, `${EN_SLUG}/index.html`),
-  withCanonical(enHtml, `https://futpools.com/${EN_SLUG}`)
+  withSeo(enHtml, EN_SLUG, 'en')
 );
 
 console.log('[i18n shells] wrote:');

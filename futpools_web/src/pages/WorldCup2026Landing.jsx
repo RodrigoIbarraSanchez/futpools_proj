@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import { WC_CSS } from './WorldCup2026Calendar';
+import { wc26Faq, wc26JsonLd } from '../seo/wc26Landing';
 
 const ORIGIN = 'https://futpools.com';
 
@@ -51,20 +52,9 @@ export function WorldCup2026Landing() {
       'Complete World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook — free.'
     ));
     setCanonical(canonical);
-    const faq = FAQS(c).map(({ q, a }) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } }));
-    setJsonLd('wc26-landing-jsonld', {
-      '@context': 'https://schema.org',
-      '@graph': [
-        { '@type': 'FAQPage', mainEntity: faq },
-        {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'FutPools', item: ORIGIN + '/' },
-            { '@type': 'ListItem', position: 2, name: c('Calendario Mundial 2026', 'World Cup 2026 Calendar'), item: canonical },
-          ],
-        },
-      ],
-    });
+    // Client-side structured data (the static shell also bakes this in for
+    // non-JS crawlers — see scripts/build-i18n-shells.js).
+    setJsonLd('wc26-landing-jsonld', wc26JsonLd(locale));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
@@ -215,7 +205,7 @@ export function WorldCup2026Landing() {
         <section className="wc-faq">
           <h2>{c('Preguntas frecuentes', 'Frequently asked questions')}</h2>
           <div className="wc-faq-grid">
-            {FAQS(c).map(({ q, a }) => (
+            {wc26Faq(locale).map(({ q, a }) => (
               <div className="wc-faq-item" key={q}>
                 <div className="wc-faq-q">◆ {q}</div>
                 <div className="wc-faq-a">{a}</div>
@@ -286,7 +276,7 @@ function DistributionVisual({ c }) {
     { f: '🇨🇦', n: c('Canadá', 'Canada'), v: 13, w: 18, tone: '#36E9FF' },
   ];
   return (
-    <div className="wc-viz">
+    <div className="wc-viz" role="img" aria-label={c('Distribución de los 104 partidos del Mundial 2026 por país: 78 en Estados Unidos, 13 en México y 13 en Canadá.', 'Distribution of the 104 World Cup 2026 matches by country: 78 in the United States, 13 in Mexico and 13 in Canada.')}>
       <div className="wc-viz-head"><span>◆ 104 {c('PARTIDOS · 3 PAÍSES', 'MATCHES · 3 COUNTRIES')}</span></div>
       <div className="wc-dist">
         {rows.map((r, i) => (
@@ -305,7 +295,7 @@ function DistributionVisual({ c }) {
 function PhasesVisual({ c }) {
   const steps = [c('GRUPOS', 'GROUPS'), '1/16', '1/8', '1/4', c('SEMIS', 'SEMIS'), c('FINAL', 'FINAL')];
   return (
-    <div className="wc-viz">
+    <div className="wc-viz" role="img" aria-label={c('Fases del Mundial 2026: fase de grupos, dieciseisavos, octavos, cuartos, semifinales y final.', 'World Cup 2026 stages: group stage, round of 32, round of 16, quarter-finals, semi-finals and final.')}>
       <div className="wc-viz-head"><span>◆ {c('FASES', 'STAGES')}</span><span className="wc-viz-sub">{c('11 jun → 19 jul', 'Jun 11 → Jul 19')}</span></div>
       <div className="wc-ph">
         {steps.map((s, i) => {
@@ -334,9 +324,9 @@ function HostMapVisual({ c }) {
   ];
   const tone = { ca: '#36E9FF', us: '#21E28C', mx: '#FF2BD6' };
   return (
-    <div className="wc-viz wc-viz-map">
+    <div className="wc-viz wc-viz-map" role="img" aria-label={c('Mapa de las 16 sedes del Mundial 2026: 11 en Estados Unidos, 3 en México y 2 en Canadá.', 'Map of the 16 World Cup 2026 host cities: 11 in the United States, 3 in Mexico and 2 in Canada.')}>
       <div className="wc-viz-head"><span>◆ {c('16 SEDES · 3 PAÍSES', '16 HOST CITIES · 3 COUNTRIES')}</span></div>
-      <svg viewBox="0 0 320 230" className="wc-map-svg" role="img" aria-label={c('Mapa de sedes del Mundial 2026', 'World Cup 2026 host map')}>
+      <svg viewBox="0 0 320 230" className="wc-map-svg" aria-hidden="true">
         <defs>
           <pattern id="wcgrid" width="20" height="20" patternUnits="userSpaceOnUse">
             <path d="M20 0H0V20" fill="none" stroke="rgba(33,226,140,0.12)" strokeWidth="0.5" />
@@ -370,7 +360,7 @@ function TimezoneVisual({ c }) {
     c('Europa — España y Reino Unido', 'Europe — Spain & UK'),
   ];
   return (
-    <div className="wc-viz">
+    <div className="wc-viz" role="img" aria-label={c('El calendario del Mundial 2026 se ajusta a tu zona horaria: México, Estados Unidos, Latinoamérica y Europa.', 'The World Cup 2026 calendar adjusts to your timezone: Mexico, the United States, Latin America and Europe.')}>
       <div className="wc-viz-head"><span>◆ {c('TU ZONA · AUTOMÁTICO', 'YOUR ZONE · AUTOMATIC')}</span></div>
       <div className="wc-tz-note2">{c('Cada partido se muestra en tu hora local — sin convertir nada a mano.', 'Every match shows in your local time — no manual conversion.')}</div>
       <div className="wc-tz-list">
@@ -390,7 +380,7 @@ function PhoneCalendarVisual({ c }) {
     { d: 'JUL 19', m: c('Final · Nueva York', 'Final · New York'), f: '🏆' },
   ];
   return (
-    <div className="wc-viz wc-viz-phone-wrap">
+    <div className="wc-viz wc-viz-phone-wrap" role="img" aria-label={c('Un teléfono con el calendario del Mundial 2026 añadido: inauguración en el Azteca, fase de grupos, octavos y final.', 'A phone showing the World Cup 2026 calendar added: opening match at the Azteca, group stage, round of 16 and final.')}>
       <div className="wc-phone">
         <div className="wc-phone-notch" />
         <div className="wc-phone-head">{c('MUNDIAL 2026', 'WORLD CUP 2026')}</div>
@@ -407,15 +397,6 @@ function PhoneCalendarVisual({ c }) {
     </div>
   );
 }
-
-const FAQS = (c) => [
-  { q: c('¿El calendario del Mundial 2026 es gratis?', 'Is the World Cup 2026 calendar free?'), a: c('Sí. 100% gratis. Sin cuenta, sin app, sin anuncios.', 'Yes. 100% free. No account, no app, no ads.') },
-  { q: c('¿Cuántos partidos tiene el Mundial 2026?', 'How many matches does the World Cup 2026 have?'), a: c('104 partidos: 78 en Estados Unidos, 13 en México y 13 en Canadá. Es el primer Mundial con 48 selecciones.', '104 matches: 78 in the USA, 13 in Mexico and 13 in Canada. It’s the first World Cup with 48 teams.') },
-  { q: c('¿Se actualizan los horarios automáticamente?', 'Do kickoff times update automatically?'), a: c('Sí. La suscripción se sincroniza con la fuente oficial de la FIFA — si cambia un horario, tu calendario también.', 'Yes. The subscription syncs with the official FIFA source — if a kickoff changes, your calendar updates too.') },
-  { q: c('¿En qué dispositivos funciona?', 'Which devices does it work on?'), a: c('iPhone, iPad, Mac, Android, Google Calendar y Outlook (archivo .ics estándar).', 'iPhone, iPad, Mac, Android, Google Calendar and Outlook (standard .ics file).') },
-  { q: c('¿Puedo añadir sólo mi selección?', 'Can I add only my national team?'), a: c('Sí. Elige tus selecciones y, si quieres, suma toda la fase de eliminatorias.', 'Yes. Pick your teams and, if you like, add the entire knockout stage too.') },
-  { q: c('¿Cuándo y dónde es la final del Mundial 2026?', 'When and where is the World Cup 2026 final?'), a: c('El 19 de julio de 2026 en el MetLife Stadium, Nueva York/Nueva Jersey.', 'On July 19, 2026 at MetLife Stadium, New York/New Jersey.') },
-];
 
 // ── tiny SEO head helpers ──
 function setMeta(name, content) {
