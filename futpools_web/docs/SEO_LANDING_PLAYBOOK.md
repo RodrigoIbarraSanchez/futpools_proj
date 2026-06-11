@@ -60,7 +60,7 @@ gives variety instead of a wall of identical cards.
 - [ ] **Canonical** — self-referencing, per locale. Baked into the static shell **and** set client-side. (`build-i18n-shells.js` + `setCanonical`)
 - [ ] **hreflang** — `es`, `en`, `x-default` in `index.html` + the EN shell.
 - [ ] **Open Graph + Twitter Card** — title/description/image per locale (`index.html` base + `build-i18n-shells.js` ES→EN map).
-- [ ] **JSON-LD** — `FAQPage` + `BreadcrumbList`, per locale, **baked into the shell** (not only client-side) so non-JS crawlers see it. Single source: a `src/seo/<page>.js` module imported by BOTH the component and `build-i18n-shells.js`.
+- [ ] **JSON-LD** — `FAQPage` + `BreadcrumbList`, per locale, **baked into the shell** (not only client-side) so non-JS crawlers see it. Single source: a `src/seo/<page>.js` module imported by BOTH the component and `build-i18n-shells.js`. **The shell `<script>` and the component's `setJsonLd` MUST share the SAME id `landing-jsonld`** — same id across ALL landings — so the client UPDATES the one element instead of adding a duplicate (and SPA navigation between landings never leaves two `FAQPage` blocks). A 2nd block → Google error "FAQPage duplicated".
 - [ ] **Per-locale static shell** — `dist/<es-slug>/index.html` + `dist/<en-slug>/index.html` with correct `<title>`/meta/canonical/JSON-LD, so crawlers get the right language without running JS.
 - [ ] **Sitemap** — add both slugs to `sitemapController.js` (`STATIC_ROUTES`) with hreflang alternates (landing 0.9, tool 0.6) **and** to `public/sitemap.xml` (static fallback). All `<loc>` use `https://futpools.com`.
 - [ ] **robots.txt** — already points to the sitemap; ensure the landing isn't disallowed.

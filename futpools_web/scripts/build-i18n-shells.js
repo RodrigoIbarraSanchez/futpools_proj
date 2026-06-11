@@ -110,7 +110,7 @@ const withSeo = (html, slug, locale) => {
   // <script> would make Google flag "FAQPage duplicated").
   return html.replace('</head>',
     `    <link rel="canonical" href="https://futpools.com/${slug}" />\n` +
-    `    <script id="wc26-landing-jsonld" type="application/ld+json">${ld}</script>\n  </head>`);
+    `    <script id="landing-jsonld" type="application/ld+json">${ld}</script>\n  </head>`);
 };
 
 const ES_SLUG = 'calendario-mundial-2026';
@@ -189,7 +189,7 @@ function mexicoShell(locale) {
   // id must match the component's setJsonLd id (avoids a duplicate FAQPage).
   return html.replace('</head>',
     `    <link rel="canonical" href="https://futpools.com/${slug}" />\n` +
-    `    <script id="mexico-wc26-jsonld" type="application/ld+json">${JSON.stringify(mexicoJsonLd(locale))}</script>\n  </head>`);
+    `    <script id="landing-jsonld" type="application/ld+json">${JSON.stringify(mexicoJsonLd(locale))}</script>\n  </head>`);
 }
 ensureDir(path.join(distDir, MX_ES_SLUG));
 ensureDir(path.join(distDir, MX_EN_SLUG));

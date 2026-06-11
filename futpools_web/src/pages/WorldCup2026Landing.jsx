@@ -55,7 +55,7 @@ export function WorldCup2026Landing() {
     setCanonical(canonical);
     // Client-side structured data (the static shell also bakes this in for
     // non-JS crawlers — see scripts/build-i18n-shells.js).
-    setJsonLd('wc26-landing-jsonld', wc26JsonLd(locale));
+    setJsonLd('landing-jsonld', wc26JsonLd(locale));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 

@@ -48,7 +48,7 @@ export function MexicoWorldCup2026() {
       'All of Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times — add them to your calendar free.'
     ));
     setCanonical(canonical);
-    setJsonLd('mexico-wc26-jsonld', mexicoJsonLd(locale));
+    setJsonLd('landing-jsonld', mexicoJsonLd(locale));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
