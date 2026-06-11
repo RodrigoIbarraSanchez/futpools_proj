@@ -105,9 +105,12 @@ const ensureDir = (p) => fs.mkdirSync(p, { recursive: true });
 // client-side) means non-JS crawlers also get the structured data.
 const withSeo = (html, slug, locale) => {
   const ld = JSON.stringify(wc26JsonLd(locale));
+  // The id MUST match the component's setJsonLd id so the client-side
+  // injection UPDATES this element instead of adding a second one (a second
+  // <script> would make Google flag "FAQPage duplicated").
   return html.replace('</head>',
     `    <link rel="canonical" href="https://futpools.com/${slug}" />\n` +
-    `    <script type="application/ld+json">${ld}</script>\n  </head>`);
+    `    <script id="wc26-landing-jsonld" type="application/ld+json">${ld}</script>\n  </head>`);
 };
 
 const ES_SLUG = 'calendario-mundial-2026';
@@ -183,9 +186,10 @@ function mexicoShell(locale) {
     html = swap(html, CAL.ogLocale, '<meta property="og:locale" content="en_US" />', 'og:locale');
     html = swap(html, CAL.ogLocaleAlt, '<meta property="og:locale:alternate" content="es_MX" />', 'og:locale:alternate');
   }
+  // id must match the component's setJsonLd id (avoids a duplicate FAQPage).
   return html.replace('</head>',
     `    <link rel="canonical" href="https://futpools.com/${slug}" />\n` +
-    `    <script type="application/ld+json">${JSON.stringify(mexicoJsonLd(locale))}</script>\n  </head>`);
+    `    <script id="mexico-wc26-jsonld" type="application/ld+json">${JSON.stringify(mexicoJsonLd(locale))}</script>\n  </head>`);
 }
 ensureDir(path.join(distDir, MX_ES_SLUG));
 ensureDir(path.join(distDir, MX_EN_SLUG));

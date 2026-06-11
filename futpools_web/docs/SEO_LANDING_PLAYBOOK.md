@@ -135,13 +135,21 @@ grep -c 'application/ld+json' dist/<es-slug>/index.html dist/<en-slug>/index.htm
 curl -s http://localhost:3000/sitemap.xml | grep -c '<loc>'
 python3 -c "import xml.dom.minidom as m; m.parse('dist/sitemap.xml'); print('valid')"
 
+# CRITICAL: exactly ONE application/ld+json per shell, and its id MUST match
+# the component's setJsonLd id (else the client adds a 2nd → Google flags
+# "FAQPage duplicated"). Verify BOTH:
+grep -c 'application/ld+json' dist/<es-slug>/index.html dist/<en-slug>/index.html   # → 1 each
+grep -o 'id="[a-z0-9-]*jsonld"' dist/<es-slug>/index.html                            # matches setJsonLd('<id>')
+
 # Exactly one <h1>; CTAs top + bottom; internal link present
 grep -c '<h1' src/pages/<Component>.jsx
 grep -rn '<es-slug>\|<en-slug>' src/pages/LandingPage.jsx   # internal link wired
 ```
 
 After deploy: `curl -sI` the old slug → expect **301**; open both URLs (table-styled
-sitemap, correct `<title>`); run Google's **Rich Results Test** on each locale.
+sitemap, correct `<title>`); **run Google's Rich Results Test on each locale BEFORE
+requesting indexing** — it catches duplicate/invalid structured data (e.g. a 2nd
+FAQPage from shell + client both injecting). This step is mandatory, not optional.
 
 ---
 
