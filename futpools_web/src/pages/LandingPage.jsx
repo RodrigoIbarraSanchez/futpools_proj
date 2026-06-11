@@ -22,6 +22,7 @@ export function LandingPage() {
   // links it from the highest-authority public page so it isn't orphaned.
   const wcPath = locale === 'es' ? '/calendario-mundial-2026' : '/world-cup-2026-calendar';
   const wcMexPath = locale === 'es' ? '/mexico-mundial-2026' : '/mexico-world-cup-2026';
+  const qsPath = '/quiniela-de-la-semana'; // ES-only landing
 
   // Smooth-scroll for in-page anchor links (#how, #features, …). React Router
   // only handles route changes, so we intercept the click ourselves.
@@ -298,6 +299,7 @@ export function LandingPage() {
         <div className="links">
           <Link to={wcPath}>{c('Calendario Mundial 2026', 'World Cup 2026 Calendar')}</Link>
           <Link to={wcMexPath}>{c('Partidos de México', 'Mexico’s matches')}</Link>
+          {locale === 'es' && <Link to={qsPath}>Quiniela de la semana</Link>}
           <a href="#">{c('Privacidad', 'Privacy')}</a>
           <a href="#">{c('Términos', 'Terms')}</a>
           <a href="#">{c('Contacto', 'Contact')}</a>

@@ -173,6 +173,16 @@ re-implement the rhythm or head helpers.
 - Data lives in `src/seo/<team>.js` (verified fixtures + FAQ + JSON-LD),
   imported by the component AND the shell script — single source.
 
+**ES-only / evergreen landings** (e.g. `QuinielaDeLaSemana.jsx`,
+`/quiniela-de-la-semana` — Progol "quiniela de la semana"): no `c()` bilingual,
+single route, single shell, and **no hreflang** (the shell swaps the calendar's
+hreflang block out, self-canonical only). For **time-sensitive** topics (a weekly
+pool whose matches change every jornada) keep the copy **evergreen** — explain how
+it works, label illustrative visuals "ejemplo", and never hardcode a specific
+week. (A dynamic data-backed "this week" section is a separate, larger build.)
+Also: for third-party brands (Progol/Lotería Nacional) state non-affiliation in
+the FAQ + footer.
+
 **Additional shells** in `build-i18n-shells.js` = string-swap the calendar head
 (present in `baseHtml`) → the new page's, per locale, via the `swap()` helper
 (it warns if a source string drifts). Inject canonical + JSON-LD. Add both

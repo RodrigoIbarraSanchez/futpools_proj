@@ -21,6 +21,7 @@ import { LandingPage } from './pages/LandingPage';
 import { WorldCup2026Calendar } from './pages/WorldCup2026Calendar';
 import { WorldCup2026Landing } from './pages/WorldCup2026Landing';
 import { MexicoWorldCup2026 } from './pages/MexicoWorldCup2026';
+import { QuinielaDeLaSemana } from './pages/QuinielaDeLaSemana';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -88,6 +89,8 @@ export default function App() {
             {/* Team landing (topic-cluster child of the calendar landing). */}
             <Route path="/mexico-mundial-2026" element={<MexicoWorldCup2026 />} />
             <Route path="/mexico-world-cup-2026" element={<MexicoWorldCup2026 />} />
+            {/* ES-only evergreen landing (Progol / quiniela de la semana). */}
+            <Route path="/quiniela-de-la-semana" element={<QuinielaDeLaSemana />} />
             {/* Legacy concatenated slugs → 301 at the host (_redirects); this
                 client-side Navigate covers any in-app navigation. */}
             <Route path="/calendariomundial2026" element={<Navigate to="/calendario-mundial-2026" replace />} />

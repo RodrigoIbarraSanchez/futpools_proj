@@ -79,6 +79,13 @@
   </url>
 
   <url>
+    <loc>https://futpools.com/quiniela-de-la-semana</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
     <loc>https://futpools.com/register</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>

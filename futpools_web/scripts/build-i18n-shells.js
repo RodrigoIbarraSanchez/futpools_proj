@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { wc26JsonLd } from '../src/seo/wc26Landing.js';
 import { mexicoJsonLd } from '../src/seo/mexicoWc26.js';
+import { quinielaJsonLd } from '../src/seo/quinielaSemana.js';
 
 const distDir = path.resolve(process.cwd(), 'dist');
 const baseHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
@@ -196,9 +197,30 @@ ensureDir(path.join(distDir, MX_EN_SLUG));
 fs.writeFileSync(path.join(distDir, `${MX_ES_SLUG}/index.html`), mexicoShell('es'));
 fs.writeFileSync(path.join(distDir, `${MX_EN_SLUG}/index.html`), mexicoShell('en'));
 
+// ── Quiniela de la semana shell (ES-only — no hreflang/alternates) ──
+const QS_SLUG = 'quiniela-de-la-semana';
+function quinielaShell() {
+  let html = baseHtml;
+  html = swap(html, CAL.title, '<title>Quiniela de la semana — Progol y quiniela posible | FutPools</title>', 'qs:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Qué es la quiniela de la semana de Progol, cómo se llena (L/E/V de 14 partidos), qué es la quiniela posible, y cómo jugar tu propia quiniela en FutPools. Gratis." />', 'qs:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela de la semana — Progol y quiniela posible" />', 'qs:og:title');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Cómo funciona la quiniela de la semana de Progol (L/E/V, 14 partidos + Revancha), qué es la quiniela posible, y cómo jugar tu propia quiniela en FutPools." />', 'qs:og:description');
+  html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${QS_SLUG}" />`, 'qs:og:url');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela de la semana — Progol y quiniela posible" />', 'qs:twitter:title');
+  html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Cómo funciona la quiniela de la semana (Progol) y cómo jugar la tuya en FutPools. Gratis." />', 'qs:twitter:description');
+  // ES-only page: drop the calendar's hreflang block (no alternates).
+  html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'qs:hreflang');
+  return html.replace('</head>',
+    `    <link rel="canonical" href="https://futpools.com/${QS_SLUG}" />\n` +
+    `    <script id="landing-jsonld" type="application/ld+json">${JSON.stringify(quinielaJsonLd())}</script>\n  </head>`);
+}
+ensureDir(path.join(distDir, QS_SLUG));
+fs.writeFileSync(path.join(distDir, `${QS_SLUG}/index.html`), quinielaShell());
+
 console.log('[i18n shells] wrote:');
 console.log(`  dist/${ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${EN_SLUG}/index.html  (en)`);
 console.log(`  dist/${MX_ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${MX_EN_SLUG}/index.html  (en)`);
+console.log(`  dist/${QS_SLUG}/index.html  (es)`);
 console.log('  dist/404.html                          (es)');

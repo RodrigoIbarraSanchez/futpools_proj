@@ -31,6 +31,8 @@ const STATIC_ROUTES = [
   // Team landings.
   { path: '/mexico-mundial-2026', changefreq: 'weekly', priority: '0.8', alternates: MX_LANDING_ALT },
   { path: '/mexico-world-cup-2026', changefreq: 'weekly', priority: '0.8', alternates: MX_LANDING_ALT },
+  // Topic landings (ES-only, no alternates).
+  { path: '/quiniela-de-la-semana', changefreq: 'weekly', priority: '0.7' },
   // The export tool (utility, lower priority).
   { path: '/calendario-mundial-2026/agregar', changefreq: 'weekly', priority: '0.6', alternates: WC_TOOL_ALT },
   { path: '/world-cup-2026-calendar/add', changefreq: 'weekly', priority: '0.6', alternates: WC_TOOL_ALT },
