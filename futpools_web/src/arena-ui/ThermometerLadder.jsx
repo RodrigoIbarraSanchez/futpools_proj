@@ -142,13 +142,21 @@ export function ThermometerLadder({
               animation: bumpKey ? 'fpThermoRise 0.8s ease-out' : undefined,
             }} />
           </div>
-          {/* bulb */}
+          {/* bulb — carries the player's current acierto count */}
           <div style={{
-            width: 38, height: 38, borderRadius: '50%', marginTop: -6,
+            width: 44, height: 44, borderRadius: '50%', marginTop: -8,
             background: `radial-gradient(circle at 35% 30%, ${rampColor(fillRatio)}, var(--fp-danger))`,
             border: '1px solid var(--fp-stroke)',
             boxShadow: `0 0 18px ${rampColor(fillRatio)}AA`,
-          }} />
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+            title={`${liveScore} / ${fixtureCount}`}
+          >
+            <span style={{
+              fontFamily: 'var(--fp-display)', fontWeight: 900, fontSize: 18, lineHeight: 1,
+              color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.45)',
+            }}>{liveScore}</span>
+          </div>
         </div>
 
         {/* Tier cards */}

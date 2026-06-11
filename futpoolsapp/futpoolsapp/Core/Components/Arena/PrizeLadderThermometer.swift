@@ -113,12 +113,19 @@ struct PrizeLadderThermometer: View {
             .frame(width: 24, height: max(tubeHeight, 60))
             .animation(.spring(response: 0.8, dampingFraction: 0.85), value: fillRatio)
 
+            // Bulb — carries the player's current acierto count.
             Circle()
                 .fill(RadialGradient(
                     colors: [ramp(fillRatio), .arenaDanger],
                     center: .topLeading, startRadius: 2, endRadius: 30))
-                .frame(width: 36, height: 36)
+                .frame(width: 42, height: 42)
                 .overlay(Circle().stroke(Color.arenaStroke, lineWidth: 1))
+                .overlay(
+                    Text("\(liveScore)")
+                        .font(ArenaFont.display(size: 18, weight: .heavy))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.45), radius: 1, y: 1)
+                )
                 .shadow(color: ramp(fillRatio).opacity(0.7), radius: 12)
                 .offset(y: -6)
         }
