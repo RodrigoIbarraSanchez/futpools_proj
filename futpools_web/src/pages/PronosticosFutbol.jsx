@@ -28,27 +28,10 @@ import { trackEvent } from '../lib/analytics';
 
 const CANONICAL = 'https://futpools.com/pronosticos-de-futbol';
 
-export function useNextOpenPool() {
-  const [pool, setPool] = useState(null);
-  useEffect(() => {
-    let on = true;
-    api.get('/public/pools/next-open')
-      .then((d) => { if (on) setPool(d?.pool || null); })
-      .catch(() => {}); // fetch failure → pool stays null → /onboarding
-    return () => { on = false; };
-  }, []);
-  return pool;
-}
-
-function formatKickoff(iso) {
-  try {
-    return new Date(iso).toLocaleDateString('es-MX', {
-      weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
-}
+// Moved to src/hooks/publicData.js (shared with the WC calendar funnel);
+// re-exported here so existing importers keep working.
+export { useNextOpenPool } from '../hooks/publicData';
+import { useNextOpenPool, formatKickoff } from '../hooks/publicData';
 
 export function PronosticosFutbol() {
   useEffect(() => {

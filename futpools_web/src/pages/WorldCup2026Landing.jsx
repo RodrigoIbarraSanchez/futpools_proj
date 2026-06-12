@@ -24,6 +24,7 @@ import { useLocale } from '../context/LocaleContext';
 import { WC_CSS } from './WorldCup2026Calendar';
 import { wc26Faq, wc26JsonLd } from '../seo/wc26Landing';
 import { trackEvent } from '../lib/analytics';
+import { useNextOpenPool, useTodayFixtures, formatKickoff, kickoffTime } from '../hooks/publicData';
 
 const ORIGIN = 'https://futpools.com';
 
@@ -60,13 +61,22 @@ export function WorldCup2026Landing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
-  useRevealOnScroll();
+  // Open pool + today's fixtures power the engagement modules (today strip,
+  // mid-page pool card, hero secondary CTA). Both are fail-safe (null →
+  // evergreen fallbacks). The reveal hook re-scans when the pool arrives so
+  // the re-rendered .wc-viz card doesn't stay animation-paused.
+  const pool = useNextOpenPool();
+  useRevealOnScroll([pool]);
+
+  // EN visitors never deep-link into /pool/:id (Spanish app UI) — they go
+  // to the bilingual onboarding instead.
+  const poolTo = pool && locale === 'es' ? `/pool/${pool.id}` : '/onboarding';
 
   const ctaTool = (label) => (
     <Link
       to={toolPath}
       className="wc-btn-primary"
-      onClick={() => trackEvent('cta_click', { page: landingPath, cta: label, destination: toolPath })}
+      onClick={() => trackEvent('cta_click', { page: landingPath, cta: label, destination: toolPath, locale })}
     >▶ {label}</Link>
   );
 
@@ -100,7 +110,16 @@ export function WorldCup2026Landing() {
                 'The World Cup 2026 calendar is here: all 104 matches, 48 teams and 16 host cities across the USA, Mexico and Canada. Check the dates and kickoff times in your timezone, and add the matches to your calendar in seconds. It’s free, with no app and no sign-up.'
               )}
             </p>
-            <div className="wc-cta-row">{ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}</div>
+            <div className="wc-cta-row">
+              {ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}
+              {/* Fixed label — only the href upgrades when the pool loads
+                  (a label swap would shift the hero layout). */}
+              <Link
+                to={poolTo}
+                className="wc-btn-secondary"
+                onClick={() => trackEvent('cta_click', { page: landingPath, cta: 'hero_quiniela_secondary', destination: poolTo, locale })}
+              >{c('Jugar la quiniela', 'Play the pool')} →</Link>
+            </div>
             <div className="wc-hero-stats">
               <div className="wc-stat"><div className="wc-stat-num">104</div><div className="wc-stat-lab">{c('Partidos', 'Matches')}</div></div>
               <div className="wc-stat"><div className="wc-stat-num">48</div><div className="wc-stat-lab">{c('Selecciones', 'Teams')}</div></div>
@@ -115,6 +134,10 @@ export function WorldCup2026Landing() {
       </header>
 
       <main className="wc-main wc-content">
+
+        {/* Live "today" strip — fixed height (zero CLS), always rendered:
+            evergreen copy first, upgrades to today's real matches. */}
+        <TodayStrip c={c} locale={locale} landingPath={landingPath} />
 
         {/* statement */}
         <Statement
@@ -172,6 +195,10 @@ export function WorldCup2026Landing() {
             'Add the official schedule to your calendar and stop hunting for kickoff times. If FIFA moves a match, yours updates automatically.'
           )}
         </Statement>
+
+        {/* Mid-page conversion hook: the live open pool (separate, clearly
+            paid offer — placed AFTER the free-calendar statement on purpose). */}
+        <WcPoolHookCard pool={pool} c={c} locale={locale} landingPath={landingPath} poolTo={poolTo} />
 
         {/* two-column: host cities + map */}
         <Split title={c('Sedes y estadios del Mundial 2026', 'Host cities and stadiums of the World Cup 2026')} visual={<HostMapVisual c={c} />}>
@@ -249,9 +276,9 @@ export function WorldCup2026Landing() {
             <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
               {ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}
               <Link
-                to="/onboarding"
+                to={poolTo}
                 className="wc-btn-secondary"
-                onClick={() => trackEvent('cta_click', { page: landingPath, cta: 'Jugar la quiniela del Mundial', destination: '/onboarding' })}
+                onClick={() => trackEvent('cta_click', { page: landingPath, cta: 'Jugar la quiniela del Mundial', destination: poolTo, locale })}
               >{c('Jugar la quiniela del Mundial', 'Play the World Cup pool')} →</Link>
             </div>
           </div>
@@ -440,6 +467,88 @@ export function setJsonLd(id, obj) {
   el.textContent = JSON.stringify(obj);
 }
 
+// ─────────────── Engagement modules (client-side only, zero CLS) ───────────────
+
+/**
+ * One-line "today at the World Cup" strip under the hero. ALWAYS rendered
+ * at a fixed height: evergreen copy first, upgraded to today's first real
+ * match when fixtures load — the swap can't shift layout. Whole strip is
+ * one link with descriptive anchor text. NOT a .wc-viz (keeps it out of
+ * the reveal-on-scroll pause rules).
+ */
+function TodayStrip({ c, locale, landingPath }) {
+  const fixtures = useTodayFixtures();
+  const first = Array.isArray(fixtures) && fixtures.length ? fixtures[0] : null;
+  const to = locale === 'es' ? '/quiniela-futbol-hoy' : '/onboarding';
+  return (
+    <Link
+      to={to}
+      className="wc-today-strip"
+      onClick={() => trackEvent('cta_click', { page: landingPath, cta: 'today_strip', destination: to, locale })}
+    >
+      <span className="wc-ts-tag">{first ? c('🔴 HOY', '🔴 TODAY') : '◆'}</span>
+      <span className="wc-ts-text">
+        {first ? (
+          <>
+            {first.teams?.home?.name} vs {first.teams?.away?.name} · {kickoffTime(first.date)}
+            {fixtures.length > 1 && c(` · +${fixtures.length - 1} más`, ` · +${fixtures.length - 1} more`)}
+            {' — '}{c('¿ya hiciste tu pronóstico?', 'made your picks yet?')}
+          </>
+        ) : (
+          c('Mundial 2026 en juego · ¿Ya hiciste tu pronóstico en la quiniela?', 'World Cup 2026 is on · Made your picks in the pool yet?')
+        )}
+      </span>
+      <span className="wc-ts-cta">{c('Jugar', 'Play')} →</span>
+    </Link>
+  );
+}
+
+/**
+ * Mid-page open-pool hook. ALWAYS rendered (evergreen fallback when no
+ * pool / loading / error) with a min-height so the loaded state can't
+ * shift the sections below. EN visitors go to /onboarding, never into
+ * the Spanish pool UI.
+ */
+function WcPoolHookCard({ pool, c, locale, landingPath, poolTo }) {
+  const label = pool && locale === 'es' ? c('Entrar a la quiniela', 'Play the World Cup pool') : c('Jugar mi quiniela', 'Play the World Cup pool');
+  return (
+    <section className="wc-pf-next">
+      <div className="wc-viz wc-pf-next-card wc-pool-hook">
+        {pool ? (
+          <>
+            <div className="wc-viz-head">
+              <span>◆ {c('QUINIELA DEL MUNDIAL ABIERTA', 'WORLD CUP POOL OPEN')}</span>
+              <span className="wc-viz-sub">{c('Inscripción abierta', 'Entries open')}</span>
+            </div>
+            <div className="wc-pf-next-name">{pool.name}</div>
+            <div className="wc-pf-next-meta">
+              <span>{c('Primer partido', 'First kickoff')}: {formatKickoff(pool.firstKickoff)}</span>
+              {pool.entriesCount > 0 && <span>{pool.entriesCount} {c('participantes', 'players in')}</span>}
+              {pool.entryFeeMXN > 0 && <span>${pool.entryFeeMXN} {pool.currency || 'MXN'} / {c('entrada', 'entry')}</span>}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="wc-viz-head"><span>◆ {c('QUINIELAS DEL MUNDIAL', 'WORLD CUP POOLS')}</span></div>
+            <div className="wc-pf-next-name">{c('Cada jornada del Mundial abre una quiniela', 'Every World Cup matchday opens a pool')}</div>
+            <div className="wc-pf-next-meta">
+              <span>{c('Pronostica L/E/V, sigue tus aciertos en vivo y compite por el premio.', 'Pick the results, track your hits live and compete for the prize.')}</span>
+            </div>
+          </>
+        )}
+        <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
+          <Link
+            to={poolTo}
+            className="wc-btn-primary"
+            onClick={() => trackEvent('cta_click', { page: landingPath, cta: 'pool_hook_card', destination: poolTo, locale })}
+          >▶ {label}</Link>
+        </div>
+        <div className="wc-dist-foot">{c('La inscripción cierra cuando inicia el primer partido', 'Entries close at first kickoff')}</div>
+      </div>
+    </section>
+  );
+}
+
 /**
  * Reveal-on-scroll for landing visuals. All `.wc-viz` animations start
  * PAUSED (see the .is-inview rule in LANDING_CSS); this hook adds
@@ -476,6 +585,20 @@ export const LANDING_CSS = `
 
 .fp-wc26 .wc-content { gap: 0; padding-top: 8px; }
 .fp-wc26 .wc-lead { max-width: 720px; }
+
+/* ── Today strip (fixed height = zero CLS when content upgrades) ── */
+.fp-wc26 .wc-today-strip { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; margin: 4px 0 10px; background: var(--surface); border: 1px solid var(--stroke); border-left: 2px solid var(--primary); clip-path: polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%); text-decoration: none; overflow: hidden; transition: border-color 0.15s; }
+.fp-wc26 .wc-today-strip:hover { border-color: var(--primary); }
+.fp-wc26 .wc-ts-tag { flex-shrink: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: var(--primary); }
+.fp-wc26 .wc-ts-text { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-wc26 .wc-ts-cta { flex-shrink: 0; font-family: var(--ox); font-weight: 800; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--primary); }
+
+/* ── Mid-page open-pool hook (shared wc-pf-next styles + CLS guard) ── */
+.fp-wc26 .wc-pf-next { margin: 34px 0; display: flex; justify-content: center; }
+.fp-wc26 .wc-pf-next-card { max-width: 520px; width: 100%; text-align: center; }
+.fp-wc26 .wc-pf-next-name { font-family: var(--ox); font-weight: 800; font-size: 19px; color: var(--text); margin: 10px 0 6px; }
+.fp-wc26 .wc-pf-next-meta { display: flex; flex-direction: column; gap: 3px; font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-bottom: 12px; }
+.fp-wc26 .wc-pool-hook { min-height: 200px; }
 
 /* ── Reverb-style hero: copy left, visual right (stacks on mobile) ──
    The visual sits above the fold so visitors see the product instantly

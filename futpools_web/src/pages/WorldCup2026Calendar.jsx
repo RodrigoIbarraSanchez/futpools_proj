@@ -19,6 +19,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import { api } from '../api/client';
+import { trackEvent } from '../lib/analytics';
+import { useNextOpenPool } from '../hooks/publicData';
 
 // Where the API lives. In production we hit the same origin via the
 // reverse proxy; in dev Vite proxies `/api` → :3000. Some flows (webcal:
@@ -97,6 +99,22 @@ export function WorldCup2026Calendar() {
   // Google Calendar's addbyurl page doesn't auto-fill the input from
   // ?cid=, so we copy + open + tell the user to paste.
   const [pasteToast, setPasteToast] = useState(false);
+  // Which export the user completed ('apple'|'google'|'android'|'ics') —
+  // drives the post-export success card. Persisted to sessionStorage so
+  // Google-flow users who reload after the tab dance still see it.
+  const [exported, setExported] = useState(() => {
+    try { return sessionStorage.getItem('wc26_exported') || null; } catch { return null; }
+  });
+  // Open pool powers the success card + bottom CTA deep link. EN visitors
+  // never deep-link into /pool/:id (Spanish app UI).
+  const pool = useNextOpenPool();
+  const poolTo = pool && locale === 'es' ? `/pool/${pool.id}` : '/onboarding';
+
+  const markExport = (method) => {
+    setExported(method);
+    try { sessionStorage.setItem('wc26_exported', method); } catch { /* private mode */ }
+    trackEvent('calendar_export', { method, scope, teams_count: selectedTeams.size, locale });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -239,11 +257,12 @@ export function WorldCup2026Calendar() {
   // the user to paste. Google's settings page does NOT prefill the
   // input from the cid= param (confirmed in user testing), so the
   // paste is mandatory.
-  const handleGoogleClick = async (e) => {
+  const handleGoogleClick = async (e, method = 'google') => {
     e.preventDefault();
     if (!teamsReady) return;
     await writeToClipboard(absoluteHttp);
     window.open(googleHref, '_blank', 'noopener,noreferrer');
+    markExport(method);
     setPasteToast(true);
     // Toast stays up long enough for the user to switch tabs, see the
     // empty field, and paste. 8s is plenty.
@@ -456,6 +475,7 @@ export function WorldCup2026Calendar() {
             <ExportCard
               disabled={!teamsReady}
               href={teamsReady ? webcalHref : undefined}
+              onClick={teamsReady ? () => markExport('apple') : undefined}
               icon="📱"
               brand="apple"
               title={c('iPhone · iPad · Mac', 'iPhone · iPad · Mac')}
@@ -465,7 +485,7 @@ export function WorldCup2026Calendar() {
             <ExportCard
               disabled={!teamsReady}
               href={teamsReady ? googleHref : undefined}
-              onClick={teamsReady ? handleGoogleClick : undefined}
+              onClick={teamsReady ? (e) => handleGoogleClick(e, 'google') : undefined}
               icon="📅"
               brand="google"
               title="Google Calendar"
@@ -476,7 +496,7 @@ export function WorldCup2026Calendar() {
             <ExportCard
               disabled={!teamsReady}
               href={teamsReady ? googleHref : undefined}
-              onClick={teamsReady ? handleGoogleClick : undefined}
+              onClick={teamsReady ? (e) => handleGoogleClick(e, 'android') : undefined}
               icon="🤖"
               brand="android"
               title="Android"
@@ -487,6 +507,7 @@ export function WorldCup2026Calendar() {
             <ExportCard
               disabled={!teamsReady}
               href={teamsReady ? downloadHref : undefined}
+              onClick={teamsReady ? () => markExport('ics') : undefined}
               icon="💻"
               brand="outlook"
               title={c('Outlook · Descarga .ics', 'Outlook · Download .ics')}
@@ -495,6 +516,36 @@ export function WorldCup2026Calendar() {
               download
             />
           </div>
+
+          {/* Post-export success card — the highest-goodwill moment: the
+              user JUST got value. User-initiated appearance (no CLS
+              concern), no auto-scroll (Google users still need the manual
+              URL block below). */}
+          {exported && (
+            <div className="wc-export-success" role="status">
+              <div className="wc-es-title">✓ {c('Calendario agregado', 'Calendar added')}</div>
+              {(exported === 'google' || exported === 'android') && (
+                <div className="wc-es-hint">{c('Recuerda pegar la URL en Google Calendar y guardar.', 'Remember to paste the URL in Google Calendar and save.')}</div>
+              )}
+              <p className="wc-es-text">
+                {c('Ya tienes los partidos en tu calendario. ¿Te atreves a pronosticarlos?', 'You’ve got every match in your calendar. Dare to predict them?')}
+              </p>
+              <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
+                <Link
+                  to={poolTo}
+                  className="wc-btn-primary"
+                  onClick={() => trackEvent('cta_click', { page: 'wc-calendar-tool', cta: 'export_success_pool', destination: poolTo, locale, export_method: exported })}
+                >▶ {c('Jugar la quiniela del Mundial', 'Play the World Cup pool')}</Link>
+                {locale === 'es' && (
+                  <Link
+                    to="/pronosticos-futbol-hoy"
+                    className="wc-es-secondary"
+                    onClick={() => trackEvent('cta_click', { page: 'wc-calendar-tool', cta: 'export_success_pronosticos', destination: '/pronosticos-futbol-hoy', locale })}
+                  >Pronósticos de hoy →</Link>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="wc-stat-bar">
             <div>
@@ -583,7 +634,11 @@ export function WorldCup2026Calendar() {
               'Inscríbete por $50 MXN. El ganador se lleva el 65% del premio acumulado, depositado a tu cuenta bancaria.',
               'Pay $50 MXN to enter. Winner takes 65% of the pool, deposited straight to your bank.'
             )}</p>
-            <Link to="/onboarding" className="wc-btn-primary">▶ {c('Jugar Quiniela del Mundial', 'Play World Cup Pool')}</Link>
+            <Link
+              to={poolTo}
+              className="wc-btn-primary"
+              onClick={() => trackEvent('cta_click', { page: 'wc-calendar-tool', cta: 'tool_bottom_onboarding', destination: poolTo, locale })}
+            >▶ {c('Jugar Quiniela del Mundial', 'Play World Cup Pool')}</Link>
           </div>
         </section>
       </main>
@@ -606,6 +661,16 @@ export function WorldCup2026Calendar() {
               {c(
                 'Pega con ⌘V (o Ctrl+V) en el campo "URL del calendario" de Google y haz clic en "Agregar calendario".',
                 'Paste with ⌘V (or Ctrl+V) into the "Calendar URL" field on Google and click "Add calendar".'
+              )}
+              {locale === 'es' && (
+                <>
+                  {' '}
+                  <Link
+                    to={poolTo}
+                    style={{ color: 'var(--primary)', textDecoration: 'underline' }}
+                    onClick={() => trackEvent('cta_click', { page: 'wc-calendar-tool', cta: 'paste_toast_pool', destination: poolTo, locale })}
+                  >Mientras: juega la quiniela →</Link>
+                </>
               )}
             </div>
           </div>
@@ -1208,6 +1273,18 @@ export const WC_CSS = `
   position: relative;
 }
 .fp-wc26 .wc-cta-inner { max-width: 600px; margin: 0 auto; }
+
+/* post-export success card (user-initiated → no CLS concern). The wcRise
+   keyframe must live HERE: this page does not load LANDING_CSS, and a
+   missing keyframe + opacity:0 base would leave the card invisible. */
+@keyframes wcRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fp-wc26 .wc-export-success { margin: 16px 0 4px; padding: 16px 18px; text-align: center; background: color-mix(in srgb, var(--primary) 7%, transparent); border: 1px solid var(--primary); clip-path: polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%); opacity: 0; animation: wcRise 0.6s ease both; }
+.fp-wc26 .wc-export-success .wc-cta-row { justify-content: center; }
+.fp-wc26 .wc-es-title { font-family: var(--ox); font-weight: 900; font-size: 16px; color: var(--primary); }
+.fp-wc26 .wc-es-hint { font-family: var(--mono); font-size: 10.5px; color: var(--accent); margin-top: 4px; }
+.fp-wc26 .wc-es-text { font-size: 13.5px; color: var(--text-dim); margin: 8px 0 12px; }
+.fp-wc26 .wc-es-secondary { display: inline-flex; align-items: center; font-family: var(--ox); font-weight: 800; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--text); text-decoration: none; padding: 13px 18px; border: 1px solid var(--stroke-strong); clip-path: var(--hud-clip-sm); }
+.fp-wc26 .wc-es-secondary:hover { border-color: var(--primary); color: var(--primary); }
 .fp-wc26 .wc-cta-kicker {
   font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
   color: var(--primary); font-weight: 700; margin-bottom: 10px;

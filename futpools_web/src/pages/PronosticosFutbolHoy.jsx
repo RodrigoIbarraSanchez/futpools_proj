@@ -29,27 +29,10 @@ import { trackEvent } from '../lib/analytics';
 const CANONICAL = 'https://futpools.com/pronosticos-futbol-hoy';
 const PAGE = 'pronosticos-futbol-hoy';
 
-export function useTodayFixtures() {
-  // null = loading/failed (render the evergreen fallback); [] = no matches
-  // today; [...] = real fixtures.
-  const [fixtures, setFixtures] = useState(null);
-  useEffect(() => {
-    let on = true;
-    api.get('/public/fixtures/today?limit=6')
-      .then((d) => { if (on) setFixtures(Array.isArray(d) ? d : null); })
-      .catch(() => {});
-    return () => { on = false; };
-  }, []);
-  return fixtures;
-}
-
-function kickoffTime(iso) {
-  try {
-    return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  } catch {
-    return '';
-  }
-}
+// Moved to src/hooks/publicData.js (shared with the WC calendar funnel);
+// re-exported here so existing importers keep working.
+export { useTodayFixtures } from '../hooks/publicData';
+import { useTodayFixtures, kickoffTime } from '../hooks/publicData';
 
 export function PronosticosFutbolHoy() {
   useEffect(() => {
