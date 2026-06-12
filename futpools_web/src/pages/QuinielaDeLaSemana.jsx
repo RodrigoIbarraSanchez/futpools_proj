@@ -22,7 +22,7 @@ const CANONICAL = 'https://futpools.com/quiniela-de-la-semana';
 
 export function QuinielaDeLaSemana() {
   useEffect(() => {
-    document.title = 'Quiniela de la semana — Progol y quiniela posible | FutPools';
+    document.title = 'Quiniela de la semana: Progol y quiniela posible | FutPools';
     setMeta('description', 'Qué es la quiniela de la semana de Progol, cómo se llena (L/E/V de 14 partidos), qué es la quiniela posible, y cómo jugar tu propia quiniela en FutPools. Gratis.');
     setCanonical(CANONICAL);
     setJsonLd('landing-jsonld', quinielaJsonLd());
@@ -43,22 +43,28 @@ export function QuinielaDeLaSemana() {
         </div>
       </nav>
 
-      <header className="wc-hero">
+      {/* Reverb layout: copy left, visual right (above the fold). */}
+      <header className="wc-hero wc-hero-split">
         <div className="wc-grid-bg" />
         <div className="wc-hero-inner">
-          <div className="wc-kicker">◆ PRONÓSTICOS DE FÚTBOL · MÉXICO</div>
-          <h1>Quiniela de la semana</h1>
-          <p className="wc-sub wc-lead">
-            La quiniela de la semana es la forma más popular de pronosticar el fútbol en México. Cada jornada eliges
-            el resultado —local, empate o visitante— de los 14 partidos del Progol, y la "quiniela posible" te ayuda a
-            llenar tu boleto. Aquí te explicamos cómo funciona y cómo jugar tu propia quiniela con amigos en FutPools, gratis.
-          </p>
-          <div className="wc-cta-row" style={{ justifyContent: 'center' }}>{cta('Jugar mi quiniela')}</div>
-          <div className="wc-hero-stats">
-            <div className="wc-stat"><div className="wc-stat-num">14</div><div className="wc-stat-lab">Partidos</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">L·E·V</div><div className="wc-stat-lab">Pronóstico</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">7</div><div className="wc-stat-lab">Revancha</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">Gratis</div><div className="wc-stat-lab">En FutPools</div></div>
+          <div className="wc-hero-copy">
+            <div className="wc-kicker">◆ PRONÓSTICOS DE FÚTBOL · MÉXICO</div>
+            <h1>Quiniela de la semana</h1>
+            <p className="wc-sub wc-lead">
+              La quiniela de la semana es la forma más popular de pronosticar el fútbol en México. Cada jornada eliges
+              el resultado (local, empate o visitante) de los 14 partidos del Progol, y la "quiniela posible" te ayuda a
+              llenar tu boleto. Aquí te explicamos cómo funciona y cómo jugar tu propia quiniela con amigos en FutPools, gratis.
+            </p>
+            <div className="wc-cta-row">{cta('Jugar mi quiniela')}</div>
+            <div className="wc-hero-stats">
+              <div className="wc-stat"><div className="wc-stat-num">14</div><div className="wc-stat-lab">Partidos</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">L·E·V</div><div className="wc-stat-lab">Pronóstico</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">7</div><div className="wc-stat-lab">Revancha</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">Gratis</div><div className="wc-stat-lab">En FutPools</div></div>
+            </div>
+          </div>
+          <div className="wc-hero-visual">
+            <PhoneVisual />
           </div>
         </div>
       </header>
@@ -75,7 +81,7 @@ export function QuinielaDeLaSemana() {
           <ul className="wc-ul">
             <li>Son 14 partidos de fútbol nacional e internacional cada jornada</li>
             <li>En cada partido pronosticas Local (L), Empate (E) o Visitante (V)</li>
-            <li>Cuenta el resultado en tiempo reglamentario — sin tiempos extra ni penales</li>
+            <li>Cuenta el resultado en tiempo reglamentario, sin tiempos extra ni penales</li>
             <li>Entre más resultados aciertes, mayor es el premio</li>
           </ul>
         </Split>
@@ -101,7 +107,7 @@ export function QuinielaDeLaSemana() {
           <ul className="wc-ul">
             <li>Reúne el pronóstico más probable de cada uno de los 14 partidos</li>
             <li>Se arma con estadísticas, momios y forma de los equipos</li>
-            <li>Es una guía orientativa — no garantiza aciertos</li>
+            <li>Es una guía orientativa, no garantiza aciertos</li>
             <li>En FutPools tú decides tus L/E/V; la quiniela posible es solo apoyo</li>
           </ul>
         </Split>

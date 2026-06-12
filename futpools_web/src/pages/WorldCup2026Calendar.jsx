@@ -35,10 +35,10 @@ const TIMEZONES = [
   { value: 'America/Mexico_City',    label_es: 'México (CDMX)',        label_en: 'Mexico (CDMX)' },
   { value: 'America/Monterrey',      label_es: 'México (Norte)',       label_en: 'Mexico (North)' },
   { value: 'America/Tijuana',        label_es: 'México (Pacífico)',    label_en: 'Mexico (Pacific)' },
-  { value: 'America/New_York',       label_es: 'EE.UU. — Este (EDT)',  label_en: 'USA — East (EDT)' },
-  { value: 'America/Chicago',        label_es: 'EE.UU. — Centro',      label_en: 'USA — Central' },
-  { value: 'America/Denver',         label_es: 'EE.UU. — Montaña',     label_en: 'USA — Mountain' },
-  { value: 'America/Los_Angeles',    label_es: 'EE.UU. — Pacífico',    label_en: 'USA — Pacific' },
+  { value: 'America/New_York',       label_es: 'EE.UU. · Este (EDT)',  label_en: 'USA · East (EDT)' },
+  { value: 'America/Chicago',        label_es: 'EE.UU. · Centro',      label_en: 'USA · Central' },
+  { value: 'America/Denver',         label_es: 'EE.UU. · Montaña',     label_en: 'USA · Mountain' },
+  { value: 'America/Los_Angeles',    label_es: 'EE.UU. · Pacífico',    label_en: 'USA · Pacific' },
   { value: 'America/Toronto',        label_es: 'Canadá (Toronto)',     label_en: 'Canada (Toronto)' },
   { value: 'America/Vancouver',      label_es: 'Canadá (Vancouver)',   label_en: 'Canada (Vancouver)' },
   { value: 'America/Argentina/Buenos_Aires', label_es: 'Argentina',    label_en: 'Argentina' },
@@ -128,8 +128,8 @@ export function WorldCup2026Calendar() {
   // is what ranks for "calendario mundial 2026".
   useEffect(() => {
     document.title = c(
-      'Añadir el Mundial 2026 a tu calendario — iPhone, Google, Android | FutPools',
-      'Add the World Cup 2026 to your calendar — iPhone, Google, Android | FutPools'
+      'Añadir el Mundial 2026 a tu calendario: iPhone, Google, Android | FutPools',
+      'Add the World Cup 2026 to your calendar: iPhone, Google, Android | FutPools'
     );
     const href = 'https://futpools.com' + (locale === 'es' ? '/calendario-mundial-2026/agregar' : '/world-cup-2026-calendar/add');
     let link = document.querySelector('link[rel="canonical"]');
@@ -312,8 +312,8 @@ export function WorldCup2026Calendar() {
           <div className="wc-notice">
             <strong>◆ {c('Datos del Mundial llegando pronto', 'World Cup data arriving soon')}</strong>
             <div>{c(
-              'Estamos actualizando la conexión con el proveedor oficial. La página está lista — el calendario estará disponible en cuanto la FIFA confirme el sorteo final.',
-              "We're refreshing the connection with our official data provider. The page is ready — the calendar will go live as soon as the FIFA final draw is confirmed."
+              'Estamos actualizando la conexión con el proveedor oficial. La página está lista; el calendario estará disponible en cuanto la FIFA confirme el sorteo final.',
+              "We're refreshing the connection with our official data provider. The page is ready; the calendar will go live as soon as the FIFA final draw is confirmed."
             )}</div>
           </div>
         )}
@@ -429,8 +429,8 @@ export function WorldCup2026Calendar() {
             </select>
             <div className="wc-tz-note">
               {c(
-                'Tu calendario mostrará los horarios automáticamente en tu zona local — esta selección es sólo para el preview.',
-                "Your calendar will display kickoff times in your local zone automatically — this picker is just for the preview below."
+                'Tu calendario mostrará los horarios automáticamente en tu zona local; esta selección es sólo para el preview.',
+                "Your calendar will display kickoff times in your local zone automatically; this picker is just for the preview below."
               )}
             </div>
           </div>
@@ -480,7 +480,7 @@ export function WorldCup2026Calendar() {
               icon="🤖"
               brand="android"
               title="Android"
-              desc={c('Usa Google Calendar — copiamos la URL automáticamente.', 'Uses Google Calendar — we copy the URL automatically.')}
+              desc={c('Usa Google Calendar: copiamos la URL automáticamente.', 'Uses Google Calendar: we copy the URL automatically.')}
               cta={c('Suscribirse', 'Subscribe')}
               target="_blank"
             />
@@ -490,7 +490,7 @@ export function WorldCup2026Calendar() {
               icon="💻"
               brand="outlook"
               title={c('Outlook · Descarga .ics', 'Outlook · Download .ics')}
-              desc={c('Archivo estándar compatible con Outlook, Yahoo, Proton…', 'Standard .ics file — works with Outlook, Yahoo, Proton…')}
+              desc={c('Archivo estándar compatible con Outlook, Yahoo, Proton…', 'Standard .ics file, works with Outlook, Yahoo, Proton…')}
               cta={c('Descargar', 'Download')}
               download
             />
@@ -553,8 +553,8 @@ export function WorldCup2026Calendar() {
             <FAQ
               q={c('¿Se actualizan los horarios automáticamente?', 'Do kickoffs update automatically?')}
               a={c(
-                'Sí. La suscripción se sincroniza con la fuente oficial de la FIFA — si la FIFA cambia un horario, tu calendario también.',
-                'Yes. The subscription syncs with the official FIFA source — if FIFA shifts a kickoff, your calendar updates too.'
+                'Sí. La suscripción se sincroniza con la fuente oficial de la FIFA: si la FIFA cambia un horario, tu calendario también.',
+                'Yes. The subscription syncs with the official FIFA source: if FIFA shifts a kickoff, your calendar updates too.'
               )}
             />
             <FAQ
@@ -567,8 +567,8 @@ export function WorldCup2026Calendar() {
             <FAQ
               q={c('¿Quién está detrás?', "Who's behind this?")}
               a={c(
-                'FutPools — quinielas en línea para LATAM. Si te gusta el fútbol, prueba la app.',
-                'FutPools — online football pools for LATAM. If you love the game, try the app.'
+                'FutPools: quinielas en línea para LATAM. Si te gusta el fútbol, prueba la app.',
+                'FutPools: online football pools for LATAM. If you love the game, try the app.'
               )}
             />
           </div>
@@ -580,8 +580,8 @@ export function WorldCup2026Calendar() {
             <div className="wc-cta-kicker">◆ {c('¿LISTO PARA JUGAR EL MUNDIAL?', 'READY TO PLAY THE WORLD CUP?')}</div>
             <h3>{c('Quinielas reales. Premios reales.', 'Real pools. Real prizes.')}</h3>
             <p>{c(
-              'Inscríbete por $50 MXN — el ganador se lleva el 65% del premio acumulado, depositado a tu cuenta bancaria.',
-              'Pay $50 MXN to enter — winner takes 65% of the pool, deposited straight to your bank.'
+              'Inscríbete por $50 MXN. El ganador se lleva el 65% del premio acumulado, depositado a tu cuenta bancaria.',
+              'Pay $50 MXN to enter. Winner takes 65% of the pool, deposited straight to your bank.'
             )}</p>
             <Link to="/onboarding" className="wc-btn-primary">▶ {c('Jugar Quiniela del Mundial', 'Play World Cup Pool')}</Link>
           </div>

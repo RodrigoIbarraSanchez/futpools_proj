@@ -26,7 +26,7 @@ export const WC26_FAQ = [
   },
   {
     q: { es: '¿Se actualizan los horarios automáticamente?', en: 'Do kickoff times update automatically?' },
-    a: { es: 'Sí. La suscripción se sincroniza con la fuente oficial de la FIFA — si cambia un horario, tu calendario también.', en: 'Yes. The subscription syncs with the official FIFA source — if a kickoff changes, your calendar updates too.' },
+    a: { es: 'Sí. La suscripción se sincroniza con la fuente oficial de la FIFA: si cambia un horario, tu calendario también.', en: 'Yes. The subscription syncs with the official FIFA source: if a kickoff changes, your calendar updates too.' },
   },
   {
     q: { es: '¿En qué dispositivos funciona?', en: 'Which devices does it work on?' },

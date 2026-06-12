@@ -36,7 +36,7 @@ Fill this out (ES + EN) BEFORE writing code — it's the authoring template:
 | **Primary keyword** | One per page. The whole page targets it. |
 | **Secondary keywords** | 2–5 related terms; weave into H2s + copy. |
 | **URL slug** | The keyword, **hyphen-separated, lowercase** (`calendario-mundial-2026`). Never run words together in a path. |
-| **`<title>`** | `[Primary Keyword] — [kw2], [kw3] \| FutPools`. Keyword first. ≤ 60 chars ideal. |
+| **`<title>`** | `[Primary Keyword]: [kw2], [kw3] \| FutPools`. Keyword first. ≤ 60 chars ideal. |
 | **Meta description** | Lead with the keyword. Compelling. ~150–160 chars. |
 | **H1** | The primary keyword (exactly one `<h1>` on the page). |
 | **Intro** | First sentence **leads with the keyword**. ~3 sentences, short and punchy. |
@@ -47,6 +47,14 @@ Fill this out (ES + EN) BEFORE writing code — it's the authoring template:
 
 Copy style (from the video): sentences **short and punchy** (often one line),
 paragraphs of 1–3 sentences, **bullets everywhere**. No fluff.
+
+**No em dashes (—) anywhere in user-visible text** (user rule, 2026-06-11: they
+read as AI-generated; real people don't write with them). Use a comma, colon,
+period or parentheses instead. Applies to titles, meta descriptions, OG/Twitter
+tags, intros, bullets, FAQ answers and JSON-LD. `·` as a separator in HUD
+labels/visual chips is fine; so is `—` as an empty-value placeholder in UI.
+Kickers must read like natural Spanish labels (category · country), not
+abstract slogans.
 
 **Section rhythm (Reverb-style):** alternate centered **statement** sections
 (`<Statement>` — no visual, big centered H2 + 1 sentence) with two-column
@@ -76,6 +84,15 @@ gives variety instead of a wall of identical cards.
 Reuse the **WC26 HUD aesthetic** — do NOT introduce a new look per page:
 - Import `WC_CSS` from `WorldCup2026Calendar.jsx` (shared nav/hero/footer/CTA/buttons + tokens: Oxanium display, neon green `#21E28C`, cyan `#36E9FF`, magenta `#FF2BD6`, clip-path corner-cuts, scanlines, perspective grid).
 - Add a page-specific `LANDING_CSS` block for the content sections.
+
+**Hero = Reverb layout (user rule, 2026-06-11): copy left, visual right,
+above the fold.** Kicker + H1 + lead + CTA + stats left-aligned in one column;
+a product-style visual (the page's phone mockup or strongest visual) in the
+right column, visible without scrolling — it signals "content worth seeing"
+and cuts bounce. Markup: `<header className="wc-hero wc-hero-split">` with
+`.wc-hero-copy` + `.wc-hero-visual` inside `.wc-hero-inner`; the grid CSS
+lives in `LANDING_CSS` and stacks (text first) on mobile. Never center the
+hero CTA row on these pages.
 
 **Visuals = hand-built SVG/CSS, never raster.** They stay crisp at any DPI,
 weigh ~0 KB, cause no layout shift, and stay on-brand. Patterns in the WC26 page

@@ -30,7 +30,7 @@ META DESCRIPTION:   Cómo hacer una app paso a paso con IA: créala sin saber
 ¿Quieres saber cómo hacer una app? Hoy puedes crearla con inteligencia
 artificial sin escribir código desde cero, publicarla en la App Store y Google
 Play, y convertirla en una fuente de ingresos. En esta guía te muestro el
-camino completo — y si quieres ir directo, mi curso te lleva de la idea a la
+camino completo y, si quieres ir directo, mi curso te lleva de la idea a la
 app monetizada.
 
 **[CTA — Button]** `Quiero aprender a hacer apps →`
@@ -41,7 +41,7 @@ URL: `https://go.hotmart.com/P105968657K`
 ## Secciones (ritmo Statement/Split de la guía)
 
 ### STATEMENT (centrado)
-**De la idea a la app publicada — sin escribir código desde cero.**
+**De la idea a la app publicada, sin escribir código desde cero.**
 La IA cambió las reglas: hoy una persona sin equipo técnico puede construir,
 publicar y monetizar su propia app.
 
@@ -54,12 +54,12 @@ Antes de construir, junta estas piezas:
 
 ### H2 · Cómo hacer una app paso a paso *(Split invertido — visual: pasos numerados)*
 El camino completo, resumido:
-- **1. Valida la idea** — confirma que alguien la quiere antes de construir
-- **2. Construye con IA** — describe tu app y deja que la IA genere el código
-- **3. Prueba** — úsala tú y ponla en manos de usuarios reales
-- **4. Publica** — App Store y Google Play
-- **5. Consigue usuarios** — ASO, contenido y lanzamiento
-- **6. Monetiza** — suscripciones, compras o anuncios
+- **1. Valida la idea:** confirma que alguien la quiere antes de construir
+- **2. Construye con IA:** describe tu app y deja que la IA genere el código
+- **3. Prueba:** úsala tú y ponla en manos de usuarios reales
+- **4. Publica:** App Store y Google Play
+- **5. Consigue usuarios:** ASO, contenido y lanzamiento
+- **6. Monetiza:** suscripciones, compras o anuncios
 
 ### STATEMENT (centrado)
 **No necesitas saber programar.** Necesitas saber qué construir, para quién, y
@@ -88,10 +88,10 @@ La mayoría de las apps fallan por construir algo que nadie pidió:
 
 ### H2 · Cómo ganar dinero con tu app *(Split invertido — visual: gráfico de ingresos)*
 La monetización se diseña, no se improvisa:
-- **Suscripciones** — ingreso recurrente, el modelo más rentable
-- **Compras dentro de la app** — desbloquea features o contenido
-- **Anuncios** — funciona con volumen alto de usuarios
-- **Freemium** — gratis para entrar, pago para el valor completo
+- **Suscripciones:** ingreso recurrente, el modelo más rentable
+- **Compras dentro de la app:** desbloquea features o contenido
+- **Anuncios:** funciona con volumen alto de usuarios
+- **Freemium:** gratis para entrar, pago para el valor completo
 
 ### H2 · Aprende todo el proceso en un solo curso *(sección de conversión, centrada)*
 En mi curso en línea te llevo de cero a app monetizada:

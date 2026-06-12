@@ -40,12 +40,12 @@ export function MexicoWorldCup2026() {
 
   useEffect(() => {
     document.title = c(
-      'Partidos de México en el Mundial 2026 — Fechas y horarios | FutPools',
-      'Mexico at the World Cup 2026 — Matches, Dates & Times | FutPools'
+      'Partidos de México en el Mundial 2026: fechas y horarios | FutPools',
+      'Mexico at the World Cup 2026: Matches, Dates & Times | FutPools'
     );
     setMeta('description', c(
-      'Todos los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios — añádelos a tu calendario gratis.',
-      'All of Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times — add them to your calendar free.'
+      'Todos los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios. Añádelos a tu calendario gratis.',
+      'All of Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times. Add them to your calendar free.'
     ));
     setCanonical(canonical);
     setJsonLd('landing-jsonld', mexicoJsonLd(locale));
@@ -75,23 +75,29 @@ export function MexicoWorldCup2026() {
         </div>
       </nav>
 
-      <header className="wc-hero">
+      {/* Reverb layout: copy left, visual right (above the fold). */}
+      <header className="wc-hero wc-hero-split">
         <div className="wc-grid-bg" />
         <div className="wc-hero-inner">
-          <div className="wc-kicker">◆ {c('EL TRI · MUNDIAL 2026', 'EL TRI · WORLD CUP 2026')}</div>
-          <h1>{c('Partidos de México en el Mundial 2026', 'Mexico at the World Cup 2026')}</h1>
-          <p className="wc-sub wc-lead">
-            {c(
-              'Estos son los partidos de México en el Mundial 2026. El Tri inaugura el torneo en el Estadio Azteca el 11 de junio y juega su fase de grupos (Grupo A) en Ciudad de México y Guadalajara. Añade los 3 partidos de México a tu calendario en segundos — gratis.',
-              'These are Mexico’s matches at the World Cup 2026. El Tri opens the tournament at Estadio Azteca on June 11 and plays its group stage (Group A) in Mexico City and Guadalajara. Add Mexico’s 3 matches to your calendar in seconds — free.'
-            )}
-          </p>
-          <div className="wc-cta-row" style={{ justifyContent: 'center' }}>{ctaTool(c('Añadir los partidos de México', 'Add Mexico’s matches'))}</div>
-          <div className="wc-hero-stats">
-            <div className="wc-stat"><div className="wc-stat-num">3</div><div className="wc-stat-lab">{c('Partidos', 'Matches')}</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">A</div><div className="wc-stat-lab">{c('Grupo', 'Group')}</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">2</div><div className="wc-stat-lab">{c('Sedes', 'Venues')}</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">11</div><div className="wc-stat-lab">{c('Jun · inaugura', 'Jun · opener')}</div></div>
+          <div className="wc-hero-copy">
+            <div className="wc-kicker">◆ {c('EL TRI · MUNDIAL 2026', 'EL TRI · WORLD CUP 2026')}</div>
+            <h1>{c('Partidos de México en el Mundial 2026', 'Mexico at the World Cup 2026')}</h1>
+            <p className="wc-sub wc-lead">
+              {c(
+                'Estos son los partidos de México en el Mundial 2026. El Tri inaugura el torneo en el Estadio Azteca el 11 de junio y juega su fase de grupos (Grupo A) en Ciudad de México y Guadalajara. Añade los 3 partidos de México a tu calendario en segundos, gratis.',
+                'These are Mexico’s matches at the World Cup 2026. El Tri opens the tournament at Estadio Azteca on June 11 and plays its group stage (Group A) in Mexico City and Guadalajara. Add Mexico’s 3 matches to your calendar in seconds, free.'
+              )}
+            </p>
+            <div className="wc-cta-row">{ctaTool(c('Añadir los partidos de México', 'Add Mexico’s matches'))}</div>
+            <div className="wc-hero-stats">
+              <div className="wc-stat"><div className="wc-stat-num">3</div><div className="wc-stat-lab">{c('Partidos', 'Matches')}</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">A</div><div className="wc-stat-lab">{c('Grupo', 'Group')}</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">2</div><div className="wc-stat-lab">{c('Sedes', 'Venues')}</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">11</div><div className="wc-stat-lab">{c('Jun · inaugura', 'Jun · opener')}</div></div>
+            </div>
+          </div>
+          <div className="wc-hero-visual">
+            <MexPhoneVisual c={c} matches={matches} />
           </div>
         </div>
       </header>
@@ -100,15 +106,15 @@ export function MexicoWorldCup2026() {
 
         <Statement kicker={c('GRUPO A · 11–24 JUNIO 2026', 'GROUP A · JUNE 11–24, 2026')} title={c('El Tri juega en casa', 'El Tri plays at home')}>
           {c(
-            'México inaugura el Mundial 2026 en el Estadio Azteca y disputa su fase de grupos en territorio mexicano. Estos son sus 3 partidos — y cómo no perderte ninguno.',
-            'Mexico opens the World Cup 2026 at Estadio Azteca and plays its group stage on home soil. Here are its 3 matches — and how not to miss a single one.'
+            'México inaugura el Mundial 2026 en el Estadio Azteca y disputa su fase de grupos en territorio mexicano. Estos son sus 3 partidos y cómo no perderte ninguno.',
+            'Mexico opens the World Cup 2026 at Estadio Azteca and plays its group stage on home soil. Here are its 3 matches and how not to miss a single one.'
           )}
         </Statement>
 
         <Split title={c('El calendario de México en el Mundial 2026', 'Mexico’s World Cup 2026 schedule')} visual={<MatchesVisual c={c} matches={matches} />}>
           <p>{c('México juega 3 partidos en la fase de grupos del Grupo A:', 'Mexico plays 3 matches in the Group A stage:')}</p>
           <ul className="wc-ul">
-            <li>{c('11 jun · México vs Sudáfrica · Estadio Azteca (CDMX) — partido inaugural', 'Jun 11 · Mexico vs South Africa · Estadio Azteca (Mexico City) — opening match')}</li>
+            <li>{c('11 jun · México vs Sudáfrica · Estadio Azteca (CDMX) · partido inaugural', 'Jun 11 · Mexico vs South Africa · Estadio Azteca (Mexico City) · opening match')}</li>
             <li>{c('18 jun · México vs Corea del Sur · Estadio Akron (Guadalajara)', 'Jun 18 · Mexico vs South Korea · Estadio Akron (Guadalajara)')}</li>
             <li>{c('24 jun · México vs Chequia · Estadio Azteca (CDMX)', 'Jun 24 · Mexico vs Czechia · Estadio Azteca (Mexico City)')}</li>
           </ul>
@@ -152,7 +158,7 @@ export function MexicoWorldCup2026() {
         <Split title={c('Cómo añadir los partidos de México a tu calendario', 'How to add Mexico’s matches to your calendar')} visual={<MexPhoneVisual c={c} matches={matches} />}>
           <p>{c('En 3 pasos, sin instalar nada:', 'In 3 steps, with nothing to install:')}</p>
           <ul className="wc-ul">
-            <li>{c('1. Toca el botón — la herramienta abre con México ya seleccionado.', '1. Tap the button — the tool opens with Mexico already selected.')}</li>
+            <li>{c('1. Toca el botón: la herramienta abre con México ya seleccionado.', '1. Tap the button: the tool opens with Mexico already selected.')}</li>
             <li>{c('2. Elige tu zona horaria.', '2. Pick your timezone.')}</li>
             <li>{c('3. Suscríbete en iPhone, Google Calendar o Android, o descarga el .ics.', '3. Subscribe on iPhone, Google Calendar or Android, or download the .ics.')}</li>
           </ul>
@@ -265,15 +271,15 @@ function VenuesVisual({ c }) {
 
 function TimezoneVisual({ c }) {
   const zs = [
-    c('México — CDMX, Norte y Pacífico', 'Mexico — Central, North & Pacific'),
-    c('EE.UU. — Este, Centro, Montaña, Pacífico', 'USA — Eastern, Central, Mountain, Pacific'),
-    c('Latinoamérica — ARG · BRA · COL · PER · CHI', 'Latin America — ARG · BRA · COL · PER · CHI'),
-    c('Europa — España y Reino Unido', 'Europe — Spain & UK'),
+    c('México · CDMX, Norte y Pacífico', 'Mexico · Central, North & Pacific'),
+    c('EE.UU. · Este, Centro, Montaña, Pacífico', 'USA · Eastern, Central, Mountain, Pacific'),
+    c('Latinoamérica · ARG · BRA · COL · PER · CHI', 'Latin America · ARG · BRA · COL · PER · CHI'),
+    c('Europa · España y Reino Unido', 'Europe · Spain & UK'),
   ];
   return (
     <div className="wc-viz" role="img" aria-label={c('Los partidos de México se muestran en tu zona horaria automáticamente.', 'Mexico’s matches show in your timezone automatically.')}>
       <div className="wc-viz-head"><span>◆ {c('TU ZONA · AUTOMÁTICO', 'YOUR ZONE · AUTOMATIC')}</span></div>
-      <div className="wc-tz-note2">{c('Cada partido de México se muestra en tu hora local — sin convertir nada.', 'Every Mexico match shows in your local time — no manual conversion.')}</div>
+      <div className="wc-tz-note2">{c('Cada partido de México se muestra en tu hora local, sin convertir nada.', 'Every Mexico match shows in your local time, with no manual conversion.')}</div>
       <div className="wc-tz-list">
         {zs.map((z, i) => (
           <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 80}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>

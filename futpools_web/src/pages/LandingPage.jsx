@@ -24,6 +24,7 @@ export function LandingPage() {
   const wcMexPath = locale === 'es' ? '/mexico-mundial-2026' : '/mexico-world-cup-2026';
   const qsPath = '/quiniela-de-la-semana'; // ES-only landing
   const pfPath = '/pronosticos-de-futbol'; // ES-only landing
+  const wcToolPath = locale === 'es' ? '/calendario-mundial-2026/agregar' : '/world-cup-2026-calendar/add';
 
   // Smooth-scroll for in-page anchor links (#how, #features, …). React Router
   // only handles route changes, so we intercept the click ourselves.
@@ -88,8 +89,8 @@ export function LandingPage() {
           </h1>
           <p className="hero-sub">
             {c(
-              'Inscríbete por $50 MXN. El ganador se lleva el 65% del premio acumulado por transferencia bancaria. Mundial, Liga MX, Champions y más — pickea, juega, cobra.',
-              "Pay $50 MXN to enter. Winner takes 65% of the prize pool, paid out by bank transfer. World Cup, Liga MX, Champions and more — pick, play, get paid."
+              'Inscríbete por $50 MXN. El ganador se lleva el 65% del premio acumulado por transferencia bancaria. Mundial, Liga MX, Champions y más: pickea, juega, cobra.',
+              "Pay $50 MXN to enter. Winner takes 65% of the prize pool, paid out by bank transfer. World Cup, Liga MX, Champions and more: pick, play, get paid."
             )}
           </p>
 
@@ -188,8 +189,8 @@ export function LandingPage() {
             </h2>
             <p className="gamify-sub">
               {c(
-                'Sube de Bronce III a Legend. Mantén tu streak encendido. Desbloquea medallas que solo el 1% tiene. Compite no solo contra tus amigos — contra ti mismo.',
-                'Climb from Bronze III to Legend. Keep your streak alive. Unlock medals only the 1% holds. Compete not just against friends — against yourself.'
+                'Sube de Bronce III a Legend. Mantén tu streak encendido. Desbloquea medallas que solo el 1% tiene. Compite no solo contra tus amigos, también contra ti mismo.',
+                'Climb from Bronze III to Legend. Keep your streak alive. Unlock medals only the 1% holds. Compete not just against friends, but against yourself.'
               )}
             </p>
             <div className="streak-chip">🔥 {c('7-día racha', '7-day streak')}</div>
@@ -294,20 +295,50 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ─────────── FOOTER ─────────── */}
+      {/* ─────────── FOOTER ───────────
+          Structured SEO footer: one column per content cluster so every
+          public landing gets a crawlable internal link from the home
+          (no-orphan rule, playbook §2), with descriptive anchor text. */}
       <footer>
-        <div>© 2026 FUTPOOLS · futpools.com</div>
-        <div className="links">
-          <Link to={wcPath}>{c('Calendario Mundial 2026', 'World Cup 2026 Calendar')}</Link>
-          <Link to={wcMexPath}>{c('Partidos de México', 'Mexico’s matches')}</Link>
-          {locale === 'es' && <Link to={qsPath}>Quiniela de la semana</Link>}
-          {locale === 'es' && <Link to={pfPath}>Pronósticos de fútbol</Link>}
-          <a href="#">{c('Privacidad', 'Privacy')}</a>
-          <a href="#">{c('Términos', 'Terms')}</a>
-          <a href="#">{c('Contacto', 'Contact')}</a>
-          <a href="#">Twitter/X</a>
+        <div className="foot-grid">
+          <div className="foot-col foot-brand">
+            <div className="foot-logo">FUT<span>POOLS</span></div>
+            <p>{c(
+              'Quinielas de fútbol con amigos. Pronostica los partidos, sigue tus aciertos en vivo y gana premios reales.',
+              'Football pools with friends. Predict the matches, follow your hits live and win real prizes.'
+            )}</p>
+          </div>
+
+          <nav className="foot-col" aria-label="FutPools">
+            <div className="foot-h">FutPools</div>
+            <a href="#how">{c('Cómo funciona', 'How it works')}</a>
+            <a href="#gamify">{c('Progresión', 'Progression')}</a>
+            <Link to="/register">{c('Crear cuenta', 'Sign up')}</Link>
+            <Link to="/login">{c('Iniciar sesión', 'Log in')}</Link>
+          </nav>
+
+          <nav className="foot-col" aria-label={c('Guías de fútbol', 'Football guides')}>
+            <div className="foot-h">{c('Guías de fútbol', 'Football guides')}</div>
+            <Link to={wcPath}>{c('Calendario Mundial 2026', 'World Cup 2026 calendar')}</Link>
+            <Link to={wcMexPath}>{c('Partidos de México en el Mundial', 'Mexico’s World Cup matches')}</Link>
+            {locale === 'es' && <Link to={qsPath}>Quiniela de la semana</Link>}
+            {locale === 'es' && <Link to={pfPath}>Pronósticos de fútbol</Link>}
+            <Link to={wcToolPath}>{c('Añadir el Mundial a tu calendario', 'Add the World Cup to your calendar')}</Link>
+          </nav>
+
+          <nav className="foot-col" aria-label="Legal">
+            <div className="foot-h">Legal</div>
+            <a href="#">{c('Privacidad', 'Privacy')}</a>
+            <a href="#">{c('Términos', 'Terms')}</a>
+            <a href="#">{c('Contacto', 'Contact')}</a>
+          </nav>
         </div>
-        <div className="footer-version">◆ v1.0 · LIVE</div>
+
+        <div className="foot-bottom">
+          <div>© 2026 FUTPOOLS · futpools.com</div>
+          <div>{c('Pago seguro · Mayores de 18 años', 'Secure payments · 18+')}</div>
+          <div className="footer-version">◆ v1.0 · LIVE</div>
+        </div>
       </footer>
     </div>
   );
@@ -325,8 +356,8 @@ const STEPS = [
   },
   {
     t_es: 'Elige Quiniela', t_en: 'Pick a Pool',
-    d_es: 'Mundial, Liga MX, Champions, Premier — entra a la quiniela que quieras por $50 MXN.',
-    d_en: 'World Cup, Liga MX, Champions, Premier — buy into any pool for $50 MXN.',
+    d_es: 'Mundial, Liga MX, Champions, Premier: entra a la quiniela que quieras por $50 MXN.',
+    d_en: 'World Cup, Liga MX, Champions, Premier: buy into any pool for $50 MXN.',
   },
   {
     t_es: 'Haz tus Picks', t_en: 'Make Your Picks',
@@ -1070,15 +1101,31 @@ const LANDING_CSS = `
 /* FOOTER */
 .fp-landing footer {
   border-top: 1px solid var(--stroke);
-  padding: 40px 32px;
+  padding: 48px 32px 28px;
   max-width: 1440px; margin: 0 auto;
-  display: flex; justify-content: space-between; align-items: center;
   font-family: var(--mono); font-size: 11px;
-  color: var(--text-muted); letter-spacing: 1.5px;
-  flex-wrap: wrap; gap: 16px;
+  color: var(--text-muted); letter-spacing: 1px;
 }
-.fp-landing footer .links { display: flex; gap: 24px; }
+.fp-landing .foot-grid {
+  display: grid; grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr;
+  gap: 36px; padding-bottom: 32px;
+}
+.fp-landing .foot-col { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.fp-landing .foot-h {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 4px;
+}
+.fp-landing .foot-h::before { content: '◆ '; color: var(--primary); }
+.fp-landing .foot-logo { font-family: var(--ox); font-weight: 900; font-size: 16px; letter-spacing: 2px; color: var(--text); }
+.fp-landing .foot-logo span { color: var(--primary); }
+.fp-landing .foot-brand p { margin: 0; line-height: 1.7; letter-spacing: 0.5px; max-width: 280px; }
 .fp-landing footer a:hover { color: var(--primary); }
+.fp-landing .foot-bottom {
+  border-top: 1px solid var(--stroke);
+  padding-top: 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px; letter-spacing: 1.5px;
+}
 .fp-landing .footer-version { color: var(--primary); }
 
 /* Decorative corner brackets */
@@ -1176,8 +1223,10 @@ const LANDING_CSS = `
   .fp-landing .cta-row .btn { width: 100%; justify-content: center; }
   .fp-landing .cta-sub { margin-top: 16px; }
 
-  .fp-landing footer { flex-direction: column; text-align: center; padding: 28px 16px; gap: 12px; }
-  .fp-landing footer .links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+  .fp-landing footer { padding: 32px 16px 24px; }
+  .fp-landing .foot-grid { grid-template-columns: 1fr 1fr; gap: 28px 20px; }
+  .fp-landing .foot-brand { grid-column: 1 / -1; }
+  .fp-landing .foot-bottom { flex-direction: column; text-align: center; gap: 8px; }
 }
 @media (max-width: 380px) {
   .fp-landing nav { gap: 6px; }

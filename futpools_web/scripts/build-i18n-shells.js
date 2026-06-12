@@ -40,16 +40,16 @@ const ES_TO_EN = [
     '<html lang="en">',
   ],
   [
-    '<title>Calendario Mundial 2026 — Partidos, horarios y fechas | FutPools</title>',
-    '<title>World Cup 2026 Calendar — Schedule, Fixtures & Dates | FutPools</title>',
+    '<title>Calendario Mundial 2026: partidos, horarios y fechas | FutPools</title>',
+    '<title>World Cup 2026 Calendar: Schedule, Fixtures & Dates | FutPools</title>',
   ],
   [
-    '<meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook — gratis." />',
-    '<meta name="description" content="Complete World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook — free." />',
+    '<meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook, gratis." />',
+    '<meta name="description" content="Complete World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook, free." />',
   ],
   [
-    '<meta property="og:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
-    '<meta property="og:title" content="World Cup 2026 Calendar — schedule, fixtures & dates" />',
+    '<meta property="og:title" content="Calendario Mundial 2026: partidos, horarios y fechas" />',
+    '<meta property="og:title" content="World Cup 2026 Calendar: schedule, fixtures & dates" />',
   ],
   [
     '<meta property="og:description" content="Calendario del Mundial 2026: los 104 partidos con fechas y horarios en tu zona. Añádelos a iPhone, Google Calendar, Android u Outlook. Gratis." />',
@@ -72,8 +72,8 @@ const ES_TO_EN = [
     '<meta property="og:locale:alternate" content="es_MX" />',
   ],
   [
-    '<meta name="twitter:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
-    '<meta name="twitter:title" content="World Cup 2026 Calendar — schedule, fixtures & dates" />',
+    '<meta name="twitter:title" content="Calendario Mundial 2026: partidos, horarios y fechas" />',
+    '<meta name="twitter:title" content="World Cup 2026 Calendar: schedule, fixtures & dates" />',
   ],
   [
     '<meta name="twitter:description" content="Calendario del Mundial 2026: 104 partidos con fechas y horarios en tu zona. Gratis, sin app." />',
@@ -142,12 +142,12 @@ fs.writeFileSync(
 const MX_ES_SLUG = 'mexico-mundial-2026';
 const MX_EN_SLUG = 'mexico-world-cup-2026';
 const CAL = {
-  title: '<title>Calendario Mundial 2026 — Partidos, horarios y fechas | FutPools</title>',
-  desc: '<meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook — gratis." />',
-  ogTitle: '<meta property="og:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
+  title: '<title>Calendario Mundial 2026: partidos, horarios y fechas | FutPools</title>',
+  desc: '<meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook, gratis." />',
+  ogTitle: '<meta property="og:title" content="Calendario Mundial 2026: partidos, horarios y fechas" />',
   ogDesc: '<meta property="og:description" content="Calendario del Mundial 2026: los 104 partidos con fechas y horarios en tu zona. Añádelos a iPhone, Google Calendar, Android u Outlook. Gratis." />',
   ogUrl: '<meta property="og:url" content="https://futpools.com/calendario-mundial-2026" />',
-  twTitle: '<meta name="twitter:title" content="Calendario Mundial 2026 — partidos, horarios y fechas" />',
+  twTitle: '<meta name="twitter:title" content="Calendario Mundial 2026: partidos, horarios y fechas" />',
   twDesc: '<meta name="twitter:description" content="Calendario del Mundial 2026: 104 partidos con fechas y horarios en tu zona. Gratis, sin app." />',
   hrefBlock: '<link rel="alternate" hreflang="es" href="https://futpools.com/calendario-mundial-2026" />\n    <link rel="alternate" hreflang="en" href="https://futpools.com/world-cup-2026-calendar" />\n    <link rel="alternate" hreflang="x-default" href="https://futpools.com/calendario-mundial-2026" />',
   ogLocale: '<meta property="og:locale" content="es_MX" />',
@@ -161,15 +161,15 @@ function mexicoShell(locale) {
   const es = locale === 'es';
   const slug = es ? MX_ES_SLUG : MX_EN_SLUG;
   const h = es ? {
-    title: 'Partidos de México en el Mundial 2026 — Fechas y horarios | FutPools',
-    desc: 'Todos los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios — añádelos a tu calendario gratis.',
-    ogTitle: 'Partidos de México en el Mundial 2026 — fechas y horarios',
+    title: 'Partidos de México en el Mundial 2026: fechas y horarios | FutPools',
+    desc: 'Todos los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios. Añádelos a tu calendario gratis.',
+    ogTitle: 'Partidos de México en el Mundial 2026: fechas y horarios',
     ogDesc: 'Los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios. Gratis.',
     twDesc: 'México en el Mundial 2026: Grupo A, 3 partidos con fechas y sedes. Añádelos a tu calendario gratis.',
   } : {
-    title: 'Mexico at the World Cup 2026 — Matches, Dates & Times | FutPools',
-    desc: 'All of Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times — add them to your calendar free.',
-    ogTitle: 'Mexico at the World Cup 2026 — matches, dates & times',
+    title: 'Mexico at the World Cup 2026: Matches, Dates & Times | FutPools',
+    desc: 'All of Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times. Add them to your calendar free.',
+    ogTitle: 'Mexico at the World Cup 2026: matches, dates & times',
     ogDesc: 'Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times. Free.',
     twDesc: 'Mexico at the World Cup 2026: Group A, 3 matches with dates and venues. Add them to your calendar free.',
   };
@@ -202,12 +202,12 @@ fs.writeFileSync(path.join(distDir, `${MX_EN_SLUG}/index.html`), mexicoShell('en
 const QS_SLUG = 'quiniela-de-la-semana';
 function quinielaShell() {
   let html = baseHtml;
-  html = swap(html, CAL.title, '<title>Quiniela de la semana — Progol y quiniela posible | FutPools</title>', 'qs:title');
+  html = swap(html, CAL.title, '<title>Quiniela de la semana: Progol y quiniela posible | FutPools</title>', 'qs:title');
   html = swap(html, CAL.desc, '<meta name="description" content="Qué es la quiniela de la semana de Progol, cómo se llena (L/E/V de 14 partidos), qué es la quiniela posible, y cómo jugar tu propia quiniela en FutPools. Gratis." />', 'qs:desc');
-  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela de la semana — Progol y quiniela posible" />', 'qs:og:title');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela de la semana: Progol y quiniela posible" />', 'qs:og:title');
   html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Cómo funciona la quiniela de la semana de Progol (L/E/V, 14 partidos + Revancha), qué es la quiniela posible, y cómo jugar tu propia quiniela en FutPools." />', 'qs:og:description');
   html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${QS_SLUG}" />`, 'qs:og:url');
-  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela de la semana — Progol y quiniela posible" />', 'qs:twitter:title');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela de la semana: Progol y quiniela posible" />', 'qs:twitter:title');
   html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Cómo funciona la quiniela de la semana (Progol) y cómo jugar la tuya en FutPools. Gratis." />', 'qs:twitter:description');
   // ES-only page: drop the calendar's hreflang block (no alternates).
   html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'qs:hreflang');
@@ -225,7 +225,7 @@ function pronosticosShell() {
   html = swap(html, CAL.title, '<title>Pronósticos de fútbol: haz tu quiniela y compite | FutPools</title>', 'pf:title');
   html = swap(html, CAL.desc, '<meta name="description" content="Aprende a hacer pronósticos de fútbol (L, E, V): cómo analizar forma, localía y bajas, y pon a prueba tus pronósticos en quinielas con amigos en FutPools." />', 'pf:desc');
   html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Pronósticos de fútbol: haz tu quiniela y compite" />', 'pf:og:title');
-  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Cómo hacer pronósticos de fútbol (L/E/V) con criterio — forma, localía, cara a cara y bajas — y dónde ponerlos a prueba: las quinielas de FutPools." />', 'pf:og:description');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Cómo hacer pronósticos de fútbol (L/E/V) con criterio: forma, localía, cara a cara y bajas. Y dónde ponerlos a prueba: las quinielas de FutPools." />', 'pf:og:description');
   html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${PF_SLUG}" />`, 'pf:og:url');
   html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Pronósticos de fútbol: haz tu quiniela y compite" />', 'pf:twitter:title');
   html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Haz tus pronósticos de fútbol (L/E/V) y compite con tus aciertos en las quinielas de FutPools." />', 'pf:twitter:description');

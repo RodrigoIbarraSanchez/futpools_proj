@@ -75,29 +75,35 @@ export function PronosticosFutbol() {
         </div>
       </nav>
 
-      <header className="wc-hero">
+      {/* Reverb layout: copy left, visual right (above the fold). */}
+      <header className="wc-hero wc-hero-split">
         <div className="wc-grid-bg" />
         <div className="wc-hero-inner">
-          <div className="wc-kicker">◆ TU OPINIÓN, A PRUEBA · MÉXICO</div>
-          <h1>Pronósticos de fútbol</h1>
-          <p className="wc-sub wc-lead">
-            Los pronósticos de fútbol son tu opinión sobre cada partido —gana el local, empate o gana el
-            visitante— y la quiniela es donde se ponen a prueba. Aquí te explicamos cómo hacer pronósticos
-            de fútbol con criterio y cómo competir con tus aciertos en las quinielas de FutPools.
-          </p>
-          <div className="wc-cta-row" style={{ justifyContent: 'center' }}>{cta()}</div>
-          <div className="wc-hero-stats">
-            <div className="wc-stat"><div className="wc-stat-num">L·E·V</div><div className="wc-stat-lab">Pronóstico</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">90'</div><div className="wc-stat-lab">Tiempo reglamentario</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">En vivo</div><div className="wc-stat-lab">Aciertos</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">18+</div><div className="wc-stat-lab">México</div></div>
+          <div className="wc-hero-copy">
+            <div className="wc-kicker">◆ QUINIELAS DE FÚTBOL · MÉXICO</div>
+            <h1>Pronósticos de fútbol</h1>
+            <p className="wc-sub wc-lead">
+              Los pronósticos de fútbol son tu opinión sobre cada partido: gana el local, empate o gana el
+              visitante. La quiniela es donde se ponen a prueba. Aquí te explicamos cómo hacer pronósticos
+              de fútbol con criterio y cómo competir con tus aciertos en las quinielas de FutPools.
+            </p>
+            <div className="wc-cta-row">{cta()}</div>
+            <div className="wc-hero-stats">
+              <div className="wc-stat"><div className="wc-stat-num">L·E·V</div><div className="wc-stat-lab">Pronóstico</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">90'</div><div className="wc-stat-lab">Tiempo reglamentario</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">En vivo</div><div className="wc-stat-lab">Aciertos</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">18+</div><div className="wc-stat-lab">México</div></div>
+            </div>
+          </div>
+          <div className="wc-hero-visual">
+            <PhonePicksVisual />
           </div>
         </div>
       </header>
 
       <main className="wc-main wc-content">
 
-        <Statement kicker="TU OPINIÓN, A PRUEBA" title="Pronosticar es fácil. Acertar, no tanto.">
+        <Statement kicker="ASÍ SE JUEGA" title="Pronosticar es fácil. Acertar, no tanto.">
           Cualquiera tiene una opinión del partido del fin de semana. Los pronósticos de fútbol convierten esa
           opinión en un juego: registras tus L/E/V, los comparas contra tus rivales, y los resultados deciden.
         </Statement>
@@ -105,20 +111,20 @@ export function PronosticosFutbol() {
         <Split title="¿Qué son los pronósticos de fútbol?" visual={<PickVisual />}>
           <p>Un pronóstico de fútbol es tu predicción del resultado de un partido:</p>
           <ul className="wc-ul">
-            <li>L — gana el equipo local</li>
-            <li>E — empate, sin ganador</li>
-            <li>V — gana el equipo visitante</li>
-            <li>Cuenta el resultado en tiempo reglamentario — sin tiempos extra ni penales</li>
+            <li>L: gana el equipo local</li>
+            <li>E: empate, sin ganador</li>
+            <li>V: gana el equipo visitante</li>
+            <li>Cuenta el resultado en tiempo reglamentario, sin tiempos extra ni penales</li>
           </ul>
         </Split>
 
         <Split flip title="Cómo hacer pronósticos de fútbol: 4 claves" visual={<FormVisual />}>
           <p>Un buen pronóstico se construye con información, no con corazonadas:</p>
           <ul className="wc-ul">
-            <li>Forma reciente — cómo llegan los dos equipos a la jornada</li>
-            <li>Localía — jugar en casa pesa, pero no decide solo</li>
-            <li>Cara a cara — el historial entre ambos equipos</li>
-            <li>Bajas — lesiones y suspensiones confirmadas</li>
+            <li>Forma reciente: cómo llegan los dos equipos a la jornada</li>
+            <li>Localía: jugar en casa pesa, pero no decide solo</li>
+            <li>Cara a cara: el historial entre ambos equipos</li>
+            <li>Bajas: lesiones y suspensiones confirmadas</li>
           </ul>
           <p>Ningún análisis garantiza el resultado: un buen pronóstico reduce la incertidumbre, no la elimina.</p>
         </Split>
@@ -212,7 +218,7 @@ function NextPoolCard({ pool }) {
           <div className="wc-viz-head"><span>◆ QUINIELAS PÚBLICAS</span></div>
           <div className="wc-pf-next-name">Cada semana se abren quinielas en FutPools</div>
           <div className="wc-pf-next-meta">
-            <span>Crea tu cuenta y entérate cuando abra la siguiente — o arma una quiniela con tus amigos.</span>
+            <span>Crea tu cuenta y entérate cuando abra la siguiente, o arma una quiniela con tus amigos.</span>
           </div>
           <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
             <Link to="/onboarding" className="wc-btn-primary">▶ Jugar mi quiniela</Link>
@@ -318,7 +324,7 @@ function PhonePicksVisual() {
               <span className="wc-phone-date">{it.t}</span>
               <span className="wc-phone-evt">
                 <span className={`wc-pf-cell on`} style={{ width: 18, height: 18, fontSize: 9 }}>{it.p}</span>
-                <span className={`wc-pf-live ${it.ok ? 'ok' : ''}`}>{it.ok ? '✓' : '—'}</span>
+                <span className={`wc-pf-live ${it.ok ? 'ok' : ''}`}>{it.ok ? '✓' : '·'}</span>
               </span>
             </div>
           ))}

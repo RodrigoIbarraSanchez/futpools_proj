@@ -173,6 +173,9 @@ LINKS INTERNOS:     desde dónde se enlaza esta página + a dónde enlaza ella
 - 1 página = 1 keyword primaria. 1 solo H1. Sin páginas huérfanas.
 - Exactamente **1** FAQPage por página; **0** BreadcrumbList manuales (Yoast).
 - Frases cortas, bullets, intro con la keyword al inicio. Nada de relleno.
+- **Sin guiones largos (—) en ningún texto visible** (regla del usuario,
+  2026-06-11: se leen "AI generated"). Usar coma, dos puntos, punto o
+  paréntesis. Aplica a títulos, meta descriptions, copy, bullets y FAQ.
 - Datos verificados; temas que cambian en el tiempo → copy evergreen +
   visuales marcados "ejemplo".
 - Marcas de terceros → disclaimer de no-afiliación (FAQ + footer).

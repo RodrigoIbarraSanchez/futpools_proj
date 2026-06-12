@@ -45,12 +45,12 @@ export function WorldCup2026Landing() {
 
   useEffect(() => {
     document.title = c(
-      'Calendario Mundial 2026 — Partidos, horarios y fechas | FutPools',
-      'World Cup 2026 Calendar — Schedule, Fixtures & Dates | FutPools'
+      'Calendario Mundial 2026: partidos, horarios y fechas | FutPools',
+      'World Cup 2026 Calendar: Schedule, Fixtures & Dates | FutPools'
     );
     setMeta('description', c(
-      'Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook — gratis.',
-      'Complete World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook — free.'
+      'Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook, gratis.',
+      'Complete World Cup 2026 calendar: all 104 matches with dates and kickoff times in your timezone. Add them to iPhone, Google Calendar, Android or Outlook, free.'
     ));
     setCanonical(canonical);
     // Client-side structured data (the static shell also bakes this in for
@@ -78,24 +78,29 @@ export function WorldCup2026Landing() {
         </div>
       </nav>
 
-      {/* ─────────── HERO (H1 = keyword) ─────────── */}
-      <header className="wc-hero">
+      {/* ─────────── HERO (H1 = keyword · Reverb layout: copy left, visual right) ─────────── */}
+      <header className="wc-hero wc-hero-split">
         <div className="wc-grid-bg" />
         <div className="wc-hero-inner">
-          <div className="wc-kicker">◆ {c('CALENDARIO OFICIAL · MUNDIAL 2026', 'OFFICIAL SCHEDULE · WORLD CUP 2026')}</div>
-          <h1>{c('Calendario del Mundial 2026', 'World Cup 2026 Calendar')}</h1>
-          <p className="wc-sub wc-lead">
-            {c(
-              'El calendario del Mundial 2026 ya está aquí: los 104 partidos, 48 selecciones y 16 sedes en Estados Unidos, México y Canadá. Consulta las fechas y los horarios en tu zona, y añade los partidos a tu calendario en segundos. Es gratis, sin app ni registro.',
-              'The World Cup 2026 calendar is here: all 104 matches, 48 teams and 16 host cities across the USA, Mexico and Canada. Check the dates and kickoff times in your timezone, and add the matches to your calendar in seconds. It’s free — no app, no sign-up.'
-            )}
-          </p>
-          <div className="wc-cta-row" style={{ justifyContent: 'center' }}>{ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}</div>
-          <div className="wc-hero-stats">
-            <div className="wc-stat"><div className="wc-stat-num">104</div><div className="wc-stat-lab">{c('Partidos', 'Matches')}</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">48</div><div className="wc-stat-lab">{c('Selecciones', 'Teams')}</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">16</div><div className="wc-stat-lab">{c('Sedes', 'Host cities')}</div></div>
-            <div className="wc-stat"><div className="wc-stat-num">39</div><div className="wc-stat-lab">{c('Días', 'Days')}</div></div>
+          <div className="wc-hero-copy">
+            <div className="wc-kicker">◆ {c('CALENDARIO OFICIAL · MUNDIAL 2026', 'OFFICIAL SCHEDULE · WORLD CUP 2026')}</div>
+            <h1>{c('Calendario del Mundial 2026', 'World Cup 2026 Calendar')}</h1>
+            <p className="wc-sub wc-lead">
+              {c(
+                'El calendario del Mundial 2026 ya está aquí: los 104 partidos, 48 selecciones y 16 sedes en Estados Unidos, México y Canadá. Consulta las fechas y los horarios en tu zona, y añade los partidos a tu calendario en segundos. Es gratis, sin app ni registro.',
+                'The World Cup 2026 calendar is here: all 104 matches, 48 teams and 16 host cities across the USA, Mexico and Canada. Check the dates and kickoff times in your timezone, and add the matches to your calendar in seconds. It’s free, with no app and no sign-up.'
+              )}
+            </p>
+            <div className="wc-cta-row">{ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}</div>
+            <div className="wc-hero-stats">
+              <div className="wc-stat"><div className="wc-stat-num">104</div><div className="wc-stat-lab">{c('Partidos', 'Matches')}</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">48</div><div className="wc-stat-lab">{c('Selecciones', 'Teams')}</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">16</div><div className="wc-stat-lab">{c('Sedes', 'Host cities')}</div></div>
+              <div className="wc-stat"><div className="wc-stat-num">39</div><div className="wc-stat-lab">{c('Días', 'Days')}</div></div>
+            </div>
+          </div>
+          <div className="wc-hero-visual">
+            <PhoneCalendarVisual c={c} />
           </div>
         </div>
       </header>
@@ -109,7 +114,7 @@ export function WorldCup2026Landing() {
         >
           {c(
             'Por primera vez, 48 selecciones y 104 partidos repartidos en tres países anfitriones. Aquí tienes todo el calendario, y lo añades a tu teléfono en segundos.',
-            'For the first time, 48 teams and 104 matches across three host countries. Here’s the full calendar — and you add it to your phone in seconds.'
+            'For the first time, 48 teams and 104 matches across three host countries. Here’s the full calendar, and you can add it to your phone in seconds.'
           )}
         </Statement>
 
@@ -203,8 +208,8 @@ export function WorldCup2026Landing() {
           title={c('Tu compañero para el Mundial 2026', 'Your companion for the World Cup 2026')}
         >
           {c(
-            'No te pierdas un solo partido de tu selección — desde el primer silbatazo en el Azteca hasta la final.',
-            'Don’t miss a single match of your team — from the first whistle at the Azteca to the final.'
+            'No te pierdas un solo partido de tu selección, desde el primer silbatazo en el Azteca hasta la final.',
+            'Don’t miss a single match of your team, from the first whistle at the Azteca to the final.'
           )}
         </Statement>
 
@@ -229,8 +234,8 @@ export function WorldCup2026Landing() {
               {c('Ya tienes el calendario. Ahora juega.', 'You’ve got the calendar. Now play.')}
             </h2>
             <p>{c(
-              'Haz tu quiniela del Mundial 2026 en FutPools — premios reales, depositados a tu cuenta.',
-              'Make your World Cup 2026 pool on FutPools — real prizes, paid straight to your account.'
+              'Haz tu quiniela del Mundial 2026 en FutPools: premios reales, depositados a tu cuenta.',
+              'Make your World Cup 2026 pool on FutPools: real prizes, paid straight to your account.'
             )}</p>
             <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
               {ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}
@@ -361,15 +366,15 @@ function HostMapVisual({ c }) {
 
 function TimezoneVisual({ c }) {
   const zs = [
-    c('México — CDMX, Norte y Pacífico', 'Mexico — Central, North & Pacific'),
-    c('EE.UU. — Este, Centro, Montaña, Pacífico', 'USA — Eastern, Central, Mountain, Pacific'),
-    c('Latinoamérica — ARG · BRA · COL · PER · CHI', 'Latin America — ARG · BRA · COL · PER · CHI'),
-    c('Europa — España y Reino Unido', 'Europe — Spain & UK'),
+    c('México · CDMX, Norte y Pacífico', 'Mexico · Central, North & Pacific'),
+    c('EE.UU. · Este, Centro, Montaña, Pacífico', 'USA · Eastern, Central, Mountain, Pacific'),
+    c('Latinoamérica · ARG · BRA · COL · PER · CHI', 'Latin America · ARG · BRA · COL · PER · CHI'),
+    c('Europa · España y Reino Unido', 'Europe · Spain & UK'),
   ];
   return (
     <div className="wc-viz" role="img" aria-label={c('El calendario del Mundial 2026 se ajusta a tu zona horaria: México, Estados Unidos, Latinoamérica y Europa.', 'The World Cup 2026 calendar adjusts to your timezone: Mexico, the United States, Latin America and Europe.')}>
       <div className="wc-viz-head"><span>◆ {c('TU ZONA · AUTOMÁTICO', 'YOUR ZONE · AUTOMATIC')}</span></div>
-      <div className="wc-tz-note2">{c('Cada partido se muestra en tu hora local — sin convertir nada a mano.', 'Every match shows in your local time — no manual conversion.')}</div>
+      <div className="wc-tz-note2">{c('Cada partido se muestra en tu hora local, sin convertir nada a mano.', 'Every match shows in your local time, with no manual conversion.')}</div>
       <div className="wc-tz-list">
         {zs.map((z, i) => (
           <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 80}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>
@@ -425,6 +430,20 @@ export function setJsonLd(id, obj) {
 export const LANDING_CSS = `
 .fp-wc26 .wc-content { gap: 0; padding-top: 8px; }
 .fp-wc26 .wc-lead { max-width: 720px; }
+
+/* ── Reverb-style hero: copy left, visual right (stacks on mobile) ──
+   The visual sits above the fold so visitors see the product instantly
+   (engagement signal vs. bounce). Text column stays first in the DOM. */
+.fp-wc26 .wc-hero-split { text-align: left; padding-top: 40px; }
+.fp-wc26 .wc-hero-split .wc-hero-inner { max-width: 1100px; display: grid; grid-template-columns: 1fr; gap: 26px; align-items: center; }
+.fp-wc26 .wc-hero-split .wc-sub { margin-left: 0; margin-right: 0; }
+.fp-wc26 .wc-hero-split .wc-cta-row { justify-content: flex-start; }
+.fp-wc26 .wc-hero-split .wc-hero-stats { max-width: 480px; }
+.fp-wc26 .wc-hero-split .wc-hero-visual { width: 100%; min-width: 0; }
+@media (min-width: 880px) {
+  .fp-wc26 .wc-hero-split .wc-hero-inner { grid-template-columns: 1.1fr 0.9fr; gap: 52px; }
+  .fp-wc26 .wc-hero-split h1 { font-size: clamp(32px, 4.6vw, 56px); }
+}
 .fp-wc26 .wc-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 4px; }
 .fp-wc26 .wc-ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .fp-wc26 .wc-ul li { position: relative; padding-left: 20px; font-size: 13.5px; line-height: 1.5; color: var(--text-dim); }
