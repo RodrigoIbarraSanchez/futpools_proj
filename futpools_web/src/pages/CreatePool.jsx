@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSafeBack } from '../lib/safeBack';
+import { inviteShareUrl } from '../lib/shareLinks';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -1005,9 +1006,9 @@ function CoinPresetChip({ amount, active, onClick, accent = 'var(--fp-gold)', ti
 function CreatedSuccess({ pool, onClose, locale }) {
   const [copied, setCopied] = useState(false);
   const code = pool.inviteCode || '';
-  const shareURL = typeof window !== 'undefined'
-    ? `${window.location.origin}/p/${code}`
-    : `futpools://p/${code}`;
+  // Share via the API origin (og: meta + preview image); futpools.com/p/*
+  // returns 404 to crawlers — see src/lib/shareLinks.js.
+  const shareURL = inviteShareUrl(code);
 
   const copy = async (text) => {
     try {

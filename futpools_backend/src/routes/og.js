@@ -233,7 +233,10 @@ router.get('/p/:code', async (req, res) => {
     : inviteHook;
 
   const title = `${pool.name} — FutPools`;
-  const host = `${req.protocol}://${req.get('host')}`;
+  // Behind Render's proxy req.protocol reports "http"; crawlers (WhatsApp,
+  // Facebook) reject mixed-content og:image URLs, so honor the forwarded
+  // protocol and the image URL stays https in production.
+  const host = `${String(req.headers['x-forwarded-proto'] || req.protocol).split(',')[0]}://${req.get('host')}`;
   const ogImage   = `${host}/p/${code}/image.png`;
   const canonical = `${frontendUrl}/p/${code}`;
   const spaUrl    = `${frontendUrl}/pool/${pool._id}`;
@@ -328,7 +331,10 @@ router.get('/c/:code', async (req, res) => {
     ? `${challengerHandle} apuesta a que ${phrase}. Toma el lado contrario por ${stake} monedas.`
     : `${challengerHandle} te reta: apuesta a que ${phrase}. Acepta y juégate ${stake} monedas.`;
 
-  const host = `${req.protocol}://${req.get('host')}`;
+  // Behind Render's proxy req.protocol reports "http"; crawlers (WhatsApp,
+  // Facebook) reject mixed-content og:image URLs, so honor the forwarded
+  // protocol and the image URL stays https in production.
+  const host = `${String(req.headers['x-forwarded-proto'] || req.protocol).split(',')[0]}://${req.get('host')}`;
   const ogImage   = `${host}/c/${code}/image.png`;
   const canonical = `${frontendUrl}/c/${code}`;
   // Web SPA route is /challenges/:id (plural). The /c/:code resolver in

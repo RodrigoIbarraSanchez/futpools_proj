@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
+import { inviteShareUrl } from '../lib/shareLinks';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t, tFormat } from '../i18n/translations';
@@ -85,15 +86,9 @@ function ShareButton({ pool }) {
   const [copied, setCopied] = useState(false);
   // Route share links through the backend so WhatsApp / Telegram bots
   // receive a server-rendered page with og: meta tags and a fixture-card
-  // image. VITE_API_URL must be an absolute URL (https://…) for this to
-  // work; if it's relative or unset we fall back to the current origin.
-  // (Render Static Sites doesn't support external proxies in _redirects,
-  // so we can't keep the branded host without a CF Worker or Web Service.)
-  const apiBase = import.meta.env.VITE_API_URL || '';
-  const shareOrigin = apiBase.startsWith('http')
-    ? apiBase.replace(/\/$/, '')
-    : (typeof window !== 'undefined' ? window.location.origin : '');
-  const url = pool.inviteCode ? `${shareOrigin}/p/${pool.inviteCode}` : '';
+  // image (futpools.com/p/* answers 404 to crawlers) — shared logic in
+  // src/lib/shareLinks.js, also used by the pool-created success screen.
+  const url = inviteShareUrl(pool.inviteCode);
 
   /// Use native share ONLY on mobile devices — desktop share sheets (Chrome,
   /// macOS) sometimes concatenate the `text`/`title` fields onto the `url`
