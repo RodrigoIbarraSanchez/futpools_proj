@@ -115,6 +115,10 @@ export function PronosticosFutbolHoy() {
 
       <main className="wc-main wc-content">
 
+        {/* First thing after the hero: the predictions themselves — that's
+            what the "pronosticos futbol hoy" searcher came for (anti-bounce). */}
+        <TodayPredictionsSection fixtures={fixtures} />
+
         <Statement kicker="LO DE HOY" title="Los partidos de hoy. Tus pronósticos.">
           Los pronósticos de fútbol de hoy tienen una ventaja sobre los de la semana: las alineaciones
           y las bajas ya están confirmadas. Revisa la lista, decide tus L/E/V y ponlos a competir.
@@ -132,8 +136,6 @@ export function PronosticosFutbolHoy() {
             pronósticos de fútbol</Link>.
           </p>
         </Split>
-
-        <TodayPredictionsSection fixtures={fixtures} />
 
         <TodayPoolCard pool={pool} />
 
