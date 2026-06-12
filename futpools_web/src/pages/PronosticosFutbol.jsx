@@ -96,7 +96,7 @@ export function PronosticosFutbol() {
             </div>
           </div>
           <div className="wc-hero-visual">
-            <PhonePicksVisual />
+            <HeroPicksVisual />
           </div>
         </div>
       </header>
@@ -231,6 +231,42 @@ function NextPoolCard({ pool }) {
 
 // ─────────────── Visuals (evergreen, illustrative) ───────────────
 
+/**
+ * Hero "product shot" (Reverb-style): a quiniela mid-fill, large enough to
+ * own the right column. Represents the primary keyword literally — making
+ * football pronósticos (L/E/V) and tracking aciertos live.
+ */
+function HeroPicksVisual() {
+  const rows = [
+    { n: 1, p: 'L', live: '✓' },
+    { n: 2, p: 'E', live: '✓' },
+    { n: 3, p: 'V', live: '·' },
+    { n: 4, p: 'L', live: '✓' },
+    { n: 5, p: 'E', live: '·' },
+    { n: 6, p: 'V', live: '·' },
+  ];
+  return (
+    <div className="wc-viz wc-pf-hero" role="img" aria-label="Una quiniela de ejemplo llenándose: pronóstico Local, Empate o Visitante por partido, con los aciertos marcándose en vivo.">
+      <div className="wc-viz-head"><span>◆ TUS PRONÓSTICOS · EJEMPLO</span><span className="wc-viz-sub">● EN VIVO</span></div>
+      <div className="wc-pf-hero-th"><span>Partido</span><span>L</span><span>E</span><span>V</span><span>✓</span></div>
+      <div className="wc-pf-hero-list">
+        {rows.map((r, i) => (
+          <div className="wc-pf-hero-row" key={r.n} style={{ animationDelay: `${i * 80}ms` }}>
+            <span className="wc-pf-hero-match">
+              <span className="wc-pf-dot" /><span className="wc-pf-dot alt" />Partido {r.n}
+            </span>
+            {['L', 'E', 'V'].map((opt) => (
+              <span className={`wc-pf-cell wc-pf-cell-lg ${r.p === opt ? 'on' : ''}`} key={opt}>{opt}</span>
+            ))}
+            <span className={`wc-pf-live ${r.live === '✓' ? 'ok' : ''}`}>{r.live}</span>
+          </div>
+        ))}
+      </div>
+      <div className="wc-dist-foot">3 aciertos de 6 · gana quien acierta más</div>
+    </div>
+  );
+}
+
 function PickVisual() {
   const rows = [
     { n: 1, p: 'L' }, { n: 2, p: 'E' }, { n: 3, p: 'V' }, { n: 4, p: 'L' }, { n: 5, p: 'V' }, { n: 6, p: 'E' },
@@ -336,6 +372,24 @@ function PhonePicksVisual() {
 }
 
 const PF_CSS = `
+/* hero product shot (large quiniela) */
+.fp-wc26 .wc-pf-hero { padding: 18px 18px 16px; }
+.fp-wc26 .wc-pf-hero-th, .fp-wc26 .wc-pf-hero-row { display: grid; grid-template-columns: 1fr repeat(3, 46px) 28px; gap: 7px; align-items: center; }
+.fp-wc26 .wc-pf-hero-th { font-family: var(--mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 12px 8px; }
+.fp-wc26 .wc-pf-hero-th span:not(:first-child) { text-align: center; }
+.fp-wc26 .wc-pf-hero-list { display: flex; flex-direction: column; gap: 7px; }
+.fp-wc26 .wc-pf-hero-row { background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--primary); clip-path: polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%); padding: 8px 12px; opacity: 0; animation: wcRise 0.45s ease forwards; }
+.fp-wc26 .wc-pf-hero-match { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; }
+.fp-wc26 .wc-pf-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); opacity: 0.85; flex-shrink: 0; }
+.fp-wc26 .wc-pf-dot.alt { background: var(--accent); margin-left: -3px; }
+.fp-wc26 .wc-pf-cell-lg { height: 32px; font-size: 13px; }
+.fp-wc26 .wc-pf-hero .wc-pf-live { text-align: center; margin: 0; font-size: 13px; }
+.fp-wc26 .wc-pf-hero .wc-viz-sub { color: var(--primary); }
+@media (max-width: 420px) {
+  .fp-wc26 .wc-pf-hero-th, .fp-wc26 .wc-pf-hero-row { grid-template-columns: 1fr repeat(3, 38px) 22px; gap: 5px; }
+  .fp-wc26 .wc-pf-cell-lg { height: 28px; font-size: 12px; }
+}
+
 /* picks ticket */
 .fp-wc26 .wc-pf-ticket { display: flex; flex-direction: column; gap: 4px; }
 .fp-wc26 .wc-pf-th, .fp-wc26 .wc-pf-row { display: grid; grid-template-columns: 28px repeat(3, 1fr); gap: 5px; align-items: center; }

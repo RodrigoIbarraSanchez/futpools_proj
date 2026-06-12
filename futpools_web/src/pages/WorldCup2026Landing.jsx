@@ -435,13 +435,29 @@ export const LANDING_CSS = `
    The visual sits above the fold so visitors see the product instantly
    (engagement signal vs. bounce). Text column stays first in the DOM. */
 .fp-wc26 .wc-hero-split { text-align: left; padding-top: 40px; }
-.fp-wc26 .wc-hero-split .wc-hero-inner { max-width: 1100px; display: grid; grid-template-columns: 1fr; gap: 26px; align-items: center; }
+.fp-wc26 .wc-hero-split .wc-hero-inner { max-width: 1100px; display: grid; grid-template-columns: 1fr; gap: 30px; align-items: center; }
 .fp-wc26 .wc-hero-split .wc-sub { margin-left: 0; margin-right: 0; }
 .fp-wc26 .wc-hero-split .wc-cta-row { justify-content: flex-start; }
-.fp-wc26 .wc-hero-split .wc-hero-stats { max-width: 480px; }
+/* Stats: explicit left-aligned grid at EVERY width — the base WC_CSS
+   switches to centered flex at 640px+, which wrapped the 4th chip onto
+   its own centered row. 2×2 on phones, 4-up from 640px. */
+.fp-wc26 .wc-hero-split .wc-hero-stats {
+  display: grid; grid-template-columns: repeat(2, minmax(0, max-content));
+  justify-content: start; text-align: left; gap: 16px 36px; margin-top: 22px;
+}
 .fp-wc26 .wc-hero-split .wc-hero-visual { width: 100%; min-width: 0; }
+/* Hero visuals must read as the page's "product shot": full column width
+   for panel visuals, larger phone for the mockups. */
+.fp-wc26 .wc-hero-visual > .wc-viz { width: 100%; box-sizing: border-box; }
+.fp-wc26 .wc-hero-visual .wc-phone { width: min(320px, 100%); }
+.fp-wc26 .wc-hero-visual .wc-phone-head { font-size: 12px; }
+.fp-wc26 .wc-hero-visual .wc-phone-date { font-size: 10px; }
+.fp-wc26 .wc-hero-visual .wc-phone-row { padding: 10px 11px; }
+@media (min-width: 640px) {
+  .fp-wc26 .wc-hero-split .wc-hero-stats { grid-template-columns: repeat(4, minmax(0, max-content)); gap: 10px 36px; }
+}
 @media (min-width: 880px) {
-  .fp-wc26 .wc-hero-split .wc-hero-inner { grid-template-columns: 1.1fr 0.9fr; gap: 52px; }
+  .fp-wc26 .wc-hero-split .wc-hero-inner { grid-template-columns: 1.05fr 0.95fr; gap: 56px; }
   .fp-wc26 .wc-hero-split h1 { font-size: clamp(32px, 4.6vw, 56px); }
 }
 .fp-wc26 .wc-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 4px; }
