@@ -50,13 +50,34 @@ export function wc26Faq(locale) {
   return WC26_FAQ.map((f) => ({ q: f.q[l], a: f.a[l] }));
 }
 
-/** schema.org @graph (FAQPage + BreadcrumbList) for one locale. */
+/** schema.org @graph (WebPage+image, FAQPage, BreadcrumbList) per locale.
+ *  The WebPage/ImageObject pair is the Image-SEO hook: it tells Google the
+ *  page's primary indexable image (inline SVGs can't be image-indexed). */
 export function wc26JsonLd(locale) {
   const l = L(locale);
   const canonical = ORIGIN + PATH[l];
+  const imageUrl = ORIGIN + '/calendario-mundial-2026-partidos.jpg';
   return {
     '@context': 'https://schema.org',
     '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': canonical,
+        url: canonical,
+        name: l === 'es'
+          ? 'Calendario Mundial 2026: partidos, horarios y fechas'
+          : 'World Cup 2026 Calendar: Schedule, Fixtures & Dates',
+        primaryImageOfPage: {
+          '@type': 'ImageObject',
+          contentUrl: imageUrl,
+          url: imageUrl,
+          width: 640,
+          height: 1314,
+          caption: l === 'es'
+            ? 'Calendario del Mundial 2026 con los 104 partidos en un teléfono'
+            : 'World Cup 2026 calendar with all 104 matches on a phone',
+        },
+      },
       {
         '@type': 'FAQPage',
         mainEntity: WC26_FAQ.map((f) => ({

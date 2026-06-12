@@ -135,6 +135,23 @@ you can reuse: distribution bars, a phases stepper, a dotted region map, a
 timezone list, a phone mockup. One well-orchestrated staggered load
 (`animation-delay`) beats scattered micro-animations.
 
+**Image SEO (hybrid, added 2026-06-12).** Inline SVGs are invisible to Google
+Images — that channel needs real rasters. The pattern (reference: the WC26
+calendar landing):
+- Visual roots are `<figure className="wc-viz">` with keyword-bearing
+  `<figcaption className="wc-dist-foot">` (captions near visuals are weighted
+  context — Sturm's "pie de imagen"). CSS reset: `figure.wc-viz { margin: 0 }`.
+- ONE real indexable image per landing, only when the keyword has image
+  intent: descriptive filename (`/calendario-mundial-2026-partidos.jpg`),
+  bilingual alt, explicit width/height (no CLS), `loading="lazy"` (below the
+  fold), wrapped in figure/figcaption.
+- JSON-LD gains a `WebPage` node with `primaryImageOfPage` (ImageObject with
+  contentUrl/width/height/caption).
+- Both sitemaps declare the image via the `xmlns:image` extension
+  (`image:image` → `image:loc` + `image:title`); backend `STATIC_ROUTES`
+  entries take an optional `images: [{loc, title}]`.
+Measure in GSC (Search results → Image filter) before extending to more pages.
+
 **Accuracy is non-negotiable.** Never invent data (e.g. specific match
 fixtures that depend on a draw). Use only verified facts (dates, venues,
 distribution). Web-search to confirm before publishing.

@@ -195,6 +195,11 @@ export function WorldCup2026Landing() {
             'Add the official schedule to your calendar and stop hunting for kickoff times. If FIFA moves a match, yours updates automatically.'
           )}
         </Statement>
+        {/* The "free, no sign-up" pitch is the peak persuasion moment for
+            the calendar — give it its congruent action right here. */}
+        <div className="wc-cta-row" style={{ justifyContent: 'center', marginTop: -18, marginBottom: 26 }}>
+          {ctaTool(c('Añadir el calendario gratis', 'Add the free calendar'))}
+        </div>
 
         {/* two-column: host cities + map */}
         <Split title={c('Sedes y estadios del Mundial 2026', 'Host cities and stadiums of the World Cup 2026')} visual={<HostMapVisual c={c} />}>
@@ -229,8 +234,29 @@ export function WorldCup2026Landing() {
             separate thing — no bait-and-switch reading. */}
         <WcPoolHookCard pool={pool} c={c} locale={locale} landingPath={landingPath} poolTo={poolTo} />
 
-        {/* two-column: how to add + phone */}
-        <Split title={c('Cómo añadir el calendario del Mundial 2026 a tu teléfono', 'How to add the World Cup 2026 calendar to your phone')} visual={<PhoneCalendarVisual c={c} />}>
+        {/* two-column: how to add + REAL screenshot. This is the one
+            indexable raster on the page (Google Images can't index inline
+            SVGs): descriptive filename, alt, fixed dimensions (no CLS),
+            lazy (below the fold), semantic figure/figcaption. */}
+        <Split title={c('Cómo añadir el calendario del Mundial 2026 a tu teléfono', 'How to add the World Cup 2026 calendar to your phone')} visual={
+          <figure className="wc-real-shot">
+            <img
+              src="/calendario-mundial-2026-partidos.jpg"
+              alt={c(
+                'Calendario del Mundial 2026 en un iPhone: los partidos con fechas, horarios y banderas de cada selección.',
+                'World Cup 2026 calendar on an iPhone: matches with dates, kickoff times and each team’s flag.'
+              )}
+              width="640"
+              height="1314"
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>{c(
+              'Así se ve el calendario del Mundial 2026 con los 104 partidos en tu teléfono.',
+              'The World Cup 2026 calendar with all 104 matches on your phone.'
+            )}</figcaption>
+          </figure>
+        }>
           <p>{c('Añade todos los partidos en 3 pasos, sin instalar nada:', 'Add every match in 3 steps, with nothing to install:')}</p>
           <ul className="wc-ul">
             <li>{c('1. Elige qué partidos: los 104, sólo tus selecciones, o tus selecciones + eliminatorias.', '1. Choose which matches: all 104, only your teams, or your teams + the knockout stage.')}</li>
@@ -330,7 +356,7 @@ function DistributionVisual({ c }) {
     { f: '🇨🇦', n: c('Canadá', 'Canada'), v: 13, w: 18, tone: '#36E9FF' },
   ];
   return (
-    <div className="wc-viz" role="img" aria-label={c('Distribución de los 104 partidos del Mundial 2026 por país: 78 en Estados Unidos, 13 en México y 13 en Canadá.', 'Distribution of the 104 World Cup 2026 matches by country: 78 in the United States, 13 in Mexico and 13 in Canada.')}>
+    <figure className="wc-viz" role="img" aria-label={c('Distribución de los 104 partidos del Mundial 2026 por país: 78 en Estados Unidos, 13 en México y 13 en Canadá.', 'Distribution of the 104 World Cup 2026 matches by country: 78 in the United States, 13 in Mexico and 13 in Canada.')}>
       <div className="wc-viz-head"><span>◆ 104 {c('PARTIDOS · 3 PAÍSES', 'MATCHES · 3 COUNTRIES')}</span></div>
       <div className="wc-dist">
         {rows.map((r, i) => (
@@ -341,15 +367,15 @@ function DistributionVisual({ c }) {
           </div>
         ))}
       </div>
-      <div className="wc-dist-foot">{c('Total: 104 partidos · 48 selecciones', 'Total: 104 matches · 48 teams')}</div>
-    </div>
+      <figcaption className="wc-dist-foot">{c('Total: 104 partidos · 48 selecciones del Mundial 2026', 'Total: 104 World Cup 2026 matches · 48 teams')}</figcaption>
+    </figure>
   );
 }
 
 function PhasesVisual({ c }) {
   const steps = [c('GRUPOS', 'GROUPS'), '1/16', '1/8', '1/4', c('SEMIS', 'SEMIS'), c('FINAL', 'FINAL')];
   return (
-    <div className="wc-viz" role="img" aria-label={c('Fases del Mundial 2026: fase de grupos, dieciseisavos, octavos, cuartos, semifinales y final.', 'World Cup 2026 stages: group stage, round of 32, round of 16, quarter-finals, semi-finals and final.')}>
+    <figure className="wc-viz" role="img" aria-label={c('Fases del Mundial 2026: fase de grupos, dieciseisavos, octavos, cuartos, semifinales y final.', 'World Cup 2026 stages: group stage, round of 32, round of 16, quarter-finals, semi-finals and final.')}>
       <div className="wc-viz-head"><span>◆ {c('FASES', 'STAGES')}</span><span className="wc-viz-sub">{c('11 jun → 19 jul', 'Jun 11 → Jul 19')}</span></div>
       <div className="wc-ph">
         {steps.map((s, i) => {
@@ -362,7 +388,8 @@ function PhasesVisual({ c }) {
           );
         })}
       </div>
-    </div>
+      <figcaption className="wc-dist-foot">{c('Las 6 fases del calendario del Mundial 2026: de la fase de grupos a la final.', 'The 6 stages of the World Cup 2026 calendar: from the group stage to the final.')}</figcaption>
+    </figure>
   );
 }
 
@@ -378,7 +405,7 @@ function HostMapVisual({ c }) {
   ];
   const tone = { ca: '#36E9FF', us: '#21E28C', mx: '#FF2BD6' };
   return (
-    <div className="wc-viz wc-viz-map" role="img" aria-label={c('Mapa de las 16 sedes del Mundial 2026: 11 en Estados Unidos, 3 en México y 2 en Canadá.', 'Map of the 16 World Cup 2026 host cities: 11 in the United States, 3 in Mexico and 2 in Canada.')}>
+    <figure className="wc-viz wc-viz-map" role="img" aria-label={c('Mapa de las 16 sedes del Mundial 2026: 11 en Estados Unidos, 3 en México y 2 en Canadá.', 'Map of the 16 World Cup 2026 host cities: 11 in the United States, 3 in Mexico and 2 in Canada.')}>
       <div className="wc-viz-head"><span>◆ {c('16 SEDES · 3 PAÍSES', '16 HOST CITIES · 3 COUNTRIES')}</span></div>
       <svg viewBox="0 0 320 230" className="wc-map-svg" aria-hidden="true">
         <defs>
@@ -402,7 +429,8 @@ function HostMapVisual({ c }) {
         <span><i style={{ background: tone.mx }} /> {c('México 3', 'Mexico 3')}</span>
         <span><i style={{ background: tone.ca }} /> {c('Canadá 2', 'Canada 2')}</span>
       </div>
-    </div>
+      <figcaption className="wc-dist-foot">{c('Las 16 sedes del Mundial 2026 en Estados Unidos, México y Canadá.', 'The 16 World Cup 2026 host cities across the USA, Mexico and Canada.')}</figcaption>
+    </figure>
   );
 }
 
@@ -414,7 +442,7 @@ function TimezoneVisual({ c }) {
     c('Europa · España y Reino Unido', 'Europe · Spain & UK'),
   ];
   return (
-    <div className="wc-viz" role="img" aria-label={c('El calendario del Mundial 2026 se ajusta a tu zona horaria: México, Estados Unidos, Latinoamérica y Europa.', 'The World Cup 2026 calendar adjusts to your timezone: Mexico, the United States, Latin America and Europe.')}>
+    <figure className="wc-viz" role="img" aria-label={c('El calendario del Mundial 2026 se ajusta a tu zona horaria: México, Estados Unidos, Latinoamérica y Europa.', 'The World Cup 2026 calendar adjusts to your timezone: Mexico, the United States, Latin America and Europe.')}>
       <div className="wc-viz-head"><span>◆ {c('TU ZONA · AUTOMÁTICO', 'YOUR ZONE · AUTOMATIC')}</span></div>
       <div className="wc-tz-note2">{c('Cada partido se muestra en tu hora local, sin convertir nada a mano.', 'Every match shows in your local time, with no manual conversion.')}</div>
       <div className="wc-tz-list">
@@ -422,7 +450,8 @@ function TimezoneVisual({ c }) {
           <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 120}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>
         ))}
       </div>
-    </div>
+      <figcaption className="wc-dist-foot">{c('Horarios del Mundial 2026 ajustados automáticamente a tu zona horaria.', 'World Cup 2026 kickoff times adjusted automatically to your timezone.')}</figcaption>
+    </figure>
   );
 }
 
@@ -434,7 +463,7 @@ function PhoneCalendarVisual({ c }) {
     { d: 'JUL 19', m: c('Final · Nueva York', 'Final · New York'), f: '🏆' },
   ];
   return (
-    <div className="wc-viz wc-viz-phone-wrap" role="img" aria-label={c('Un teléfono con el calendario del Mundial 2026 añadido: inauguración en el Azteca, fase de grupos, octavos y final.', 'A phone showing the World Cup 2026 calendar added: opening match at the Azteca, group stage, round of 16 and final.')}>
+    <figure className="wc-viz wc-viz-phone-wrap" role="img" aria-label={c('Un teléfono con el calendario del Mundial 2026 añadido: inauguración en el Azteca, fase de grupos, octavos y final.', 'A phone showing the World Cup 2026 calendar added: opening match at the Azteca, group stage, round of 16 and final.')}>
       <div className="wc-phone">
         <div className="wc-phone-notch" />
         <div className="wc-phone-head">{c('MUNDIAL 2026', 'WORLD CUP 2026')}</div>
@@ -448,7 +477,7 @@ function PhoneCalendarVisual({ c }) {
         </div>
         <div className="wc-phone-foot"><span>📱</span><span>📅</span><span>🤖</span><span>💻</span></div>
       </div>
-    </div>
+    </figure>
   );
 }
 
@@ -610,6 +639,12 @@ export const LANDING_CSS = `
 .fp-wc26 .wc-pf-next-meta { display: flex; flex-direction: column; gap: 3px; font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-bottom: 12px; }
 .fp-wc26 .wc-pool-hook { min-height: 200px; }
 .fp-wc26 .wc-pool-hook-lead { font-family: var(--ox); font-weight: 800; font-size: clamp(15px, 2.4vw, 18px); color: var(--text); text-align: center; max-width: 560px; line-height: 1.4; }
+
+/* ── Image SEO: semantic figures + the one indexable raster ── */
+.fp-wc26 figure.wc-viz, .fp-wc26 figure.wc-real-shot { margin: 0; }
+.fp-wc26 .wc-real-shot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.fp-wc26 .wc-real-shot img { width: min(280px, 85%); height: auto; border-radius: 20px; border: 1px solid var(--stroke-strong); box-shadow: 0 0 30px rgba(33,226,140,0.18); }
+.fp-wc26 .wc-real-shot figcaption { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text-muted); text-align: center; max-width: 320px; line-height: 1.5; }
 
 /* ── Reverb-style hero: copy left, visual right (stacks on mobile) ──
    The visual sits above the fold so visitors see the product instantly

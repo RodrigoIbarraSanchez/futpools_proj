@@ -9,7 +9,8 @@
   Update <lastmod> when these pages change materially.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
   <url>
     <loc>https://futpools.com/</loc>
@@ -26,6 +27,10 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/calendario-mundial-2026" />
     <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/world-cup-2026-calendar" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/calendario-mundial-2026" />
+    <image:image>
+      <image:loc>https://futpools.com/calendario-mundial-2026-partidos.jpg</image:loc>
+      <image:title>Calendario del Mundial 2026 con los 104 partidos en un teléfono</image:title>
+    </image:image>
   </url>
 
   <url>
@@ -36,6 +41,10 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/calendario-mundial-2026" />
     <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/world-cup-2026-calendar" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/calendario-mundial-2026" />
+    <image:image>
+      <image:loc>https://futpools.com/calendario-mundial-2026-partidos.jpg</image:loc>
+      <image:title>World Cup 2026 calendar with all 104 matches on a phone</image:title>
+    </image:image>
   </url>
 
   <url>

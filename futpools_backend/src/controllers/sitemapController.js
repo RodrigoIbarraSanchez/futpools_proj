@@ -26,8 +26,14 @@ const MX_LANDING_ALT = [['es', '/mexico-mundial-2026'], ['en', '/mexico-world-cu
 const STATIC_ROUTES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   // Keyword landing pages (highest-value SEO).
-  { path: '/calendario-mundial-2026', changefreq: 'weekly', priority: '0.9', alternates: WC_LANDING_ALT },
-  { path: '/world-cup-2026-calendar', changefreq: 'weekly', priority: '0.9', alternates: WC_LANDING_ALT },
+  {
+    path: '/calendario-mundial-2026', changefreq: 'weekly', priority: '0.9', alternates: WC_LANDING_ALT,
+    images: [{ loc: '/calendario-mundial-2026-partidos.jpg', title: 'Calendario del Mundial 2026 con los 104 partidos en un teléfono' }],
+  },
+  {
+    path: '/world-cup-2026-calendar', changefreq: 'weekly', priority: '0.9', alternates: WC_LANDING_ALT,
+    images: [{ loc: '/calendario-mundial-2026-partidos.jpg', title: 'World Cup 2026 calendar with all 104 matches on a phone' }],
+  },
   // Team landings.
   { path: '/mexico-mundial-2026', changefreq: 'weekly', priority: '0.8', alternates: MX_LANDING_ALT },
   { path: '/mexico-world-cup-2026', changefreq: 'weekly', priority: '0.8', alternates: MX_LANDING_ALT },
@@ -59,7 +65,7 @@ async function generate() {
   // Human-friendly rendering in browsers. Crawlers ignore it. Relative path
   // resolves to the WEB host (futpools.com/sitemap.xsl) once snapshotted.
   out.push('<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>');
-  out.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">');
+  out.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">');
 
   for (const r of STATIC_ROUTES) {
     out.push('  <url>');
@@ -68,6 +74,14 @@ async function generate() {
     out.push(`    <priority>${r.priority}</priority>`);
     for (const [lang, p] of (r.alternates || [])) {
       out.push(`    <xhtml:link rel="alternate" hreflang="${lang}" href="${web}${p}" />`);
+    }
+    // Image-sitemap entries (Google image extension) — the indexable
+    // rasters embedded on the page, so Google Images discovers them.
+    for (const img of (r.images || [])) {
+      out.push('    <image:image>');
+      out.push(`      <image:loc>${web}${img.loc}</image:loc>`);
+      if (img.title) out.push(`      <image:title>${img.title}</image:title>`);
+      out.push('    </image:image>');
     }
     out.push('  </url>');
   }
