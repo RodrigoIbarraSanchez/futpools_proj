@@ -219,7 +219,7 @@ function FixtureCard({ fixture, idx, picks, setPick, locale }) {
 
 function SummaryCard({
   count, total, complete, submitting, error,
-  feeMXN, prizeMxn, onSubmit, locale, isAdmin, isFree, entryFree,
+  feeMXN, prizeStr, onSubmit, locale, isAdmin, isFree, entryFree,
   payCfg, payMethod, setPayMethod,
 }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
@@ -277,7 +277,7 @@ function SummaryCard({
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span className="muted">{t(locale, 'Prize')}</span>
           <span className="gold num" style={{ fontWeight: 700 }}>
-            {isFree ? t(locale, 'NO PRIZE') : (prizeMxn > 0 ? fmtMxn(prizeMxn) : '—')}
+            {prizeStr}
           </span>
         </div>
       </div>
@@ -368,9 +368,20 @@ export function QuinielaPickDesktop({
 }) {
   const { locale } = useLocale();
   const fixtures = quiniela?.fixtures || [];
+  // Prize display must match PoolDetail's PlayCard: prize_ladder pools pay
+  // FIXED platform-funded tiers ("UP TO $<max>"), NOT the 65%-of-pot
+  // formula — that formula only applies to standard pooled-prize pools
+  // (with 3 entries it showed a misleading "$97" next to a $3,000 ladder).
+  const isLadder = quiniela?.poolType === 'prize_ladder';
+  const ladderMax = Math.max(0, ...(quiniela?.prizeLadder || []).map((tr) => Number(tr.prizeMXN) || 0));
   const prizeMxn = Math.floor(
     (quiniela?.entriesCount ?? 0) * (quiniela?.entryFeeMXN ?? 50) * WINNER_SHARE
   );
+  const prizeStr = isLadder
+    ? (ladderMax > 0 ? `${t(locale, 'UP TO')} $${ladderMax.toLocaleString('en-US')}` : '—')
+    : isFreePool(quiniela)
+      ? t(locale, 'NO PRIZE')
+      : (prizeMxn > 0 ? fmtMxn(prizeMxn) : '—');
 
   const quickAll = (val) => {
     const next = {};
@@ -477,7 +488,7 @@ export function QuinielaPickDesktop({
             submitting={submitting}
             error={error}
             feeMXN={feeMXN}
-            prizeMxn={prizeMxn}
+            prizeStr={prizeStr}
             onSubmit={onSubmit}
             locale={locale}
             isAdmin={isAdmin}
