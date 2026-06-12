@@ -24,6 +24,7 @@ import { WC_CSS } from './WorldCup2026Calendar';
 import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd, useRevealOnScroll } from './WorldCup2026Landing';
 import { pronosticosFaq, pronosticosJsonLd } from '../seo/pronosticosFutbol';
 import { api } from '../api/client';
+import { trackEvent } from '../lib/analytics';
 
 const CANONICAL = 'https://futpools.com/pronosticos-de-futbol';
 
@@ -62,7 +63,13 @@ export function PronosticosFutbol() {
   const pool = useNextOpenPool();
   const ctaTo = pool ? `/pool/${pool.id}` : '/onboarding';
   const ctaLabel = pool ? 'Jugar la próxima quiniela' : 'Jugar mi quiniela';
-  const cta = () => <Link to={ctaTo} className="wc-btn-primary">▶ {ctaLabel}</Link>;
+  const cta = () => (
+    <Link
+      to={ctaTo}
+      className="wc-btn-primary"
+      onClick={() => trackEvent('cta_click', { page: 'pronosticos-de-futbol', cta: ctaLabel, destination: ctaTo })}
+    >▶ {ctaLabel}</Link>
+  );
 
   return (
     <div className="fp-wc26">
@@ -211,7 +218,11 @@ function NextPoolCard({ pool }) {
             {pool.entryFeeMXN > 0 && <span>${pool.entryFeeMXN} {pool.currency || 'MXN'} / entrada</span>}
           </div>
           <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
-            <Link to={`/pool/${pool.id}`} className="wc-btn-primary">▶ Entrar a la quiniela</Link>
+            <Link
+              to={`/pool/${pool.id}`}
+              className="wc-btn-primary"
+              onClick={() => trackEvent('cta_click', { page: 'pronosticos-de-futbol', cta: 'Entrar a la quiniela (tarjeta)', destination: `/pool/${pool.id}` })}
+            >▶ Entrar a la quiniela</Link>
           </div>
           <div className="wc-dist-foot">La inscripción cierra cuando inicia el primer partido</div>
         </div>
@@ -223,7 +234,11 @@ function NextPoolCard({ pool }) {
             <span>Crea tu cuenta y entérate cuando abra la siguiente, o arma una quiniela con tus amigos.</span>
           </div>
           <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
-            <Link to="/onboarding" className="wc-btn-primary">▶ Jugar mi quiniela</Link>
+            <Link
+              to="/onboarding"
+              className="wc-btn-primary"
+              onClick={() => trackEvent('cta_click', { page: 'pronosticos-de-futbol', cta: 'Jugar mi quiniela (tarjeta)', destination: '/onboarding' })}
+            >▶ Jugar mi quiniela</Link>
           </div>
         </div>
       )}

@@ -23,6 +23,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import { WC_CSS } from './WorldCup2026Calendar';
 import { wc26Faq, wc26JsonLd } from '../seo/wc26Landing';
+import { trackEvent } from '../lib/analytics';
 
 const ORIGIN = 'https://futpools.com';
 
@@ -61,7 +62,13 @@ export function WorldCup2026Landing() {
 
   useRevealOnScroll();
 
-  const ctaTool = (label) => <Link to={toolPath} className="wc-btn-primary">▶ {label}</Link>;
+  const ctaTool = (label) => (
+    <Link
+      to={toolPath}
+      className="wc-btn-primary"
+      onClick={() => trackEvent('cta_click', { page: landingPath, cta: label, destination: toolPath })}
+    >▶ {label}</Link>
+  );
 
   return (
     <div className="fp-wc26">
@@ -241,7 +248,11 @@ export function WorldCup2026Landing() {
             )}</p>
             <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
               {ctaTool(c('Añadir partidos a mi calendario', 'Add matches to my calendar'))}
-              <Link to="/onboarding" className="wc-btn-secondary">{c('Jugar la quiniela del Mundial', 'Play the World Cup pool')} →</Link>
+              <Link
+                to="/onboarding"
+                className="wc-btn-secondary"
+                onClick={() => trackEvent('cta_click', { page: landingPath, cta: 'Jugar la quiniela del Mundial', destination: '/onboarding' })}
+              >{c('Jugar la quiniela del Mundial', 'Play the World Cup pool')} →</Link>
             </div>
           </div>
         </section>

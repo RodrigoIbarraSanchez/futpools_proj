@@ -26,6 +26,41 @@ export function initAnalytics() {
   window.gtag('config', GA_ID, { send_page_view: false });
 }
 
+/**
+ * Custom GA4 event (e.g. cta_click, sign_up). No-op when the tag isn't
+ * loaded (dev/preview, hostname gate in index.html).
+ */
+export function trackEvent(name, params = {}) {
+  if (typeof window === 'undefined' || !window.gtag) return;
+  window.gtag('event', name, params);
+}
+
+/**
+ * First-touch attribution: remembers the FIRST page this visitor ever
+ * landed on (and the external referrer, e.g. google.com) so the signup
+ * can report which landing brought the user. Stored once, never
+ * overwritten.
+ */
+export function captureFirstTouch(path) {
+  try {
+    if (!localStorage.getItem('fp_first_path')) {
+      localStorage.setItem('fp_first_path', path);
+      if (document.referrer) localStorage.setItem('fp_referrer', document.referrer);
+    }
+  } catch { /* storage blocked (private mode) — attribution is best-effort */ }
+}
+
+export function getFirstTouch() {
+  try {
+    return {
+      path: localStorage.getItem('fp_first_path') || undefined,
+      referrer: localStorage.getItem('fp_referrer') || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 export function trackPageView(path) {
   if (typeof window === 'undefined') return;
   // Defer one tick so the destination page's useEffect has already set

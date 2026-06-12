@@ -17,6 +17,7 @@ import { useLocale } from '../context/LocaleContext';
 import { WC_CSS } from './WorldCup2026Calendar';
 import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd, useRevealOnScroll } from './WorldCup2026Landing';
 import { mexicoFaq, mexicoJsonLd, MX_MATCHES, MX_GROUP } from '../seo/mexicoWc26';
+import { trackEvent } from '../lib/analytics';
 
 const ORIGIN = 'https://futpools.com';
 
@@ -58,7 +59,13 @@ export function MexicoWorldCup2026() {
 
   useRevealOnScroll();
 
-  const ctaTool = (label) => <Link to={toolPath} className="wc-btn-primary">▶ {label}</Link>;
+  const ctaTool = (label) => (
+    <Link
+      to={toolPath}
+      className="wc-btn-primary"
+      onClick={() => trackEvent('cta_click', { page: landingPath, cta: label, destination: toolPath })}
+    >▶ {label}</Link>
+  );
 
   return (
     <div className="fp-wc26">

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { initAnalytics, trackPageView } from './lib/analytics';
+import { initAnalytics, trackPageView, captureFirstTouch } from './lib/analytics';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocaleProvider } from './context/LocaleContext';
 import { Login } from './pages/Login';
@@ -78,7 +78,11 @@ function RootSwitch() {
  */
 function AnalyticsTracker() {
   const location = useLocation();
-  useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => {
+    initAnalytics();
+    captureFirstTouch(location.pathname + location.search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     trackPageView(location.pathname + location.search);
   }, [location.pathname, location.search]);

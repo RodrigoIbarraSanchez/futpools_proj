@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom';
 import { WC_CSS } from './WorldCup2026Calendar';
 import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd, useRevealOnScroll } from './WorldCup2026Landing';
 import { quinielaFaq, quinielaJsonLd } from '../seo/quinielaSemana';
+import { trackEvent } from '../lib/analytics';
 
 const CANONICAL = 'https://futpools.com/quiniela-de-la-semana';
 
@@ -30,7 +31,13 @@ export function QuinielaDeLaSemana() {
 
   useRevealOnScroll();
 
-  const cta = (label) => <Link to="/onboarding" className="wc-btn-primary">▶ {label}</Link>;
+  const cta = (label) => (
+    <Link
+      to="/onboarding"
+      className="wc-btn-primary"
+      onClick={() => trackEvent('cta_click', { page: 'quiniela-de-la-semana', cta: label, destination: '/onboarding' })}
+    >▶ {label}</Link>
+  );
 
   return (
     <div className="fp-wc26">

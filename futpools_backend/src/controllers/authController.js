@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const { applyDelta } = require('../services/transactionService');
+const { sendTelegramMessage } = require('../services/telegramService');
 
 const { ADMIN_EMAILS } = require('../middleware/auth');
 const RESET_CODE_EXPIRY_MINUTES = 15;
@@ -112,6 +113,34 @@ exports.register = async (req, res) => {
       countryCode: normalizedCountry,
     });
     await user.save();
+
+    // Telegram alert to the organizer: new signup. Best-effort and fully
+    // detached — a Telegram outage must never affect registration.
+    // `signupSource` is first-touch attribution captured by the web client
+    // (first page the visitor ever landed on + external referrer).
+    try {
+      const src = (req.body && typeof req.body.signupSource === 'object' && req.body.signupSource) || {};
+      const firstPath = String(src.path || '').slice(0, 200);
+      const referrer = String(src.referrer || '').slice(0, 200);
+      const ua = String(req.headers['user-agent'] || '');
+      const device = /mobile|iphone|ipad|android/i.test(ua) ? '📱 Móvil' : '💻 Desktop';
+      const when = new Date().toLocaleString('es-MX', {
+        timeZone: 'America/Mexico_City', dateStyle: 'medium', timeStyle: 'short',
+      });
+      const lines = [
+        '🆕 Nuevo registro en FutPools',
+        `👤 ${user.displayName || user.username} (@${user.username})`,
+        `📧 ${user.email}`,
+        `🕑 ${when} hora CDMX`,
+        firstPath ? `📍 Primera página visitada: ${firstPath}` : null,
+        referrer ? `🔗 Vino desde: ${referrer}` : null,
+        user.countryCode ? `🌎 País: ${user.countryCode}` : null,
+        device,
+      ].filter(Boolean);
+      sendTelegramMessage(lines.join('\n')).catch(() => {});
+    } catch (notifyErr) {
+      console.warn('[Auth] signup telegram alert failed:', notifyErr.message);
+    }
 
     // v3 signup bonus — credit the new account and write a ledger row so the
     // balance change is auditable. Idempotent via signup:<userId> in case the
