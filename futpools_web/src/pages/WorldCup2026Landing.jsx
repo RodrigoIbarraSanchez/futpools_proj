@@ -139,6 +139,38 @@ export function WorldCup2026Landing() {
             evergreen copy first, upgrades to today's real matches. */}
         <TodayStrip c={c} locale={locale} landingPath={landingPath} />
 
+        {/* two-column: how to add + REAL screenshot. This is the one
+            indexable raster on the page (Google Images can't index inline
+            SVGs): descriptive filename, alt, fixed dimensions (no CLS),
+            lazy (below the fold), semantic figure/figcaption. */}
+        <Split title={c('Cómo añadir el calendario del Mundial 2026 a tu teléfono', 'How to add the World Cup 2026 calendar to your phone')} visual={
+          <figure className="wc-real-shot">
+            <img
+              src="/calendario-mundial-2026-partidos.jpg"
+              alt={c(
+                'Calendario del Mundial 2026 en un iPhone: los partidos con fechas, horarios y banderas de cada selección.',
+                'World Cup 2026 calendar on an iPhone: matches with dates, kickoff times and each team’s flag.'
+              )}
+              width="640"
+              height="1314"
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>{c(
+              'Así se ve el calendario del Mundial 2026 con los 104 partidos en tu teléfono.',
+              'The World Cup 2026 calendar with all 104 matches on your phone.'
+            )}</figcaption>
+          </figure>
+        }>
+          <p>{c('Añade todos los partidos en 3 pasos, sin instalar nada:', 'Add every match in 3 steps, with nothing to install:')}</p>
+          <ul className="wc-ul">
+            <li>{c('1. Elige qué partidos: los 104, sólo tus selecciones, o tus selecciones + eliminatorias.', '1. Choose which matches: all 104, only your teams, or your teams + the knockout stage.')}</li>
+            <li>{c('2. Elige tu zona horaria para ver los horarios correctos.', '2. Pick your timezone to see the correct kickoff times.')}</li>
+            <li>{c('3. Suscríbete en iPhone, Google Calendar o Android, o descarga el .ics para Outlook.', '3. Subscribe on iPhone, Google Calendar or Android, or download the .ics for Outlook.')}</li>
+          </ul>
+          <div className="wc-cta-row">{ctaTool(c('Abrir la herramienta del calendario', 'Open the calendar tool'))}</div>
+        </Split>
+
         {/* statement */}
         <Statement
           kicker={c('11 JUNIO – 19 JULIO 2026', 'JUNE 11 – JULY 19, 2026')}
@@ -233,38 +265,6 @@ export function WorldCup2026Landing() {
             led by a bridge line that makes the paid offer explicitly a
             separate thing — no bait-and-switch reading. */}
         <WcPoolHookCard pool={pool} c={c} locale={locale} landingPath={landingPath} poolTo={poolTo} />
-
-        {/* two-column: how to add + REAL screenshot. This is the one
-            indexable raster on the page (Google Images can't index inline
-            SVGs): descriptive filename, alt, fixed dimensions (no CLS),
-            lazy (below the fold), semantic figure/figcaption. */}
-        <Split title={c('Cómo añadir el calendario del Mundial 2026 a tu teléfono', 'How to add the World Cup 2026 calendar to your phone')} visual={
-          <figure className="wc-real-shot">
-            <img
-              src="/calendario-mundial-2026-partidos.jpg"
-              alt={c(
-                'Calendario del Mundial 2026 en un iPhone: los partidos con fechas, horarios y banderas de cada selección.',
-                'World Cup 2026 calendar on an iPhone: matches with dates, kickoff times and each team’s flag.'
-              )}
-              width="640"
-              height="1314"
-              loading="lazy"
-              decoding="async"
-            />
-            <figcaption>{c(
-              'Así se ve el calendario del Mundial 2026 con los 104 partidos en tu teléfono.',
-              'The World Cup 2026 calendar with all 104 matches on your phone.'
-            )}</figcaption>
-          </figure>
-        }>
-          <p>{c('Añade todos los partidos en 3 pasos, sin instalar nada:', 'Add every match in 3 steps, with nothing to install:')}</p>
-          <ul className="wc-ul">
-            <li>{c('1. Elige qué partidos: los 104, sólo tus selecciones, o tus selecciones + eliminatorias.', '1. Choose which matches: all 104, only your teams, or your teams + the knockout stage.')}</li>
-            <li>{c('2. Elige tu zona horaria para ver los horarios correctos.', '2. Pick your timezone to see the correct kickoff times.')}</li>
-            <li>{c('3. Suscríbete en iPhone, Google Calendar o Android, o descarga el .ics para Outlook.', '3. Subscribe on iPhone, Google Calendar or Android, or download the .ics for Outlook.')}</li>
-          </ul>
-          <div className="wc-cta-row">{ctaTool(c('Abrir la herramienta del calendario', 'Open the calendar tool'))}</div>
-        </Split>
 
         {/* statement */}
         <Statement
