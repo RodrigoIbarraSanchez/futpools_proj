@@ -13,5 +13,7 @@ router.get('/fixtures/today', publicController.todayFixtures);
 // Dynamic CTA for /pronosticos-de-futbol: next public pool still open
 // for registration (no match started), or { pool: null }.
 router.get('/pools/next-open', publicController.nextOpenPool);
+// Which manual payment channels are configured (SPEI / PayPal USD).
+router.get('/payment-config', publicController.paymentConfig);
 
 module.exports = router;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { trackEvent } from '../lib/analytics';
+import { PayMethodSelector } from '../components/PayMethodSelector';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
@@ -38,6 +39,18 @@ export function QuinielaPick() {
   // Once the SPEI intent is created, we switch this screen to the transfer
   // instructions (CLABE + reference). Holds the backend's intent response.
   const [speiInfo, setSpeiInfo] = useState(null);
+  // Payment channel: SPEI (MXN, Mexico) or PayPal (USD, international).
+  // The PayPal option only renders when the backend reports it configured.
+  const [payCfg, setPayCfg] = useState(null);
+  const [payMethod, setPayMethod] = useState('spei');
+
+  useEffect(() => {
+    let on = true;
+    api.get('/public/payment-config')
+      .then((d) => { if (on) setPayCfg(d); })
+      .catch(() => {});
+    return () => { on = false; };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -85,15 +98,17 @@ export function QuinielaPick() {
         picks: fixtures
           .filter(f => ['1','X','2'].includes(picks[f.fixtureId]))
           .map(f => ({ fixtureId: f.fixtureId, pick: picks[f.fixtureId] })),
+        method: payMethod,
       };
       const res = await api.post(`/pools/${id}/spei-intent`, payload, token);
       // GA funnel step: participant signed up (picks submitted). The next
-      // step is payment ("marcó como pagado" lives server-side via SPEI).
+      // step is payment ("marcó como pagado" lives server-side).
       trackEvent('join_pool', {
         pool_id: id,
         pool_name: res?.poolName || '',
-        value: res?.amountMXN ?? 0,
-        currency: 'MXN',
+        method: res?.method || payMethod,
+        value: res?.method === 'paypal' ? (res?.amountUSD ?? 0) : (res?.amountMXN ?? 0),
+        currency: res?.method === 'paypal' ? 'USD' : 'MXN',
         free_entry: !!res?.freeEntry,
       });
       if (res?.freeEntry) {
@@ -144,6 +159,9 @@ export function QuinielaPick() {
         onSubmit={handleSubmit}
         goBack={goBack}
         isAdmin={isAdmin}
+        payCfg={payCfg}
+        payMethod={payMethod}
+        setPayMethod={setPayMethod}
       />
     );
   }
@@ -277,6 +295,16 @@ export function QuinielaPick() {
           );
         })}
 
+        {!isAdmin && !freeToEnter(quiniela) && (
+          <PayMethodSelector
+            payCfg={payCfg}
+            payMethod={payMethod}
+            setPayMethod={setPayMethod}
+            feeMXN={feeMXN}
+            locale={locale}
+          />
+        )}
+
         {error && (
           <div style={{
             color: 'var(--fp-danger)', fontFamily: 'var(--fp-mono)', fontSize: 12,
@@ -304,6 +332,7 @@ export function QuinielaPick() {
             {submitting ? t(locale, 'PROCESSING…')
               : !complete ? `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`
               : freeToEnter(quiniela) ? `▶ ${t(locale, 'PLAY FREE')}`
+              : payMethod === 'paypal' ? `▶ ${t(locale, 'PAY')} $${payCfg?.paypal?.amountUSD ?? 3} USD`
               : `▶ ${t(locale, 'PAY')} $${feeMXN} MXN`}
           </ArcadeButton>
         </div>
@@ -344,10 +373,12 @@ function CopyField({ label, value, locale, big }) {
   );
 }
 
-// SPEI transfer instructions — shown after a payment intent is created.
+// Payment instructions — shown after an intent is created. Branches on
+// the chosen method: SPEI (CLABE + MXN) or PayPal (PayPal.me + USD).
 // Same view on mobile and desktop.
 function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
-  const configured = !!info?.clabe;
+  const isPaypal = info?.method === 'paypal';
+  const configured = isPaypal ? !!info?.paypalMeUrl : !!info?.clabe;
   const [note, setNote] = useState('');
   const [marking, setMarking] = useState(false);
   const [marked, setMarked] = useState(false);
@@ -359,13 +390,14 @@ function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
     setMarkError(null);
     try {
       await api.post(`/pools/spei/${info.paymentId}/mark-paid`, { note }, token);
-      // GA funnel step: user reports the SPEI transfer as done (payment
-      // confirmation itself happens admin-side, so this is the closest
-      // client-trackable "purchase" signal).
+      // GA funnel step: user reports the payment as done (confirmation
+      // itself happens admin-side, so this is the closest client-trackable
+      // "purchase" signal).
       trackEvent('mark_paid', {
         pool_name: info?.poolName || '',
-        value: info?.amountMXN ?? 0,
-        currency: 'MXN',
+        method: info?.method || 'spei',
+        value: isPaypal ? (info?.amountUSD ?? 0) : (info?.amountMXN ?? 0),
+        currency: isPaypal ? 'USD' : 'MXN',
       });
       setMarked(true);
     } catch (e) {
@@ -380,7 +412,7 @@ function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
       {!isDesktop && <AppBackground />}
       <div style={{ padding: '18px 16px 120px', maxWidth: 520, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800, letterSpacing: 3, marginBottom: 6 }}>
-          {t(locale, 'PAY BY SPEI')}
+          {t(locale, isPaypal ? 'PAY BY PAYPAL' : 'PAY BY SPEI')}
         </div>
         {info?.poolName && (
           <div style={{ textAlign: 'center', fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-muted)', marginBottom: 16 }}>{info.poolName}</div>
@@ -388,14 +420,35 @@ function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
 
         <HudFrame glow="var(--fp-primary)" brackets>
           <div style={{ padding: 16, textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>{t(locale, 'Transfer exactly this amount to:')}</div>
-            <div style={{ fontFamily: 'var(--fp-display)', fontSize: 38, fontWeight: 900, color: 'var(--fp-primary)', marginTop: 4 }}>${Number(info?.amountMXN || 0).toLocaleString('en-US')} MXN</div>
+            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
+              {t(locale, isPaypal ? 'Send exactly this amount:' : 'Transfer exactly this amount to:')}
+            </div>
+            <div style={{ fontFamily: 'var(--fp-display)', fontSize: 38, fontWeight: 900, color: 'var(--fp-primary)', marginTop: 4 }}>
+              {isPaypal
+                ? `$${Number(info?.amountUSD || 0).toLocaleString('en-US')} USD`
+                : `$${Number(info?.amountMXN || 0).toLocaleString('en-US')} MXN`}
+            </div>
           </div>
         </HudFrame>
 
         <div style={{ height: 16 }} />
 
-        {configured ? (
+        {configured && isPaypal && (
+          <>
+            <a href={info.paypalMeUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block', marginBottom: 12 }}>
+              <ArcadeButton variant="accent" size="lg" fullWidth>▶ {t(locale, 'OPEN PAYPAL')}</ArcadeButton>
+            </a>
+            <CopyField label={t(locale, 'REFERENCE / CONCEPT')} value={info.reference} locale={locale} big />
+            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)', lineHeight: 1.5, margin: '4px 0 14px' }}>
+              ◆ {t(locale, 'Add this reference in the PayPal payment note so we can match your payment.')}
+            </div>
+            <div style={{ padding: '10px 12px', background: 'color-mix(in srgb, var(--fp-accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--fp-accent) 35%, transparent)', clipPath: 'var(--fp-clip-sm)', fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-accent)', marginBottom: 16 }}>
+              {t(locale, "You'll join the pool once we confirm your transfer.")} {t(locale, 'If you win, your prize is sent via PayPal.')}
+            </div>
+          </>
+        )}
+
+        {configured && !isPaypal && (
           <>
             <CopyField label={t(locale, 'BENEFICIARY')} value={info.beneficiary} locale={locale} />
             <CopyField label={t(locale, 'BANK')} value={info.bank} locale={locale} />
@@ -408,7 +461,9 @@ function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
               {t(locale, "You'll join the pool once we confirm your transfer.")}
             </div>
           </>
-        ) : (
+        )}
+
+        {!configured && (
           <div style={{ padding: 14, background: 'color-mix(in srgb, var(--fp-danger) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--fp-danger) 40%, transparent)', clipPath: 'var(--fp-clip-sm)', fontFamily: 'var(--fp-mono)', fontSize: 12, color: 'var(--fp-danger)', marginBottom: 16 }}>
             {t(locale, 'SPEI payments are not set up yet. Contact the admin.')}
             <div style={{ marginTop: 8, color: 'var(--fp-text-dim)' }}>{t(locale, 'REFERENCE / CONCEPT')}: <b style={{ color: 'var(--fp-text)' }}>{info?.reference}</b></div>
@@ -429,12 +484,12 @@ function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
         ) : (
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5, color: 'var(--fp-text-muted)', marginBottom: 4 }}>
-              {t(locale, 'SPEI tracking key (optional)')}
+              {t(locale, isPaypal ? 'Your PayPal email (optional)' : 'SPEI tracking key (optional)')}
             </div>
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder={t(locale, "e.g. your bank's tracking key (clave de rastreo)")}
+              placeholder={t(locale, isPaypal ? 'e.g. the email you paid with' : "e.g. your bank's tracking key (clave de rastreo)")}
               maxLength={200}
               style={{
                 width: '100%', padding: '10px 12px', background: 'var(--fp-bg2)',
@@ -447,7 +502,7 @@ function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
               <div style={{ color: 'var(--fp-danger)', fontFamily: 'var(--fp-mono)', fontSize: 11, marginBottom: 8 }}>{markError}</div>
             )}
             <ArcadeButton size="md" fullWidth onClick={markPaid} disabled={marking}>
-              {marking ? t(locale, 'SENDING…') : `✓ ${t(locale, "I'VE TRANSFERRED")}`}
+              {marking ? t(locale, 'SENDING…') : `✓ ${t(locale, isPaypal ? "I'VE PAID" : "I'VE TRANSFERRED")}`}
             </ArcadeButton>
           </div>
         )}

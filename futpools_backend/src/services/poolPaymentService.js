@@ -350,6 +350,17 @@ function getSpeiConfig() {
 }
 
 /**
+ * PayPal.me config for players outside Mexico (manual flow, USD).
+ * PAYPAL_ME_URL e.g. https://paypal.me/rodrigoibarra — when unset the
+ * PayPal option simply isn't offered (no broken screens).
+ */
+function getPaypalConfig() {
+  const url = (process.env.PAYPAL_ME_URL || '').trim().replace(/\/$/, '');
+  const entryUSD = Math.max(1, Number(process.env.PAYPAL_ENTRY_USD) || 3);
+  return { paypalMeUrl: url, entryUSD, enabled: !!url };
+}
+
+/**
  * Generate a unique 7-digit numeric reference. Numeric so it fits SPEI's
  * "referencia numérica" field AND doubles as the "concepto". Retries on the
  * rare collision against the unique index.
@@ -390,9 +401,15 @@ async function createEntryFromPicks({ poolId, userId, picks }) {
  * "transfer $50 here" screen. Admins bypass payment entirely (free entry),
  * matching the Stripe path.
  */
-async function createSpeiIntentForEntry({ user, poolId, picks }) {
+async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }) {
   const pool = await Quiniela.findById(poolId);
   if (!pool) throw Object.assign(new Error('Pool not found'), { code: 'POOL_NOT_FOUND', status: 404 });
+
+  const payMethod = method === 'paypal' ? 'paypal' : 'spei';
+  const paypalCfg = getPaypalConfig();
+  if (payMethod === 'paypal' && !paypalCfg.enabled) {
+    throw Object.assign(new Error('PayPal payments are not configured'), { code: 'PAYPAL_NOT_CONFIGURED', status: 400 });
+  }
 
   const cutoff = firstKickoff(pool);
   if (cutoff && cutoff.getTime() <= Date.now()) {
@@ -415,7 +432,9 @@ async function createSpeiIntentForEntry({ user, poolId, picks }) {
         `👤 ${user.displayName || user.username || ''} (${user.email || 'sin email'})`,
         kind === 'free'
           ? '💸 Entrada gratuita (pool $0): entrada creada al instante'
-          : `💰 $${amountMXN} MXN · pendiente de pago SPEI${reference ? ` · ref ${reference}` : ''}`,
+          : kind === 'paypal'
+            ? `💰 $${paypalCfg.entryUSD} USD · pendiente de pago PayPal${reference ? ` · ref ${reference}` : ''}`
+            : `💰 $${amountMXN} MXN · pendiente de pago SPEI${reference ? ` · ref ${reference}` : ''}`,
         `🕑 ${when} hora CDMX`,
       ];
       sendTelegramMessage(lines.join('\n')).catch(() => {});
@@ -452,12 +471,29 @@ async function createSpeiIntentForEntry({ user, poolId, picks }) {
     user: user._id,
     picks,
     amountMXN,
+    method: payMethod,
+    amountUSD: payMethod === 'paypal' ? paypalCfg.entryUSD : null,
     reference,
     status: 'pending',
   });
 
-  console.log(`[poolPayment] SPEI intent created — pool=${poolId} user=${user._id} ref=${reference}`);
-  notifyJoinIntent('spei', amountMXN, reference);
+  console.log(`[poolPayment] ${payMethod} intent created — pool=${poolId} user=${user._id} ref=${reference}`);
+  notifyJoinIntent(payMethod, amountMXN, reference);
+
+  if (payMethod === 'paypal') {
+    return {
+      ok: true,
+      method: 'paypal',
+      paymentId: String(payment._id),
+      reference,
+      amountMXN,
+      amountUSD: paypalCfg.entryUSD,
+      // Deep link with the amount pre-filled (PayPal.me/<user>/<amount>USD).
+      paypalMeUrl: `${paypalCfg.paypalMeUrl}/${paypalCfg.entryUSD}USD`,
+      poolName: pool.name,
+    };
+  }
+
   const cfg = getSpeiConfig();
   return {
     ok: true,
@@ -536,14 +572,15 @@ async function markSpeiPaidByUser({ user, paymentId, note }) {
     const pool = await Quiniela.findById(payment.quiniela).select('name').lean();
     const base = WEB_APP_BASE_URL();
     const who = user.displayName || user.email || String(user._id);
+    const isPaypal = payment.method === 'paypal';
     const text = [
-      '💸 Pago marcado como pagado',
+      `💸 Pago marcado como pagado (${isPaypal ? 'PayPal' : 'SPEI'})`,
       '',
       `Quiniela: ${pool?.name || '—'}`,
       `Jugador: ${who}${user.email ? ` (${user.email})` : ''}`,
-      `Monto: $${payment.amountMXN} MXN`,
+      isPaypal ? `Monto: $${payment.amountUSD} USD vía PayPal` : `Monto: $${payment.amountMXN} MXN`,
       `Referencia: ${payment.reference}`,
-      `Clave de rastreo: ${payment.userNote || '—'}`,
+      isPaypal ? `Nota del pagador: ${payment.userNote || '—'}` : `Clave de rastreo: ${payment.userNote || '—'}`,
       '',
       `Valida aquí: ${base}/admin/spei`,
     ].join('\n');
@@ -582,6 +619,7 @@ module.exports = {
   confirmSpeiPayment,
   rejectSpeiPayment,
   getSpeiConfig,
+  getPaypalConfig,
   // Exported for unit tests / future integrations.
   serializePicks,
   deserializePicks,

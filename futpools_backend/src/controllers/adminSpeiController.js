@@ -30,6 +30,8 @@ exports.listSpeiPayments = async (req, res) => {
       id: String(p._id),
       reference: p.reference,
       amountMXN: p.amountMXN,
+      method: p.method || 'spei',
+      amountUSD: p.amountUSD ?? null,
       status: p.status,
       createdAt: p.createdAt,
       userMarkedPaidAt: p.userMarkedPaidAt || null,

@@ -49,11 +49,12 @@ exports.createCheckoutSession = async (req, res) => {
  */
 exports.createSpeiIntent = async (req, res) => {
   try {
-    const { picks } = req.body || {};
+    const { picks, method } = req.body || {};
     const result = await poolPaymentService.createSpeiIntentForEntry({
       user: req.user,
       poolId: req.params.id,
       picks,
+      method,
     });
     res.json(result);
   } catch (err) {

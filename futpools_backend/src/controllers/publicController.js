@@ -52,6 +52,24 @@ exports.upcomingFixtures = async (req, res) => {
 };
 
 /**
+ * GET /public/payment-config
+ * Public (no auth) — which manual payment channels are available, so the
+ * pick screen only offers PayPal when it's actually configured. Exposes
+ * NO account details (those come with the payment intent, post-auth).
+ */
+const { getSpeiConfig, getPaypalConfig } = require('../services/poolPaymentService');
+
+exports.paymentConfig = (req, res) => {
+  const spei = getSpeiConfig();
+  const paypal = getPaypalConfig();
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({
+    spei: { enabled: !!spei.clabe },
+    paypal: { enabled: paypal.enabled, amountUSD: paypal.entryUSD },
+  });
+};
+
+/**
  * GET /public/fixtures/today
  * Public (no auth) — today's fixtures (Mexico City calendar day) across a
  * curated league set, queried BY DATE so it works regardless of the

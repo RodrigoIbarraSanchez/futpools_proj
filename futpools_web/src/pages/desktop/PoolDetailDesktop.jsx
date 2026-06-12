@@ -221,6 +221,15 @@ function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid }) {
 // ─────────────────────────────────────────────────────────────────────
 
 function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMXN, onJoin, status, isAdmin }) {
+  // International players can pay in USD via PayPal — surface it BEFORE
+  // they bounce off the MXN price. Only shown when the backend has the
+  // channel configured.
+  const [payCfg, setPayCfg] = useState(null);
+  useEffect(() => {
+    let on = true;
+    api.get('/public/payment-config').then((d) => { if (on) setPayCfg(d); }).catch(() => {});
+    return () => { on = false; };
+  }, []);
   const closed = !canJoin;
   // freeEntry = $0 to join (any pool type) → drives entry/CTA/disclaimer.
   // noPrize = standard pool with no prize ("test"). isLadder shows the
@@ -303,6 +312,11 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
             ? t(locale, 'Free pool — picks register immediately, no payment required.')
             : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
       </p>
+      {!isAdmin && !freeEntry && payCfg?.paypal?.enabled && (
+        <p style={{ fontSize: 11, lineHeight: 1.5, margin: '6px 0 0', textAlign: 'center', color: 'var(--fp-accent)' }}>
+          🌎 {tFormat(locale, 'Outside Mexico? You can pay ${usd} USD via PayPal.', { usd: payCfg.paypal.amountUSD })}
+        </p>
+      )}
     </div>
   );
 }

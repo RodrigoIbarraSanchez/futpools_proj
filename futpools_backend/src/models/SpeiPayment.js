@@ -20,6 +20,12 @@ const speiPaymentSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   picks: { type: [pickSchema], default: [] },
   amountMXN: { type: Number, required: true },
+  // Manual payment channel. 'spei' = MXN bank transfer (Mexico);
+  // 'paypal' = PayPal.me in USD for players outside Mexico. Same
+  // pending → user-marks-paid → admin-confirms lifecycle for both.
+  method: { type: String, enum: ['spei', 'paypal'], default: 'spei', index: true },
+  // Set only for method 'paypal' (the fixed international entry price).
+  amountUSD: { type: Number, default: null },
   // Human-friendly numeric code the payer puts in the SPEI "concepto" /
   // "referencia numérica" so the admin can match the transfer. Unique so
   // two intents never collide on the same reference.

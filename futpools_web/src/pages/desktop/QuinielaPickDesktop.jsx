@@ -18,6 +18,7 @@ import { useLocale } from '../../context/LocaleContext';
 import { t } from '../../i18n/translations';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
 import { isFreePool, freeToEnter } from '../../lib/poolStatus';
+import { PayMethodSelector } from '../../components/PayMethodSelector';
 
 const WINNER_SHARE = 0.65;
 
@@ -219,8 +220,11 @@ function FixtureCard({ fixture, idx, picks, setPick, locale }) {
 function SummaryCard({
   count, total, complete, submitting, error,
   feeMXN, prizeMxn, onSubmit, locale, isAdmin, isFree, entryFree,
+  payCfg, payMethod, setPayMethod,
 }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
+  const isPaypal = payMethod === 'paypal';
+  const usd = payCfg?.paypal?.amountUSD ?? 3;
   // entryFree = $0 to join (drives CTA/entry/disclaimer). isFree = standard
   // pool with no prize (drives the "no prize" line). A ladder pool can be
   // entryFree but still have prizes.
@@ -231,7 +235,9 @@ function SummaryCard({
           ? t(locale, 'Confirm (admin free entry)')
           : entryFree
             ? t(locale, 'PLAY FREE')
-            : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
+            : isPaypal
+              ? `${t(locale, 'Confirm for')} $${usd} USD`
+              : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
       : `${t(locale, 'Missing')} ${total - count} ${total - count === 1 ? t(locale, 'pick') : t(locale, 'picks')}`;
   return (
     <div className="fp-card">
@@ -265,7 +271,7 @@ function SummaryCard({
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span className="muted">{t(locale, 'Entry')}</span>
           <span className="num" style={{ fontWeight: 600, color: entryFree ? 'var(--fp-accent)' : undefined }}>
-            {entryFree ? t(locale, 'FREE') : `$${feeMXN} MXN`}
+            {entryFree ? t(locale, 'FREE') : isPaypal ? `$${usd} USD` : `$${feeMXN} MXN`}
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
@@ -275,6 +281,16 @@ function SummaryCard({
           </span>
         </div>
       </div>
+
+      {!isAdmin && !entryFree && (
+        <PayMethodSelector
+          payCfg={payCfg}
+          payMethod={payMethod}
+          setPayMethod={setPayMethod}
+          feeMXN={feeMXN}
+          locale={locale}
+        />
+      )}
 
       <button
         type="button"
@@ -348,6 +364,7 @@ export function QuinielaPickDesktop({
   quiniela, picks, setPicks, setPick,
   count, total, complete, submitting, error,
   feeMXN, onSubmit, goBack, isAdmin = false,
+  payCfg = null, payMethod = 'spei', setPayMethod = () => {},
 }) {
   const { locale } = useLocale();
   const fixtures = quiniela?.fixtures || [];
@@ -466,6 +483,9 @@ export function QuinielaPickDesktop({
             isAdmin={isAdmin}
             isFree={isFreePool(quiniela)}
             entryFree={freeToEnter(quiniela)}
+            payCfg={payCfg}
+            payMethod={payMethod}
+            setPayMethod={setPayMethod}
           />
           <DistributionCard fixtures={fixtures} picks={picks} locale={locale} />
         </aside>

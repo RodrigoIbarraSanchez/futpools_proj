@@ -116,10 +116,21 @@ export function AdminSpeiPayments() {
                     fontFamily: 'var(--fp-display)', fontSize: 15, fontWeight: 800,
                     letterSpacing: 0.5, color: 'var(--fp-text)', flex: 1,
                   }}>{p.pool?.name || '—'}</div>
+                  {/* Channel badge — PayPal payments are verified in PayPal, not the bank. */}
+                  <div style={{
+                    fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5, fontWeight: 700,
+                    padding: '3px 8px', clipPath: 'var(--fp-clip-sm)',
+                    background: p.method === 'paypal' ? 'color-mix(in srgb, var(--fp-accent) 16%, transparent)' : 'color-mix(in srgb, var(--fp-primary) 14%, transparent)',
+                    color: p.method === 'paypal' ? 'var(--fp-accent)' : 'var(--fp-primary)',
+                  }}>{p.method === 'paypal' ? 'PAYPAL' : 'SPEI'}</div>
                   <div style={{
                     fontFamily: 'var(--fp-display)', fontSize: 20, fontWeight: 900,
                     color: 'var(--fp-gold)',
-                  }}>${Number(p.amountMXN || 0).toLocaleString('en-US')}</div>
+                  }}>
+                    {p.method === 'paypal'
+                      ? `$${Number(p.amountUSD || 0).toLocaleString('en-US')} USD`
+                      : `$${Number(p.amountMXN || 0).toLocaleString('en-US')}`}
+                  </div>
                 </div>
 
                 {/* Reference — the key thing the admin matches against the bank */}
