@@ -443,8 +443,11 @@ export const LANDING_CSS = `
    its own centered row. 2×2 on phones, 4-up from 640px. */
 .fp-wc26 .wc-hero-split .wc-hero-stats {
   display: grid; grid-template-columns: repeat(2, minmax(0, max-content));
-  justify-content: start; text-align: left; gap: 16px 36px; margin-top: 22px;
+  justify-content: start; gap: 16px 36px; margin-top: 22px;
 }
+/* The GROUP sits left under the CTA, but inside each chip the number is
+   centered over its label (90' centered above TIEMPO REGLAMENTARIO). */
+.fp-wc26 .wc-hero-split .wc-stat { text-align: center; }
 .fp-wc26 .wc-hero-split .wc-hero-visual { width: 100%; min-width: 0; }
 /* Hero visuals must read as the page's "product shot": full column width
    for panel visuals, larger phone for the mockups. */
