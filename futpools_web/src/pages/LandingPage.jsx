@@ -327,6 +327,7 @@ export function LandingPage() {
             {locale === 'es' && <Link to={qsPath}>Quiniela de la semana</Link>}
             {locale === 'es' && <Link to={pfPath}>Pronósticos de fútbol</Link>}
             {locale === 'es' && <Link to="/pronosticos-futbol-hoy">Pronósticos de fútbol hoy</Link>}
+            {locale === 'es' && <Link to="/quiniela-futbol-hoy">Quiniela de fútbol hoy</Link>}
             <Link to={wcToolPath}>{c('Añadir el Mundial a tu calendario', 'Add the World Cup to your calendar')}</Link>
           </div>
 

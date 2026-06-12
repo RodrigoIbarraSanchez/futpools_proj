@@ -27,6 +27,7 @@ import { mexicoJsonLd } from '../src/seo/mexicoWc26.js';
 import { quinielaJsonLd } from '../src/seo/quinielaSemana.js';
 import { pronosticosJsonLd } from '../src/seo/pronosticosFutbol.js';
 import { pronosticosHoyJsonLd } from '../src/seo/pronosticosHoy.js';
+import { quinielaHoyJsonLd } from '../src/seo/quinielaHoy.js';
 
 const distDir = path.resolve(process.cwd(), 'dist');
 const baseHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
@@ -259,6 +260,26 @@ function pronosticosHoyShell() {
 ensureDir(path.join(distDir, PFH_SLUG));
 fs.writeFileSync(path.join(distDir, `${PFH_SLUG}/index.html`), pronosticosHoyShell());
 
+// ── Quiniela fútbol hoy shell (ES-only — no hreflang/alternates) ──
+const QH_SLUG = 'quiniela-futbol-hoy';
+function quinielaHoyShell() {
+  let html = baseHtml;
+  html = swap(html, CAL.title, '<title>Quiniela de fútbol hoy: juega y gana premios | FutPools</title>', 'qh:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Quiniela de fútbol hoy: entra a la quiniela con inscripción abierta, llena tus L, E o V con los partidos del día y compite por el premio antes del primer partido." />', 'qh:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela de fútbol hoy: juega y gana premios" />', 'qh:og:title');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="La quiniela de hoy con inscripción abierta: llena tus L/E/V con los partidos del día y compite por el premio antes del primer silbatazo." />', 'qh:og:description');
+  html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${QH_SLUG}" />`, 'qh:og:url');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela de fútbol hoy: juega y gana premios" />', 'qh:twitter:title');
+  html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Entra a la quiniela de hoy, llena tus L/E/V y compite por el premio antes del primer partido." />', 'qh:twitter:description');
+  // ES-only page: drop the calendar's hreflang block (no alternates).
+  html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'qh:hreflang');
+  return html.replace('</head>',
+    `    <link rel="canonical" href="https://futpools.com/${QH_SLUG}" />\n` +
+    `    <script id="landing-jsonld" type="application/ld+json">${JSON.stringify(quinielaHoyJsonLd())}</script>\n  </head>`);
+}
+ensureDir(path.join(distDir, QH_SLUG));
+fs.writeFileSync(path.join(distDir, `${QH_SLUG}/index.html`), quinielaHoyShell());
+
 console.log('[i18n shells] wrote:');
 console.log(`  dist/${ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${EN_SLUG}/index.html  (en)`);
@@ -267,4 +288,5 @@ console.log(`  dist/${MX_EN_SLUG}/index.html  (en)`);
 console.log(`  dist/${QS_SLUG}/index.html  (es)`);
 console.log(`  dist/${PF_SLUG}/index.html  (es)`);
 console.log(`  dist/${PFH_SLUG}/index.html  (es)`);
+console.log(`  dist/${QH_SLUG}/index.html  (es)`);
 console.log('  dist/404.html                          (es)');

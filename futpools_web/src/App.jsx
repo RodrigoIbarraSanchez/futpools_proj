@@ -26,6 +26,7 @@ import { MexicoWorldCup2026 } from './pages/MexicoWorldCup2026';
 import { QuinielaDeLaSemana } from './pages/QuinielaDeLaSemana';
 import { PronosticosFutbol } from './pages/PronosticosFutbol';
 import { PronosticosFutbolHoy } from './pages/PronosticosFutbolHoy';
+import { QuinielaFutbolHoy } from './pages/QuinielaFutbolHoy';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -118,6 +119,8 @@ export default function App() {
             <Route path="/pronosticos-de-futbol" element={<PronosticosFutbol />} />
             {/* Cluster child — dynamic "today's matches" module. */}
             <Route path="/pronosticos-futbol-hoy" element={<PronosticosFutbolHoy />} />
+            {/* Transactional "hoy" sibling — open pool as the hero. */}
+            <Route path="/quiniela-futbol-hoy" element={<QuinielaFutbolHoy />} />
             {/* Legacy concatenated slugs → 301 at the host (_redirects); this
                 client-side Navigate covers any in-app navigation. */}
             <Route path="/calendariomundial2026" element={<Navigate to="/calendario-mundial-2026" replace />} />

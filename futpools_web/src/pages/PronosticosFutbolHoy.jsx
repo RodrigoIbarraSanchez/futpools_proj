@@ -29,7 +29,7 @@ import { trackEvent } from '../lib/analytics';
 const CANONICAL = 'https://futpools.com/pronosticos-futbol-hoy';
 const PAGE = 'pronosticos-futbol-hoy';
 
-function useTodayFixtures() {
+export function useTodayFixtures() {
   // null = loading/failed (render the evergreen fallback); [] = no matches
   // today; [...] = real fixtures.
   const [fixtures, setFixtures] = useState(null);
@@ -176,7 +176,8 @@ export function PronosticosFutbolHoy() {
             <p>Llena tus L/E/V del día y sigue tus aciertos en vivo.</p>
             <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
               {cta()}
-              <Link to="/pronosticos-de-futbol" className="wc-btn-secondary">Guía de pronósticos de fútbol →</Link>
+              <Link to="/quiniela-futbol-hoy" className="wc-btn-secondary">Quiniela de fútbol hoy →</Link>
+              <Link to="/pronosticos-de-futbol" className="wc-btn-secondary">Guía de pronósticos →</Link>
               <Link to="/quiniela-de-la-semana" className="wc-btn-secondary">Quiniela de la semana →</Link>
             </div>
           </div>
@@ -195,7 +196,7 @@ export function PronosticosFutbolHoy() {
 // Real fixtures from /public/fixtures/today; the evergreen "ejemplo"
 // fallback renders while loading / on error so the hero never looks broken.
 
-function TodayMatchesVisual({ fixtures }) {
+export function TodayMatchesVisual({ fixtures }) {
   const today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
   const live = (s) => s && s !== 'NS' && s !== 'TBD' && !['FT', 'AET', 'PEN'].includes(s);
   const finished = (s) => ['FT', 'AET', 'PEN'].includes(s);
@@ -381,7 +382,7 @@ function DeadlineVisual() {
   );
 }
 
-const PFH_CSS = `
+export const PFH_CSS = `
 /* today's matches list (hero visual) */
 .fp-wc26 .wc-pfh-today { padding: 18px 18px 16px; }
 .fp-wc26 .wc-pfh-list { display: flex; flex-direction: column; gap: 7px; }

@@ -167,6 +167,7 @@ export function QuinielaDeLaSemana() {
             <p>Gratis, con amigos y desde tu teléfono. Premios reales en las quinielas con bote.</p>
             <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
               {cta('Jugar mi quiniela')}
+              <Link to="/quiniela-futbol-hoy" className="wc-btn-secondary">Quiniela de fútbol hoy →</Link>
               <Link to="/pronosticos-de-futbol" className="wc-btn-secondary">Cómo hacer pronósticos de fútbol →</Link>
               <Link to="/calendario-mundial-2026" className="wc-btn-secondary">Calendario del Mundial 2026 →</Link>
             </div>
