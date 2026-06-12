@@ -194,10 +194,13 @@ export function Login() {
       }} />
 
       {isDesktop ? (
-        /* ── Desktop: brand/value pitch left · form right ── */
-        <div style={{
+        /* ── Desktop: brand/value pitch left · form right.
+           `fp-auth-full` opts out of the global 430px phone-frame clamp
+           (see index.css) — without it this grid renders inside a phone
+           column and collapses. ── */
+        <div className="fp-auth-full" style={{
           position: 'relative', zIndex: 1, minHeight: '100vh',
-          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          display: 'grid', gridTemplateColumns: '1.05fr 0.95fr',
           alignItems: 'center', gap: 72,
           maxWidth: 1040, margin: '0 auto', padding: '60px 40px',
         }}>
