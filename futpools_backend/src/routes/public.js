@@ -4,8 +4,12 @@ const publicController = require('../controllers/publicController');
 const router = express.Router();
 
 // All routes here are unauthenticated by design — used by the iOS
-// onboarding "App Demo" screen before the user creates an account.
+// onboarding "App Demo" screen and the web SEO landings before the
+// user creates an account.
 // Keep the surface SMALL: only read-only endpoints with safe data.
 router.get('/fixtures/upcoming', publicController.upcomingFixtures);
+// Dynamic CTA for /pronosticos-de-futbol: next public pool still open
+// for registration (no match started), or { pool: null }.
+router.get('/pools/next-open', publicController.nextOpenPool);
 
 module.exports = router;

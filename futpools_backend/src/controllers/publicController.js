@@ -1,4 +1,7 @@
 const { getLeagueFixtures } = require('../services/apiFootball');
+const Quiniela = require('../models/Quiniela');
+const QuinielaEntry = require('../models/QuinielaEntry');
+const { computePoolStatus } = require('./quinielaController');
 
 /**
  * GET /public/fixtures/upcoming
@@ -44,6 +47,71 @@ exports.upcomingFixtures = async (req, res) => {
     res.json(upcoming.slice(0, limit));
   } catch (err) {
     console.error('[Public] upcomingFixtures error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * GET /public/pools/next-open
+ * Public (no auth) — returns the public pool that is still open for
+ * registration (no fixture has kicked off yet) whose first match starts
+ * soonest. Powers the dynamic CTA on the /pronosticos-de-futbol SEO
+ * landing: pool open → CTA deep-links to /pool/:id; nothing open →
+ * `{ pool: null }` and the landing falls back to /onboarding.
+ *
+ * 200 + { pool: null } on the empty state (not 404): "no open pool" is a
+ * normal weekly condition, and the web client treats >=400 as an error.
+ */
+let nextOpenCache = { data: null, at: 0 };
+const NEXT_OPEN_TTL_MS = 60 * 1000;
+
+exports.nextOpenPool = async (req, res) => {
+  try {
+    const now = new Date();
+    if (nextOpenCache.data && now - nextOpenCache.at < NEXT_OPEN_TTL_MS) {
+      res.set('Cache-Control', 'public, max-age=60');
+      return res.json(nextOpenCache.data);
+    }
+
+    // "Registration open" === no fixture has started. The $not+$elemMatch
+    // expresses "min(kickoff) > now" — a plain `fixtures.kickoff > now`
+    // would also match live pools whose later matches are still upcoming.
+    const candidates = await Quiniela.find({
+      visibility: 'public',
+      cancelledAt: null,
+      'fixtures.0': { $exists: true },
+      fixtures: { $not: { $elemMatch: { kickoff: { $lte: now } } } },
+    })
+      .select('name fixtures.kickoff fixtures.status fixtures.fixtureId entryFeeMXN currency prizeLabel')
+      .lean();
+
+    const firstKickoffOf = (q) =>
+      Math.min(...q.fixtures.map((f) => new Date(f.kickoff).getTime()));
+    candidates.sort((a, b) => firstKickoffOf(a) - firstKickoffOf(b));
+
+    // Defensive re-check against the canonical status function (no live
+    // status map needed: every kickoff is in the future by the query).
+    const open = candidates.find((q) => computePoolStatus(q.fixtures, null) === 'scheduled');
+
+    let payload = { pool: null };
+    if (open) {
+      const entriesCount = await QuinielaEntry.countDocuments({ quiniela: open._id });
+      payload = {
+        pool: {
+          id: String(open._id),
+          name: open.name,
+          firstKickoff: new Date(firstKickoffOf(open)).toISOString(),
+          entriesCount,
+          entryFeeMXN: open.entryFeeMXN,
+          currency: open.currency || 'MXN',
+        },
+      };
+    }
+    nextOpenCache = { data: payload, at: now };
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json(payload);
+  } catch (err) {
+    console.error('[Public] nextOpenPool error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };

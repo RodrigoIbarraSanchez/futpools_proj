@@ -183,6 +183,21 @@ week. (A dynamic data-backed "this week" section is a separate, larger build.)
 Also: for third-party brands (Progol/Lotería Nacional) state non-affiliation in
 the FAQ + footer.
 
+**Dynamic CTA landings** (e.g. `PronosticosFutbol.jsx`, `/pronosticos-de-futbol`):
+the CTA can target live product state via a **public no-auth endpoint**
+(`GET /public/pools/next-open` → next public pool still open for registration,
+i.e. computed status `scheduled`; 60s in-memory cache; returns `200 + {pool:null}`
+on the empty state so the client's >=400-throws path stays quiet). Rules:
+- The **default render state is the evergreen fallback** (`/onboarding` CTA +
+  undated copy) — initial paint, fetch failure, and crawler snapshots are always
+  valid. The fetched pool only *upgrades* the CTA/card client-side.
+- Never put fetched data (dates, names) into `document.title`/meta/JSON-LD —
+  the baked shell stays evergreen; dynamic content is body-only enhancement.
+- New public endpoints go in `futpools_backend/src/routes/public.js`
+  (read-only, minimal payload, no auth) and reuse the canonical status logic
+  (`computePoolStatus` exported from `quinielaController.js`) — don't duplicate
+  the "registration open" definition.
+
 **Additional shells** in `build-i18n-shells.js` = string-swap the calendar head
 (present in `baseHtml`) → the new page's, per locale, via the `swap()` helper
 (it warns if a source string drifts). Inject canonical + JSON-LD. Add both

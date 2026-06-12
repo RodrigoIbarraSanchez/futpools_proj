@@ -84,6 +84,10 @@ function computePoolStatus(fixtures, liveStatusMap) {
   return 'scheduled';
 }
 
+// Shared with publicController (next-open pool endpoint) so the
+// "registration open" definition has a single source of truth.
+exports.computePoolStatus = computePoolStatus;
+
 function addPoolStatus(quiniela, liveStatusMap) {
   return { ...quiniela, status: computePoolStatus(quiniela.fixtures || [], liveStatusMap) };
 }

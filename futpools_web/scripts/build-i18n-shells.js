@@ -25,6 +25,7 @@ import path from 'node:path';
 import { wc26JsonLd } from '../src/seo/wc26Landing.js';
 import { mexicoJsonLd } from '../src/seo/mexicoWc26.js';
 import { quinielaJsonLd } from '../src/seo/quinielaSemana.js';
+import { pronosticosJsonLd } from '../src/seo/pronosticosFutbol.js';
 
 const distDir = path.resolve(process.cwd(), 'dist');
 const baseHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
@@ -217,10 +218,31 @@ function quinielaShell() {
 ensureDir(path.join(distDir, QS_SLUG));
 fs.writeFileSync(path.join(distDir, `${QS_SLUG}/index.html`), quinielaShell());
 
+// ── Pronósticos de fútbol shell (ES-only — no hreflang/alternates) ──
+const PF_SLUG = 'pronosticos-de-futbol';
+function pronosticosShell() {
+  let html = baseHtml;
+  html = swap(html, CAL.title, '<title>Pronósticos de fútbol: haz tu quiniela y compite | FutPools</title>', 'pf:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Aprende a hacer pronósticos de fútbol (L, E, V): cómo analizar forma, localía y bajas, y pon a prueba tus pronósticos en quinielas con amigos en FutPools." />', 'pf:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Pronósticos de fútbol: haz tu quiniela y compite" />', 'pf:og:title');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Cómo hacer pronósticos de fútbol (L/E/V) con criterio — forma, localía, cara a cara y bajas — y dónde ponerlos a prueba: las quinielas de FutPools." />', 'pf:og:description');
+  html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${PF_SLUG}" />`, 'pf:og:url');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Pronósticos de fútbol: haz tu quiniela y compite" />', 'pf:twitter:title');
+  html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Haz tus pronósticos de fútbol (L/E/V) y compite con tus aciertos en las quinielas de FutPools." />', 'pf:twitter:description');
+  // ES-only page: drop the calendar's hreflang block (no alternates).
+  html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'pf:hreflang');
+  return html.replace('</head>',
+    `    <link rel="canonical" href="https://futpools.com/${PF_SLUG}" />\n` +
+    `    <script id="landing-jsonld" type="application/ld+json">${JSON.stringify(pronosticosJsonLd())}</script>\n  </head>`);
+}
+ensureDir(path.join(distDir, PF_SLUG));
+fs.writeFileSync(path.join(distDir, `${PF_SLUG}/index.html`), pronosticosShell());
+
 console.log('[i18n shells] wrote:');
 console.log(`  dist/${ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${EN_SLUG}/index.html  (en)`);
 console.log(`  dist/${MX_ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${MX_EN_SLUG}/index.html  (en)`);
 console.log(`  dist/${QS_SLUG}/index.html  (es)`);
+console.log(`  dist/${PF_SLUG}/index.html  (es)`);
 console.log('  dist/404.html                          (es)');
