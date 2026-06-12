@@ -15,7 +15,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { WC_CSS } from './WorldCup2026Calendar';
-import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd } from './WorldCup2026Landing';
+import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd, useRevealOnScroll } from './WorldCup2026Landing';
 import { quinielaFaq, quinielaJsonLd } from '../seo/quinielaSemana';
 
 const CANONICAL = 'https://futpools.com/quiniela-de-la-semana';
@@ -27,6 +27,8 @@ export function QuinielaDeLaSemana() {
     setCanonical(CANONICAL);
     setJsonLd('landing-jsonld', quinielaJsonLd());
   }, []);
+
+  useRevealOnScroll();
 
   const cta = (label) => <Link to="/onboarding" className="wc-btn-primary">▶ {label}</Link>;
 
@@ -206,7 +208,7 @@ function StepsVisual() {
       <div className="wc-viz-head"><span>◆ EN 3 PASOS</span></div>
       <div className="wc-qs-steps">
         {steps.map((s, i) => (
-          <div className="wc-qs-step" key={i} style={{ animationDelay: `${i * 90}ms` }}>
+          <div className="wc-qs-step" key={i} style={{ animationDelay: `${i * 130}ms` }}>
             <span className="wc-qs-step-n">{i + 1}</span>
             <span className="wc-qs-step-t">{s}</span>
           </div>
@@ -293,7 +295,7 @@ const QS_CSS = `
 
 /* steps */
 .fp-wc26 .wc-qs-steps { display: flex; flex-direction: column; gap: 8px; }
-.fp-wc26 .wc-qs-step { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--primary); clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); padding: 10px 12px; opacity: 0; animation: wcRise 0.45s ease forwards; }
+.fp-wc26 .wc-qs-step { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--primary); clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); padding: 10px 12px; opacity: 0; animation: wcRise 0.8s ease both; }
 .fp-wc26 .wc-qs-step-n { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: var(--primary); color: var(--fp-on-primary); font-family: var(--ox); font-weight: 900; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(33,226,140,0.45); }
 .fp-wc26 .wc-qs-step-t { font-size: 12.5px; color: var(--text-dim); }
 
@@ -301,7 +303,7 @@ const QS_CSS = `
 .fp-wc26 .wc-qs-poss { display: flex; flex-direction: column; gap: 7px; }
 .fp-wc26 .wc-qs-poss-row { display: grid; grid-template-columns: 20px 26px 1fr 36px; gap: 8px; align-items: center; }
 .fp-wc26 .wc-qs-poss-bar { height: 8px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%); }
-.fp-wc26 .wc-qs-poss-bar span { display: block; height: 100%; background: var(--accent); box-shadow: 0 0 8px rgba(54,233,255,0.5); transform-origin: left; animation: wcGrow 0.7s ease forwards; }
+.fp-wc26 .wc-qs-poss-bar span { display: block; height: 100%; background: var(--accent); box-shadow: 0 0 8px rgba(54,233,255,0.5); transform-origin: left; animation: wcGrow 1.1s ease both; }
 .fp-wc26 .wc-qs-poss-pct { font-family: var(--ox); font-weight: 800; font-size: 12px; color: var(--accent); text-align: right; }
 
 /* revancha */

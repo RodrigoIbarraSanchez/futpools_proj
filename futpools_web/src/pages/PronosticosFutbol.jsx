@@ -21,7 +21,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { WC_CSS } from './WorldCup2026Calendar';
-import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd } from './WorldCup2026Landing';
+import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd, useRevealOnScroll } from './WorldCup2026Landing';
 import { pronosticosFaq, pronosticosJsonLd } from '../seo/pronosticosFutbol';
 import { api } from '../api/client';
 
@@ -56,6 +56,8 @@ export function PronosticosFutbol() {
     setCanonical(CANONICAL);
     setJsonLd('landing-jsonld', pronosticosJsonLd());
   }, []);
+
+  useRevealOnScroll();
 
   const pool = useNextOpenPool();
   const ctaTo = pool ? `/pool/${pool.id}` : '/onboarding';
@@ -251,7 +253,7 @@ function HeroPicksVisual() {
       <div className="wc-pf-hero-th"><span>Partido</span><span>L</span><span>E</span><span>V</span><span>✓</span></div>
       <div className="wc-pf-hero-list">
         {rows.map((r, i) => (
-          <div className="wc-pf-hero-row" key={r.n} style={{ animationDelay: `${i * 80}ms` }}>
+          <div className="wc-pf-hero-row" key={r.n} style={{ animationDelay: `${i * 120}ms` }}>
             <span className="wc-pf-hero-match">
               <span className="wc-pf-dot" /><span className="wc-pf-dot alt" />Partido {r.n}
             </span>
@@ -305,7 +307,7 @@ function FormVisual() {
         {rows.map((r, i) => (
           <div className="wc-pf-form-row" key={r.t}>
             <span className="wc-pf-form-lab">{r.t}</span>
-            <span className="wc-pf-form-bar"><span style={{ width: `${r.w}%`, animationDelay: `${i * 90}ms` }} /></span>
+            <span className="wc-pf-form-bar"><span style={{ width: `${r.w}%`, animationDelay: `${i * 130}ms` }} /></span>
           </div>
         ))}
       </div>
@@ -378,7 +380,7 @@ const PF_CSS = `
 .fp-wc26 .wc-pf-hero-th { font-family: var(--mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 12px 8px; }
 .fp-wc26 .wc-pf-hero-th span:not(:first-child) { text-align: center; }
 .fp-wc26 .wc-pf-hero-list { display: flex; flex-direction: column; gap: 7px; }
-.fp-wc26 .wc-pf-hero-row { background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--primary); clip-path: polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%); padding: 8px 12px; opacity: 0; animation: wcRise 0.45s ease forwards; }
+.fp-wc26 .wc-pf-hero-row { background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--primary); clip-path: polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%); padding: 8px 12px; opacity: 0; animation: wcRise 0.8s ease both; }
 .fp-wc26 .wc-pf-hero-match { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; }
 .fp-wc26 .wc-pf-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); opacity: 0.85; flex-shrink: 0; }
 .fp-wc26 .wc-pf-dot.alt { background: var(--accent); margin-left: -3px; }
@@ -404,7 +406,7 @@ const PF_CSS = `
 .fp-wc26 .wc-pf-form-row { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; }
 .fp-wc26 .wc-pf-form-lab { font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; color: var(--text-dim); text-transform: uppercase; }
 .fp-wc26 .wc-pf-form-bar { height: 8px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%); }
-.fp-wc26 .wc-pf-form-bar span { display: block; height: 100%; background: var(--accent); box-shadow: 0 0 8px rgba(54,233,255,0.5); transform-origin: left; animation: wcGrow 0.7s ease forwards; }
+.fp-wc26 .wc-pf-form-bar span { display: block; height: 100%; background: var(--accent); box-shadow: 0 0 8px rgba(54,233,255,0.5); transform-origin: left; animation: wcGrow 1.1s ease both; }
 
 /* leaderboard */
 .fp-wc26 .wc-pf-board { display: flex; flex-direction: column; gap: 7px; }

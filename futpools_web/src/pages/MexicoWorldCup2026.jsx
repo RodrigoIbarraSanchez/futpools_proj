@@ -15,7 +15,7 @@ import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import { WC_CSS } from './WorldCup2026Calendar';
-import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd } from './WorldCup2026Landing';
+import { LANDING_CSS, Statement, Split, setMeta, setCanonical, setJsonLd, useRevealOnScroll } from './WorldCup2026Landing';
 import { mexicoFaq, mexicoJsonLd, MX_MATCHES, MX_GROUP } from '../seo/mexicoWc26';
 
 const ORIGIN = 'https://futpools.com';
@@ -55,6 +55,8 @@ export function MexicoWorldCup2026() {
   // Resolve bilingual data to the active locale.
   const matches = MX_MATCHES.map((m) => ({ date: c(m.date.es, m.date.en), opp: c(m.opp.es, m.opp.en), flag: m.flag, venue: c(m.venue.es, m.venue.en), timeLocal: m.timeLocal, tag: c(m.tag.es, m.tag.en) }));
   const group = MX_GROUP.map((t) => ({ name: c(t.name.es, t.name.en), flag: t.flag, host: !!t.host }));
+
+  useRevealOnScroll();
 
   const ctaTool = (label) => <Link to={toolPath} className="wc-btn-primary">▶ {label}</Link>;
 
@@ -282,7 +284,7 @@ function TimezoneVisual({ c }) {
       <div className="wc-tz-note2">{c('Cada partido de México se muestra en tu hora local, sin convertir nada.', 'Every Mexico match shows in your local time, with no manual conversion.')}</div>
       <div className="wc-tz-list">
         {zs.map((z, i) => (
-          <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 80}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>
+          <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 120}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>
         ))}
       </div>
     </div>

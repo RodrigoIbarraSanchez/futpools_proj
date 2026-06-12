@@ -59,6 +59,8 @@ export function WorldCup2026Landing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
+  useRevealOnScroll();
+
   const ctaTool = (label) => <Link to={toolPath} className="wc-btn-primary">▶ {label}</Link>;
 
   return (
@@ -294,7 +296,7 @@ function DistributionVisual({ c }) {
         {rows.map((r, i) => (
           <div className="wc-dist-row" key={i}>
             <div className="wc-dist-lbl"><span className="wc-fx-flag">{r.f}</span>{r.n}</div>
-            <div className="wc-dist-bar"><span style={{ width: `${r.w}%`, background: r.tone, boxShadow: `0 0 12px ${r.tone}88`, animationDelay: `${i * 120}ms` }} /></div>
+            <div className="wc-dist-bar"><span style={{ width: `${r.w}%`, background: r.tone, boxShadow: `0 0 12px ${r.tone}88`, animationDelay: `${i * 170}ms` }} /></div>
             <div className="wc-dist-val">{r.v}</div>
           </div>
         ))}
@@ -313,7 +315,7 @@ function PhasesVisual({ c }) {
         {steps.map((s, i) => {
           const last = i === steps.length - 1;
           return (
-            <div className="wc-ph-node" key={i} style={{ animationDelay: `${i * 90}ms` }}>
+            <div className="wc-ph-node" key={i} style={{ animationDelay: `${i * 130}ms` }}>
               <div className={`wc-ph-dot ${last ? 'final' : ''}`}>{last ? '🏆' : i + 1}</div>
               <div className="wc-ph-lbl">{s}</div>
             </div>
@@ -349,7 +351,7 @@ function HostMapVisual({ c }) {
         <ellipse cx="150" cy="105" rx="135" ry="46" fill="rgba(33,226,140,0.06)" stroke="rgba(33,226,140,0.28)" strokeWidth="0.7" />
         <ellipse cx="115" cy="175" rx="58" ry="30" fill="rgba(255,43,214,0.06)" stroke="rgba(255,43,214,0.28)" strokeWidth="0.7" />
         {cities.map((p, i) => (
-          <g key={i} style={{ animationDelay: `${i * 55}ms` }} className="wc-map-dot">
+          <g key={i} style={{ animationDelay: `${i * 120}ms` }} className="wc-map-dot">
             <circle cx={p.x} cy={p.y} r="6" fill={tone[p.k]} opacity="0.18" />
             <circle cx={p.x} cy={p.y} r="2.6" fill={tone[p.k]} />
           </g>
@@ -377,7 +379,7 @@ function TimezoneVisual({ c }) {
       <div className="wc-tz-note2">{c('Cada partido se muestra en tu hora local, sin convertir nada a mano.', 'Every match shows in your local time, with no manual conversion.')}</div>
       <div className="wc-tz-list">
         {zs.map((z, i) => (
-          <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 80}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>
+          <div className="wc-tz-item" key={i} style={{ animationDelay: `${i * 120}ms` }}><span className="wc-tz-clock">◷</span>{z}</div>
         ))}
       </div>
     </div>
@@ -427,7 +429,35 @@ export function setJsonLd(id, obj) {
   el.textContent = JSON.stringify(obj);
 }
 
+/**
+ * Reveal-on-scroll for landing visuals. All `.wc-viz` animations start
+ * PAUSED (see the .is-inview rule in LANDING_CSS); this hook adds
+ * `.is-inview` the first time each visual enters the viewport, so
+ * below-the-fold visuals animate when the user scrolls to them instead
+ * of having finished off-screen. Shared by every landing page.
+ */
+export function useRevealOnScroll() {
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll('.fp-wc26 .wc-viz'));
+    if (typeof IntersectionObserver === 'undefined') {
+      els.forEach((el) => el.classList.add('is-inview'));
+      return undefined;
+    }
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) { e.target.classList.add('is-inview'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.25 });
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
+
 export const LANDING_CSS = `
+/* Reveal on scroll: every animation inside a visual stays paused until
+   useRevealOnScroll() adds .is-inview when it enters the viewport. */
+.fp-wc26 .wc-viz:not(.is-inview), .fp-wc26 .wc-viz:not(.is-inview) * { animation-play-state: paused !important; }
+
 .fp-wc26 .wc-content { gap: 0; padding-top: 8px; }
 .fp-wc26 .wc-lead { max-width: 720px; }
 
@@ -495,14 +525,14 @@ export const LANDING_CSS = `
 .fp-wc26 .wc-dist-row { display: grid; grid-template-columns: 110px 1fr 28px; align-items: center; gap: 8px; }
 .fp-wc26 .wc-dist-lbl { display: flex; align-items: center; gap: 7px; font-family: var(--ox); font-weight: 700; font-size: 12px; color: var(--text); }
 .fp-wc26 .wc-dist-bar { position: relative; height: 14px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%); display: flex; align-items: center; }
-.fp-wc26 .wc-dist-bar span { display: block; height: 100%; clip-path: polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%); transform-origin: left; animation: wcGrow 0.7s ease forwards; }
+.fp-wc26 .wc-dist-bar span { display: block; height: 100%; clip-path: polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%); transform-origin: left; animation: wcGrow 1.1s ease both; }
 .fp-wc26 .wc-dist-val { font-family: var(--ox); font-weight: 900; font-size: 16px; color: var(--primary); text-align: right; }
 .fp-wc26 .wc-dist-foot { margin-top: 12px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 1px; color: var(--text-muted); text-align: center; }
 @keyframes wcGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* phases */
 .fp-wc26 .wc-ph { display: flex; flex-wrap: wrap; gap: 4px 0; align-items: flex-start; }
-.fp-wc26 .wc-ph-node { flex: 1 1 0; min-width: 44px; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; opacity: 0; animation: wcRise 0.5s ease forwards; }
+.fp-wc26 .wc-ph-node { flex: 1 1 0; min-width: 44px; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; opacity: 0; animation: wcRise 0.85s ease both; }
 .fp-wc26 .wc-ph-node:not(:last-child)::after { content: ''; position: absolute; top: 13px; left: 60%; right: -40%; height: 2px; background: linear-gradient(90deg, var(--primary), rgba(33,226,140,0.15)); }
 .fp-wc26 .wc-ph-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--ox); font-weight: 900; font-size: 11px; color: var(--fp-on-primary); background: var(--primary); box-shadow: 0 0 12px rgba(33,226,140,0.5); position: relative; z-index: 1; }
 .fp-wc26 .wc-ph-dot.final { background: var(--gold); box-shadow: 0 0 16px rgba(255,209,102,0.7); font-size: 13px; }
@@ -511,7 +541,7 @@ export const LANDING_CSS = `
 
 /* map */
 .fp-wc26 .wc-map-svg { width: 100%; height: auto; display: block; }
-.fp-wc26 .wc-map-dot { opacity: 0; animation: wcRise 0.5s ease forwards; }
+.fp-wc26 .wc-map-dot { opacity: 0; animation: wcRise 0.85s ease both; }
 .fp-wc26 .wc-map-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
 .fp-wc26 .wc-map-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .fp-wc26 .wc-map-legend i { width: 8px; height: 8px; border-radius: 50%; }
@@ -519,7 +549,7 @@ export const LANDING_CSS = `
 /* timezone */
 .fp-wc26 .wc-tz-note2 { font-size: 12px; line-height: 1.5; color: var(--text-dim); margin-bottom: 12px; }
 .fp-wc26 .wc-tz-list { display: flex; flex-direction: column; gap: 7px; }
-.fp-wc26 .wc-tz-item { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--accent); clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); padding: 9px 10px; font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); opacity: 0; animation: wcRise 0.45s ease forwards; }
+.fp-wc26 .wc-tz-item { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--stroke); border-left: 2px solid var(--accent); clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); padding: 9px 10px; font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); opacity: 0; animation: wcRise 0.8s ease both; }
 .fp-wc26 .wc-tz-clock { color: var(--accent); font-size: 13px; }
 
 /* phone */
