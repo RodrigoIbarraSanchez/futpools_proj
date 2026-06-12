@@ -1,13 +1,15 @@
 /**
- * Google Analytics 4 (gtag.js), loaded only when VITE_GA_ID is set
- * (e.g. G-XXXXXXXXXX in Render's environment for the production build).
- * Without the env var everything here is a no-op, so dev and preview
- * builds send nothing.
+ * Google Analytics 4 page tracking for the SPA.
  *
- * SPA note: we disable gtag's automatic page_view and send one manually
- * on every route change (AnalyticsTracker in App.jsx). Relying on GA4's
- * "enhanced measurement" history detection double-counts when combined
- * with a manual setup, so there is exactly ONE emitter: us.
+ * The gtag.js tag itself lives in index.html (hostname-gated to
+ * futpools.com, `send_page_view: false`) so Google's tag detector sees
+ * it and it loads as early as possible. This module only sends the
+ * manual page_view on every route change (AnalyticsTracker in App.jsx) —
+ * exactly ONE page_view emitter, no double counting.
+ *
+ * initAnalytics() is a fallback injector gated on VITE_GA_ID for builds
+ * whose index.html lacks the tag; with the standard setup it no-ops
+ * because window.gtag already exists.
  */
 
 const GA_ID = import.meta.env.VITE_GA_ID;
@@ -25,9 +27,10 @@ export function initAnalytics() {
 }
 
 export function trackPageView(path) {
-  if (!GA_ID || typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return;
   // Defer one tick so the destination page's useEffect has already set
-  // document.title (landings set it on mount).
+  // document.title (landings set it on mount). In dev window.gtag never
+  // exists (hostname gate in index.html) → no-op.
   setTimeout(() => {
     if (!window.gtag) return;
     window.gtag('event', 'page_view', {
