@@ -350,14 +350,26 @@ function getSpeiConfig() {
 }
 
 /**
- * PayPal.me config for players outside Mexico (manual flow, USD).
- * PAYPAL_ME_URL e.g. https://paypal.me/rodrigoibarra — when unset the
- * PayPal option simply isn't offered (no broken screens).
+ * PayPal config for players outside Mexico (manual flow, USD). When
+ * PAYPAL_ME_URL is unset the PayPal option simply isn't offered (no
+ * broken screens). Two link formats are supported:
+ *   - PayPal.me (https://paypal.me/user): the amount CAN be appended as
+ *     /3USD so it arrives prefilled.
+ *   - Payment Links (https://www.paypal.com/ncp/payment/XXXX): must be
+ *     used VERBATIM — appending anything 302s to PayPal's "something
+ *     went wrong" page. The amount lives in the button's own settings,
+ *     so keep it in sync with PAYPAL_ENTRY_USD.
  */
 function getPaypalConfig() {
   const url = (process.env.PAYPAL_ME_URL || '').trim().replace(/\/$/, '');
   const entryUSD = Math.max(1, Number(process.env.PAYPAL_ENTRY_USD) || 3);
-  return { paypalMeUrl: url, entryUSD, enabled: !!url };
+  const isPaypalMe = /paypal\.me\//i.test(url);
+  return {
+    paypalMeUrl: url,
+    payUrl: isPaypalMe ? `${url}/${entryUSD}USD` : url,
+    entryUSD,
+    enabled: !!url,
+  };
 }
 
 /**
@@ -488,8 +500,8 @@ async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }
       reference,
       amountMXN,
       amountUSD: paypalCfg.entryUSD,
-      // Deep link with the amount pre-filled (PayPal.me/<user>/<amount>USD).
-      paypalMeUrl: `${paypalCfg.paypalMeUrl}/${paypalCfg.entryUSD}USD`,
+      // PayPal.me links get the amount appended; Payment Links go verbatim.
+      paypalMeUrl: paypalCfg.payUrl,
       poolName: pool.name,
     };
   }
