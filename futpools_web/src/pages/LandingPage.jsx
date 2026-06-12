@@ -309,29 +309,32 @@ export function LandingPage() {
             )}</p>
           </div>
 
-          <nav className="foot-col" aria-label="FutPools">
+          {/* divs, not <nav>: `.fp-landing nav` is the FIXED top bar
+              (element-level selector), so a <nav> here gets pinned to
+              the viewport top. */}
+          <div className="foot-col" role="navigation" aria-label="FutPools">
             <div className="foot-h">FutPools</div>
             <a href="#how">{c('Cómo funciona', 'How it works')}</a>
             <a href="#gamify">{c('Progresión', 'Progression')}</a>
             <Link to="/register">{c('Crear cuenta', 'Sign up')}</Link>
             <Link to="/login">{c('Iniciar sesión', 'Log in')}</Link>
-          </nav>
+          </div>
 
-          <nav className="foot-col" aria-label={c('Guías de fútbol', 'Football guides')}>
+          <div className="foot-col" role="navigation" aria-label={c('Guías de fútbol', 'Football guides')}>
             <div className="foot-h">{c('Guías de fútbol', 'Football guides')}</div>
             <Link to={wcPath}>{c('Calendario Mundial 2026', 'World Cup 2026 calendar')}</Link>
             <Link to={wcMexPath}>{c('Partidos de México en el Mundial', 'Mexico’s World Cup matches')}</Link>
             {locale === 'es' && <Link to={qsPath}>Quiniela de la semana</Link>}
             {locale === 'es' && <Link to={pfPath}>Pronósticos de fútbol</Link>}
             <Link to={wcToolPath}>{c('Añadir el Mundial a tu calendario', 'Add the World Cup to your calendar')}</Link>
-          </nav>
+          </div>
 
-          <nav className="foot-col" aria-label="Legal">
+          <div className="foot-col" role="navigation" aria-label="Legal">
             <div className="foot-h">Legal</div>
             <a href="#">{c('Privacidad', 'Privacy')}</a>
             <a href="#">{c('Términos', 'Terms')}</a>
             <a href="#">{c('Contacto', 'Contact')}</a>
-          </nav>
+          </div>
         </div>
 
         <div className="foot-bottom">
