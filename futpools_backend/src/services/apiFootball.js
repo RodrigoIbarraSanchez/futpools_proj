@@ -762,8 +762,10 @@ const getFixturesByLeagueAndDate = async (leagueId, date, season) => {
  * weekends + UCL on Tue/Wed). Caller is responsible for filtering down
  * to upcoming + sane kickoffs.
  */
-const getFixturesByDate = async (date) => {
-  const data = await apiFetch('/fixtures', { date });
+const getFixturesByDate = async (date, timezone) => {
+  // Optional timezone: api-football interprets `date` in that zone, so
+  // "today's matches" can mean the Mexico City calendar day instead of UTC.
+  const data = await apiFetch('/fixtures', timezone ? { date, timezone } : { date });
   return data?.response || [];
 };
 
@@ -927,6 +929,7 @@ const lookupLeaguesByIds = async (ids = []) => {
 };
 
 module.exports = {
+  mapFixturePreview,
   fetchFixturesForMatchday,
   fetchFixturesByIds,
   searchLeagues,

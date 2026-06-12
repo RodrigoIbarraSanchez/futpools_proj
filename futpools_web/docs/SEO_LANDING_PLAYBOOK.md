@@ -4,8 +4,11 @@
 > Canonical reference implementation: **`src/pages/WorldCup2026Landing.jsx`**
 > (the World Cup 2026 calendar landing). Copy it; don't reinvent it.
 >
-> **Every landing ships bilingual (ES + EN)** — both URLs are submitted to
-> Google Search Console. No exceptions.
+> **Language**: bilingual ES + EN when the keyword exists with real volume in
+> both languages (calendar, Mexico) — both URLs go to Search Console. ES-only
+> when the keyword is Spanish-native (quiniela, pronósticos): one route, one
+> shell, no hreflang. An EN variant without its own keyword research is dead
+> weight, not coverage.
 
 ---
 
@@ -24,6 +27,38 @@ Architecture (information architecture / IA):
 - **Landing** = the SEO page, e.g. `/calendario-mundial-2026` (priority 0.9).
 - **Tool** = the utility under it, e.g. `/calendario-mundial-2026/agregar` (0.6, self-canonical).
 - Keep a rational parent/child hierarchy so you can scale (`/calendario-mundial-2026/mexico`, etc.).
+
+---
+
+## 0b. Picking the keyword (Compact Keywords method — do this FIRST)
+
+A landing only gets built after the keyword passes this filter. The tool's
+difficulty score is NOT the filter — the SERP itself is.
+
+1. **Bottom-of-funnel intent fit.** The searcher must want something our
+   product (or a tool we can build) actually delivers. "pronosticos de futbol"
+   → make predictions and compete: fit. "resultados de futbol ayer" → a scores
+   archive we don't have: skip.
+2. **Manual SERP weakness check** (the core of the method). Search the keyword
+   (incognito, MX) and inspect the top 10 with Semrush/Ahrefs URL-level data:
+   - **Page Authority of the ranking URLs is what matters** — not the domains'
+     DA, not the tool's KD%. PA < ~30 pages in the top 10 = beatable.
+   - **Weak-content tells**: a forum thread, a Reddit/Quora answer, an app-store
+     listing, a generic homepage (not a dedicated page) ranking = Google can't
+     find a good dedicated page. That slot is winnable.
+   - Real example (2026-06-12): "pronosticos futbol hoy" showed Semrush KD 70%
+     ("Hard") but the top 10 included PA 13 pages, a forum and a Play Store
+     listing → greenlit. The KD number alone would have killed it.
+3. **Volume is secondary.** Low-volume bottom-of-funnel keywords convert;
+   high-volume informational ones bounce. 1K/mo MX with weak SERP beats
+   20K/mo with fortified SERP.
+4. **One keyword = one page**, and variants ("de futbol hoy", "para hoy",
+   "futbol para hoy") are the SAME page — Google stems them. A different
+   *intent* (hoy vs general vs team-specific) is a different page.
+5. **Match the intent's freshness.** If the keyword implies "now/today",
+   a static page loses: pair evergreen baked copy with a dynamic client-side
+   module (see §7b). If it implies a season/event, keep copy evergreen and
+   let visuals/tools carry the specifics.
 
 ---
 
@@ -217,6 +252,17 @@ on the empty state so the client's >=400-throws path stays quiet). Rules:
   (read-only, minimal payload, no auth) and reuse the canonical status logic
   (`computePoolStatus` exported from `quinielaController.js`) — don't duplicate
   the "registration open" definition.
+
+**Freshness ("hoy") landings** (e.g. `PronosticosFutbolHoy.jsx`,
+`/pronosticos-futbol-hoy`): when the keyword demands TODAY's content, bake
+everything SEO-visible evergreen (title/meta/H1/FAQ/JSON-LD carry no dates)
+and satisfy the daily intent with a **dynamic client-side module**:
+`GET /public/fixtures/today` (CDMX calendar day, priority-league filter,
+10-min server cache) renders today's real matches in the hero visual.
+Crawlers that execute JS see fresh content on every crawl (`changefreq:
+daily` in the sitemap); a fetch failure falls back to "ejemplo" rows so the
+page never renders broken. These pages are cluster children — cross-link
+pillar ↔ hoy both ways.
 
 **Additional shells** in `build-i18n-shells.js` = string-swap the calendar head
 (present in `baseHtml`) → the new page's, per locale, via the `swap()` helper

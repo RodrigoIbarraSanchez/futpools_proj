@@ -28,7 +28,7 @@ import { trackEvent } from '../lib/analytics';
 
 const CANONICAL = 'https://futpools.com/pronosticos-de-futbol';
 
-function useNextOpenPool() {
+export function useNextOpenPool() {
   const [pool, setPool] = useState(null);
   useEffect(() => {
     let on = true;
@@ -187,6 +187,7 @@ export function PronosticosFutbol() {
             <p>Llena tus L/E/V, compite con amigos y sigue tus aciertos en vivo.</p>
             <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
               {cta()}
+              <Link to="/pronosticos-futbol-hoy" className="wc-btn-secondary">Pronósticos de fútbol hoy →</Link>
               <Link to="/quiniela-de-la-semana" className="wc-btn-secondary">¿Nuevo en quinielas? Cómo funciona →</Link>
             </div>
           </div>

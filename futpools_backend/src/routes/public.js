@@ -8,6 +8,8 @@ const router = express.Router();
 // user creates an account.
 // Keep the surface SMALL: only read-only endpoints with safe data.
 router.get('/fixtures/upcoming', publicController.upcomingFixtures);
+// Today's matches (CDMX calendar day) for /pronosticos-futbol-hoy.
+router.get('/fixtures/today', publicController.todayFixtures);
 // Dynamic CTA for /pronosticos-de-futbol: next public pool still open
 // for registration (no match started), or { pool: null }.
 router.get('/pools/next-open', publicController.nextOpenPool);

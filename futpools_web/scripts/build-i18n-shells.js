@@ -26,6 +26,7 @@ import { wc26JsonLd } from '../src/seo/wc26Landing.js';
 import { mexicoJsonLd } from '../src/seo/mexicoWc26.js';
 import { quinielaJsonLd } from '../src/seo/quinielaSemana.js';
 import { pronosticosJsonLd } from '../src/seo/pronosticosFutbol.js';
+import { pronosticosHoyJsonLd } from '../src/seo/pronosticosHoy.js';
 
 const distDir = path.resolve(process.cwd(), 'dist');
 const baseHtml = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
@@ -238,6 +239,26 @@ function pronosticosShell() {
 ensureDir(path.join(distDir, PF_SLUG));
 fs.writeFileSync(path.join(distDir, `${PF_SLUG}/index.html`), pronosticosShell());
 
+// ── Pronósticos fútbol hoy shell (ES-only — no hreflang/alternates) ──
+const PFH_SLUG = 'pronosticos-futbol-hoy';
+function pronosticosHoyShell() {
+  let html = baseHtml;
+  html = swap(html, CAL.title, '<title>Pronósticos de fútbol hoy: partidos y quinielas | FutPools</title>', 'pfh:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Pronósticos de fútbol hoy: consulta los partidos de hoy, elige L, E o V y pon tus pronósticos a competir en una quiniela de FutPools antes del primer partido." />', 'pfh:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Pronósticos de fútbol hoy: partidos y quinielas" />', 'pfh:og:title');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Los partidos de hoy y tus pronósticos L/E/V compitiendo en quinielas de FutPools. La inscripción cierra al primer partido." />', 'pfh:og:description');
+  html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${PFH_SLUG}" />`, 'pfh:og:url');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Pronósticos de fútbol hoy: partidos y quinielas" />', 'pfh:twitter:title');
+  html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Los partidos de hoy y tus pronósticos L/E/V compitiendo en quinielas de FutPools." />', 'pfh:twitter:description');
+  // ES-only page: drop the calendar's hreflang block (no alternates).
+  html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'pfh:hreflang');
+  return html.replace('</head>',
+    `    <link rel="canonical" href="https://futpools.com/${PFH_SLUG}" />\n` +
+    `    <script id="landing-jsonld" type="application/ld+json">${JSON.stringify(pronosticosHoyJsonLd())}</script>\n  </head>`);
+}
+ensureDir(path.join(distDir, PFH_SLUG));
+fs.writeFileSync(path.join(distDir, `${PFH_SLUG}/index.html`), pronosticosHoyShell());
+
 console.log('[i18n shells] wrote:');
 console.log(`  dist/${ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${EN_SLUG}/index.html  (en)`);
@@ -245,4 +266,5 @@ console.log(`  dist/${MX_ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${MX_EN_SLUG}/index.html  (en)`);
 console.log(`  dist/${QS_SLUG}/index.html  (es)`);
 console.log(`  dist/${PF_SLUG}/index.html  (es)`);
+console.log(`  dist/${PFH_SLUG}/index.html  (es)`);
 console.log('  dist/404.html                          (es)');

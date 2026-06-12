@@ -326,6 +326,7 @@ export function LandingPage() {
             <Link to={wcMexPath}>{c('Partidos de México en el Mundial', 'Mexico’s World Cup matches')}</Link>
             {locale === 'es' && <Link to={qsPath}>Quiniela de la semana</Link>}
             {locale === 'es' && <Link to={pfPath}>Pronósticos de fútbol</Link>}
+            {locale === 'es' && <Link to="/pronosticos-futbol-hoy">Pronósticos de fútbol hoy</Link>}
             <Link to={wcToolPath}>{c('Añadir el Mundial a tu calendario', 'Add the World Cup to your calendar')}</Link>
           </div>
 
