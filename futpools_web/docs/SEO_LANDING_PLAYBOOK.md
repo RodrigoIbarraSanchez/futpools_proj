@@ -43,7 +43,7 @@ Fill this out (ES + EN) BEFORE writing code — it's the authoring template:
 | **Primary CTA (top)** | Button → the tool. Right after the intro. |
 | **H2 sections** | As many as needed (≥4). Each: 1–2 punchy sentences + a bullet list. Put the keyword in several H2s. |
 | **CTA (bottom)** | Repeat the primary CTA. Add a secondary conversion CTA (e.g. → onboarding). |
-| **FAQ** | 4–6 Q&A. Powers FAQ rich results via JSON-LD. |
+| **FAQ** | 4–6 Q&A. The visible CONTENT is the value (captures long-tail queries); the FAQPage JSON-LD is now optional — Google removed FAQ rich results from Search on 2026-05-07 (and retires the GSC FAQ report in June 2026). |
 
 Copy style (from the video): sentences **short and punchy** (often one line),
 paragraphs of 1–3 sentences, **bullets everywhere**. No fluff.
@@ -68,7 +68,7 @@ gives variety instead of a wall of identical cards.
 - [ ] **Canonical** — self-referencing, per locale. Baked into the static shell **and** set client-side. (`build-i18n-shells.js` + `setCanonical`)
 - [ ] **hreflang** — `es`, `en`, `x-default` in `index.html` + the EN shell.
 - [ ] **Open Graph + Twitter Card** — title/description/image per locale (`index.html` base + `build-i18n-shells.js` ES→EN map).
-- [ ] **JSON-LD** — `FAQPage` + `BreadcrumbList`, per locale, **baked into the shell** (not only client-side) so non-JS crawlers see it. Single source: a `src/seo/<page>.js` module imported by BOTH the component and `build-i18n-shells.js`. **The shell `<script>` and the component's `setJsonLd` MUST share the SAME id `landing-jsonld`** — same id across ALL landings — so the client UPDATES the one element instead of adding a duplicate (and SPA navigation between landings never leaves two `FAQPage` blocks). A 2nd block → Google error "FAQPage duplicated".
+- [ ] **JSON-LD** — `BreadcrumbList` (still produces a visible result) + optionally `FAQPage`, per locale, **baked into the shell** (not only client-side) so non-JS crawlers see it. Single source: a `src/seo/<page>.js` module imported by BOTH the component and `build-i18n-shells.js`. **The shell `<script>` and the component's `setJsonLd` MUST share the SAME id `landing-jsonld`** — same id across ALL landings — so the client UPDATES the one element instead of adding a duplicate (and SPA navigation between landings never leaves two blocks). The rule applies to ANY schema type: duplicated/invalid structured data still gets flagged. *Status 2026-06: FAQ rich results were removed from Google Search on 2026-05-07, so `FAQPage` markup no longer yields a rich result — keeping it is harmless (and existing landings keep theirs), but it's no longer mandatory for new pages.*
 - [ ] **Per-locale static shell** — `dist/<es-slug>/index.html` + `dist/<en-slug>/index.html` with correct `<title>`/meta/canonical/JSON-LD, so crawlers get the right language without running JS.
 - [ ] **Sitemap** — add both slugs to `sitemapController.js` (`STATIC_ROUTES`) with hreflang alternates (landing 0.9, tool 0.6) **and** to `public/sitemap.xml` (static fallback). All `<loc>` use `https://futpools.com`.
 - [ ] **robots.txt** — already points to the sitemap; ensure the landing isn't disallowed.
@@ -166,7 +166,10 @@ grep -rn '<es-slug>\|<en-slug>' src/pages/LandingPage.jsx   # internal link wire
 After deploy: `curl -sI` the old slug → expect **301**; open both URLs (table-styled
 sitemap, correct `<title>`); **run Google's Rich Results Test on each locale BEFORE
 requesting indexing** — it catches duplicate/invalid structured data (e.g. a 2nd
-FAQPage from shell + client both injecting). This step is mandatory, not optional.
+schema block from shell + client both injecting). This step is mandatory, not
+optional. What "pass" means since 2026-05: **zero invalid/duplicate items** and a
+valid BreadcrumbList; FAQ no longer appears as a rich result (discontinued by
+Google), so don't expect or chase it.
 
 ---
 

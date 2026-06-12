@@ -95,13 +95,21 @@ de TU tema (Site Settings → Global), no inventes un look por página.
 
 ## 4. Schema en WordPress — las 2 reglas anti-duplicado (CRÍTICO)
 
+> **Estado 2026-06:** Google retiró los rich results de FAQ de la Búsqueda el
+> 2026-05-07 (y el informe de FAQ de Search Console se retira en junio 2026).
+> El bloque manual de `FAQPage` pasa a ser **OPCIONAL**: ya no produce ningún
+> resultado enriquecido. La sección de FAQ **visible** (Accordion) sigue siendo
+> obligatoria — su contenido es lo que captura búsquedas long-tail. Si decides
+> omitir el widget HTML con JSON-LD, la página queda igual de bien; si lo
+> incluyes, las reglas anti-duplicado de abajo siguen aplicando tal cual.
+
 Yoast emite **automáticamente** en cada página un `@graph` con `WebPage`,
 `WebSite`, `Organization` y **`BreadcrumbList`**. Por lo tanto:
 
-1. **El JSON-LD manual contiene SOLO `FAQPage`.** Nunca BreadcrumbList ni
-   Organization ni WebPage — ya existen vía Yoast y duplicarlos invalida la
-   elegibilidad de rich results (mismo error "campo duplicado" que vivimos en
-   FutPools con FAQPage).
+1. **El JSON-LD manual (si lo usas) contiene SOLO `FAQPage`.** Nunca
+   BreadcrumbList ni Organization ni WebPage — ya existen vía Yoast y
+   duplicarlos genera schema inválido (mismo error "campo duplicado" que
+   vivimos en FutPools con FAQPage).
 2. **Un solo emisor de FAQ schema.** Si pegas el JSON-LD manual, el widget
    Accordion debe ser "tonto" (visual). No instales/actives además un widget o
    plugin de FAQ que emita su propio schema.
@@ -134,7 +142,7 @@ Formato del bloque (va en un widget HTML de la página):
 - [ ] H1 único (verifica las etiquetas de todos los Headings)
 - [ ] Yoast: Título SEO + meta description + pestaña Social
 - [ ] CTA arriba y abajo
-- [ ] Accordion FAQ + widget HTML con JSON-LD **solo FAQPage**
+- [ ] Accordion FAQ (obligatorio) + opcional: widget HTML con JSON-LD **solo FAQPage**
 - [ ] Link interno desde menú/footer + 1 contextual (NO huérfana)
 - [ ] Si reemplaza una URL vieja → 301 en Redirection
 - [ ] QA (§7) → publicar → Search Console: inspeccionar URL + solicitar indexación
@@ -159,9 +167,11 @@ LINKS INTERNOS:     desde dónde se enlaza esta página + a dónde enlaza ella
 ## 7. QA post-publicación (obligatorio, antes de pedir indexación)
 
 1. **Rich Results Test** (search.google.com/test/rich-results) sobre la URL
-   publicada: debe salir **1 FAQPage + 1 BreadcrumbList (el de Yoast), sin
-   duplicados ni errores**. ← Este paso nos habría ahorrado el error en GSC.
-2. Ver código fuente: **un solo** `<h1>`, **un solo** bloque FAQPage.
+   publicada: **cero elementos duplicados o inválidos** y el BreadcrumbList de
+   Yoast válido. Si incluiste el JSON-LD de FAQ: exactamente 1 FAQPage (Google
+   ya no muestra FAQ como rich result desde 2026-05, pero el schema inválido
+   sigue generando errores en GSC). ← Este paso nos habría ahorrado el error.
+2. Ver código fuente: **un solo** `<h1>`; si hay FAQPage, **un solo** bloque.
 3. `/sitemap_index.xml` incluye la página.
 4. Click al link interno (menú/footer) → llega a la página.
 5. Si hubo cambio de slug: la URL vieja responde **301** a la nueva.
@@ -171,7 +181,8 @@ LINKS INTERNOS:     desde dónde se enlaza esta página + a dónde enlaza ella
 ## 8. No-negociables (heredados del playbook)
 
 - 1 página = 1 keyword primaria. 1 solo H1. Sin páginas huérfanas.
-- Exactamente **1** FAQPage por página; **0** BreadcrumbList manuales (Yoast).
+- FAQ visible obligatoria; FAQPage JSON-LD opcional (máx **1** por página);
+  **0** BreadcrumbList manuales (Yoast lo emite).
 - Frases cortas, bullets, intro con la keyword al inicio. Nada de relleno.
 - **Sin guiones largos (—) en ningún texto visible** (regla del usuario,
   2026-06-11: se leen "AI generated"). Usar coma, dos puntos, punto o
