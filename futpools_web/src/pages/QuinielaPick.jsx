@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { trackEvent } from '../lib/analytics';
-import { PayMethodSelector } from '../components/PayMethodSelector';
+import { PayMethodSelector, isLikelyMexico } from '../components/PayMethodSelector';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
@@ -47,7 +47,14 @@ export function QuinielaPick() {
   useEffect(() => {
     let on = true;
     api.get('/public/payment-config')
-      .then((d) => { if (on) setPayCfg(d); })
+      .then((d) => {
+        if (!on) return;
+        setPayCfg(d);
+        // Auto-steer by browser timezone (no geolocation needed): foreign
+        // visitors get PayPal preselected; Mexicans keep SPEI (preferred —
+        // PayPal fees eat a chunk of the small USD entry).
+        if (d?.paypal?.enabled && !isLikelyMexico()) setPayMethod('paypal');
+      })
       .catch(() => {});
     return () => { on = false; };
   }, []);
