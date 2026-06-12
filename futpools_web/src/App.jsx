@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { initAnalytics, trackPageView } from './lib/analytics';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocaleProvider } from './context/LocaleContext';
 import { Login } from './pages/Login';
@@ -69,11 +71,26 @@ function RootSwitch() {
   return isAuthenticated ? <MainTabs /> : <LandingPage />;
 }
 
+/**
+ * GA4 page tracking — renders nothing. Lives inside BrowserRouter so it
+ * sees every route change; sends one page_view per navigation (the
+ * automatic one is disabled in analytics.js). No-op without VITE_GA_ID.
+ */
+function AnalyticsTracker() {
+  const location = useLocation();
+  useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+  return null;
+}
+
 export default function App() {
   return (
     <LocaleProvider>
       <AuthProvider>
         <BrowserRouter>
+          <AnalyticsTracker />
           <Routes>
             <Route path="/arena" element={<ArenaApp />} />
 
