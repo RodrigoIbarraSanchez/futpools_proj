@@ -321,12 +321,14 @@ export function QuinielaPick() {
       </div>
 
       {/* Mobile sticky submit. Desktop has its own CTA inside the aside,
-          so this only renders below the desktop breakpoint. */}
+          so this only renders below the desktop breakpoint. bottom: 0 —
+          this deep view has NO bottom tab bar; the old 104px offset left
+          the button floating mid-screen, covering the payment selector. */}
       <div style={{
-        position: 'fixed', bottom: 104, left: 0, right: 0,
+        position: 'fixed', bottom: 0, left: 0, right: 0,
         maxWidth: 430, margin: '0 auto',
-        padding: '8px 16px 0',
-        background: 'linear-gradient(180deg, transparent, var(--fp-bg) 40%)',
+        padding: '14px 16px calc(12px + env(safe-area-inset-bottom))',
+        background: 'linear-gradient(180deg, transparent, var(--fp-bg) 45%)',
         pointerEvents: 'none',
       }}>
         <div style={{ pointerEvents: 'auto' }}>
