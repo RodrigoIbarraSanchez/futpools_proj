@@ -196,10 +196,6 @@ export function WorldCup2026Landing() {
           )}
         </Statement>
 
-        {/* Mid-page conversion hook: the live open pool (separate, clearly
-            paid offer — placed AFTER the free-calendar statement on purpose). */}
-        <WcPoolHookCard pool={pool} c={c} locale={locale} landingPath={landingPath} poolTo={poolTo} />
-
         {/* two-column: host cities + map */}
         <Split title={c('Sedes y estadios del Mundial 2026', 'Host cities and stadiums of the World Cup 2026')} visual={<HostMapVisual c={c} />}>
           <p>{c(
@@ -226,6 +222,12 @@ export function WorldCup2026Landing() {
             <li>{c('Europa: España y Reino Unido', 'Europe: Spain and the United Kingdom')}</li>
           </ul>
         </Split>
+
+        {/* Mid-page conversion hook: the live open pool. Deliberately FAR
+            from the "Gratis. Sin registro." statement (calendar claim) and
+            led by a bridge line that makes the paid offer explicitly a
+            separate thing — no bait-and-switch reading. */}
+        <WcPoolHookCard pool={pool} c={c} locale={locale} landingPath={landingPath} poolTo={poolTo} />
 
         {/* two-column: how to add + phone */}
         <Split title={c('Cómo añadir el calendario del Mundial 2026 a tu teléfono', 'How to add the World Cup 2026 calendar to your phone')} visual={<PhoneCalendarVisual c={c} />}>
@@ -512,7 +514,15 @@ function TodayStrip({ c, locale, landingPath }) {
 function WcPoolHookCard({ pool, c, locale, landingPath, poolTo }) {
   const label = pool && locale === 'es' ? c('Entrar a la quiniela', 'Play the World Cup pool') : c('Jugar mi quiniela', 'Play the World Cup pool');
   return (
-    <section className="wc-pf-next">
+    <section className="wc-pf-next" style={{ flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      {/* Bridge line: names the topic switch so the paid pool never reads
+          as a condition of the free calendar. */}
+      <div className="wc-pool-hook-lead">
+        {c(
+          'El calendario es gratis y así se queda. La quiniela es otra cosa: ahí se compite.',
+          'The calendar is free and stays free. The pool is a different game: that one you compete in.'
+        )}
+      </div>
       <div className="wc-viz wc-pf-next-card wc-pool-hook">
         {pool ? (
           <>
@@ -599,6 +609,7 @@ export const LANDING_CSS = `
 .fp-wc26 .wc-pf-next-name { font-family: var(--ox); font-weight: 800; font-size: 19px; color: var(--text); margin: 10px 0 6px; }
 .fp-wc26 .wc-pf-next-meta { display: flex; flex-direction: column; gap: 3px; font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-bottom: 12px; }
 .fp-wc26 .wc-pool-hook { min-height: 200px; }
+.fp-wc26 .wc-pool-hook-lead { font-family: var(--ox); font-weight: 800; font-size: clamp(15px, 2.4vw, 18px); color: var(--text); text-align: center; max-width: 560px; line-height: 1.4; }
 
 /* ── Reverb-style hero: copy left, visual right (stacks on mobile) ──
    The visual sits above the fold so visitors see the product instantly
