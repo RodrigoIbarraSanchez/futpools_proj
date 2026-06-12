@@ -401,6 +401,29 @@ async function createSpeiIntentForEntry({ user, poolId, picks }) {
 
   validatePicks(pool, picks);
 
+  // Telegram alert: a user just signed up as participant (picks submitted).
+  // This is the TOP of the join funnel — the existing "marcó como pagado"
+  // alert is the next step, and admin confirm closes it. Best-effort.
+  const notifyJoinIntent = (kind, amountMXN, reference) => {
+    try {
+      const when = new Date().toLocaleString('es-MX', {
+        timeZone: 'America/Mexico_City', dateStyle: 'medium', timeStyle: 'short',
+      });
+      const lines = [
+        '📝 Nueva inscripción a quiniela',
+        `🏆 ${pool.name}`,
+        `👤 ${user.displayName || user.username || ''} (${user.email || 'sin email'})`,
+        kind === 'free'
+          ? '💸 Entrada gratuita (pool $0): entrada creada al instante'
+          : `💰 $${amountMXN} MXN · pendiente de pago SPEI${reference ? ` · ref ${reference}` : ''}`,
+        `🕑 ${when} hora CDMX`,
+      ];
+      sendTelegramMessage(lines.join('\n')).catch(() => {});
+    } catch (e) {
+      console.warn('[poolPayment] join-intent telegram skipped:', e.message);
+    }
+  };
+
   // Admin bypass — same as the Stripe path: admins curate the platform and
   // shouldn't be charged. Create the entry inline, no SPEI needed.
   if (isAdminUser(user)) {
@@ -419,6 +442,7 @@ async function createSpeiIntentForEntry({ user, poolId, picks }) {
   if (amountMXN <= 0) {
     const entry = await createEntryFromPicks({ poolId, userId: user._id, picks });
     console.log(`[poolPayment] free entry ($0 pool) — pool=${poolId} user=${user._id} entry=${entry._id}`);
+    notifyJoinIntent('free', 0, null);
     return { ok: true, freeEntry: true, entryId: String(entry._id) };
   }
 
@@ -433,6 +457,7 @@ async function createSpeiIntentForEntry({ user, poolId, picks }) {
   });
 
   console.log(`[poolPayment] SPEI intent created — pool=${poolId} user=${user._id} ref=${reference}`);
+  notifyJoinIntent('spei', amountMXN, reference);
   const cfg = getSpeiConfig();
   return {
     ok: true,

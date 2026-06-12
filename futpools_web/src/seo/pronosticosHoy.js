@@ -28,7 +28,7 @@ export const PFH_FAQ = [
   },
   {
     q: '¿FutPools da pronósticos o tips para los partidos de hoy?',
-    a: 'No. FutPools no vende pronósticos ni tips: tú haces tus propios L/E/V y compites contra otros jugadores en quinielas. FutPools no es una casa de apuestas. Mayores de 18 años.',
+    a: 'No como recomendación. El pronóstico estadístico de esta página se genera automáticamente con datos históricos del proveedor deportivo: es orientativo, no es asesoría de apuestas y no garantiza resultados. En FutPools tus L/E/V los decides tú. No es una casa de apuestas. Mayores de 18 años.',
   },
   {
     q: '¿Qué partidos hay hoy?',

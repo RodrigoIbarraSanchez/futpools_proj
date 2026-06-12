@@ -59,9 +59,10 @@ export function PronosticosFutbolHoy() {
     setJsonLd('landing-jsonld', pronosticosHoyJsonLd());
   }, []);
 
-  useRevealOnScroll();
-
   const fixtures = useTodayFixtures();
+  // Re-scan after the fixtures arrive: the prediction cards are .wc-viz
+  // elements that don't exist on first mount.
+  useRevealOnScroll([fixtures]);
   const pool = useNextOpenPool();
   const ctaTo = pool ? `/pool/${pool.id}` : '/onboarding';
   const ctaLabel = pool ? 'Jugar la quiniela de hoy' : 'Jugar mi quiniela';
@@ -131,6 +132,8 @@ export function PronosticosFutbolHoy() {
             pronósticos de fútbol</Link>.
           </p>
         </Split>
+
+        <TodayPredictionsSection fixtures={fixtures} />
 
         <TodayPoolCard pool={pool} />
 
@@ -248,6 +251,51 @@ function TodayMatchesVisual({ fixtures }) {
   );
 }
 
+// ─────────────── Dynamic statistical predictions ───────────────
+// Real probabilities from the provider's /predictions model (via the same
+// /public/fixtures/today payload). Renders NOTHING when no prediction is
+// available, so the evergreen page is never broken. Always framed as
+// orientative — never betting advice (see the disclaimer + FAQ).
+
+function TodayPredictionsSection({ fixtures }) {
+  const rows = Array.isArray(fixtures) ? fixtures.filter((f) => f.prediction) : [];
+  if (rows.length === 0) return null;
+  const cells = (p) => ([
+    { k: 'L', pct: p.home },
+    { k: 'E', pct: p.draw },
+    { k: 'V', pct: p.away },
+  ]);
+  return (
+    <section className="wc-pfh-pred">
+      <h2>Pronóstico estadístico de los partidos de hoy</h2>
+      <p className="wc-pfh-pred-sub">
+        Probabilidades generadas automáticamente a partir de datos históricos del proveedor
+        deportivo. Son orientativas: no son una recomendación ni asesoría de apuestas, y no
+        garantizan ningún resultado. Tus picks los decides tú.
+      </p>
+      <div className="wc-pfh-pred-grid">
+        {rows.map((f) => (
+          <div className="wc-viz wc-pfh-pred-card" key={f.fixtureId}>
+            <div className="wc-pfh-pred-match">
+              {f.teams?.home?.name} <b>vs</b> {f.teams?.away?.name}
+            </div>
+            <div className="wc-pfh-pred-bars">
+              {cells(f.prediction).map(({ k, pct }) => (
+                <div className={`wc-pfh-pred-row ${f.prediction.pick === k ? 'on' : ''}`} key={k}>
+                  <span className="wc-pfh-pred-k">{k}</span>
+                  <span className="wc-pfh-pred-bar"><span style={{ width: `${Math.min(pct, 100)}%` }} /></span>
+                  <span className="wc-pfh-pred-pct">{pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="wc-pfh-pred-foot">◆ Pronóstico estadístico orientativo · no garantiza aciertos · 18+</div>
+    </section>
+  );
+}
+
 // ─────────────── Dynamic "quiniela de hoy" card ───────────────
 
 function TodayPoolCard({ pool }) {
@@ -352,6 +400,26 @@ const PFH_CSS = `
 .fp-wc26 .wc-pfh-step-n { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: var(--primary); color: var(--fp-on-primary); font-family: var(--ox); font-weight: 900; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(33,226,140,0.45); }
 .fp-wc26 .wc-pfh-step-t { font-size: 12.5px; color: var(--text-dim); }
 .fp-wc26 .wc-pfh-step-t b { color: var(--text); font-family: var(--mono); font-size: 10px; letter-spacing: 1px; }
+
+/* statistical predictions section */
+.fp-wc26 .wc-pfh-pred { margin: 34px auto; max-width: 880px; text-align: center; padding: 0 16px; }
+.fp-wc26 .wc-pfh-pred h2 { font-family: var(--ox); font-weight: 900; font-size: clamp(20px, 4.5vw, 26px); margin: 0 0 10px; color: var(--text); }
+.fp-wc26 .wc-pfh-pred-sub { font-size: 13px; line-height: 1.6; color: var(--text-muted); max-width: 640px; margin: 0 auto 22px; }
+.fp-wc26 .wc-pfh-pred-grid { display: grid; grid-template-columns: 1fr; gap: 14px; text-align: left; }
+@media (min-width: 720px) { .fp-wc26 .wc-pfh-pred-grid { grid-template-columns: repeat(2, 1fr); } }
+.fp-wc26 .wc-pfh-pred-card { padding: 16px; }
+.fp-wc26 .wc-pfh-pred-match { font-family: var(--ox); font-weight: 800; font-size: 14px; color: var(--text); margin-bottom: 10px; }
+.fp-wc26 .wc-pfh-pred-match b { color: var(--primary); font-size: 11px; }
+.fp-wc26 .wc-pfh-pred-bars { display: flex; flex-direction: column; gap: 7px; }
+.fp-wc26 .wc-pfh-pred-row { display: grid; grid-template-columns: 22px 1fr 42px; gap: 9px; align-items: center; }
+.fp-wc26 .wc-pfh-pred-k { font-family: var(--ox); font-weight: 800; font-size: 12px; color: var(--text-muted); text-align: center; }
+.fp-wc26 .wc-pfh-pred-row.on .wc-pfh-pred-k { color: var(--primary); }
+.fp-wc26 .wc-pfh-pred-bar { height: 8px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%); }
+.fp-wc26 .wc-pfh-pred-bar span { display: block; height: 100%; background: var(--accent); transform-origin: left; animation: wcGrow 1.1s ease both; }
+.fp-wc26 .wc-pfh-pred-row.on .wc-pfh-pred-bar span { background: var(--primary); box-shadow: 0 0 8px rgba(33,226,140,0.5); }
+.fp-wc26 .wc-pfh-pred-pct { font-family: var(--ox); font-weight: 800; font-size: 12px; color: var(--text-dim); text-align: right; }
+.fp-wc26 .wc-pfh-pred-row.on .wc-pfh-pred-pct { color: var(--primary); }
+.fp-wc26 .wc-pfh-pred-foot { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text-muted); margin-top: 16px; }
 
 /* next-pool card styles are shared with the pillar page (wc-pf-next-*) */
 .fp-wc26 .wc-pf-next { margin: 34px 0; display: flex; justify-content: center; }

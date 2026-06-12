@@ -446,8 +446,13 @@ export function setJsonLd(id, obj) {
  * `.is-inview` the first time each visual enters the viewport, so
  * below-the-fold visuals animate when the user scrolls to them instead
  * of having finished off-screen. Shared by every landing page.
+ *
+ * Pass deps when visuals render AFTER data arrives (e.g. the dynamic
+ * prediction cards on /pronosticos-futbol-hoy) — the observer re-scans
+ * for new `.wc-viz` elements; already-revealed ones keep their class.
  */
-export function useRevealOnScroll() {
+export function useRevealOnScroll(deps = []) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const els = Array.from(document.querySelectorAll('.fp-wc26 .wc-viz'));
     if (typeof IntersectionObserver === 'undefined') {
@@ -461,7 +466,7 @@ export function useRevealOnScroll() {
     }, { threshold: 0.25 });
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, []);
+  }, deps);
 }
 
 export const LANDING_CSS = `

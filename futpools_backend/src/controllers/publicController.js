@@ -1,4 +1,4 @@
-const { getLeagueFixtures, getFixturesByDate, mapFixturePreview } = require('../services/apiFootball');
+const { getLeagueFixtures, getFixturesByDate, getFixturePrediction, mapFixturePreview } = require('../services/apiFootball');
 const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const { computePoolStatus } = require('./quinielaController');
@@ -107,6 +107,12 @@ exports.todayFixtures = async (req, res) => {
       || new Date(a?.fixture?.date) - new Date(b?.fixture?.date));
 
     const out = pool.slice(0, limit).map(mapFixturePreview);
+    // Enrich with the provider's statistical L/E/V prediction (one call per
+    // fixture, amortized by the 10-min cache; null when unavailable). The
+    // landing renders these as orientative percentages with a disclaimer —
+    // never as betting advice.
+    const predictions = await Promise.all(out.map((f) => getFixturePrediction(f.fixtureId)));
+    out.forEach((f, i) => { f.prediction = predictions[i]; });
     todayCache = { key: cacheKey, data: out, at: Date.now() };
     res.set('Cache-Control', 'public, max-age=300');
     res.json(out);

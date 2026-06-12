@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { trackEvent } from '../lib/analytics';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t } from '../i18n/translations';
@@ -86,6 +87,15 @@ export function QuinielaPick() {
           .map(f => ({ fixtureId: f.fixtureId, pick: picks[f.fixtureId] })),
       };
       const res = await api.post(`/pools/${id}/spei-intent`, payload, token);
+      // GA funnel step: participant signed up (picks submitted). The next
+      // step is payment ("marcó como pagado" lives server-side via SPEI).
+      trackEvent('join_pool', {
+        pool_id: id,
+        pool_name: res?.poolName || '',
+        value: res?.amountMXN ?? 0,
+        currency: 'MXN',
+        free_entry: !!res?.freeEntry,
+      });
       if (res?.freeEntry) {
         navigate(`/pool/${id}?paid=1`);
         return;
@@ -349,6 +359,14 @@ function SpeiInstructions({ info, locale, isDesktop, token, onDone }) {
     setMarkError(null);
     try {
       await api.post(`/pools/spei/${info.paymentId}/mark-paid`, { note }, token);
+      // GA funnel step: user reports the SPEI transfer as done (payment
+      // confirmation itself happens admin-side, so this is the closest
+      // client-trackable "purchase" signal).
+      trackEvent('mark_paid', {
+        pool_name: info?.poolName || '',
+        value: info?.amountMXN ?? 0,
+        currency: 'MXN',
+      });
       setMarked(true);
     } catch (e) {
       setMarkError(e?.message || 'Error');

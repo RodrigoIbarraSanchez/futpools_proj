@@ -770,6 +770,29 @@ const getFixturesByDate = async (date, timezone) => {
 };
 
 /**
+ * Statistical prediction for a single fixture from api-football's
+ * /predictions model (percent home/draw/away). Used by the public
+ * "today's matches" endpoint to show an L/E/V probability per match.
+ * Returns null when the provider has no prediction for the fixture.
+ */
+const getFixturePrediction = async (fixtureId) => {
+  try {
+    const data = await apiFetch('/predictions', { fixture: fixtureId });
+    const percent = data?.response?.[0]?.predictions?.percent;
+    if (!percent) return null;
+    const num = (s) => Math.max(0, Math.round(parseFloat(String(s || '0'))));
+    const home = num(percent.home);
+    const draw = num(percent.draw);
+    const away = num(percent.away);
+    if (home + draw + away === 0) return null;
+    const pick = home >= draw && home >= away ? 'L' : draw >= away ? 'E' : 'V';
+    return { home, draw, away, pick };
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Fetch fixtures for a single team on a single date. Powers the
  * simple_version Live Scores feed when the user has favorite teams
  * outside the leagues they follow (e.g. follows Real Madrid but not
@@ -939,6 +962,7 @@ module.exports = {
   getFixtureEvents,
   getFixturesByLeagueAndDate,
   getFixturesByDate,
+  getFixturePrediction,
   getFixturesByTeamAndDate,
   fetchFixturesFeed,
   startLivePolling,
