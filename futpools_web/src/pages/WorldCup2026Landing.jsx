@@ -400,7 +400,7 @@ function PhoneCalendarVisual({ c }) {
         <div className="wc-phone-head">{c('MUNDIAL 2026', 'WORLD CUP 2026')}</div>
         <div className="wc-phone-list">
           {items.map((it, i) => (
-            <div className="wc-phone-row" key={i}>
+            <div className="wc-phone-row" key={i} style={{ animationDelay: `${i * 130}ms` }}>
               <span className="wc-phone-date">{it.d}</span>
               <span className="wc-phone-evt"><span className="wc-fx-flag">{it.f}</span>{it.m}</span>
             </div>
@@ -559,7 +559,7 @@ export const LANDING_CSS = `
 .fp-wc26 .wc-phone-notch { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 56px; height: 5px; border-radius: 3px; background: var(--stroke-strong); }
 .fp-wc26 .wc-phone-head { font-family: var(--ox); font-weight: 800; font-size: 10px; letter-spacing: 1px; color: var(--primary); text-align: center; margin: 6px 0 10px; }
 .fp-wc26 .wc-phone-list { display: flex; flex-direction: column; gap: 6px; }
-.fp-wc26 .wc-phone-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border-left: 2px solid var(--primary); padding: 7px 9px; clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); }
+.fp-wc26 .wc-phone-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border-left: 2px solid var(--primary); padding: 7px 9px; clip-path: polygon(0 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%); opacity: 0; animation: wcRise 0.8s ease both; }
 .fp-wc26 .wc-phone-date { font-family: var(--mono); font-size: 8px; color: var(--text-muted); white-space: nowrap; }
 .fp-wc26 .wc-phone-evt { display: flex; align-items: center; gap: 5px; font-family: var(--ox); font-weight: 700; font-size: 10.5px; color: var(--text); }
 .fp-wc26 .wc-phone-foot { display: flex; justify-content: center; gap: 12px; margin-top: 12px; font-size: 16px; }

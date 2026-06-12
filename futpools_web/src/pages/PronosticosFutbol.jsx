@@ -279,7 +279,7 @@ function PickVisual() {
       <div className="wc-pf-ticket">
         <div className="wc-pf-th"><span>#</span><span>L</span><span>E</span><span>V</span></div>
         {rows.map((r) => (
-          <div className="wc-pf-row" key={r.n}>
+          <div className="wc-pf-row" key={r.n} style={{ animationDelay: `${(r.n - 1) * 90}ms` }}>
             <span className="wc-pf-n">{r.n}</span>
             {['L', 'E', 'V'].map((opt) => (
               <span className={`wc-pf-cell ${r.p === opt ? 'on' : ''}`} key={opt}>{opt}</span>
@@ -327,7 +327,7 @@ function LeaderboardVisual() {
       <div className="wc-viz-head"><span>◆ TABLA · EJEMPLO ILUSTRATIVO</span><span className="wc-viz-sub">Aciertos</span></div>
       <div className="wc-pf-board">
         {rows.map((r) => (
-          <div className={`wc-pf-board-row ${r.pos === 1 ? 'on' : ''}`} key={r.pos}>
+          <div className={`wc-pf-board-row ${r.pos === 1 ? 'on' : ''}`} key={r.pos} style={{ animationDelay: `${(r.pos - 1) * 140}ms` }}>
             <span className="wc-pf-board-pos">{r.pos}</span>
             <span className="wc-pf-board-name">{r.name}</span>
             <span className="wc-pf-board-hits">
@@ -358,7 +358,7 @@ function PhonePicksVisual() {
         <div className="wc-phone-head">MIS PRONÓSTICOS · EN VIVO</div>
         <div className="wc-phone-list">
           {items.map((it, i) => (
-            <div className="wc-phone-row" key={i}>
+            <div className="wc-phone-row" key={i} style={{ animationDelay: `${i * 130}ms` }}>
               <span className="wc-phone-date">{it.t}</span>
               <span className="wc-phone-evt">
                 <span className={`wc-pf-cell on`} style={{ width: 18, height: 18, fontSize: 9 }}>{it.p}</span>
@@ -418,6 +418,10 @@ const PF_CSS = `
 .fp-wc26 .wc-pf-tick { width: 9px; height: 9px; background: var(--bg); border: 1px solid var(--stroke); clip-path: polygon(2px 0,100% 0,calc(100% - 2px) 100%,0 100%); }
 .fp-wc26 .wc-pf-tick.on { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 6px rgba(33,226,140,0.5); }
 .fp-wc26 .wc-pf-board-num { font-family: var(--ox); font-weight: 800; font-size: 13px; color: var(--accent); text-align: right; }
+
+/* reveal: every visual element animates in (scroll-triggered) */
+.fp-wc26 .wc-pf-row, .fp-wc26 .wc-pf-board-row { opacity: 0; animation: wcRise 0.8s ease both; }
+.fp-wc26 .wc-pf-form-row { opacity: 0; animation: wcRise 0.8s ease both; }
 
 /* live check in phone */
 .fp-wc26 .wc-pf-live { font-family: var(--ox); font-weight: 900; font-size: 11px; color: var(--text-muted); margin-left: 6px; }

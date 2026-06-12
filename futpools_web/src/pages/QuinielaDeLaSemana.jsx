@@ -188,7 +188,7 @@ function TicketVisual() {
       <div className="wc-qs-ticket">
         <div className="wc-qs-th"><span>#</span><span>L</span><span>E</span><span>V</span></div>
         {rows.map((r) => (
-          <div className="wc-qs-row" key={r.n}>
+          <div className="wc-qs-row" key={r.n} style={{ animationDelay: `${(r.n - 1) * 70}ms` }}>
             <span className="wc-qs-n">{r.n}</span>
             {['L', 'E', 'V'].map((opt) => (
               <span className={`wc-qs-cell ${r.p === opt ? 'on' : ''}`} key={opt}>{opt}</span>
@@ -227,10 +227,10 @@ function PossibleVisual() {
       <div className="wc-viz-head"><span>◆ QUINIELA POSIBLE · EJEMPLO</span></div>
       <div className="wc-qs-poss">
         {rows.map((r) => (
-          <div className="wc-qs-poss-row" key={r.n}>
+          <div className="wc-qs-poss-row" key={r.n} style={{ animationDelay: `${(r.n - 1) * 110}ms` }}>
             <span className="wc-qs-n">{r.n}</span>
             <span className={`wc-qs-cell on`}>{r.p}</span>
-            <span className="wc-qs-poss-bar"><span style={{ width: `${r.pct}%` }} /></span>
+            <span className="wc-qs-poss-bar"><span style={{ width: `${r.pct}%`, animationDelay: `${(r.n - 1) * 110 + 250}ms` }} /></span>
             <span className="wc-qs-poss-pct">{r.pct}%</span>
           </div>
         ))}
@@ -271,7 +271,7 @@ function PhoneVisual() {
         <div className="wc-phone-head">TU QUINIELA · FUTPOOLS</div>
         <div className="wc-phone-list">
           {items.map((it, i) => (
-            <div className="wc-phone-row" key={i}>
+            <div className="wc-phone-row" key={i} style={{ animationDelay: `${i * 130}ms` }}>
               <span className="wc-phone-date">{it.t}</span>
               <span className="wc-phone-evt"><span className="wc-qs-cell on" style={{ width: 18, height: 18, fontSize: 9 }}>{it.p}</span></span>
             </div>
@@ -314,4 +314,9 @@ const QS_CSS = `
 .fp-wc26 .wc-qs-rev-card:not(.on) .wc-qs-rev-num { color: var(--accent); }
 .fp-wc26 .wc-qs-rev-lab { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; }
 .fp-wc26 .wc-qs-rev-plus { font-family: var(--ox); font-weight: 900; font-size: 20px; color: var(--text-muted); }
+
+/* reveal: every visual element animates in (scroll-triggered) */
+.fp-wc26 .wc-qs-row, .fp-wc26 .wc-qs-poss-row, .fp-wc26 .wc-qs-rev-card, .fp-wc26 .wc-qs-rev-plus { opacity: 0; animation: wcRise 0.8s ease both; }
+.fp-wc26 .wc-qs-rev-plus { animation-delay: 140ms; }
+.fp-wc26 .wc-qs-rev-card:not(.on) { animation-delay: 280ms; }
 `;

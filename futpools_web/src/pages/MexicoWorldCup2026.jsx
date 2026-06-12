@@ -217,7 +217,7 @@ function MatchesVisual({ c, matches }) {
       <div className="wc-viz-head"><span>◆ {c('PARTIDOS DE MÉXICO', 'MEXICO MATCHES')}</span><span className="wc-viz-sub">{c('Grupo A', 'Group A')}</span></div>
       <div className="wc-mx-fx">
         {matches.map((m, i) => (
-          <div className="wc-mx-fx-row" key={i}>
+          <div className="wc-mx-fx-row" key={i} style={{ animationDelay: `${i * 140}ms` }}>
             <div className="wc-mx-fx-top">
               <span className="wc-mx-fx-date">{m.date} · {m.timeLocal}</span>
               <span className="wc-mx-fx-tag">{m.tag}</span>
@@ -237,7 +237,7 @@ function GroupVisual({ c, group }) {
       <div className="wc-viz-head"><span>◆ {c('GRUPO A', 'GROUP A')}</span></div>
       <div className="wc-mx-group">
         {group.map((t, i) => (
-          <div className={`wc-mx-group-row ${t.host ? 'host' : ''}`} key={i}>
+          <div className={`wc-mx-group-row ${t.host ? 'host' : ''}`} key={i} style={{ animationDelay: `${i * 120}ms` }}>
             <span className="wc-mx-group-pos">{i + 1}</span>
             <span className="wc-fx-flag">{t.flag}</span>
             <span className="wc-mx-group-name">{t.name}</span>
@@ -300,7 +300,7 @@ function MexPhoneVisual({ c, matches }) {
         <div className="wc-phone-head">{c('MÉXICO · MUNDIAL 2026', 'MEXICO · WORLD CUP 2026')}</div>
         <div className="wc-phone-list">
           {matches.map((m, i) => (
-            <div className="wc-phone-row" key={i}>
+            <div className="wc-phone-row" key={i} style={{ animationDelay: `${i * 130}ms` }}>
               <span className="wc-phone-date">{m.date}</span>
               <span className="wc-phone-evt"><span className="wc-fx-flag">🇲🇽</span>MEX – {short[m.opp] || m.opp}</span>
             </div>
@@ -337,4 +337,8 @@ const MX_CSS = `
 .fp-wc26 .wc-mx-venue-name { font-family: var(--ox); font-weight: 800; font-size: 12px; color: var(--text); }
 .fp-wc26 .wc-mx-venue-city { font-family: var(--mono); font-size: 9px; color: var(--accent); margin: 3px 0; }
 .fp-wc26 .wc-mx-venue-note { font-size: 10px; color: var(--text-dim); line-height: 1.3; }
+
+/* reveal: every visual element animates in (scroll-triggered) */
+.fp-wc26 .wc-mx-fx-row, .fp-wc26 .wc-mx-group-row, .fp-wc26 .wc-mx-venue { opacity: 0; animation: wcRise 0.8s ease both; }
+.fp-wc26 .wc-mx-venue:nth-child(2) { animation-delay: 160ms; }
 `;
