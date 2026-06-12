@@ -4,6 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#07090D" />
+
+    <!-- Google tag (gtag.js) · G-BJ5WNM9T05. Production hostnames only, so
+         localhost/preview visits never count. page_view is sent manually
+         per route change by the SPA (AnalyticsTracker in App.jsx) — that's
+         why send_page_view is false here; a second emitter double-counts. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        if (h !== 'futpools.com' && h !== 'www.futpools.com') return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-BJ5WNM9T05';
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { dataLayer.push(arguments); };
+        gtag('js', new Date());
+        gtag('config', 'G-BJ5WNM9T05', { send_page_view: false });
+      })();
+    </script>
+
     <title>Calendario Mundial 2026: partidos, horarios y fechas | FutPools</title>
     <meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook, gratis." />
 
@@ -44,7 +64,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-D-7EufoD.js"></script>
+    <script type="module" crossorigin src="/assets/index-B2G3_2fN.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-J7-nNvB9.css">
   </head>
   <body>
