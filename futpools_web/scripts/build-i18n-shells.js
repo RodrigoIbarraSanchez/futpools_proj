@@ -301,7 +301,40 @@ function quinielaLigaMxShell() {
 ensureDir(path.join(distDir, QLM_SLUG));
 fs.writeFileSync(path.join(distDir, `${QLM_SLUG}/index.html`), quinielaLigaMxShell());
 
+// ── Homepage shell (futpools.com/) — the BRAND default, NOT the calendar ──
+// The base index.html carries calendar OG tags because the swap() machinery
+// above needs them as the source to swap FROM. But the root dist/index.html
+// (and 404.html) are served as the homepage, so they must describe the
+// PRODUCT, not the calendar. We swap calendar → brand here, last, after every
+// landing shell has already read the in-memory baseHtml. (Bug caught via the
+// Meta Sharing Debugger: sharing futpools.com showed calendar metadata.)
+function homeShell() {
+  let html = baseHtml;
+  html = swap(html, CAL.title, '<title>FutPools: quinielas de fútbol con premios reales</title>', 'home:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="FutPools es la app de quinielas de fútbol con amigos: pronostica la Liga MX, el Mundial y más, compite y gana premios reales. Juega desde México (SPEI) o Estados Unidos (PayPal)." />', 'home:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="FutPools: quinielas de fútbol con premios reales" />', 'home:og:title');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Quinielas de fútbol con amigos: pronostica la Liga MX, el Mundial y más, compite y gana premios reales. Juega desde México o Estados Unidos." />', 'home:og:desc');
+  html = swap(html, CAL.ogUrl, '<meta property="og:url" content="https://futpools.com/" />', 'home:og:url');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="FutPools: quinielas de fútbol con premios reales" />', 'home:tw:title');
+  html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Quinielas de fútbol con amigos: pronostica, juega y gana premios reales. Desde México o Estados Unidos." />', 'home:tw:desc');
+  // Brand OG image (1200×630) instead of the calendar screenshot.
+  html = swap(html, '<meta property="og:image" content="https://futpools.com/og-wc26.png" />', '<meta property="og:image" content="https://futpools.com/og-futpools.png" />', 'home:og:img');
+  html = swap(html, '<meta property="og:image:secure_url" content="https://futpools.com/og-wc26.png" />', '<meta property="og:image:secure_url" content="https://futpools.com/og-futpools.png" />', 'home:og:img2');
+  html = swap(html, '<meta property="og:image:width" content="1179" />', '<meta property="og:image:width" content="1200" />', 'home:og:w');
+  html = swap(html, '<meta property="og:image:height" content="2422" />', '<meta property="og:image:height" content="630" />', 'home:og:h');
+  html = swap(html, '<meta property="og:image:alt" content="Vista de calendario con los 104 partidos del Mundial 2026, cada uno con la bandera de su selección." />', '<meta property="og:image:alt" content="FutPools: quinielas de fútbol con premios reales." />', 'home:og:alt');
+  html = swap(html, '<meta name="twitter:image" content="https://futpools.com/og-wc26.png" />', '<meta name="twitter:image" content="https://futpools.com/og-futpools.png" />', 'home:tw:img');
+  html = swap(html, '<meta name="twitter:image:alt" content="Vista de calendario con los 104 partidos del Mundial 2026 y las banderas de cada selección." />', '<meta name="twitter:image:alt" content="FutPools: quinielas de fútbol con premios reales." />', 'home:tw:alt');
+  // The homepage is the brand root — not a bilingual variant of the calendar.
+  html = swap(html, CAL.hrefBlock, '<link rel="canonical" href="https://futpools.com/" />', 'home:href');
+  return html;
+}
+const homeHtml = homeShell();
+fs.writeFileSync(path.join(distDir, 'index.html'), homeHtml);
+fs.writeFileSync(path.join(distDir, '404.html'), homeHtml);
+
 console.log('[i18n shells] wrote:');
+console.log('  dist/index.html                        (es · brand home)');
 console.log(`  dist/${ES_SLUG}/index.html  (es)`);
 console.log(`  dist/${EN_SLUG}/index.html  (en)`);
 console.log(`  dist/${MX_ES_SLUG}/index.html  (es)`);
