@@ -27,6 +27,7 @@ import { QuinielaDeLaSemana } from './pages/QuinielaDeLaSemana';
 import { PronosticosFutbol } from './pages/PronosticosFutbol';
 import { PronosticosFutbolHoy } from './pages/PronosticosFutbolHoy';
 import { QuinielaFutbolHoy } from './pages/QuinielaFutbolHoy';
+import { QuinielaLigaMexicana } from './pages/QuinielaLigaMexicana';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -121,6 +122,8 @@ export default function App() {
             <Route path="/pronosticos-futbol-hoy" element={<PronosticosFutbolHoy />} />
             {/* Transactional "hoy" sibling — open pool as the hero. */}
             <Route path="/quiniela-futbol-hoy" element={<QuinielaFutbolHoy />} />
+            {/* Liga MX quiniela — binational (SPEI MX / PayPal USA) angle. */}
+            <Route path="/quiniela-liga-mexicana" element={<QuinielaLigaMexicana />} />
             {/* Legacy concatenated slugs → 301 at the host (_redirects); this
                 client-side Navigate covers any in-app navigation. */}
             <Route path="/calendariomundial2026" element={<Navigate to="/calendario-mundial-2026" replace />} />

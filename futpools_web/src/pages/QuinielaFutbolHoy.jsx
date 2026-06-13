@@ -154,6 +154,7 @@ export function QuinielaFutbolHoy() {
             <p>Llena tus L/E/V del día y compite antes del primer silbatazo.</p>
             <div className="wc-cta-row" style={{ justifyContent: 'center' }}>
               {cta()}
+              <Link to="/quiniela-liga-mexicana" className="wc-btn-secondary">Quiniela de la Liga MX →</Link>
               <Link to="/pronosticos-futbol-hoy" className="wc-btn-secondary">Pronósticos de hoy →</Link>
               <Link to="/quiniela-de-la-semana" className="wc-btn-secondary">¿Qué es una quiniela? →</Link>
             </div>

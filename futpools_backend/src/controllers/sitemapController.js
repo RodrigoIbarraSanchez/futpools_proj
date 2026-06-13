@@ -42,6 +42,7 @@ const STATIC_ROUTES = [
   { path: '/pronosticos-de-futbol', changefreq: 'weekly', priority: '0.7' },
   { path: '/pronosticos-futbol-hoy', changefreq: 'daily', priority: '0.7' },
   { path: '/quiniela-futbol-hoy', changefreq: 'daily', priority: '0.7' },
+  { path: '/quiniela-liga-mexicana', changefreq: 'weekly', priority: '0.8' },
   // The export tool (utility, lower priority).
   { path: '/calendario-mundial-2026/agregar', changefreq: 'weekly', priority: '0.6', alternates: WC_TOOL_ALT },
   { path: '/world-cup-2026-calendar/add', changefreq: 'weekly', priority: '0.6', alternates: WC_TOOL_ALT },
