@@ -55,6 +55,15 @@ difficulty score is NOT the filter — the SERP itself is.
 4. **One keyword = one page**, and variants ("de futbol hoy", "para hoy",
    "futbol para hoy") are the SAME page — Google stems them. A different
    *intent* (hoy vs general vs team-specific) is a different page.
+   Worked example (2026-06-12): "quiniela liga mexicana" (170/mo US) and
+   "quiniela liga mx" (720/mo MX) are the same entity/intent — their SERPs
+   share the same results. ONE page targets both (title carries both forms,
+   intro uses both in the first sentence). A second page would cannibalize.
+   But the variant list exposed real SUB-intents worth serving on-page:
+   "formato quiniela liga mx" (template seekers → a Statement + FAQ
+   positioning the product as the digital format) and the programmatic
+   family "quiniela liga mx jornada N" (per-jornada pages — roadmap for
+   when the Apertura starts, not a hand-built landing).
 5. **Match the intent's freshness.** If the keyword implies "now/today",
    a static page loses: pair evergreen baked copy with a dynamic client-side
    module (see §7b). If it implies a season/event, keep copy evergreen and

@@ -38,6 +38,10 @@ export const QLM_FAQ = [
     q: '¿Cómo se gana en la quiniela?',
     a: 'Cada resultado acertado suma a tu marcador y la tabla se actualiza en vivo durante la jornada. Al terminar el último partido, quien tenga más aciertos gana el premio de la quiniela.',
   },
+  {
+    q: '¿Dónde encuentro el formato de la quiniela de la Liga MX?',
+    a: 'Ya no necesitas imprimir un formato ni llenar hojas de Excel: en FutPools creas tu quiniela de la jornada en un minuto, compartes el código con tus amigos y la plataforma cuenta los aciertos sola. Es el formato de la quiniela de la liga mexicana, pero digital y sin errores de conteo.',
+  },
 ];
 
 export function quinielaLigaMxFaq() {

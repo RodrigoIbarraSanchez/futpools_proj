@@ -128,6 +128,11 @@ export function QuinielaLigaMexicana() {
           </ul>
         </Split>
 
+        <Statement kicker="ADIÓS AL PAPELITO" title="El formato de la quiniela, sin formato.">
+          ¿Buscabas el formato de la quiniela de la Liga MX para imprimir? Ya no hace falta: creas tu
+          quiniela en un minuto, compartes el código con tu banda y los aciertos se cuentan solos, en vivo.
+        </Statement>
+
         <section className="wc-faq">
           <h2>Preguntas frecuentes</h2>
           <div className="wc-faq-grid">
