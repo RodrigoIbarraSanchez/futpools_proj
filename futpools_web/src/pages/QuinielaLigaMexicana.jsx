@@ -27,8 +27,8 @@ const PAGE = 'quiniela-liga-mexicana';
 
 export function QuinielaLigaMexicana() {
   useEffect(() => {
-    document.title = 'Quiniela Liga Mexicana: juega la Liga MX y gana | FutPools';
-    setMeta('description', 'Quiniela de la liga mexicana en línea: pronostica los partidos de la Liga MX, compite con amigos y gana premios. Juega desde México (SPEI) o Estados Unidos (PayPal).');
+    document.title = 'Quiniela Liga MX: pronostica la liga mexicana y gana | FutPools';
+    setMeta('description', 'Quiniela de la Liga MX en línea: pronostica la jornada de la liga mexicana, compite con amigos y gana premios. Juega desde México (SPEI) o Estados Unidos (PayPal).');
     setCanonical(CANONICAL);
     setJsonLd('landing-jsonld', quinielaLigaMxJsonLd());
   }, []);
@@ -65,11 +65,11 @@ export function QuinielaLigaMexicana() {
         <div className="wc-hero-inner">
           <div className="wc-hero-copy">
             <div className="wc-kicker">◆ LIGA MX · MÉXICO Y ESTADOS UNIDOS</div>
-            <h1>Quiniela de la Liga Mexicana</h1>
+            <h1>Quiniela de la Liga MX</h1>
             <p className="wc-sub wc-lead">
-              La quiniela de la liga mexicana de toda la vida, en línea: pronostica los partidos de
-              la jornada de la Liga MX, compite contra tus amigos y gana premios reales. Juega desde
-              México o desde Estados Unidos, con tus mismos equipos de siempre.
+              La quiniela de la Liga MX (la quiniela de la liga mexicana de toda la vida) ahora en
+              línea: pronostica los partidos de la jornada, compite contra tus amigos y gana premios
+              reales. Juega desde México o desde Estados Unidos, con tus mismos equipos de siempre.
             </p>
             <div className="wc-cta-row">{cta()}</div>
             <div className="wc-hero-stats">
@@ -92,8 +92,8 @@ export function QuinielaLigaMexicana() {
           liga mexicana convierte la fecha completa en un duelo contra tu banda: tus L/E/V contra los suyos.
         </Statement>
 
-        <Split title="¿Cómo funciona la quiniela de la liga mexicana?" visual={<PoolLiveCard pool={pool} />}>
-          <p>Igual que la quiniela de papel, pero sin papel:</p>
+        <Split title="¿Cómo funciona la quiniela de la Liga MX?" visual={<PoolLiveCard pool={pool} />}>
+          <p>Igual que la quiniela de papel de la liga mexicana, pero sin papel:</p>
           <ul className="wc-ul">
             <li>Cada quiniela trae los partidos de la jornada de la Liga MX</li>
             <li>Pronosticas L (local), E (empate) o V (visitante) en cada uno</li>

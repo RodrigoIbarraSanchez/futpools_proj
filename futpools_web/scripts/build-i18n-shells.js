@@ -285,12 +285,12 @@ fs.writeFileSync(path.join(distDir, `${QH_SLUG}/index.html`), quinielaHoyShell()
 const QLM_SLUG = 'quiniela-liga-mexicana';
 function quinielaLigaMxShell() {
   let html = baseHtml;
-  html = swap(html, CAL.title, '<title>Quiniela Liga Mexicana: juega la Liga MX y gana | FutPools</title>', 'qlm:title');
-  html = swap(html, CAL.desc, '<meta name="description" content="Quiniela de la liga mexicana en línea: pronostica los partidos de la Liga MX, compite con amigos y gana premios. Juega desde México (SPEI) o Estados Unidos (PayPal)." />', 'qlm:desc');
-  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela Liga Mexicana: juega la Liga MX y gana" />', 'qlm:og:title');
-  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Pronostica la jornada de la Liga MX, compite con amigos y gana premios. Juega desde México con SPEI o desde Estados Unidos con PayPal." />', 'qlm:og:description');
+  html = swap(html, CAL.title, '<title>Quiniela Liga MX: pronostica la liga mexicana y gana | FutPools</title>', 'qlm:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Quiniela de la Liga MX en línea: pronostica la jornada de la liga mexicana, compite con amigos y gana premios. Juega desde México (SPEI) o Estados Unidos (PayPal)." />', 'qlm:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela Liga MX: pronostica la liga mexicana y gana" />', 'qlm:og:title');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="La quiniela de la Liga MX: pronostica la jornada de la liga mexicana, compite con amigos y gana premios. Desde México con SPEI o Estados Unidos con PayPal." />', 'qlm:og:description');
   html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${QLM_SLUG}" />`, 'qlm:og:url');
-  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela Liga Mexicana: juega la Liga MX y gana" />', 'qlm:twitter:title');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela Liga MX: pronostica la liga mexicana y gana" />', 'qlm:twitter:title');
   html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="La quiniela de la Liga MX en línea: pronostica la jornada y compite por premios desde México o Estados Unidos." />', 'qlm:twitter:description');
   // ES-only page: drop the calendar's hreflang block (no alternates).
   html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'qlm:hreflang');

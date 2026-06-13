@@ -42,6 +42,10 @@ export const QLM_FAQ = [
     q: '¿Dónde encuentro el formato de la quiniela de la Liga MX?',
     a: 'Ya no necesitas imprimir un formato ni llenar hojas de Excel: en FutPools creas tu quiniela de la jornada en un minuto, compartes el código con tus amigos y la plataforma cuenta los aciertos sola. Es el formato de la quiniela de la liga mexicana, pero digital y sin errores de conteo.',
   },
+  {
+    q: '¿Cómo armo una quiniela de la Liga MX con mis amigos?',
+    a: 'Crea tu cuenta en FutPools, arma una quiniela con los partidos de la jornada de la Liga MX y comparte el código de invitación. Cada quien llena sus L/E/V, paga su entrada y compite por el premio. La tabla de aciertos se actualiza sola en vivo.',
+  },
 ];
 
 export function quinielaLigaMxFaq() {
