@@ -39,44 +39,55 @@ function fmtMxn(n) { return '$' + Number(n).toLocaleString('es-MX'); }
 
 const FINISHED_PICK_STATUSES = new Set(['FT', 'AET', 'PEN']);
 
+// Outcome of a single pick vs the (possibly live) result. Shared by the
+// per-entry PickRow and the fixture-list "your pick" strip so the prediction
+// reads identically on every surface.
+// States: missing | pending | leading | trailing | won | lost.
+function pickState(pick, live) {
+  const home = live?.score?.home;
+  const away = live?.score?.away;
+  const result = (typeof home === 'number' && typeof away === 'number')
+    ? (home > away ? '1' : home < away ? '2' : 'X')
+    : null;
+  const isFinal = FINISHED_PICK_STATUSES.has((live?.status?.short || '').toUpperCase());
+  if (!pick || pick === '-' || pick === '') return 'missing';
+  if (!result) return 'pending';
+  if (isFinal) return pick === result ? 'won' : 'lost';
+  return pick === result ? 'leading' : 'trailing';
+}
+
+const PICK_PALETTE = {
+  missing:  { badgeBg: 'var(--fp-bg2, #0F1620)', fg: 'var(--fp-text-dim)', accent: 'var(--fp-stroke)' },
+  pending:  { badgeBg: 'color-mix(in srgb, var(--fp-accent) 18%, transparent)', fg: 'var(--fp-accent)', accent: 'color-mix(in srgb, var(--fp-accent) 50%, transparent)' },
+  leading:  { badgeBg: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)', fg: 'var(--fp-primary)', accent: 'var(--fp-primary)' },
+  trailing: { badgeBg: 'color-mix(in srgb, var(--fp-danger) 18%, transparent)',  fg: 'var(--fp-danger)',  accent: 'color-mix(in srgb, var(--fp-danger) 70%, transparent)' },
+  won:      { badgeBg: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)', fg: 'var(--fp-primary)', accent: 'var(--fp-primary)' },
+  lost:     { badgeBg: 'color-mix(in srgb, var(--fp-danger) 18%, transparent)',  fg: 'var(--fp-danger)',  accent: 'color-mix(in srgb, var(--fp-danger) 70%, transparent)' },
+};
+
+function pickStatusText(state, locale) {
+  switch (state) {
+    case 'missing':  return t(locale, 'NO PICK');
+    case 'pending':  return t(locale, 'PENDING').toUpperCase();
+    case 'leading':  return `● ${t(locale, 'LEADING')}`;
+    case 'trailing': return `● ${t(locale, 'TRAILING')}`;
+    case 'won':      return `✓ +1 ${t(locale, 'PT')}`;
+    case 'lost':     return `✗ ${t(locale, 'MISSED')}`;
+    default: return '';
+  }
+}
+
 function PickRow({ fixture, pick, live, locale }) {
   const home = live?.score?.home;
   const away = live?.score?.away;
-  const liveResult = (typeof home === 'number' && typeof away === 'number')
-    ? (home > away ? '1' : home < away ? '2' : 'X')
-    : null;
-  const short = (live?.status?.short || '').toUpperCase();
   const isLive = live?.status?.isLive === true;
-  const isFinal = FINISHED_PICK_STATUSES.has(short);
-
-  let state = 'missing';
-  if (pick && pick !== '-' && pick !== '') {
-    if (!liveResult) state = 'pending';
-    else if (isFinal) state = pick === liveResult ? 'won' : 'lost';
-    else state = pick === liveResult ? 'leading' : 'trailing';
-  }
-
-  const palette = {
-    missing:  { badgeBg: 'var(--fp-bg2, #0F1620)', fg: 'var(--fp-text-dim)', accent: 'var(--fp-stroke)' },
-    pending:  { badgeBg: 'color-mix(in srgb, var(--fp-accent) 18%, transparent)', fg: 'var(--fp-accent)', accent: 'color-mix(in srgb, var(--fp-accent) 50%, transparent)' },
-    leading:  { badgeBg: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)', fg: 'var(--fp-primary)', accent: 'var(--fp-primary)' },
-    trailing: { badgeBg: 'color-mix(in srgb, var(--fp-danger) 18%, transparent)',  fg: 'var(--fp-danger)',  accent: 'color-mix(in srgb, var(--fp-danger) 70%, transparent)' },
-    won:      { badgeBg: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)', fg: 'var(--fp-primary)', accent: 'var(--fp-primary)' },
-    lost:     { badgeBg: 'color-mix(in srgb, var(--fp-danger) 18%, transparent)',  fg: 'var(--fp-danger)',  accent: 'color-mix(in srgb, var(--fp-danger) 70%, transparent)' },
-  }[state];
-
-  const statusEl = (() => {
-    const baseStyle = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em' };
-    switch (state) {
-      case 'missing':  return <span style={{ ...baseStyle, color: 'var(--fp-text-dim)' }}>{t(locale, 'NO PICK')}</span>;
-      case 'pending':  return <span style={{ ...baseStyle, color: 'var(--fp-accent)' }}>{t(locale, 'PENDING').toUpperCase()}</span>;
-      case 'leading':  return <span style={{ ...baseStyle, color: 'var(--fp-primary)' }}>● {t(locale, 'LEADING')}</span>;
-      case 'trailing': return <span style={{ ...baseStyle, color: 'var(--fp-danger)' }}>● {t(locale, 'TRAILING')}</span>;
-      case 'won':      return <span style={{ ...baseStyle, color: 'var(--fp-primary)' }}>✓ +1 {t(locale, 'PT')}</span>;
-      case 'lost':     return <span style={{ ...baseStyle, color: 'var(--fp-danger)' }}>✗ {t(locale, 'MISSED')}</span>;
-      default: return null;
-    }
-  })();
+  const state = pickState(pick, live);
+  const palette = PICK_PALETTE[state];
+  const statusEl = (
+    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: palette.fg }}>
+      {pickStatusText(state, locale)}
+    </span>
+  );
 
   const showScore = typeof home === 'number' && typeof away === 'number';
 
@@ -325,7 +336,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
 // Tab content — Resumen, Partidos, Tabla.
 // ─────────────────────────────────────────────────────────────────────
 
-function FixtureRow({ fixture, live, locale, navigate }) {
+function FixtureRow({ fixture, live, locale, navigate, myPick }) {
   const liveStatus = live?.status;
   const liveMatch = isLiveStatus(liveStatus?.short);
   const finalMatch = isFinishedStatus(liveStatus?.short) || isFinishedStatus(fixture.status);
@@ -380,6 +391,50 @@ function FixtureRow({ fixture, live, locale, navigate }) {
           {fixture.awayLogo && <img src={fixture.awayLogo} alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />}
           <div className="name">{fixture.awayTeam}</div>
         </div>
+
+        {/* The user's own prediction for this fixture, with its live/final
+            outcome (✓ won, ✗ lost, ● leading/trailing, pending). Full-width
+            strip across the card grid so it reads as the row's footer. Hidden
+            for viewers with no entry/pick. */}
+        {myPick ? (() => {
+          const st = pickState(myPick, live);
+          const pal = PICK_PALETTE[st];
+          const label = myPick === '1' ? fixture.homeTeam
+            : myPick === '2' ? fixture.awayTeam
+            : t(locale, 'DRAW');
+          return (
+            <div style={{
+              gridColumn: '1 / -1',
+              marginTop: 4, paddingTop: 10,
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: 10, flexWrap: 'wrap',
+              position: 'relative', zIndex: 1,
+            }}>
+              <span style={{
+                fontFamily: 'var(--fp-mono, monospace)', fontSize: 9, fontWeight: 700,
+                letterSpacing: '0.14em', color: 'var(--fp-text-muted, #7b8794)',
+              }}>{t(locale, 'YOUR PICK')}</span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '3px 10px', borderRadius: 6,
+                background: pal.badgeBg, border: `1px solid ${pal.accent}`,
+                fontWeight: 900, fontSize: 12, color: pal.fg,
+              }}>
+                <span>{myPick}</span>
+                <span style={{
+                  fontFamily: 'var(--fp-mono, monospace)', fontSize: 10, fontWeight: 700,
+                  letterSpacing: '0.04em', textTransform: 'uppercase',
+                  maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>{label}</span>
+              </span>
+              <span style={{
+                fontFamily: 'var(--fp-mono, monospace)', fontSize: 10, fontWeight: 700,
+                letterSpacing: '0.06em', color: pal.fg,
+              }}>{pickStatusText(st, locale)}</span>
+            </div>
+          );
+        })() : null}
       </div>
     </button>
   );
@@ -391,7 +446,7 @@ const FIXTURE_GROUP_META = {
   finished: { icon: '🏁', label: 'Finished' },
 };
 
-function FixturesTab({ quiniela, liveByFixture, locale, navigate }) {
+function FixturesTab({ quiniela, liveByFixture, locale, navigate, myPicks }) {
   // Order by status: live on top, then upcoming (soonest first), then
   // finished at the bottom — so an in-progress pool surfaces what matters.
   const groups = groupFixturesByStatus(quiniela.fixtures, liveByFixture);
@@ -416,6 +471,7 @@ function FixturesTab({ quiniela, liveByFixture, locale, navigate }) {
                   live={liveByFixture[f.fixtureId]}
                   locale={locale}
                   navigate={navigate}
+                  myPick={myPicks?.[f.fixtureId]}
                 />
               ))}
             </div>
@@ -524,6 +580,11 @@ function PartidosTab({ quiniela, liveByFixture, leaderboard, currentUserId, entr
   const orderedEntries = (myEntries || [])
     .slice()
     .sort((a, b) => (a.entryNumber ?? 1) - (b.entryNumber ?? 1));
+  // The current user's picks (fixtureId → '1'|'X'|'2'), surfaced on each
+  // fixture row below. Latest entry wins for multi-entry users.
+  const latestEntry = orderedEntries[orderedEntries.length - 1];
+  const myPicks = {};
+  for (const p of latestEntry?.picks || []) myPicks[p.fixtureId] = p.pick;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--app-space-6)' }}>
       {entryCount > 0 && orderedEntries.length > 0 && (
@@ -619,6 +680,7 @@ function PartidosTab({ quiniela, liveByFixture, leaderboard, currentUserId, entr
         liveByFixture={liveByFixture}
         locale={locale}
         navigate={navigate}
+        myPicks={myPicks}
       />
     </div>
   );
