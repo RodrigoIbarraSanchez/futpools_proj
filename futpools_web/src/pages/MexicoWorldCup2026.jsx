@@ -93,8 +93,8 @@ export function MexicoWorldCup2026() {
             <h1>{c('Partidos de México en el Mundial 2026', 'Mexico at the World Cup 2026')}</h1>
             <p className="wc-sub wc-lead">
               {c(
-                'Estos son los partidos de México en el Mundial 2026. El Tri inaugura el torneo en el Estadio Azteca el 11 de junio y juega su fase de grupos (Grupo A) en Ciudad de México y Guadalajara. Añade los 3 partidos de México a tu calendario en segundos, gratis.',
-                'These are Mexico’s matches at the World Cup 2026. El Tri opens the tournament at Estadio Azteca on June 11 and plays its group stage (Group A) in Mexico City and Guadalajara. Add Mexico’s 3 matches to your calendar in seconds, free.'
+                'México Mundial 2026: estos son los partidos de la Selección. El Tri inaugura el torneo en el Estadio Azteca el 11 de junio y juega su fase de grupos (Grupo A) en Ciudad de México y Guadalajara. Añade los 3 partidos de México a tu calendario en segundos, gratis.',
+                'Mexico World Cup 2026: these are El Tri’s matches. Mexico opens the tournament at Estadio Azteca on June 11 and plays its group stage (Group A) in Mexico City and Guadalajara. Add Mexico’s 3 matches to your calendar in seconds, free.'
               )}
             </p>
             <div className="wc-cta-row">{ctaTool(c('Añadir los partidos de México', 'Add Mexico’s matches'))}</div>
@@ -210,7 +210,7 @@ export function MexicoWorldCup2026() {
 
       <footer className="wc-footer">
         <div>© 2026 FUTPOOLS · futpools.com</div>
-        <div>{c('Datos de partidos: FIFA / API-Football', 'Match data: FIFA / API-Football')}</div>
+        <div>{c('Calendario oficial en ', 'Official schedule on ')}<a href="https://www.fifa.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>FIFA.com</a>{c(' · datos vía API-Football', ' · data via API-Football')}</div>
       </footer>
     </div>
   );

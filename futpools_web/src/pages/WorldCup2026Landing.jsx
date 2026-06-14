@@ -315,7 +315,7 @@ export function WorldCup2026Landing() {
 
       <footer className="wc-footer">
         <div>© 2026 FUTPOOLS · futpools.com</div>
-        <div>{c('Datos de partidos: FIFA / API-Football', 'Match data: FIFA / API-Football')}</div>
+        <div>{c('Calendario oficial en ', 'Official schedule on ')}<a href="https://www.fifa.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>FIFA.com</a>{c(' · datos vía API-Football', ' · data via API-Football')}</div>
       </footer>
     </div>
   );

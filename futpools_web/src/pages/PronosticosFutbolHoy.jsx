@@ -76,7 +76,7 @@ export function PronosticosFutbolHoy() {
         <div className="wc-hero-inner">
           <div className="wc-hero-copy">
             <div className="wc-kicker">◆ PARTIDOS DE HOY · MÉXICO</div>
-            <h1>Pronósticos de fútbol hoy</h1>
+            <h1>Pronósticos fútbol hoy</h1>
             <p className="wc-sub wc-lead">
               ¿Buscas pronósticos de fútbol hoy? Aquí tienes los partidos del día, actualizados
               automáticamente. Elige local, empate o visitante en cada uno, registra tus pronósticos
@@ -170,6 +170,7 @@ export function PronosticosFutbolHoy() {
       <footer className="wc-footer">
         <div>© 2026 FUTPOOLS · futpools.com</div>
         <div>FutPools es una plataforma de quinielas entre amigos. No es una casa de apuestas ni vende pronósticos. Mayores de 18 años.</div>
+        <div>Resultados oficiales en <a href="https://www.ligamx.net" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>el sitio de la Liga MX</a>.</div>
       </footer>
     </div>
   );

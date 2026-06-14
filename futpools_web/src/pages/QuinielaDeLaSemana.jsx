@@ -178,6 +178,7 @@ export function QuinielaDeLaSemana() {
       <footer className="wc-footer">
         <div>© 2026 FUTPOOLS · futpools.com</div>
         <div>FutPools es independiente y no está afiliado a Progol ni a Lotería Nacional.</div>
+        <div>Resultados oficiales en <a href="https://www.ligamx.net" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>el sitio de la Liga MX</a>.</div>
       </footer>
     </div>
   );

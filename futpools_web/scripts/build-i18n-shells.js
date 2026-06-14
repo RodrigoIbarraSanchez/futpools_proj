@@ -164,17 +164,17 @@ function mexicoShell(locale) {
   const es = locale === 'es';
   const slug = es ? MX_ES_SLUG : MX_EN_SLUG;
   const h = es ? {
-    title: 'Partidos de México en el Mundial 2026: fechas y horarios | FutPools',
-    desc: 'Todos los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios. Añádelos a tu calendario gratis.',
-    ogTitle: 'Partidos de México en el Mundial 2026: fechas y horarios',
-    ogDesc: 'Los partidos de México en el Mundial 2026: Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios. Gratis.',
-    twDesc: 'México en el Mundial 2026: Grupo A, 3 partidos con fechas y sedes. Añádelos a tu calendario gratis.',
+    title: 'México Mundial 2026: partidos de la Selección, fechas y horarios | FutPools',
+    desc: 'Calendario de México Mundial 2026: los partidos del Tri en el Grupo A (Sudáfrica, Corea del Sur y Chequia), con fechas, sedes y horarios. Añádelos a tu calendario gratis.',
+    ogTitle: 'México Mundial 2026: partidos de la Selección, fechas y horarios',
+    ogDesc: 'México Mundial 2026: los partidos del Tri en el Grupo A vs Sudáfrica, Corea del Sur y Chequia. Fechas, sedes y horarios. Gratis.',
+    twDesc: 'México Mundial 2026: Grupo A, 3 partidos con fechas y sedes. Añádelos a tu calendario gratis.',
   } : {
-    title: 'Mexico at the World Cup 2026: Matches, Dates & Times | FutPools',
-    desc: 'All of Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times. Add them to your calendar free.',
-    ogTitle: 'Mexico at the World Cup 2026: matches, dates & times',
-    ogDesc: 'Mexico’s World Cup 2026 matches: Group A vs South Africa, South Korea and Czechia. Dates, venues and times. Free.',
-    twDesc: 'Mexico at the World Cup 2026: Group A, 3 matches with dates and venues. Add them to your calendar free.',
+    title: 'Mexico World Cup 2026: matches, dates and times | FutPools',
+    desc: 'Mexico World Cup 2026 schedule: El Tri’s Group A matches vs South Africa, South Korea and Czechia, with dates, venues and times. Add them to your calendar free.',
+    ogTitle: 'Mexico World Cup 2026: matches, dates and times',
+    ogDesc: 'Mexico World Cup 2026: El Tri’s Group A matches vs South Africa, South Korea and Czechia. Dates, venues and times. Free.',
+    twDesc: 'Mexico World Cup 2026: Group A, 3 matches with dates and venues. Add them to your calendar free.',
   };
   let html = baseHtml;
   html = swap(html, CAL.title, `<title>${h.title}</title>`, 'title');
@@ -245,12 +245,12 @@ fs.writeFileSync(path.join(distDir, `${PF_SLUG}/index.html`), pronosticosShell()
 const PFH_SLUG = 'pronosticos-futbol-hoy';
 function pronosticosHoyShell() {
   let html = baseHtml;
-  html = swap(html, CAL.title, '<title>Pronósticos de fútbol hoy: partidos y quinielas | FutPools</title>', 'pfh:title');
-  html = swap(html, CAL.desc, '<meta name="description" content="Pronósticos de fútbol hoy: consulta los partidos de hoy, elige L, E o V y pon tus pronósticos a competir en una quiniela de FutPools antes del primer partido." />', 'pfh:desc');
-  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Pronósticos de fútbol hoy: partidos y quinielas" />', 'pfh:og:title');
+  html = swap(html, CAL.title, '<title>Pronósticos fútbol hoy: partidos del día y quiniela | FutPools</title>', 'pfh:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Pronósticos fútbol hoy: consulta los partidos del día, elige L, E o V y pon tus pronósticos a competir en una quiniela de FutPools antes del primer partido." />', 'pfh:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Pronósticos fútbol hoy: partidos del día y quiniela" />', 'pfh:og:title');
   html = swap(html, CAL.ogDesc, '<meta property="og:description" content="Los partidos de hoy y tus pronósticos L/E/V compitiendo en quinielas de FutPools. La inscripción cierra al primer partido." />', 'pfh:og:description');
   html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${PFH_SLUG}" />`, 'pfh:og:url');
-  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Pronósticos de fútbol hoy: partidos y quinielas" />', 'pfh:twitter:title');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Pronósticos fútbol hoy: partidos del día y quiniela" />', 'pfh:twitter:title');
   html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Los partidos de hoy y tus pronósticos L/E/V compitiendo en quinielas de FutPools." />', 'pfh:twitter:description');
   // ES-only page: drop the calendar's hreflang block (no alternates).
   html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'pfh:hreflang');
@@ -265,12 +265,12 @@ fs.writeFileSync(path.join(distDir, `${PFH_SLUG}/index.html`), pronosticosHoyShe
 const QH_SLUG = 'quiniela-futbol-hoy';
 function quinielaHoyShell() {
   let html = baseHtml;
-  html = swap(html, CAL.title, '<title>Quiniela de fútbol hoy: juega y gana premios | FutPools</title>', 'qh:title');
-  html = swap(html, CAL.desc, '<meta name="description" content="Quiniela de fútbol hoy: entra a la quiniela con inscripción abierta, llena tus L, E o V con los partidos del día y compite por el premio antes del primer partido." />', 'qh:desc');
-  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela de fútbol hoy: juega y gana premios" />', 'qh:og:title');
+  html = swap(html, CAL.title, '<title>Quiniela fútbol hoy: juega los partidos del día y gana | FutPools</title>', 'qh:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Quiniela fútbol hoy: entra a la quiniela con inscripción abierta, llena tus L, E o V con los partidos del día y compite por el premio antes del primer partido." />', 'qh:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela fútbol hoy: juega los partidos del día y gana" />', 'qh:og:title');
   html = swap(html, CAL.ogDesc, '<meta property="og:description" content="La quiniela de hoy con inscripción abierta: llena tus L/E/V con los partidos del día y compite por el premio antes del primer silbatazo." />', 'qh:og:description');
   html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${QH_SLUG}" />`, 'qh:og:url');
-  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela de fútbol hoy: juega y gana premios" />', 'qh:twitter:title');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela fútbol hoy: juega los partidos del día y gana" />', 'qh:twitter:title');
   html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="Entra a la quiniela de hoy, llena tus L/E/V y compite por el premio antes del primer partido." />', 'qh:twitter:description');
   // ES-only page: drop the calendar's hreflang block (no alternates).
   html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'qh:hreflang');

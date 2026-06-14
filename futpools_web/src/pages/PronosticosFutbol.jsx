@@ -180,6 +180,7 @@ export function PronosticosFutbol() {
       <footer className="wc-footer">
         <div>© 2026 FUTPOOLS · futpools.com</div>
         <div>FutPools es una plataforma de quinielas entre amigos. No es una casa de apuestas ni vende pronósticos. Mayores de 18 años.</div>
+        <div>Resultados oficiales en <a href="https://www.ligamx.net" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>el sitio de la Liga MX</a>.</div>
       </footer>
     </div>
   );

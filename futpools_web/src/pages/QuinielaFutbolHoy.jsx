@@ -77,7 +77,7 @@ export function QuinielaFutbolHoy() {
         <div className="wc-hero-inner">
           <div className="wc-hero-copy">
             <div className="wc-kicker">◆ INSCRIPCIÓN ABIERTA · MÉXICO</div>
-            <h1>Quiniela de fútbol hoy</h1>
+            <h1>Quiniela fútbol hoy</h1>
             <p className="wc-sub wc-lead">
               ¿Buscas una quiniela de fútbol hoy? Aquí está la quiniela con inscripción abierta:
               llena tus L/E/V con los partidos del día, paga tu entrada y compite por el premio.
@@ -165,6 +165,7 @@ export function QuinielaFutbolHoy() {
       <footer className="wc-footer">
         <div>© 2026 FUTPOOLS · futpools.com</div>
         <div>FutPools es una plataforma de quinielas entre amigos. No está afiliada a Progol ni a Lotería Nacional. No es una casa de apuestas. Mayores de 18 años.</div>
+        <div>Resultados oficiales en <a href="https://www.ligamx.net" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>el sitio de la Liga MX</a>.</div>
       </footer>
     </div>
   );
