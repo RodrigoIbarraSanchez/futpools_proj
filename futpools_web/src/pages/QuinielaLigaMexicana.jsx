@@ -27,8 +27,8 @@ const PAGE = 'quiniela-liga-mexicana';
 
 export function QuinielaLigaMexicana() {
   useEffect(() => {
-    document.title = 'Quiniela Liga MX: pronostica la liga mexicana y gana | FutPools';
-    setMeta('description', 'Quiniela de la Liga MX en línea: pronostica la jornada de la liga mexicana, compite con amigos y gana premios. Juega desde México (SPEI) o Estados Unidos (PayPal).');
+    document.title = 'Quiniela Liga Mexicana: pronostica la Liga MX y gana | FutPools';
+    setMeta('description', 'Juega la quiniela Liga Mexicana en línea: pronostica la jornada de la Liga MX, compite con amigos y gana premios. Desde México (SPEI) o Estados Unidos (PayPal).');
     setCanonical(CANONICAL);
     setJsonLd('landing-jsonld', quinielaLigaMxJsonLd());
   }, []);
@@ -65,9 +65,9 @@ export function QuinielaLigaMexicana() {
         <div className="wc-hero-inner">
           <div className="wc-hero-copy">
             <div className="wc-kicker">◆ LIGA MX · MÉXICO Y ESTADOS UNIDOS</div>
-            <h1>Quiniela de la Liga MX</h1>
+            <h1>Quiniela de la Liga Mexicana</h1>
             <p className="wc-sub wc-lead">
-              La quiniela de la Liga MX (la quiniela de la liga mexicana de toda la vida) ahora en
+              La quiniela de la Liga MX (la quiniela Liga Mexicana de toda la vida) ahora en
               línea: pronostica los partidos de la jornada, compite contra tus amigos y gana premios
               reales. Juega desde México o desde Estados Unidos, con tus mismos equipos de siempre.
             </p>
@@ -163,6 +163,10 @@ export function QuinielaLigaMexicana() {
 
       <footer className="wc-footer">
         <div>© 2026 FUTPOOLS · futpools.com</div>
+        <div>
+          Consulta el calendario y los resultados oficiales en{' '}
+          <a href="https://www.ligamx.net" target="_blank" rel="noopener noreferrer" className="wc-foot-link">el sitio oficial de la Liga MX</a>.
+        </div>
         <div>FutPools es una plataforma independiente de quinielas entre amigos. No está afiliada a la Liga MX, a Progol ni a Lotería Nacional. No es una casa de apuestas. Mayores de 18 años.</div>
       </footer>
     </div>
@@ -326,6 +330,10 @@ const QLM_CSS = `
 .fp-wc26 .wc-qlm-season-t { font-family: var(--ox); font-weight: 900; font-size: 11px; color: var(--text); letter-spacing: 0.5px; }
 .fp-wc26 .wc-qlm-season-block.on .wc-qlm-season-t { color: var(--primary); }
 .fp-wc26 .wc-qlm-season-d { font-family: var(--mono); font-size: 8.5px; letter-spacing: 1px; color: var(--text-muted); margin-top: 3px; }
+
+/* footer external link */
+.fp-wc26 .wc-foot-link { color: var(--primary); text-decoration: none; border-bottom: 1px solid rgba(33,226,140,0.4); }
+.fp-wc26 .wc-foot-link:hover { border-bottom-color: var(--primary); }
 
 /* open-pool card spacing within Split */
 .fp-wc26 .wc-qlm-pool { text-align: center; }

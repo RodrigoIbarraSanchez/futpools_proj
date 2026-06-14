@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "node scripts/build-i18n-shells.js && node scripts/build-sitemap.js",
+    "postbuild": "node scripts/build-i18n-shells.js && node scripts/build-sitemap.js && node scripts/prerender.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

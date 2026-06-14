@@ -285,12 +285,12 @@ fs.writeFileSync(path.join(distDir, `${QH_SLUG}/index.html`), quinielaHoyShell()
 const QLM_SLUG = 'quiniela-liga-mexicana';
 function quinielaLigaMxShell() {
   let html = baseHtml;
-  html = swap(html, CAL.title, '<title>Quiniela Liga MX: pronostica la liga mexicana y gana | FutPools</title>', 'qlm:title');
-  html = swap(html, CAL.desc, '<meta name="description" content="Quiniela de la Liga MX en línea: pronostica la jornada de la liga mexicana, compite con amigos y gana premios. Juega desde México (SPEI) o Estados Unidos (PayPal)." />', 'qlm:desc');
-  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela Liga MX: pronostica la liga mexicana y gana" />', 'qlm:og:title');
-  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="La quiniela de la Liga MX: pronostica la jornada de la liga mexicana, compite con amigos y gana premios. Desde México con SPEI o Estados Unidos con PayPal." />', 'qlm:og:description');
+  html = swap(html, CAL.title, '<title>Quiniela Liga Mexicana: pronostica la Liga MX y gana | FutPools</title>', 'qlm:title');
+  html = swap(html, CAL.desc, '<meta name="description" content="Juega la quiniela Liga Mexicana en línea: pronostica la jornada de la Liga MX, compite con amigos y gana premios. Desde México (SPEI) o Estados Unidos (PayPal)." />', 'qlm:desc');
+  html = swap(html, CAL.ogTitle, '<meta property="og:title" content="Quiniela Liga Mexicana: pronostica la Liga MX y gana" />', 'qlm:og:title');
+  html = swap(html, CAL.ogDesc, '<meta property="og:description" content="La quiniela Liga Mexicana en línea: pronostica la jornada de la Liga MX, compite con amigos y gana premios. Desde México con SPEI o Estados Unidos con PayPal." />', 'qlm:og:description');
   html = swap(html, CAL.ogUrl, `<meta property="og:url" content="https://futpools.com/${QLM_SLUG}" />`, 'qlm:og:url');
-  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela Liga MX: pronostica la liga mexicana y gana" />', 'qlm:twitter:title');
+  html = swap(html, CAL.twTitle, '<meta name="twitter:title" content="Quiniela Liga Mexicana: pronostica la Liga MX y gana" />', 'qlm:twitter:title');
   html = swap(html, CAL.twDesc, '<meta name="twitter:description" content="La quiniela de la Liga MX en línea: pronostica la jornada y compite por premios desde México o Estados Unidos." />', 'qlm:twitter:description');
   // ES-only page: drop the calendar's hreflang block (no alternates).
   html = swap(html, CAL.hrefBlock, '<!-- single-locale page: no hreflang -->', 'qlm:hreflang');
@@ -345,3 +345,25 @@ console.log(`  dist/${PFH_SLUG}/index.html  (es)`);
 console.log(`  dist/${QH_SLUG}/index.html  (es)`);
 console.log(`  dist/${QLM_SLUG}/index.html  (es)`);
 console.log('  dist/404.html                          (es)');
+
+// ── Render Rewrite/Redirect rules reminder ───────────────────────────────
+// Render serves a directory shell (dist/<slug>/index.html) only when the URL
+// ends in a slash. The SPA fallback rule `/* -> /index.html` catches the
+// canonical no-slash form FIRST and serves the homepage instead — so each
+// landing needs an EXPLICIT Rewrite (no-slash -> its index.html), placed
+// ABOVE the /* catch-all in the Render dashboard. This is a Render quirk, not
+// a code issue (Netlify/Cloudflare treat /* as a true fallback and need none).
+// Adding a landing above? It MUST also get a rule here or it silently serves
+// the homepage to Google. This block prints the full required set so the
+// dashboard never drifts out of sync with the build.
+const LANDING_SLUGS = [
+  ES_SLUG, EN_SLUG, MX_ES_SLUG, MX_EN_SLUG,
+  QS_SLUG, PF_SLUG, PFH_SLUG, QH_SLUG, QLM_SLUG,
+];
+console.log('\n[render rules] Required Rewrite rules in the Render dashboard');
+console.log('  (Redirects/Rewrites · Action: Rewrite · ABOVE the /* catch-all):');
+for (const slug of LANDING_SLUGS) {
+  console.log(`  /${slug}  ->  /${slug}/index.html`);
+}
+console.log('  /*  ->  /index.html   (SPA fallback · keep LAST)');
+console.log(`  [render rules] ${LANDING_SLUGS.length} landing rules + 1 catch-all expected.\n`);
