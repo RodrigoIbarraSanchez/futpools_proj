@@ -103,7 +103,7 @@ export function WorldCup2026Landing() {
         <div className="wc-hero-inner">
           <div className="wc-hero-copy">
             <div className="wc-kicker">◆ {c('CALENDARIO OFICIAL · MUNDIAL 2026', 'OFFICIAL SCHEDULE · WORLD CUP 2026')}</div>
-            <h1>{c('Calendario del Mundial 2026', 'World Cup 2026 Calendar')}</h1>
+            <h1>{c('Calendario Mundial 2026', 'World Cup 2026 Calendar')}</h1>
             <p className="wc-sub wc-lead">
               {c(
                 'El calendario del Mundial 2026 ya está aquí: los 104 partidos, 48 selecciones y 16 sedes en Estados Unidos, México y Canadá. Consulta las fechas y los horarios en tu zona, y añade los partidos a tu calendario en segundos. Es gratis, sin app ni registro.',
