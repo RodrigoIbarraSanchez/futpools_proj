@@ -4,6 +4,7 @@ const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const { applyDelta } = require('../services/transactionService');
 const { sendTelegramMessage } = require('../services/telegramService');
+const { welcomeNewUser } = require('../services/brevoService');
 
 const { ADMIN_EMAILS } = require('../middleware/auth');
 const RESET_CODE_EXPIRY_MINUTES = 15;
@@ -141,6 +142,12 @@ exports.register = async (req, res) => {
     } catch (notifyErr) {
       console.warn('[Auth] signup telegram alert failed:', notifyErr.message);
     }
+
+    // Brevo: register the contact in the marketing list + send the welcome
+    // email. Best-effort and fully detached (same contract as the Telegram
+    // alert above) — a Brevo outage or missing config must never affect
+    // registration. No-op until BREVO_API_KEY is set.
+    welcomeNewUser(user).catch((e) => console.warn('[Auth] brevo welcome failed:', e.message));
 
     // v3 signup bonus — credit the new account and write a ledger row so the
     // balance change is auditable. Idempotent via signup:<userId> in case the

@@ -10,6 +10,7 @@
     "sync:football": "node src/scripts/syncFootball.js",
     "telegram:chatid": "node src/scripts/telegramChatId.js",
     "telegram:test": "node src/scripts/telegramTest.js",
+    "brevo:backfill": "node src/scripts/brevoBackfill.js",
     "test": "node --test src/lib/prizeLadder.test.js"
   },
   "dependencies": {
