@@ -7,7 +7,7 @@ import { AppBackground } from '../arena-ui/AppBackground';
 import {
   HudFrame, ArcadeButton, ArenaLabel, arenaInputStyle,
 } from '../arena-ui/primitives';
-import { ComingSoonModal } from '../components/ComingSoonModal';
+import { ForgotPasswordModal } from '../components/ForgotPasswordModal';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 
 export function Login() {
@@ -19,7 +19,7 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,7 +101,7 @@ export function Login() {
 
         <button
           type="button"
-          onClick={() => setShowComingSoon(true)}
+          onClick={() => setShowForgot(true)}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 1,
@@ -225,7 +225,9 @@ export function Login() {
         </div>
       )}
 
-      {showComingSoon && <ComingSoonModal onClose={() => setShowComingSoon(false)} />}
+      {showForgot && (
+        <ForgotPasswordModal initialEmail={email} onClose={() => setShowForgot(false)} />
+      )}
     </>
   );
 }

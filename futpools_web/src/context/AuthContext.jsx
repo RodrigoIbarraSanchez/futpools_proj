@@ -124,6 +124,17 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  /// Adopt a session returned by an auth endpoint that signs the user in
+  /// directly (e.g. password reset → { token, user }). Mirrors `login` so the
+  /// app treats a post-reset user exactly like a fresh login.
+  const applySession = useCallback(({ token, user: u }) => {
+    if (!token) return;
+    localStorage.setItem(TOKEN_KEY, token);
+    setUser(u || null);
+    setError(null);
+    syncPendingOnboarding(token);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
@@ -161,6 +172,7 @@ export function AuthProvider({ children }) {
     setError: setErrorAll,
     login,
     register,
+    applySession,
     logout,
     fetchUser,
     updateDisplayName,
