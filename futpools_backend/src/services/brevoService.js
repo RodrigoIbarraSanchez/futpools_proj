@@ -21,6 +21,7 @@ const buildParticipationConfirmed = require('../emails/participationConfirmed');
 const buildPasswordReset = require('../emails/passwordReset');
 const buildPoolResult = require('../emails/poolResult');
 const buildNewPool = require('../emails/newPool');
+const buildPendingPayment = require('../emails/pendingPayment');
 const emailToken = require('../lib/emailToken');
 const User = require('../models/User');
 
@@ -129,6 +130,12 @@ async function sendParticipationConfirmed({ email, displayName, poolName, poolId
 /** Forgot-password → email the reset code. */
 async function sendPasswordResetCode({ email, displayName, code, minutes }) {
   const { subject, html } = buildPasswordReset({ code, minutes });
+  return sendEmail({ to: email, name: displayName, subject, html });
+}
+
+/** Stale manual-payment intent → nudge the payer to finish paying. */
+async function sendPendingPaymentReminder({ email, displayName, poolName, poolId, amountMXN, amountUSD, reference, method, clabe, beneficiary, bank }) {
+  const { subject, html } = buildPendingPayment({ poolName, poolId, amountMXN, amountUSD, reference, method, clabe, beneficiary, bank });
   return sendEmail({ to: email, name: displayName, subject, html });
 }
 
@@ -247,6 +254,7 @@ module.exports = {
   welcomeNewUser,
   sendParticipationConfirmed,
   sendPasswordResetCode,
+  sendPendingPaymentReminder,
   sendPoolResultsForSettlement,
   sendNewPoolAnnouncement,
 };

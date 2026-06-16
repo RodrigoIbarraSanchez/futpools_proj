@@ -42,6 +42,10 @@ const speiPaymentSchema = new mongoose.Schema({
   // tracking key ("clave de rastreo") to make reconciliation easier.
   userMarkedPaidAt: { type: Date, default: null, index: true },
   userNote: { type: String, default: '' },
+  // Set once the "complete your payment" nudge email has been sent (one-shot,
+  // see pendingPaymentReminderService). Keeps the 1-minute scheduler from
+  // re-emailing the same stale intent on every tick.
+  reminderSentAt: { type: Date, default: null, index: true },
   // Set once an admin confirms the transfer arrived. `entry` links to the
   // QuinielaEntry created at confirmation (idempotency: a confirmed
   // payment already has an entry, so re-confirming is a no-op).
