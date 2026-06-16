@@ -148,6 +148,10 @@ const quinielaSchema = new mongoose.Schema({
   },
   settledAt: { type: Date },
   winnerUserIds: { type: [mongoose.Schema.Types.ObjectId], default: [] },
+  // Set once the "last call" reminder has gone out (a few hours before
+  // startDate, to opted-in non-entrants). One-shot per pool, see
+  // lifecycleEmailService.remindClosingPools.
+  closingReminderSentAt: { type: Date, default: null },
 
   // Admin-only. When set, the pool is rendered as a "real prize pool"
   // with the bundled asset image, AMOE + Apple disclaimers in the

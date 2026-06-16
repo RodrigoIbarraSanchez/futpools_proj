@@ -3,7 +3,7 @@
  * a new PUBLIC pool. Marketing email, so it carries a one-click unsubscribe link
  * in the footer (and brevoService sets the List-Unsubscribe header to match).
  */
-const { renderEmail, esc, WEB } = require('./layout');
+const { renderEmail, esc, WEB, unsubFooter } = require('./layout');
 
 module.exports = function newPool({ poolName, poolId, prizeLabel = '', unsubscribeUrl = '' } = {}) {
   const poolUrl = `${WEB}/pool/${encodeURIComponent(String(poolId || ''))}`;
@@ -11,9 +11,7 @@ module.exports = function newPool({ poolName, poolId, prizeLabel = '', unsubscri
   const prizeBits = prizeLabel
     ? `<p style="margin:0 0 14px;">Premio: <strong style="color:#21E28C;">${esc(prizeLabel)}</strong>.</p>`
     : '';
-  const footerExtra = unsubscribeUrl
-    ? `<div style="margin-top:10px;"><a href="${esc(unsubscribeUrl)}" style="color:#9FB0AD;text-decoration:underline;">Darme de baja de novedades</a></div>`
-    : '';
+  const footerExtra = unsubFooter(unsubscribeUrl);
 
   return {
     subject: `Nueva quiniela: ${poolName || '¡ya está abierta!'}`,

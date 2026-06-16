@@ -16,6 +16,7 @@ const QuinielaEntry = require('../models/QuinielaEntry');
 const User = require('../models/User');
 const { refundEntry } = require('../services/poolPaymentService');
 const { prizeForCorrect } = require('../lib/prizeLadder');
+const brevoService = require('../services/brevoService');
 
 /**
  * GET /admin/payouts — pools whose settlementStatus = 'settled' AND
@@ -221,6 +222,12 @@ exports.markPoolPaid = async (req, res) => {
     pool.winnerPaidNote = (req.body?.note || '').toString().trim().slice(0, 500);
     await pool.save();
     console.log(`[admin/payouts] pool=${pool._id} marked paid by ${req.user.email}`);
+
+    // Best-effort: email each winner their payout receipt. Never blocks the
+    // admin action.
+    brevoService.sendPrizePaidForPool({ pool })
+      .catch((e) => console.warn('[admin/payouts] brevo prize-paid email failed:', e.message));
+
     res.json({
       ok: true,
       winnerPaidAt: pool.winnerPaidAt,

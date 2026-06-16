@@ -285,6 +285,12 @@ async function dailyPickTick() {
     const { remindStalePendingPayments } = require('./pendingPaymentReminderService');
     await remindStalePendingPayments();
   } catch (err) { console.warn('[PendingPayment] tick error:', err.message); }
+  // Lifecycle/marketing sweeps (closing-soon, activation, win-back, weekly
+  // digest). Self-throttled to ~15 min internally, so calling every tick is fine.
+  try {
+    const { runLifecycleSweeps } = require('./lifecycleEmailService');
+    await runLifecycleSweeps();
+  } catch (err) { console.warn('[lifecycle] tick error:', err.message); }
 }
 
 function startDailyPickScheduler() {

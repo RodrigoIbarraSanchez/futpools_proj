@@ -22,8 +22,11 @@ const buildPasswordReset = require('../emails/passwordReset');
 const buildPoolResult = require('../emails/poolResult');
 const buildNewPool = require('../emails/newPool');
 const buildPendingPayment = require('../emails/pendingPayment');
+const buildPaymentReceived = require('../emails/paymentReceived');
+const buildPrizePaid = require('../emails/prizePaid');
 const emailToken = require('../lib/emailToken');
 const User = require('../models/User');
+const QuinielaEntry = require('../models/QuinielaEntry');
 
 const API = 'https://api.brevo.com/v3';
 
@@ -41,6 +44,11 @@ const unsubscribeUrl = (userId) => {
   const id = String(userId);
   return `${apiBase()}/email/unsubscribe?u=${encodeURIComponent(id)}&t=${emailToken.sign(id)}`;
 };
+// Gmail/Apple Mail native unsubscribe button (RFC 8058 one-click).
+const listUnsubHeaders = (url) => ({
+  'List-Unsubscribe': `<${url}>`,
+  'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+});
 
 function isConfigured() {
   return !!apiKey();
@@ -139,6 +147,54 @@ async function sendPendingPaymentReminder({ email, displayName, poolName, poolId
   return sendEmail({ to: email, name: displayName, subject, html });
 }
 
+/** Payer tapped "I've transferred" → reassure we got it + are verifying. */
+async function sendPaymentReceivedAck({ email, displayName, poolName, poolId }) {
+  const { subject, html } = buildPaymentReceived({ poolName, poolId });
+  return sendEmail({ to: email, name: displayName, subject, html });
+}
+
+/**
+ * Admin marked a settled pool as paid → email each winner their payout receipt.
+ * Ladder pools: per-winner prize = sum of that user's winning entries' prizeMXN.
+ * Standard pools: no per-user MXN, so the email falls back to prizeLabel.
+ */
+async function sendPrizePaidForPool({ pool }) {
+  if (!isConfigured()) return { ok: false, reason: 'NOT_CONFIGURED' };
+  if (!pool || !pool._id) return { ok: false, reason: 'NO_POOL' };
+  const winnerIds = pool.winnerUserIds || [];
+  if (!winnerIds.length) return { ok: true, sent: 0 };
+
+  const isLadder = pool.poolType === 'prize_ladder';
+  const prizeByUser = new Map();
+  if (isLadder) {
+    const entries = await QuinielaEntry.find({
+      quiniela: pool._id, refundedAt: null, user: { $in: winnerIds },
+    }).select('user prizeMXN').lean();
+    for (const e of entries) {
+      const k = String(e.user);
+      prizeByUser.set(k, (prizeByUser.get(k) || 0) + (e.prizeMXN || 0));
+    }
+  }
+
+  const users = await User.find({ _id: { $in: winnerIds } })
+    .select('email displayName username').lean();
+  let sent = 0;
+  for (const u of users) {
+    if (!u.email) continue;
+    const { subject, html } = buildPrizePaid({
+      poolName: pool.name,
+      poolId: String(pool._id),
+      prizeMXN: isLadder ? (prizeByUser.get(String(u._id)) || 0) : 0,
+      prizeLabel: pool.prizeLabel || '',
+      note: pool.winnerPaidNote || '',
+    });
+    const res = await sendEmail({ to: u.email, name: u.displayName || u.username, subject, html });
+    if (res.ok) sent += 1;
+  }
+  console.log(`[brevo] prize paid pool=${pool._id} sent=${sent}/${users.length}`);
+  return { ok: true, sent };
+}
+
 /**
  * Pool settled → email every participant their result (winner vs participant).
  * Aggregates by user (a user with several entries gets ONE email, using their
@@ -223,10 +279,7 @@ async function sendNewPoolAnnouncement(pool) {
         name: u.displayName || u.username,
         subject,
         html,
-        headers: {
-          'List-Unsubscribe': `<${unsub}>`,
-          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-        },
+        headers: listUnsubHeaders(unsub),
       });
       if (res.ok) sent += 1;
     });
@@ -251,10 +304,14 @@ module.exports = {
   sendEmail,
   upsertContact,
   contactPayload,
+  marketingUnsubscribeUrl: unsubscribeUrl,
+  listUnsubHeaders,
   welcomeNewUser,
   sendParticipationConfirmed,
   sendPasswordResetCode,
   sendPendingPaymentReminder,
+  sendPaymentReceivedAck,
+  sendPrizePaidForPool,
   sendPoolResultsForSettlement,
   sendNewPoolAnnouncement,
 };

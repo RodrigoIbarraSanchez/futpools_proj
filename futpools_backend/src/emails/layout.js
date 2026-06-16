@@ -97,4 +97,10 @@ function renderEmail({ preheader = '', heading = '', bodyHtml = '', cta = null, 
 </body></html>`;
 }
 
-module.exports = { renderEmail, button, esc, WEB, C, FONT };
+/** Footer "unsubscribe" line for marketing emails (pass through to footerExtra). */
+function unsubFooter(url) {
+  if (!url) return '';
+  return `<div style="margin-top:10px;"><a href="${esc(url)}" style="color:${C.textDim};text-decoration:underline;">Darme de baja de novedades</a></div>`;
+}
+
+module.exports = { renderEmail, button, esc, unsubFooter, WEB, C, FONT };

@@ -618,6 +618,17 @@ async function markSpeiPaidByUser({ user, paymentId, note }) {
     console.warn('[poolPayment] telegram notify skipped:', e.message);
   }
 
+  // Best-effort: reassure the payer we received their notice (account email —
+  // ignores the marketing opt-out). Fire-and-forget; never blocks the action.
+  Quiniela.findById(payment.quiniela).select('name').lean()
+    .then((p) => brevoService.sendPaymentReceivedAck({
+      email: user.email,
+      displayName: user.displayName || user.username,
+      poolName: p?.name,
+      poolId: String(payment.quiniela),
+    }))
+    .catch((e) => console.warn('[poolPayment] brevo ack email failed:', e.message));
+
   return { ok: true };
 }
 
