@@ -7,6 +7,7 @@ const { isAdminUser } = require('../middleware/auth');
 const { applyScoringToQuiniela } = require('./ratingController');
 const { debitOrFail, applyDelta } = require('../services/transactionService');
 const { prizeForCorrect, validateLadder, DEFAULT_LADDER } = require('../lib/prizeLadder');
+const brevoService = require('../services/brevoService');
 
 /**
  * Resolve the coin cost a participant pays/paid for a single entry in the
@@ -345,6 +346,17 @@ exports.createQuiniela = async (req, res) => {
     });
 
     console.log(`[Quiniela] create user=${req.user._id} code=${inviteCode} fixtures=${normalizedFixtures.length}`);
+
+    // Best-effort: announce brand-new PUBLIC pools to all opted-in users.
+    // `vis === 'public'` is admin-only (see line ~232), so private/invite
+    // pools never trigger a mass blast. Fire-and-forget — never blocks or
+    // fails the create response.
+    if (vis === 'public') {
+      brevoService
+        .sendNewPoolAnnouncement(doc)
+        .catch((err) => console.warn('[brevo] new-pool announce failed:', err.message));
+    }
+
     const out = addPoolStatus({
       ...doc.toObject(),
       entriesCount: 0,

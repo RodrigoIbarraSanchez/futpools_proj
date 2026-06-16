@@ -25,6 +25,7 @@ const dailyPickRoutes = require('./routes/dailyPick');
 const sweepstakesRoutes = require('./routes/sweepstakes');
 const poolPaymentsRoutes = require('./routes/poolPayments');
 const publicRoutes = require('./routes/public');
+const emailRoutes = require('./routes/email');
 const ogRoutes = require('./routes/og');
 const worldCup2026Routes = require('./routes/worldCup2026');
 
@@ -98,6 +99,10 @@ app.use('/pools', poolPaymentsRoutes);
 // Unauthenticated read-only endpoints used by the iOS onboarding
 // "App Demo" screen (real fixtures before signup).
 app.use('/public', publicRoutes);
+
+// Public email endpoints (one-click unsubscribe for marketing blasts). No
+// auth: the link itself carries an HMAC token tying it to the user id.
+app.use('/email', emailRoutes);
 
 // Public World Cup 2026 calendar — powers /calendariomundial2026 on the
 // web. No auth: visitors export an .ics feed of all 104 matches (or a

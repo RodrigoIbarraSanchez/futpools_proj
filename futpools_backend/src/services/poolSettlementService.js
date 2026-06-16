@@ -21,6 +21,7 @@ const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const { fetchFixturesByIds } = require('./apiFootball');
 const { prizeForCorrect } = require('../lib/prizeLadder');
+const brevoService = require('./brevoService');
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']);
 
@@ -108,6 +109,13 @@ async function settlePool(pool) {
     ? ladderWinnerIds
     : [winnerEntry.user?._id].filter(Boolean);
   await pool.save();
+
+  // Best-effort: email every participant their result. Runs exactly once per
+  // pool (this block is past the settlementStatus !== 'pending' guard). Never
+  // awaited so a Brevo hiccup can't stall the scheduler.
+  brevoService
+    .sendPoolResultsForSettlement({ pool, entries })
+    .catch((err) => console.warn('[brevo] pool results failed:', err.message));
 
   if (isLadder) {
     console.log(`[PoolSettlement] settled ladder pool=${pool._id} winners=${ladderWinnerIds.length}/${entries.length} entries`);

@@ -133,6 +133,12 @@ const userSchema = new mongoose.Schema({
 
   passwordResetCode: { type: String, select: false },
   passwordResetExpiresAt: { type: Date, select: false },
+
+  // Marketing/announcement opt-out. Account emails (password reset, payment
+  // confirmation, pool results) IGNORE this — only mass "new pool" blasts
+  // check it. Flipped true by the public one-click /email/unsubscribe link.
+  emailOptOut: { type: Boolean, default: false },
+  emailOptOutAt: { type: Date, default: null },
   createdAt: {
     type: Date,
     default: Date.now,
