@@ -134,8 +134,8 @@ async function sendPasswordResetCode({ email, displayName, code, minutes }) {
 }
 
 /** Stale manual-payment intent → nudge the payer to finish paying. */
-async function sendPendingPaymentReminder({ email, displayName, poolName, poolId, amountMXN, amountUSD, reference, method, clabe, beneficiary, bank }) {
-  const { subject, html } = buildPendingPayment({ poolName, poolId, amountMXN, amountUSD, reference, method, clabe, beneficiary, bank });
+async function sendPendingPaymentReminder({ email, displayName, poolName, poolId, amountMXN, amountUSD, reference, method, clabe, beneficiary, bank, startsAtText }) {
+  const { subject, html } = buildPendingPayment({ poolName, poolId, amountMXN, amountUSD, reference, method, clabe, beneficiary, bank, startsAtText });
   return sendEmail({ to: email, name: displayName, subject, html });
 }
 

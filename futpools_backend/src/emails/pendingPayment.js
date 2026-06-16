@@ -15,7 +15,7 @@ function detailRow(label, value) {
 
 module.exports = function pendingPayment({
   poolName, poolId, amountMXN = 0, amountUSD = 0, reference = '',
-  method = 'spei', clabe = '', beneficiary = '', bank = '',
+  method = 'spei', clabe = '', beneficiary = '', bank = '', startsAtText = '',
 } = {}) {
   const poolUrl = `${WEB}/pool/${encodeURIComponent(String(poolId || ''))}`;
   const safeName = esc(poolName || 'tu quiniela');
@@ -46,6 +46,7 @@ module.exports = function pendingPayment({
       bodyHtml: `
         <p style="margin:0 0 14px;">Apartaste tu lugar en <strong style="color:#21E28C;">${safeName}</strong>, pero todavía no recibimos tu ${isPaypal ? 'pago' : 'transferencia'}. Termínalo para que tus pronósticos entren a competir.</p>
         ${detailBox}
+        ${startsAtText ? `<p style="margin:14px 0 0;color:#EAF2F0;">⏳ La quiniela empieza el <strong style="color:#21E28C;">${esc(startsAtText)}</strong>. Paga antes para no quedarte fuera.</p>` : ''}
         <p style="margin:14px 0 0;color:#9FB0AD;">${isPaypal
           ? 'Realiza el pago por PayPal e incluye la referencia.'
           : 'Haz la transferencia SPEI a la CLABE de arriba e incluye la referencia en el concepto.'} En cuanto confirmemos tu pago te llega el correo de participación confirmada.</p>`,
