@@ -1,36 +1,32 @@
 /**
- * Brevo (ex-Sendinblue) email integration. Two jobs:
- *   1. upsertContact()    — add/update the user as a contact in a list, so the
- *                           marketing CAMPAIGN (sent from the Brevo dashboard)
- *                           and future newsletters have an up-to-date audience.
- *   2. sendWelcomeEmail() — send the transactional "welcome" email via a Brevo
- *                           template when a user registers.
- * welcomeNewUser() orchestrates both for the signup hook.
+ * Brevo (ex-Sendinblue) email facade. All emails are HTML built in code
+ * (src/emails/*) and sent via Brevo's transactional API with htmlContent — no
+ * Brevo dashboard templates. Also keeps contacts synced to a marketing list for
+ * campaigns/newsletters.
  *
  * Setup (.env):
- *   BREVO_API_KEY=...                  (Brevo → SMTP & API → API Keys)
- *   BREVO_LIST_ID=12                   (Brevo → Contacts → Lists → the list id)
- *   BREVO_WELCOME_TEMPLATE_ID=3        (Brevo → Transactional → Templates → id)
- *     NB: this must be a TRANSACTIONAL template (not a marketing Campaign) —
- *     the transactional API references it by numeric id.
- *   Sender + DKIM/DMARC are configured on the Brevo side (authenticated
- *   domain futpools.com); the template carries the sender.
+ *   BREVO_API_KEY=...              (Brevo → SMTP & API → API Keys)
+ *   BREVO_LIST_ID=12              (Brevo → Contacts → Lists → id, for the sync)
+ *   BREVO_SENDER_EMAIL=rodrigo@futpools.com   (authenticated domain sender)
+ *   BREVO_SENDER_NAME=Rodrigo de FutPools
  *
- * Like telegramService, every call is BEST-EFFORT: missing config or a Brevo
- * outage logs a warning and never throws into the caller's flow (a registration
- * must succeed even if the email/contact sync fails). Uses the REST API via the
- * global fetch (Node 18+); no SDK dependency.
+ * Like telegramService, EVERY call is best-effort: missing config or a Brevo
+ * outage logs a warning and never throws into the caller's flow (registration,
+ * payment confirmation, etc. must succeed even if email fails). REST API via the
+ * global fetch (Node 18+); no SDK.
  */
+
+const buildWelcome = require('../emails/welcome');
+const buildParticipationConfirmed = require('../emails/participationConfirmed');
+const buildPasswordReset = require('../emails/passwordReset');
 
 const API = 'https://api.brevo.com/v3';
 
 const apiKey = () => process.env.BREVO_API_KEY || '';
+const senderEmail = () => process.env.BREVO_SENDER_EMAIL || 'rodrigo@futpools.com';
+const senderName = () => process.env.BREVO_SENDER_NAME || 'Rodrigo de FutPools';
 const listId = () => {
   const n = Number(process.env.BREVO_LIST_ID);
-  return Number.isInteger(n) && n > 0 ? n : null;
-};
-const welcomeTemplateId = () => {
-  const n = Number(process.env.BREVO_WELCOME_TEMPLATE_ID);
   return Number.isInteger(n) && n > 0 ? n : null;
 };
 
@@ -38,15 +34,11 @@ function isConfigured() {
   return !!apiKey();
 }
 
-/** POST to a Brevo endpoint. Throws on a non-2xx so callers can log + swallow. */
+/** POST to a Brevo endpoint. Throws on non-2xx so callers can log + swallow. */
 async function brevoPost(path, body) {
   const res = await fetch(`${API}${path}`, {
     method: 'POST',
-    headers: {
-      'api-key': apiKey(),
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
+    headers: { 'api-key': apiKey(), 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -56,19 +48,33 @@ async function brevoPost(path, body) {
   return res;
 }
 
-/** Map a user doc to the contact attributes Brevo stores. */
-function contactPayload(user) {
-  return {
-    email: user.email,
-    displayName: user.displayName || user.username || '',
-    locale: user.locale || 'es',
-  };
+/**
+ * Send one HTML email. Best-effort: returns { ok } and never rejects.
+ *   to      — recipient email (string)
+ *   name    — recipient display name (optional)
+ *   subject, html — from an emails/* builder
+ *   replyTo — optional { email, name }
+ */
+async function sendEmail({ to, name, subject, html, replyTo }) {
+  if (!isConfigured()) return { ok: false, reason: 'NOT_CONFIGURED' };
+  if (!to || !subject || !html) return { ok: false, reason: 'MISSING_FIELDS' };
+  try {
+    const body = {
+      sender: { email: senderEmail(), name: senderName() },
+      to: [{ email: to, name: name || to }],
+      subject,
+      htmlContent: html,
+    };
+    if (replyTo) body.replyTo = replyTo;
+    await brevoPost('/smtp/email', body);
+    return { ok: true };
+  } catch (err) {
+    console.warn('[brevo] sendEmail failed:', err.message);
+    return { ok: false, error: err.message };
+  }
 }
 
-/**
- * Create or update the contact (idempotent by email) and add it to the
- * marketing list. Returns { ok } and never rejects.
- */
+/** Create/update the contact (idempotent by email) + add to the marketing list. */
 async function upsertContact({ email, displayName, locale }) {
   if (!isConfigured()) return { ok: false, reason: 'NOT_CONFIGURED' };
   if (!email) return { ok: false, reason: 'NO_EMAIL' };
@@ -76,7 +82,7 @@ async function upsertContact({ email, displayName, locale }) {
     const body = {
       email,
       attributes: { FIRSTNAME: displayName || '', LOCALE: locale || 'es' },
-      updateEnabled: true, // upsert: update if the contact already exists
+      updateEnabled: true,
     };
     if (listId()) body.listIds = [listId()];
     await brevoPost('/contacts', body);
@@ -87,41 +93,39 @@ async function upsertContact({ email, displayName, locale }) {
   }
 }
 
-/**
- * Send the transactional welcome email from the configured Brevo template.
- * Passes FIRSTNAME both as a template param and (via the prior upsert) as a
- * contact attribute, so the template renders the name whether it uses
- * {{ params.FIRSTNAME }} or {{ contact.FIRSTNAME }}. Never rejects.
- */
-async function sendWelcomeEmail({ email, displayName, locale }) {
-  if (!isConfigured()) return { ok: false, reason: 'NOT_CONFIGURED' };
-  if (!email) return { ok: false, reason: 'NO_EMAIL' };
-  if (!welcomeTemplateId()) {
-    console.warn('[brevo] BREVO_WELCOME_TEMPLATE_ID not set — skipping welcome email');
-    return { ok: false, reason: 'NO_TEMPLATE' };
-  }
-  try {
-    await brevoPost('/smtp/email', {
-      templateId: welcomeTemplateId(),
-      to: [{ email, name: displayName || email }],
-      params: { FIRSTNAME: displayName || '', LOCALE: locale || 'es' },
-    });
-    return { ok: true };
-  } catch (err) {
-    console.warn('[brevo] sendWelcomeEmail failed:', err.message);
-    return { ok: false, error: err.message };
-  }
-}
+const contactPayload = (user) => ({
+  email: user.email,
+  displayName: user.displayName || user.username || '',
+  locale: user.locale || 'es',
+});
 
-/**
- * Signup side-effects: register the contact (so they land in the marketing
- * list AND contact.FIRSTNAME resolves in the template) THEN send the welcome.
- * Best-effort; never throws. Call fire-and-forget from the register handler.
- */
+// ── Typed senders (call these from the controllers; all best-effort) ──
+
+/** Signup: sync the contact to the list, then send the welcome email. */
 async function welcomeNewUser(user) {
-  const payload = contactPayload(user);
-  await upsertContact(payload);
-  await sendWelcomeEmail(payload);
+  await upsertContact(contactPayload(user));
+  const { subject, html } = buildWelcome({ displayName: user.displayName || user.username });
+  return sendEmail({ to: user.email, name: user.displayName || user.username, subject, html });
 }
 
-module.exports = { isConfigured, upsertContact, sendWelcomeEmail, welcomeNewUser, contactPayload };
+/** Admin confirmed a SPEI payment → "participation confirmed" + re-engage CTA. */
+async function sendParticipationConfirmed({ email, displayName, poolName, poolId }) {
+  const { subject, html } = buildParticipationConfirmed({ poolName, poolId });
+  return sendEmail({ to: email, name: displayName, subject, html });
+}
+
+/** Forgot-password → email the reset code. */
+async function sendPasswordResetCode({ email, displayName, code, minutes }) {
+  const { subject, html } = buildPasswordReset({ code, minutes });
+  return sendEmail({ to: email, name: displayName, subject, html });
+}
+
+module.exports = {
+  isConfigured,
+  sendEmail,
+  upsertContact,
+  contactPayload,
+  welcomeNewUser,
+  sendParticipationConfirmed,
+  sendPasswordResetCode,
+};

@@ -24,7 +24,9 @@ const Stripe = require('stripe');
 const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const SpeiPayment = require('../models/SpeiPayment');
+const User = require('../models/User');
 const { sendTelegramMessage } = require('./telegramService');
+const brevoService = require('./brevoService');
 const { isAdminUser } = require('../middleware/auth');
 
 let stripeClient = null;
@@ -553,6 +555,21 @@ async function confirmSpeiPayment({ paymentId, adminUser }) {
   await payment.save();
 
   console.log(`[poolPayment] SPEI confirmed — ref=${payment.reference} entry=${entry._id} by=${adminUser?.email}`);
+
+  // Participation-confirmed email (best-effort) — re-engage: invite them to add
+  // another entry to the same pool (more entries = more chances). Fire-and-forget;
+  // never blocks/affects the admin's confirm response.
+  User.findById(payment.user).select('email displayName username').lean()
+    .then((u) => (u?.email
+      ? brevoService.sendParticipationConfirmed({
+          email: u.email,
+          displayName: u.displayName || u.username,
+          poolName: pool.name,
+          poolId: String(pool._id),
+        })
+      : null))
+    .catch((e) => console.warn('[poolPayment] brevo confirm email failed:', e.message));
+
   return { ok: true, entryId: String(entry._id) };
 }
 

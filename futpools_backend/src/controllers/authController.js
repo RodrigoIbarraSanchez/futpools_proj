@@ -4,7 +4,7 @@ const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const { applyDelta } = require('../services/transactionService');
 const { sendTelegramMessage } = require('../services/telegramService');
-const { welcomeNewUser } = require('../services/brevoService');
+const { welcomeNewUser, sendPasswordResetCode } = require('../services/brevoService');
 
 const { ADMIN_EMAILS } = require('../middleware/auth');
 const RESET_CODE_EXPIRY_MINUTES = 15;
@@ -282,8 +282,15 @@ exports.forgotPassword = async (req, res) => {
       if (process.env.NODE_ENV !== 'production') {
         console.log(`[Auth] Password reset code for ${normalizedEmail}: ${code} (expires in ${RESET_CODE_EXPIRY_MINUTES} min)`);
       }
-      // Production: connect an email provider (e.g. nodemailer + SMTP, Resend, SendGrid)
-      // and send the code to user.email. Then set isPasswordRecoveryEnabled = true in the app.
+      // Email the reset code (best-effort; never blocks the response). The
+      // endpoint always returns the same generic message regardless, so it
+      // doesn't leak whether the account exists.
+      sendPasswordResetCode({
+        email: user.email,
+        displayName: user.displayName || user.username,
+        code,
+        minutes: RESET_CODE_EXPIRY_MINUTES,
+      }).catch((e) => console.warn('[Auth] brevo reset email failed:', e.message));
     }
     res.json({
       message: 'If an account exists with this email, you will receive a recovery code shortly.',
