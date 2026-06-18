@@ -17,6 +17,10 @@ const quinielaEntrySchema = new mongoose.Schema({
   score: { type: Number },
   totalPossibleAtScoring: { type: Number },
   ratingDelta: { type: Number },
+  // prize_ladder pools only: the fixed MXN prize this entry won, derived
+  // from `score` via the pool's prizeLadder at settlement. null for
+  // standard (single-winner) pools and for unsettled entries.
+  prizeMXN: { type: Number, default: null },
   // ── simple_version (Phase 2) — Stripe per-entry checkout ─────────────
   // Sparse unique on stripeSessionId is the idempotency guard for the
   // webhook: if Stripe re-delivers `checkout.session.completed`, the

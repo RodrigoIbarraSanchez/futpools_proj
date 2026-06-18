@@ -278,6 +278,19 @@ async function dailyPickTick() {
     const { settleEligiblePools } = require('./poolSettlementService');
     await settleEligiblePools();
   } catch (err) { console.warn('[PoolSettlement] tick error:', err.message); }
+  // Nudge stale manual-payment intents (user composed picks but never paid).
+  // Self-throttled by reminderSentAt + the createdAt window, so calling it
+  // every minute is cheap and idempotent.
+  try {
+    const { remindStalePendingPayments } = require('./pendingPaymentReminderService');
+    await remindStalePendingPayments();
+  } catch (err) { console.warn('[PendingPayment] tick error:', err.message); }
+  // Lifecycle/marketing sweeps (closing-soon, activation, win-back, weekly
+  // digest). Self-throttled to ~15 min internally, so calling every tick is fine.
+  try {
+    const { runLifecycleSweeps } = require('./lifecycleEmailService');
+    await runLifecycleSweeps();
+  } catch (err) { console.warn('[lifecycle] tick error:', err.message); }
 }
 
 function startDailyPickScheduler() {

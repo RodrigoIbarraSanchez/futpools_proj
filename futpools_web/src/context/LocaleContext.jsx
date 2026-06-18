@@ -51,7 +51,10 @@ function browserLocaleFallback() {
   return (navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en';
 }
 
-const LocaleContext = createContext(null);
+// Exported so the build-time SSR prerender (src/ssr/landings.jsx) can supply a
+// fixed locale per slug WITHOUT the real LocaleProvider, which reads
+// localStorage/navigator and would crash in Node.
+export const LocaleContext = createContext(null);
 
 export function LocaleProvider({ children }) {
   // `rawLocale` is the user's explicit pick ('' = auto). `autoLocale` is what

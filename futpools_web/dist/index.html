@@ -4,12 +4,74 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#07090D" />
-    <title>FutPools Arena</title>
+
+    <!-- Favicon + app icons (FutPools FP monogram, from the iOS app icon). -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Google tag (gtag.js) · G-BJ5WNM9T05. Production hostnames only, so
+         localhost/preview visits never count. page_view is sent manually
+         per route change by the SPA (AnalyticsTracker in App.jsx) — that's
+         why send_page_view is false here; a second emitter double-counts. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        if (h !== 'futpools.com' && h !== 'www.futpools.com') return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-BJ5WNM9T05';
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { dataLayer.push(arguments); };
+        gtag('js', new Date());
+        gtag('config', 'G-BJ5WNM9T05', { send_page_view: false });
+      })();
+    </script>
+
+    <title>FutPools: quinielas de fútbol con premios reales</title>
+    <meta name="description" content="FutPools es la app de quinielas de fútbol con amigos: pronostica la Liga MX, el Mundial y más, compite y gana premios reales. Juega desde México (SPEI) o Estados Unidos (PayPal)." />
+
+    <!--
+      Open Graph + Twitter Card metadata for social shares (WhatsApp,
+      iMessage, Telegram, Twitter, Facebook). These CALENDAR tags are the
+      source strings that scripts/build-i18n-shells.js swaps FROM to build
+      every per-landing shell. The ROOT dist/index.html (futpools.com/) is
+      itself rewritten by that script's homeShell() to carry the BRAND
+      metadata instead — so the homepage share is about FutPools, not the
+      calendar. Do not "fix" these to brand copy here or the swap machinery
+      breaks; change homeShell() for the homepage.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FutPools" />
+    <meta property="og:title" content="FutPools: quinielas de fútbol con premios reales" />
+    <meta property="og:description" content="Quinielas de fútbol con amigos: pronostica la Liga MX, el Mundial y más, compite y gana premios reales. Juega desde México o Estados Unidos." />
+    <meta property="og:url" content="https://futpools.com/" />
+    <meta property="og:image" content="https://futpools.com/og-futpools.png" />
+    <meta property="og:image:secure_url" content="https://futpools.com/og-futpools.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="FutPools: quinielas de fútbol con premios reales." />
+    <meta property="og:locale" content="es_MX" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FutPools: quinielas de fútbol con premios reales" />
+    <meta name="twitter:description" content="Quinielas de fútbol con amigos: pronostica, juega y gana premios reales. Desde México o Estados Unidos." />
+    <meta name="twitter:image" content="https://futpools.com/og-futpools.png" />
+    <meta name="twitter:image:alt" content="FutPools: quinielas de fútbol con premios reales." />
+
+    <!-- hreflang tells search engines we have ES and EN variants of the same page. -->
+    <link rel="canonical" href="https://futpools.com/" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-P5He4yIJ.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-S6SvJuSz.css">
+    <script type="module" crossorigin src="/assets/index-BPUt4wip.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-dYnEq2my.css">
   </head>
   <body>
     <div id="root"></div>

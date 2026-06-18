@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSafeBack } from '../lib/safeBack';
+import { inviteShareUrl } from '../lib/shareLinks';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
@@ -8,6 +9,7 @@ import { t, tFormat } from '../i18n/translations';
 import {
   HudFrame, ArcadeButton, ArenaLabel, arenaInputStyle, SectionLabel,
 } from '../arena-ui/primitives';
+import { DEFAULT_LADDER } from '../lib/prizeLadder';
 
 // ────────────────────────────────────────────────────────────────────
 // Helpers
@@ -31,11 +33,20 @@ function isUpcoming(iso) {
 
 const LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE', 'INT', 'SUSP']);
 
+// Statuses the backend rejects at pool creation — finished OR cancelled/
+// abandoned. Mirrors FINISHED_STATUSES in
+// futpools_backend/.../quinielaController.createQuiniela. A fixture with any
+// of these is NOT pickable even when its kickoff is still in the future: a
+// cancelled (CANC) or postponed friendly keeps its original future date but
+// will never be played, so it must not be selectable.
+const UNPICKABLE_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO', 'CANC', 'ABD', 'PST', 'TBD']);
+
 function isLiveFixture(fx) {
   return LIVE_STATUSES.has(String(fx?.status || '').toUpperCase());
 }
 
 function isPickable(fx) {
+  if (UNPICKABLE_STATUSES.has(String(fx?.status || '').toUpperCase())) return false;
   return isUpcoming(fx?.date) || isLiveFixture(fx);
 }
 
@@ -525,10 +536,25 @@ export function CreatePool() {
   // checkout. The legacy SPONSOR/COINS economy is gone. Default $50;
   // admin can override per pool.
   const [entryFeeMXN, setEntryFeeMXN] = useState(50);
+  // Pool format: 'standard' (one winner takes the pot) or 'prize_ladder'
+  // (every player wins a fixed prize by their number of aciertos).
+  const [poolType, setPoolType] = useState('standard');
+  // Editable ladder rows (only used when poolType === 'prize_ladder').
+  // Prefilled with the spec default; admin tweaks ranges + amounts.
+  const [prizeLadder, setPrizeLadder] = useState(() => DEFAULT_LADDER.map((r) => ({ ...r })));
   // Legacy state kept zeroed because the API still accepts these
   // fields on master — sending zeros keeps a backward-compat payload.
   const entryCostCoins = 0;
   const prizeCoins = 0;
+
+  const updateLadderRow = (i, field, value) => {
+    setPrizeLadder((prev) => prev.map((row, idx) => (
+      idx === i ? { ...row, [field]: value === '' ? '' : Number(value) } : row
+    )));
+  };
+  const removeLadderRow = (i) => setPrizeLadder((prev) => prev.filter((_, idx) => idx !== i));
+  const addLadderRow = () => setPrizeLadder((prev) => [...prev, { min: 0, max: 0, prizeMXN: 0 }]);
+  const resetLadder = () => setPrizeLadder(DEFAULT_LADDER.map((r) => ({ ...r })));
 
   // Basket: Map fixtureId → full fixture object (so we preserve kickoff/teams for submit)
   const [basket, setBasket] = useState(() => new Map());
@@ -591,6 +617,16 @@ export function CreatePool() {
         entryFeeMXN: Number(entryFeeMXN),
         entryCostCoins,
         prizeCoins,
+        // Pool format. For prize_ladder we send the editable ladder
+        // (coerced to numbers); standard pools omit it server-side.
+        poolType,
+        ...(poolType === 'prize_ladder' ? {
+          prizeLadder: prizeLadder.map((r) => ({
+            min: Number(r.min) || 0,
+            max: Number(r.max) || 0,
+            prizeMXN: Number(r.prizeMXN) || 0,
+          })),
+        } : {}),
         fixtures: selectedFixtures.map(fx => ({
           fixtureId: fx.fixtureId,
           leagueId:   fx.league?.id,
@@ -654,6 +690,85 @@ export function CreatePool() {
             style={{ ...arenaInputStyle, resize: 'vertical', fontFamily: 'var(--fp-mono)' }}
           />
         </div>
+
+        {/* POOL TYPE — admin chooses the competition format. */}
+        {isAdmin && (
+          <div style={{ marginBottom: 18 }}>
+            <SectionLabel color="var(--fp-primary)">{t(locale, 'POOL TYPE')}</SectionLabel>
+            <div style={{ height: 8 }} />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <EntryTypePill
+                active={poolType === 'standard'}
+                onClick={() => setPoolType('standard')}
+                title={t(locale, 'CLASSIC')}
+                subtitle={t(locale, 'Top score wins the pot')}
+              />
+              <EntryTypePill
+                active={poolType === 'prize_ladder'}
+                onClick={() => setPoolType('prize_ladder')}
+                title={t(locale, 'PRIZE LADDER')}
+                subtitle={t(locale, 'Win by number of aciertos')}
+              />
+            </div>
+
+            {poolType === 'prize_ladder' && (
+              <div style={{ marginTop: 12 }}>
+                <HudFrame clip="md" bg="var(--fp-surface)" style={{ padding: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <ArenaLabel>{t(locale, 'PRIZE LADDER (MXN BY ACIERTOS)')}</ArenaLabel>
+                    <div style={{ flex: 1 }} />
+                    <button type="button" onClick={resetLadder} style={{
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 1,
+                      color: 'var(--fp-accent)', textTransform: 'uppercase',
+                    }}>{t(locale, 'Reset')}</button>
+                  </div>
+
+                  {prizeLadder.map((row, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6,
+                    }}>
+                      <input type="number" min="0" value={row.min}
+                        onChange={(e) => updateLadderRow(i, 'min', e.target.value)}
+                        style={{ ...arenaInputStyle, width: 52, padding: '8px 6px', textAlign: 'center' }} />
+                      <span style={{ color: 'var(--fp-text-muted)', fontFamily: 'var(--fp-mono)' }}>–</span>
+                      <input type="number" min="0" value={row.max}
+                        onChange={(e) => updateLadderRow(i, 'max', e.target.value)}
+                        style={{ ...arenaInputStyle, width: 52, padding: '8px 6px', textAlign: 'center' }} />
+                      <div style={{
+                        fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 900,
+                        color: 'var(--fp-primary)', marginLeft: 4,
+                      }}>$</div>
+                      <input type="number" min="0" step="1" value={row.prizeMXN}
+                        onChange={(e) => updateLadderRow(i, 'prizeMXN', e.target.value)}
+                        style={{ ...arenaInputStyle, flex: 1, padding: '8px 10px',
+                          fontFamily: 'var(--fp-display)', fontWeight: 800 }} />
+                      <button type="button" onClick={() => removeLadderRow(i)} style={{
+                        background: 'transparent', border: 'none', cursor: 'pointer',
+                        color: 'var(--fp-danger)', fontSize: 16, lineHeight: 1, padding: 4,
+                      }}>×</button>
+                    </div>
+                  ))}
+
+                  <button type="button" onClick={addLadderRow} style={{
+                    marginTop: 4, width: '100%', padding: '8px',
+                    background: 'var(--fp-bg2)', border: '1px dashed var(--fp-stroke)',
+                    color: 'var(--fp-text-dim)', cursor: 'pointer',
+                    fontFamily: 'var(--fp-mono)', fontSize: 10, letterSpacing: 1.5,
+                    textTransform: 'uppercase', clipPath: 'var(--fp-clip-sm)',
+                  }}>+ {t(locale, 'Add rung')}</button>
+
+                  <div style={{
+                    marginTop: 10, fontFamily: 'var(--fp-mono)', fontSize: 10,
+                    color: 'var(--fp-text-dim)', lineHeight: 1.5,
+                  }}>
+                    {tFormat(locale, 'Ranges count aciertos (0–{total}). Platform pays each prize regardless of the pot.', { total: selectedFixtures.length })}
+                  </div>
+                </HudFrame>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ENTRY FEE — simple_version: flat MXN per entry, paid via Stripe.
             The legacy SPONSOR/COINS dual economy is gone (admin-only form,
@@ -891,9 +1006,9 @@ function CoinPresetChip({ amount, active, onClick, accent = 'var(--fp-gold)', ti
 function CreatedSuccess({ pool, onClose, locale }) {
   const [copied, setCopied] = useState(false);
   const code = pool.inviteCode || '';
-  const shareURL = typeof window !== 'undefined'
-    ? `${window.location.origin}/p/${code}`
-    : `futpools://p/${code}`;
+  // Share via the API origin (og: meta + preview image); futpools.com/p/*
+  // returns 404 to crawlers — see src/lib/shareLinks.js.
+  const shareURL = inviteShareUrl(code);
 
   const copy = async (text) => {
     try {

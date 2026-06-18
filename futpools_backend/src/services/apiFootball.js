@@ -762,9 +762,34 @@ const getFixturesByLeagueAndDate = async (leagueId, date, season) => {
  * weekends + UCL on Tue/Wed). Caller is responsible for filtering down
  * to upcoming + sane kickoffs.
  */
-const getFixturesByDate = async (date) => {
-  const data = await apiFetch('/fixtures', { date });
+const getFixturesByDate = async (date, timezone) => {
+  // Optional timezone: api-football interprets `date` in that zone, so
+  // "today's matches" can mean the Mexico City calendar day instead of UTC.
+  const data = await apiFetch('/fixtures', timezone ? { date, timezone } : { date });
   return data?.response || [];
+};
+
+/**
+ * Statistical prediction for a single fixture from api-football's
+ * /predictions model (percent home/draw/away). Used by the public
+ * "today's matches" endpoint to show an L/E/V probability per match.
+ * Returns null when the provider has no prediction for the fixture.
+ */
+const getFixturePrediction = async (fixtureId) => {
+  try {
+    const data = await apiFetch('/predictions', { fixture: fixtureId });
+    const percent = data?.response?.[0]?.predictions?.percent;
+    if (!percent) return null;
+    const num = (s) => Math.max(0, Math.round(parseFloat(String(s || '0'))));
+    const home = num(percent.home);
+    const draw = num(percent.draw);
+    const away = num(percent.away);
+    if (home + draw + away === 0) return null;
+    const pick = home >= draw && home >= away ? 'L' : draw >= away ? 'E' : 'V';
+    return { home, draw, away, pick };
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -927,6 +952,7 @@ const lookupLeaguesByIds = async (ids = []) => {
 };
 
 module.exports = {
+  mapFixturePreview,
   fetchFixturesForMatchday,
   fetchFixturesByIds,
   searchLeagues,
@@ -936,6 +962,7 @@ module.exports = {
   getFixtureEvents,
   getFixturesByLeagueAndDate,
   getFixturesByDate,
+  getFixturePrediction,
   getFixturesByTeamAndDate,
   fetchFixturesFeed,
   startLivePolling,

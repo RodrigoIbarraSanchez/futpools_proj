@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
+import { inviteShareUrl } from '../lib/shareLinks';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { t, tFormat } from '../i18n/translations';
@@ -8,8 +9,11 @@ import { AppBackground } from '../arena-ui/AppBackground';
 import {
   HudFrame, HudChip, LiveDot, TeamCrest, ArcadeButton, SectionLabel, IconButton,
 } from '../arena-ui/primitives';
+import { ThermometerLadder } from '../arena-ui/ThermometerLadder';
+import { LadderParticipants } from '../arena-ui/LadderParticipants';
+import { useLiveAcertoNotifier } from '../lib/ladderNotify';
 import { useSafeBack } from '../lib/safeBack';
-import { canJoinPool } from '../lib/poolStatus';
+import { canJoinPool, isFreePool, freeToEnter, orderFixturesByStatus } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { PoolDetailDesktop } from './desktop/PoolDetailDesktop';
 
@@ -28,7 +32,8 @@ function formatLeaderboardName(displayName, entryNumber, maxBaseLength = 14) {
 
 /// Same helpers as Home.jsx — shows entry fee in MXN when the pool has
 /// the new entryFeeMXN field, falls back to the legacy `cost` string.
-function formatPoolEntry(quiniela) {
+function formatPoolEntry(quiniela, locale) {
+  if (freeToEnter(quiniela)) return t(locale, 'FREE');
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     return `$${quiniela.entryFeeMXN} MXN`;
   }
@@ -36,7 +41,8 @@ function formatPoolEntry(quiniela) {
 }
 /// Winner gets 65% of the gross pot — see Home.jsx for the rationale.
 const WINNER_SHARE = 0.65;
-function formatPoolPrize(quiniela) {
+function formatPoolPrize(quiniela, locale) {
+  if (isFreePool(quiniela)) return t(locale, 'NO PRIZE');
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     const entries = quiniela?.entriesCount ?? 0;
     const pot = Math.floor(entries * quiniela.entryFeeMXN * WINNER_SHARE);
@@ -47,6 +53,31 @@ function formatPoolPrize(quiniela) {
   return quiniela?.prize || '—';
 }
 
+// Hero for free / no-prize ($0 entry) pools — replaces the gold trophy so
+// the screen reads "test pool, no prize" instead of an awkward "$0".
+function FreePoolHero({ locale }) {
+  return (
+    <HudFrame
+      glow="var(--fp-accent)"
+      bg="linear-gradient(135deg, color-mix(in srgb, var(--fp-accent) 14%, transparent), var(--fp-bg2))"
+    >
+      <div style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ fontSize: 30 }}>🎟️</div>
+        <div style={{ flex: 1 }}>
+          <div style={{
+            fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 900,
+            letterSpacing: 1, color: 'var(--fp-accent)',
+          }}>{t(locale, 'TEST POOL')}</div>
+          <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)', marginTop: 3 }}>
+            {t(locale, 'No prize · Free entry')}
+          </div>
+        </div>
+        <HudChip color="var(--fp-accent)">{t(locale, 'FREE')}</HudChip>
+      </div>
+    </HudFrame>
+  );
+}
+
 function ShareButton({ pool }) {
   // Pull locale from context — previously referenced as a free variable
   // which threw ReferenceError at runtime, crashing the whole PoolDetail
@@ -55,15 +86,9 @@ function ShareButton({ pool }) {
   const [copied, setCopied] = useState(false);
   // Route share links through the backend so WhatsApp / Telegram bots
   // receive a server-rendered page with og: meta tags and a fixture-card
-  // image. VITE_API_URL must be an absolute URL (https://…) for this to
-  // work; if it's relative or unset we fall back to the current origin.
-  // (Render Static Sites doesn't support external proxies in _redirects,
-  // so we can't keep the branded host without a CF Worker or Web Service.)
-  const apiBase = import.meta.env.VITE_API_URL || '';
-  const shareOrigin = apiBase.startsWith('http')
-    ? apiBase.replace(/\/$/, '')
-    : (typeof window !== 'undefined' ? window.location.origin : '');
-  const url = pool.inviteCode ? `${shareOrigin}/p/${pool.inviteCode}` : '';
+  // image (futpools.com/p/* answers 404 to crawlers) — shared logic in
+  // src/lib/shareLinks.js, also used by the pool-created success screen.
+  const url = inviteShareUrl(pool.inviteCode);
 
   /// Use native share ONLY on mobile devices — desktop share sheets (Chrome,
   /// macOS) sometimes concatenate the `text`/`title` fields onto the `url`
@@ -158,6 +183,31 @@ function statusMeta(q, locale) {
   return { label: t(locale, 'POOL FINISHED'), color: 'var(--fp-text-muted)', showDot: false };
 }
 
+// In-app toast for prize_ladder local notifications. Fixed to the top of
+// the viewport, tap to dismiss, auto-clears via the hook timer.
+function LadderToast({ toast, onDismiss }) {
+  if (!toast) return null;
+  return (
+    <div onClick={onDismiss} style={{
+      position: 'fixed', top: 12, left: 12, right: 12,
+      maxWidth: 430 - 24, margin: '0 auto', zIndex: 200, cursor: 'pointer',
+      padding: '12px 14px',
+      background: 'color-mix(in srgb, var(--fp-primary) 16%, var(--fp-bg))',
+      border: '1px solid var(--fp-primary)',
+      clipPath: 'var(--fp-clip-sm)',
+      boxShadow: '0 8px 28px rgba(33,226,140,0.35)',
+    }}>
+      <div style={{
+        fontFamily: 'var(--fp-display)', fontWeight: 900, fontSize: 12, letterSpacing: 1.5,
+        color: 'var(--fp-primary)', textTransform: 'uppercase', marginBottom: 4,
+      }}>⚽ {toast.title}</div>
+      <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 12, color: 'var(--fp-text)', lineHeight: 1.4 }}>
+        {toast.body}
+      </div>
+    </div>
+  );
+}
+
 export function PoolDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -181,6 +231,10 @@ export function PoolDetail() {
   // Map fixtureId → "1"|"X"|"2" so we can pass the user's pick into LiveMatch
   // when they tap a fixture. Mirrors iOS loadMyPicks.
   const [myPicks, setMyPicks] = useState({});
+  // Raw entry list with picks per entry — used by the desktop "Tus entradas"
+  // expandable rows so the user can reveal their own picks inline without
+  // jumping into another screen.
+  const [myEntries, setMyEntries] = useState([]);
   // Map fixtureId → live fixture payload (status, score, elapsed). Polled
   // every 30s with a smart skip: only hit the API if the pool has at least
   // one fixture that's live or within ±3h of kickoff — otherwise the data
@@ -280,18 +334,24 @@ export function PoolDetail() {
   useEffect(() => {
     if (id && token) {
       api.get(`/quinielas/${id}/entries/me`, token).then(entries => {
-        setEntryCount(entries?.length ?? 0);
+        const arr = entries || [];
+        setEntryCount(arr.length);
+        setMyEntries(arr);
         // Latest entry's picks win if the user has multiple entries.
-        const latest = (entries || [])
+        const latest = arr
           .slice()
           .sort((a, b) => (b.entryNumber ?? 0) - (a.entryNumber ?? 0))[0];
         const map = {};
         for (const p of latest?.picks || []) map[p.fixtureId] = p.pick;
         setMyPicks(map);
-      }).catch(() => { setEntryCount(0); setMyPicks({}); });
+      }).catch(() => { setEntryCount(0); setMyPicks({}); setMyEntries([]); });
     }
     if (id) {
-      api.get(`/quinielas/${id}/leaderboard`).then(setLeaderboard).catch(() => setLeaderboard(null));
+      // Pass the token: the leaderboard route is optionalAuth, and `userEntry`
+      // (which the prize-ladder thermometer reads for the live prize) is only
+      // populated when the request is authenticated. Without it the hero is
+      // stuck at 0 aciertos / the consolation prize.
+      api.get(`/quinielas/${id}/leaderboard`, token).then(setLeaderboard).catch(() => setLeaderboard(null));
     }
   }, [id, token]);
 
@@ -319,7 +379,9 @@ export function PoolDetail() {
     };
 
     const refresh = () => {
-      api.get(`/quinielas/${id}/leaderboard`)
+      // Token needed so `userEntry` (the thermometer's live prize) refreshes
+      // too, not just the table rows.
+      api.get(`/quinielas/${id}/leaderboard`, token)
         .then(setLeaderboard)
         .catch(() => { /* keep previous snapshot */ });
     };
@@ -328,7 +390,19 @@ export function PoolDetail() {
       if (isWorthPolling()) refresh();
     }, 30000);
     return () => clearInterval(interval);
-  }, [id, quiniela, liveByFixture]);
+  }, [id, quiniela, liveByFixture, token]);
+
+  // Local notification for prize_ladder pools — toast + Web Notification
+  // when the player's live aciertos tick up. Called unconditionally (rules
+  // of hooks) BEFORE the loading/desktop early returns; the hook no-ops
+  // until the pool resolves to a ladder pool the user has joined.
+  const { toast: ladderToast, dismiss: dismissLadderToast } = useLiveAcertoNotifier({
+    poolId: id,
+    enabled: quiniela?.poolType === 'prize_ladder' && !!leaderboard?.userEntry,
+    liveScore: leaderboard?.userEntry?.liveScore ?? 0,
+    ladder: quiniela?.prizeLadder || leaderboard?.prizeLadder || [],
+    locale,
+  });
 
   const handleJoin = () => {
     if (!canJoin()) return;
@@ -353,29 +427,44 @@ export function PoolDetail() {
 
   const status = statusMeta(quiniela, locale);
 
+  // prize_ladder pools render the gamified thermometer hero + a participants
+  // tab instead of the classic pot hero + podium. The user's live position
+  // comes from the leaderboard's userEntry (null until they join).
+  const isLadder = quiniela.poolType === 'prize_ladder';
+  const isFree = isFreePool(quiniela);
+  const freeEntry = freeToEnter(quiniela);
+  const ladderData = quiniela.prizeLadder || leaderboard?.prizeLadder || [];
+  const ladderUserLive = leaderboard?.userEntry?.liveScore ?? 0;
+  const ladderUserSettled = leaderboard?.userEntry?.score ?? 0;
+  const ladderHasLive = !!leaderboard?.hasLiveFixtures;
+
   // Desktop renders the design's two-column layout (PoolDetailDesktop)
   // using the same data + handlers we just hydrated above. Mobile keeps
   // the existing phone-frame UI verbatim.
   if (isDesktop) {
     return (
-      <PoolDetailDesktop
-        quiniela={quiniela}
-        liveByFixture={liveByFixture}
-        leaderboard={leaderboard}
-        currentUserId={user?._id || user?.id}
-        entryCount={entryCount}
-        alreadyEntered={alreadyEntered}
-        canJoin={canJoin()}
-        feeMXN={feeMXN}
-        handleJoin={handleJoin}
-        navigate={navigate}
-        goBack={goBack}
-        justPaid={justPaid}
-        isAdmin={!!user?.isAdmin}
-        isOwner={isOwner}
-        token={token}
-        onMutated={load}
-      />
+      <>
+        <LadderToast toast={ladderToast} onDismiss={dismissLadderToast} />
+        <PoolDetailDesktop
+          quiniela={quiniela}
+          liveByFixture={liveByFixture}
+          leaderboard={leaderboard}
+          currentUserId={user?._id || user?.id}
+          entryCount={entryCount}
+          alreadyEntered={alreadyEntered}
+          canJoin={canJoin()}
+          feeMXN={feeMXN}
+          handleJoin={handleJoin}
+          navigate={navigate}
+          goBack={goBack}
+          justPaid={justPaid}
+          isAdmin={!!user?.isAdmin}
+          isOwner={isOwner}
+          token={token}
+          myEntries={myEntries}
+          onMutated={load}
+        />
+      </>
     );
   }
 
@@ -385,6 +474,7 @@ export function PoolDetail() {
     // mobile the class is a no-op — phone frame stays.
     <div className="fp-pool-deep">
       <AppBackground />
+      <LadderToast toast={ladderToast} onDismiss={dismissLadderToast} />
 
       {/* Header */}
       <div style={{ padding: '14px 16px 18px' }}>
@@ -470,39 +560,53 @@ export function PoolDetail() {
           </button>
         )}
 
-        {/* Prize hero */}
-        <HudFrame
-          glow="var(--fp-gold)"
-          bg="linear-gradient(135deg, color-mix(in srgb, var(--fp-gold) 20%, transparent), var(--fp-bg2))"
-        >
-          <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ fontSize: 32, filter: 'drop-shadow(0 0 8px var(--fp-gold))' }}>🏆</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
-                {t(locale, 'PRIZE POOL')}
+        {/* Prize hero — gamified thermometer for prize_ladder pools,
+            classic pot hero otherwise. */}
+        {isLadder ? (
+          <ThermometerLadder
+            ladder={ladderData}
+            liveScore={ladderUserLive}
+            settledScore={ladderUserSettled}
+            fixtureCount={(quiniela.fixtures || []).length}
+            hasLiveFixtures={ladderHasLive}
+            locale={locale}
+          />
+        ) : isFree ? (
+          <FreePoolHero locale={locale} />
+        ) : (
+          <HudFrame
+            glow="var(--fp-gold)"
+            bg="linear-gradient(135deg, color-mix(in srgb, var(--fp-gold) 20%, transparent), var(--fp-bg2))"
+          >
+            <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ fontSize: 32, filter: 'drop-shadow(0 0 8px var(--fp-gold))' }}>🏆</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
+                  {t(locale, 'PRIZE POOL')}
+                </div>
+                <div style={{
+                  fontFamily: 'var(--fp-display)', fontSize: 26, fontWeight: 800,
+                  color: 'var(--fp-gold)', letterSpacing: 1, lineHeight: 1,
+                }}>{formatPoolPrize(quiniela, locale)}</div>
               </div>
-              <div style={{
-                fontFamily: 'var(--fp-display)', fontSize: 26, fontWeight: 800,
-                color: 'var(--fp-gold)', letterSpacing: 1, lineHeight: 1,
-              }}>{formatPoolPrize(quiniela)}</div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
+                  {t(locale, 'ENTRY')}
+                </div>
+                <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 18, fontWeight: 700, color: 'var(--fp-text)' }}>
+                  {formatPoolEntry(quiniela, locale)}
+                </div>
+              </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 2, color: 'var(--fp-text-muted)' }}>
-                {t(locale, 'ENTRY')}
-              </div>
-              <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 18, fontWeight: 700, color: 'var(--fp-text)' }}>
-                {formatPoolEntry(quiniela)}
-              </div>
-            </div>
-          </div>
-        </HudFrame>
+          </HudFrame>
+        )}
       </div>
 
       {/* Tabs */}
       <div style={{ padding: '0 16px', display: 'flex', gap: 4, marginBottom: 10 }}>
         {[
           ['fixtures', t(locale, 'FIXTURES')],
-          ['ranking',  t(locale, 'RANKING')],
+          ['ranking',  isLadder ? t(locale, 'PARTICIPANTS') : t(locale, 'RANKING')],
         ].map(([k, label]) => (
           <button
             key={k}
@@ -522,7 +626,7 @@ export function PoolDetail() {
 
       {/* Tab content */}
       <div style={{ padding: '6px 16px 140px' }}>
-        {tab === 'fixtures' && (quiniela.fixtures || []).map((f) => {
+        {tab === 'fixtures' && orderFixturesByStatus(quiniela.fixtures, liveByFixture).map((f) => {
           const live = liveByFixture[f.fixtureId];
           const isLive = live?.status?.isLive === true;
           const isHT = (live?.status?.short || '').toUpperCase() === 'HT';
@@ -665,7 +769,15 @@ export function PoolDetail() {
         })}
 
         {tab === 'ranking' && (
-          <LeaderboardPanel leaderboard={leaderboard} locale={locale} />
+          isLadder
+            ? <LadderParticipants
+                quinielaId={id}
+                locale={locale}
+                hasLiveFixtures={ladderHasLive}
+                ladder={ladderData}
+                currentUserId={user?._id || user?.id}
+              />
+            : <LeaderboardPanel leaderboard={leaderboard} locale={locale} />
         )}
       </div>
 
@@ -689,7 +801,7 @@ export function PoolDetail() {
           {/* Already-entered hint surfaces the user's status without
               taking the CTA out of action. Multiple entries are allowed
               — the button stays tappable. */}
-          {alreadyEntered && canJoin() && (
+          {alreadyEntered && canJoin() && !freeEntry && (
             <div style={{
               fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700,
               letterSpacing: 1.4, color: 'var(--fp-primary)',
@@ -708,9 +820,11 @@ export function PoolDetail() {
           >
             {!canJoin()
               ? t(locale, 'POOL LOCKED')
-              : alreadyEntered
-                ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
-                : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`}
+              : freeEntry
+                ? `▶ ${alreadyEntered ? t(locale, 'NEW ENTRY') : t(locale, 'PLAY FREE')}`
+                : alreadyEntered
+                  ? `+ ${t(locale, 'NEW ENTRY')} · $${feeMXN} MXN`
+                  : `▶ ${t(locale, 'JOIN')} · $${feeMXN} MXN`}
           </ArcadeButton>
         </div>
       </div>

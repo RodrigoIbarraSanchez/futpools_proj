@@ -1,3 +1,9 @@
+# SEO URL migration → hyphenated slugs (301, must come BEFORE the catch-all).
+# The old concatenated slugs no longer have a static shell dir, so these
+# permanent redirects apply and preserve link equity to the new landing pages.
+/calendariomundial2026   /calendario-mundial-2026   301
+/worldcup2026calendar    /world-cup-2026-calendar    301
+
 # SPA fallback so React Router can handle deep-links client-side.
 # Note: Render Static Sites silently ignores external URLs in _redirects
 # (neither 200! nor 3xx work). Share-preview routes /c/* and /p/* are

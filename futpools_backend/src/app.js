@@ -18,13 +18,16 @@ const adminRoutes = require('./routes/admin');
 const adsRoutes = require('./routes/ads');
 const paymentsRoutes = require('./routes/payments');
 const paymentsController = require('./controllers/paymentsController');
+const sitemapController = require('./controllers/sitemapController');
 const challengeRoutes = require('./routes/challenges');
 const ticketsRoutes = require('./routes/tickets');
 const dailyPickRoutes = require('./routes/dailyPick');
 const sweepstakesRoutes = require('./routes/sweepstakes');
 const poolPaymentsRoutes = require('./routes/poolPayments');
 const publicRoutes = require('./routes/public');
+const emailRoutes = require('./routes/email');
 const ogRoutes = require('./routes/og');
+const worldCup2026Routes = require('./routes/worldCup2026');
 
 const app = express();
 
@@ -46,6 +49,11 @@ app.post(
 );
 
 app.use(express.json());
+
+// Dynamic sitemap (public). URLs point at the WEB host; the web build
+// snapshots this into dist/sitemap.xml so futpools.com/sitemap.xml is
+// same-host + deploy-fresh. Public, no auth.
+app.get('/sitemap.xml', sitemapController.getSitemap);
 
 // OG share pages — must be registered before API routes so crawlers
 // (WhatsApp, Telegram, iMessage) receive the meta-tag HTML, not JSON.
@@ -91,6 +99,15 @@ app.use('/pools', poolPaymentsRoutes);
 // Unauthenticated read-only endpoints used by the iOS onboarding
 // "App Demo" screen (real fixtures before signup).
 app.use('/public', publicRoutes);
+
+// Public email endpoints (one-click unsubscribe for marketing blasts). No
+// auth: the link itself carries an HMAC token tying it to the user id.
+app.use('/email', emailRoutes);
+
+// Public World Cup 2026 calendar — powers /calendariomundial2026 on the
+// web. No auth: visitors export an .ics feed of all 104 matches (or a
+// filtered subset by team / knockout stage).
+app.use('/world-cup-2026', worldCup2026Routes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true, mode: isSimpleMode() ? 'simple' : 'master' });

@@ -46,6 +46,15 @@ struct Quiniela: Decodable, Identifiable {
     /// Guideline 5.3 disclaimers, and the pool surfaces in the Home
     /// "WEEKLY POOL · REAL PRIZE" teaser.
     let realPrize: RealPrize?
+    /// Pool competition format: `standard` (one winner takes the pot,
+    /// default) or `prize_ladder` (every player wins a fixed prize by
+    /// number of aciertos). nil/absent on legacy pools → treat as standard.
+    let poolType: String?
+    /// Tiered payout table for prize_ladder pools (empty/nil otherwise).
+    let prizeLadder: [PrizeTier]?
+
+    /// True when this pool uses the prize-ladder format.
+    var isPrizeLadder: Bool { poolType == "prize_ladder" }
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -72,6 +81,8 @@ struct Quiniela: Decodable, Identifiable {
         case rakePercent
         case entryFeeMXN
         case realPrize
+        case poolType
+        case prizeLadder
     }
 
     var startDateValue: Date? {

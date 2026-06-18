@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { api } from '../api/client';
+import { trackEvent, getFirstTouch } from '../lib/analytics';
 
 const TOKEN_KEY = 'futpools_token';
 
@@ -97,9 +98,13 @@ export function AuthProvider({ children }) {
         // missing fields; we send them when the form has them.
         dob: dob || undefined,
         countryCode: countryCode || undefined,
+        // First-touch attribution (which landing brought this signup) —
+        // forwarded to the organizer's Telegram alert by the backend.
+        signupSource: getFirstTouch(),
       });
       localStorage.setItem(TOKEN_KEY, token);
       setUser(u);
+      trackEvent('sign_up', { method: 'email' });
       // Ship any pre-signup onboarding selections (teams + leagues
       // captured by /onboarding before the user had a token) up to the
       // user's record. Mirrors the iOS AuthService.syncPendingOnboarding
@@ -117,6 +122,17 @@ export function AuthProvider({ children }) {
       setErrorField(e.field || null);
       return false;
     }
+  }, []);
+
+  /// Adopt a session returned by an auth endpoint that signs the user in
+  /// directly (e.g. password reset → { token, user }). Mirrors `login` so the
+  /// app treats a post-reset user exactly like a fresh login.
+  const applySession = useCallback(({ token, user: u }) => {
+    if (!token) return;
+    localStorage.setItem(TOKEN_KEY, token);
+    setUser(u || null);
+    setError(null);
+    syncPendingOnboarding(token);
   }, []);
 
   const logout = useCallback(() => {
@@ -156,6 +172,7 @@ export function AuthProvider({ children }) {
     setError: setErrorAll,
     login,
     register,
+    applySession,
     logout,
     fetchUser,
     updateDisplayName,

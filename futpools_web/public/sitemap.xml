@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<!--
+  sitemap.xml — futpools.com
+  ONLY pages that ship a real static shell with a self-referential canonical:
+  the homepage + the SSG-prerendered landing pages. SPA-only routes
+  (/login, /register, /pool/:id, the /agregar + /add export tools, /account,
+  /admin/*, /fixture/*) are intentionally EXCLUDED — they serve the homepage
+  shell (canonical=/), so submitting them makes Google flag them as
+  "Duplicate without user-selected canonical" and they 404'd for crawlers
+  during the routing-fix window. The World Cup calendar is bilingual: each
+  variant declares its ES/EN alternates via xhtml:link.
+  Update <lastmod> when a page changes materially.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <url>
+    <loc>https://futpools.com/</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/calendario-mundial-2026</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/calendario-mundial-2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/world-cup-2026-calendar" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/calendario-mundial-2026" />
+    <image:image>
+      <image:loc>https://futpools.com/calendario-mundial-2026-partidos.jpg</image:loc>
+      <image:title>Calendario del Mundial 2026 con los 104 partidos en un teléfono</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/world-cup-2026-calendar</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/calendario-mundial-2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/world-cup-2026-calendar" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/calendario-mundial-2026" />
+    <image:image>
+      <image:loc>https://futpools.com/calendario-mundial-2026-partidos.jpg</image:loc>
+      <image:title>World Cup 2026 calendar with all 104 matches on a phone</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/mexico-mundial-2026</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/mexico-mundial-2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/mexico-world-cup-2026" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/mexico-mundial-2026" />
+  </url>
+
+  <url>
+    <loc>https://futpools.com/mexico-world-cup-2026</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://futpools.com/mexico-mundial-2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://futpools.com/mexico-world-cup-2026" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://futpools.com/mexico-mundial-2026" />
+  </url>
+
+  <url>
+    <loc>https://futpools.com/quiniela-de-la-semana</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/pronosticos-de-futbol</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/pronosticos-futbol-hoy</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/quiniela-futbol-hoy</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://futpools.com/quiniela-liga-mexicana</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>

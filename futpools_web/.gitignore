@@ -1,1 +1,4 @@
 node_modules/
+
+# SSR render bundle (build artifact)
+.ssr-build/

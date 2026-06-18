@@ -4,7 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#07090D" />
-    <title>FutPools Arena</title>
+
+    <!-- Favicon + app icons (FutPools FP monogram, from the iOS app icon). -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Google tag (gtag.js) · G-BJ5WNM9T05. Production hostnames only, so
+         localhost/preview visits never count. page_view is sent manually
+         per route change by the SPA (AnalyticsTracker in App.jsx) — that's
+         why send_page_view is false here; a second emitter double-counts. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        if (h !== 'futpools.com' && h !== 'www.futpools.com') return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-BJ5WNM9T05';
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { dataLayer.push(arguments); };
+        gtag('js', new Date());
+        gtag('config', 'G-BJ5WNM9T05', { send_page_view: false });
+      })();
+    </script>
+
+    <title>Calendario Mundial 2026: partidos, horarios y fechas | FutPools</title>
+    <meta name="description" content="Calendario del Mundial 2026 completo: los 104 partidos con fechas y horarios en tu zona. Añádelos a tu iPhone, Google Calendar, Android u Outlook, gratis." />
+
+    <!--
+      Open Graph + Twitter Card metadata for social shares (WhatsApp,
+      iMessage, Telegram, Twitter, Facebook). These CALENDAR tags are the
+      source strings that scripts/build-i18n-shells.js swaps FROM to build
+      every per-landing shell. The ROOT dist/index.html (futpools.com/) is
+      itself rewritten by that script's homeShell() to carry the BRAND
+      metadata instead — so the homepage share is about FutPools, not the
+      calendar. Do not "fix" these to brand copy here or the swap machinery
+      breaks; change homeShell() for the homepage.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FutPools" />
+    <meta property="og:title" content="Calendario Mundial 2026: partidos, horarios y fechas" />
+    <meta property="og:description" content="Calendario del Mundial 2026: los 104 partidos con fechas y horarios en tu zona. Añádelos a iPhone, Google Calendar, Android u Outlook. Gratis." />
+    <meta property="og:url" content="https://futpools.com/calendario-mundial-2026" />
+    <meta property="og:image" content="https://futpools.com/og-wc26.png" />
+    <meta property="og:image:secure_url" content="https://futpools.com/og-wc26.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1179" />
+    <meta property="og:image:height" content="2422" />
+    <meta property="og:image:alt" content="Vista de calendario con los 104 partidos del Mundial 2026, cada uno con la bandera de su selección." />
+    <meta property="og:locale" content="es_MX" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Calendario Mundial 2026: partidos, horarios y fechas" />
+    <meta name="twitter:description" content="Calendario del Mundial 2026: 104 partidos con fechas y horarios en tu zona. Gratis, sin app." />
+    <meta name="twitter:image" content="https://futpools.com/og-wc26.png" />
+    <meta name="twitter:image:alt" content="Vista de calendario con los 104 partidos del Mundial 2026 y las banderas de cada selección." />
+
+    <!-- hreflang tells search engines we have ES and EN variants of the same page. -->
+    <link rel="alternate" hreflang="es" href="https://futpools.com/calendario-mundial-2026" />
+    <link rel="alternate" hreflang="en" href="https://futpools.com/world-cup-2026-calendar" />
+    <link rel="alternate" hreflang="x-default" href="https://futpools.com/calendario-mundial-2026" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">

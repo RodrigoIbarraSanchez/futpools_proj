@@ -92,7 +92,12 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const isLadder = pool.poolType === 'prize_ladder';
+  const ladderRows = pool.ladderPayouts || [];
   const winner = pool.winners?.[0];
+  // Standard pools need a recorded winner before they can be paid; ladder
+  // pools can always be marked paid (even if nobody hit a paying rung).
+  const canMark = isLadder ? true : !!winner;
 
   const onMark = async () => {
     if (busy) return;
@@ -133,10 +138,46 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
             <Stat label={t(locale, 'SETTLED')} value={formatDate(pool.settledAt)} />
           </div>
 
-          {/* Winner card — biggest visual element. The admin needs the
-              email + display name in plain text so they can match it
-              against bank transfer records. */}
-          {winner ? (
+          {/* prize_ladder pools pay each winner individually — render the
+              full per-entry breakdown so the admin can transfer each one. */}
+          {isLadder ? (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{
+                fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
+                color: 'var(--fp-text-muted)', marginBottom: 6,
+              }}>{tFormat(locale, '{n} WINNERS TO PAY', { n: ladderRows.length })}</div>
+              {ladderRows.length === 0 ? (
+                <div style={{
+                  fontFamily: 'var(--fp-mono)', fontSize: 12, color: 'var(--fp-text-dim)', padding: '8px 0',
+                }}>{t(locale, 'No one reached a paying tier — nothing to transfer.')}</div>
+              ) : ladderRows.map((row) => (
+                <div key={row.entryId} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', marginBottom: 6,
+                  background: 'color-mix(in srgb, var(--fp-primary) 10%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--fp-primary) 30%, transparent)',
+                  clipPath: 'var(--fp-clip-sm)',
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800,
+                      color: 'var(--fp-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>{row.displayName}</div>
+                    <div style={{
+                      fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-primary)',
+                      userSelect: 'all', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>{row.email}</div>
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-dim)', whiteSpace: 'nowrap',
+                  }}>{tFormat(locale, '{n} aciertos', { n: row.score })}</div>
+                  <div style={{
+                    fontFamily: 'var(--fp-display)', fontSize: 15, fontWeight: 900,
+                    color: 'var(--fp-gold)', whiteSpace: 'nowrap',
+                  }}>${row.prizeMXN}</div>
+                </div>
+              ))}
+            </div>
+          ) : winner ? (
             <div style={{
               padding: 12, marginBottom: 14,
               background: 'color-mix(in srgb, var(--fp-primary) 12%, transparent)',
@@ -182,7 +223,7 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
               placeholder={t(locale, 'e.g. SPEI ref ABC123')}
               maxLength={500}
               style={arenaInputStyle}
-              disabled={busy || !winner}
+              disabled={busy || !canMark}
             />
           </div>
 
@@ -197,7 +238,7 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
             size="md"
             fullWidth
             onClick={onMark}
-            disabled={busy || !winner}
+            disabled={busy || !canMark}
           >
             {busy ? t(locale, 'MARKING…') : `✓ ${t(locale, 'MARK AS PAID')}`}
           </ArcadeButton>

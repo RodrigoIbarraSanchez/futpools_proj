@@ -3,14 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
-import { t } from '../i18n/translations';
+import { t, tFormat } from '../i18n/translations';
+import { maxPrize, topTiers, formatMXN } from '../lib/prizeLadder';
 import {
   HudFrame, HudChip, LiveDot, StatTile, StatInline,
   TeamCrest, SectionLabel, ArcadeButton,
 } from '../arena-ui/primitives';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { HomeDesktop } from './desktop/HomeDesktop';
-import { resolvePoolStatus } from '../lib/poolStatus';
+import { resolvePoolStatus, isFreePool, freeToEnter } from '../lib/poolStatus';
 
 // ──────────────────────────────────────────────────────────────
 // Live/state helpers (shared across Home sub-components)
@@ -64,7 +65,8 @@ function formatDate(d) {
 /// `entryFeeMXN` numeric field; legacy pools may carry only the string
 /// `cost` (e.g. "$15"). Prefer the new field; fall back to cost; finally
 /// show "—" so empty fields don't render an awkward blank cell.
-function formatEntryFee(quiniela) {
+function formatEntryFee(quiniela, locale) {
+  if (freeToEnter(quiniela)) return t(locale, 'FREE');
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     return `$${quiniela.entryFeeMXN} MXN`;
   }
@@ -84,7 +86,14 @@ const WINNER_SHARE = 0.65;
 /// Pool prize pool — winner's share of `entries × entryFeeMXN`. Only
 /// rendered for pools that opted into the new entryFeeMXN flow; legacy
 /// pools show whatever `prize` string the admin originally set.
-function formatPrizePool(quiniela) {
+function formatPrizePool(quiniela, locale) {
+  // Free ($0) pools have no prize.
+  if (isFreePool(quiniela)) return t(locale, 'NO PRIZE');
+  // prize_ladder pools have no pot — show the headline "up to" prize.
+  if (quiniela?.poolType === 'prize_ladder') {
+    const top = maxPrize(quiniela.prizeLadder || []);
+    return top > 0 ? `${t(locale, 'UP TO')} ${formatMXN(top)}` : '—';
+  }
   if (typeof quiniela?.entryFeeMXN === 'number' && quiniela.entryFeeMXN > 0) {
     const entries = quiniela?.entriesCount ?? 0;
     const pot = Math.floor(entries * quiniela.entryFeeMXN * WINNER_SHARE);
@@ -327,10 +336,27 @@ function QuickPlayHero({ quiniela, liveFixtures, locale, embedded = false }) {
             textTransform: 'uppercase',
           }}>{quiniela.name}</div>
           <div style={{ display: 'flex', gap: 18, marginBottom: 12, flexWrap: 'wrap' }}>
-            <StatInline label={t(locale, 'Prize')}    value={formatPrizePool(quiniela)}      color="var(--fp-primary)" mono />
-            <StatInline label={t(locale, 'Entry')}    value={formatEntryFee(quiniela)}       color="var(--fp-accent)"  mono />
+            <StatInline label={t(locale, 'Prize')}    value={formatPrizePool(quiniela, locale)}      color="var(--fp-primary)" mono />
+            <StatInline label={t(locale, 'Entry')}    value={formatEntryFee(quiniela, locale)}       color="var(--fp-accent)"  mono />
             <StatInline label={t(locale, 'Fixtures')} value={quiniela.fixtures?.length ?? 0} color="var(--fp-gold)"    mono />
           </div>
+          {/* Mini prize ladder for prize_ladder pools. */}
+          {quiniela.poolType === 'prize_ladder' && maxPrize(quiniela.prizeLadder || []) > 0 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+              {topTiers(quiniela.prizeLadder || [], 3).map((tr, i) => (
+                <span key={i} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 9px',
+                  clipPath: 'var(--fp-clip-sm)',
+                  background: 'color-mix(in srgb, var(--fp-primary) 12%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--fp-primary) 30%, transparent)',
+                  fontFamily: 'var(--fp-mono)', fontSize: 11,
+                }}>
+                  <b style={{ color: 'var(--fp-text-dim)' }}>{tr.min === tr.max ? tr.max : `${tr.min}–${tr.max}`}✓</b>
+                  <span style={{ color: 'var(--fp-primary)', fontWeight: 800 }}>{formatMXN(tr.prizeMXN)}</span>
+                </span>
+              ))}
+            </div>
+          )}
           <Link to={`/pool/${quiniela._id}`} style={{ textDecoration: 'none' }}>
             <ArcadeButton size="md">▶ {hs.live ? 'RESUME' : 'OPEN'}</ArcadeButton>
           </Link>
@@ -478,8 +504,8 @@ function QuinielaCard({ quiniela, liveFixtures, locale }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: preview.length ? 10 : 0 }}>
-            <StatTile label={t(locale, 'POT')}     value={formatPrizePool(quiniela)}  color="var(--fp-gold)" />
-            <StatTile label={t(locale, 'ENTRY')}   value={formatEntryFee(quiniela)}   color="var(--fp-text)" />
+            <StatTile label={t(locale, 'POT')}     value={formatPrizePool(quiniela, locale)}  color="var(--fp-gold)" />
+            <StatTile label={t(locale, 'ENTRY')}   value={formatEntryFee(quiniela, locale)}   color="var(--fp-text)" />
             <StatTile label={t(locale, 'PLAYERS')} value={quiniela.entriesCount ?? 0} color="var(--fp-accent)" />
           </div>
 

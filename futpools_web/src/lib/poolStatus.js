@@ -33,6 +33,61 @@ const norm = (s) => String(s || '').toUpperCase();
 const isLiveCode = (s) => LIVE_STATUS_CODES.has(norm(s));
 const isFinishedCode = (s) => FINISHED_STATUS_CODES.has(norm(s));
 
+const byKickoff = (a, b) => new Date(a.kickoff || 0) - new Date(b.kickoff || 0);
+
+/** Which display bucket a fixture belongs to, given its live snapshot. */
+function fixtureBucket(fx, live) {
+  const code = live?.status?.short ?? fx.status;
+  if (live?.status?.isLive === true || isLiveCode(code)) return 'live';
+  if (isFinishedCode(code)) return 'finished';
+  return 'upcoming';
+}
+
+/**
+ * Group a pool's fixtures by status for display: live first, then upcoming
+ * (soonest first), then finished. Each non-empty bucket is returned in that
+ * order as { key, fixtures } (key ∈ 'live' | 'upcoming' | 'finished').
+ */
+export function groupFixturesByStatus(fixtures, liveFixtures = {}) {
+  const buckets = { live: [], upcoming: [], finished: [] };
+  for (const f of fixtures || []) {
+    buckets[fixtureBucket(f, liveFixtures[f.fixtureId])].push(f);
+  }
+  buckets.live.sort(byKickoff);
+  buckets.upcoming.sort(byKickoff);
+  buckets.finished.sort(byKickoff);
+  return [
+    { key: 'live', fixtures: buckets.live },
+    { key: 'upcoming', fixtures: buckets.upcoming },
+    { key: 'finished', fixtures: buckets.finished },
+  ].filter((g) => g.fixtures.length > 0);
+}
+
+/** Flat version of groupFixturesByStatus — live → upcoming → finished. */
+export function orderFixturesByStatus(fixtures, liveFixtures = {}) {
+  return groupFixturesByStatus(fixtures, liveFixtures).flatMap((g) => g.fixtures);
+}
+
+/**
+ * Free to ENTER — a $0 entry fee, regardless of pool type. Drives the
+ * entry display ("GRATIS"), the join CTA, and the no-payment join flow. A
+ * prize_ladder pool can be free-to-enter and still pay ladder prizes.
+ */
+export function freeToEnter(quiniela) {
+  return Number(quiniela?.entryFeeMXN) === 0;
+}
+
+/**
+ * A free / no-PRIZE ("test") pool: a STANDARD pool with a $0 entry fee.
+ * prize_ladder pools are excluded — their prizes come from the ladder, not
+ * the entry pot, so a $0 ladder pool is "free entry, real prizes", not a
+ * "no prize" pool. Drives the prize display + the "test pool" hero badge.
+ */
+export function isFreePool(quiniela) {
+  if (quiniela?.poolType === 'prize_ladder') return false;
+  return Number(quiniela?.entryFeeMXN) === 0;
+}
+
 /**
  * Returns true if the user can submit a new entry for this pool.
  *

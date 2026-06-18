@@ -83,7 +83,15 @@ struct QuinielaDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     header
-                    if let realPrize = quiniela.realPrize {
+                    if quiniela.isPrizeLadder {
+                        PrizeLadderThermometer(
+                            ladder: quiniela.prizeLadder ?? leaderboard?.prizeLadder ?? [],
+                            liveScore: leaderboard?.userEntry?.liveScore ?? leaderboard?.userEntry?.score ?? 0,
+                            settledScore: leaderboard?.userEntry?.score ?? 0,
+                            fixtureCount: quiniela.fixtures.count,
+                            hasLiveFixtures: leaderboard?.hasLiveFixtures == true
+                        )
+                    } else if let realPrize = quiniela.realPrize {
                         realPrizeHero(realPrize)
                     } else {
                         prizeHero
@@ -477,7 +485,9 @@ struct QuinielaDetailView: View {
         HStack(spacing: 4) {
             ForEach(ArenaPoolTab.allCases, id: \.self) { tab in
                 Button { selectedTab = tab } label: {
-                    Text(tab.label)
+                    Text(tab == .ranking && quiniela.isPrizeLadder
+                         ? String(localized: "PARTICIPANTS")
+                         : tab.label)
                         .font(ArenaFont.display(size: 11, weight: .bold))
                         .tracking(2)
                         .foregroundColor(selectedTab == tab ? .arenaOnPrimary : .arenaTextDim)
@@ -525,8 +535,18 @@ struct QuinielaDetailView: View {
             }
 
         case .ranking:
-            ArenaLeaderboardPanel(leaderboard: leaderboard, isLoading: leaderboardLoading)
+            if quiniela.isPrizeLadder {
+                LadderParticipantsView(
+                    quinielaId: quiniela.id,
+                    ladder: quiniela.prizeLadder ?? leaderboard?.prizeLadder ?? [],
+                    hasLiveFixtures: leaderboard?.hasLiveFixtures == true,
+                    currentUserId: auth.currentUser?.id
+                )
                 .padding(.horizontal, 16)
+            } else {
+                ArenaLeaderboardPanel(leaderboard: leaderboard, isLoading: leaderboardLoading)
+                    .padding(.horizontal, 16)
+            }
         }
     }
 
@@ -608,6 +628,15 @@ struct QuinielaDetailView: View {
                 token: KeychainHelper.getToken()
             )
             leaderboardLoading = false
+            // prize_ladder: fire a local notification if the user's live
+            // aciertos just went up. No-op for standard pools / non-players.
+            if quiniela.isPrizeLadder, let lb = leaderboard {
+                await LadderNotificationService.notifyIfAcertoIncreased(
+                    poolId: quiniela.id,
+                    ladder: quiniela.prizeLadder ?? lb.prizeLadder ?? [],
+                    userEntry: lb.userEntry
+                )
+            }
         }
     }
 

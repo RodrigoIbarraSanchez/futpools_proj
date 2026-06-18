@@ -133,6 +133,17 @@ const userSchema = new mongoose.Schema({
 
   passwordResetCode: { type: String, select: false },
   passwordResetExpiresAt: { type: Date, select: false },
+
+  // Marketing/announcement opt-out. Account emails (password reset, payment
+  // confirmation, pool results) IGNORE this — only mass "new pool" blasts
+  // check it. Flipped true by the public one-click /email/unsubscribe link.
+  emailOptOut: { type: Boolean, default: false },
+  emailOptOutAt: { type: Date, default: null },
+  // Lifecycle-email one-shot / cooldown stamps (see lifecycleEmailService).
+  // activation = sent once to signups who never played; winback = sent (with a
+  // cooldown) to players who went quiet.
+  activationEmailSentAt: { type: Date, default: null },
+  winbackEmailSentAt: { type: Date, default: null },
   createdAt: {
     type: Date,
     default: Date.now,

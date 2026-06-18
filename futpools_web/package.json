@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "cp dist/index.html dist/404.html",
+    "postbuild": "node scripts/build-i18n-shells.js && vite build --ssr src/ssr/landings.jsx --outDir .ssr-build --logLevel warn && node scripts/prerender-ssg.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

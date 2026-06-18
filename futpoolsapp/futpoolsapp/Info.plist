@@ -125,5 +125,17 @@
 		<dict><key>SKAdNetworkIdentifier</key><string>8c4e2ghe7u.skadnetwork</string></dict>
 		<dict><key>SKAdNetworkIdentifier</key><string>3qcr597p9d.skadnetwork</string></dict>
 	</array>
+	<!-- Background app refresh — lets prize_ladder pools fire local
+	     "you got an acierto" notifications even when the app isn't open.
+	     The identifier MUST match LadderBackgroundRefresh.taskID. The
+	     `fetch` background mode is what permits BGAppRefreshTask. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.futpools.ladder.refresh</string>
+	</array>
 </dict>
 </plist>
