@@ -336,7 +336,7 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
 // Tab content — Resumen, Partidos, Tabla.
 // ─────────────────────────────────────────────────────────────────────
 
-function FixtureRow({ fixture, live, locale, navigate, myPick }) {
+function FixtureRow({ fixture, live, locale, navigate, myPick, pickStat }) {
   const liveStatus = live?.status;
   const liveMatch = isLiveStatus(liveStatus?.short);
   const finalMatch = isFinishedStatus(liveStatus?.short) || isFinishedStatus(fixture.status);
@@ -346,7 +346,13 @@ function FixtureRow({ fixture, live, locale, navigate, myPick }) {
         weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
       })
     : null;
+  // Actual outcome ('1'|'X'|'2') once a match has a final result — used to
+  // emphasise the correct column in the admin inclination panel.
+  const resultPick = finalMatch && hasScore
+    ? (live.score.home > live.score.away ? '1' : live.score.home < live.score.away ? '2' : 'X')
+    : null;
   return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
     <button
       type="button"
       onClick={() => navigate(`/fixture/${fixture.fixtureId}`)}
@@ -437,6 +443,207 @@ function FixtureRow({ fixture, live, locale, navigate, myPick }) {
         })() : null}
       </div>
     </button>
+      {pickStat && (
+        <AdminPickInclination
+          stat={pickStat}
+          fixture={fixture}
+          resultPick={resultPick}
+          locale={locale}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// AdminPickInclination — admin-only panel under each fixture showing how
+// the field leaned: L (home '1') / E (draw 'X') / V (away '2') as a
+// segmented % bar plus participant avatar circles grouped by pick, so the
+// admin can read the inclination per match at a glance. Data comes from
+// the admin-gated `pickStats` block of GET /quinielas/:id/participants.
+// ─────────────────────────────────────────────────────────────────────
+
+// L = Local (home win), E = Empate (draw), V = Visitante (away win).
+const PICK_DIST = {
+  1: { letter: 'L', color: '#36E9FF' }, // home — cyan
+  X: { letter: 'E', color: '#F5B544' }, // draw — amber
+  2: { letter: 'V', color: '#B98CFF' }, // away — violet
+};
+const PICK_ORDER = ['1', 'X', '2'];
+const CIRCLE_CAP = 10; // top-N participants per outcome before "+N"
+
+function pickInitials(name) {
+  const parts = String(name || '?').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function AvatarStack({ voters, color }) {
+  const shown = voters.slice(0, CIRCLE_CAP);
+  const extra = voters.length - shown.length;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', rowGap: 4 }}>
+      {shown.map((v, i) => (
+        <div
+          key={`${v.name}-${v.entryNumber}-${i}`}
+          title={v.entryNumber > 1 ? `${v.name} (#${v.entryNumber})` : v.name}
+          style={{
+            width: 24, height: 24, borderRadius: '50%',
+            marginLeft: i === 0 ? 0 : -6,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 9, fontWeight: 800, letterSpacing: '0.02em',
+            fontFamily: 'var(--fp-mono, monospace)',
+            background: 'var(--fp-bg, #0B0F14)',
+            color: '#fff',
+            border: `2px solid ${color}`,
+            boxShadow: `0 0 0 1px var(--fp-bg, #0B0F14)`,
+            cursor: 'default',
+          }}
+        >{pickInitials(v.name)}</div>
+      ))}
+      {extra > 0 && (
+        <div
+          title={`+${extra}`}
+          style={{
+            width: 24, height: 24, borderRadius: '50%', marginLeft: -6,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 9, fontWeight: 800, fontFamily: 'var(--fp-mono, monospace)',
+            background: 'var(--fp-surface-alt, #1a2129)', color: 'var(--fp-text-muted, #7b8794)',
+            border: '2px solid var(--fp-stroke, #2a333d)',
+            boxShadow: '0 0 0 1px var(--fp-bg, #0B0F14)',
+          }}
+        >+{extra}</div>
+      )}
+    </div>
+  );
+}
+
+function AdminPickInclination({ stat, fixture, resultPick, locale }) {
+  const total = stat?.total || 0;
+  const teamLabel = {
+    1: fixture.homeTeam,
+    X: t(locale, 'DRAW'),
+    2: fixture.awayTeam,
+  };
+  const votersByPick = { 1: [], X: [], 2: [] };
+  for (const v of stat?.voters || []) {
+    if (votersByPick[v.pick]) votersByPick[v.pick].push(v);
+  }
+  // Majority outcome — gets a subtle "leading" emphasis on its column.
+  const leader = total > 0
+    ? PICK_ORDER.reduce((a, b) => (stat.counts[b] > stat.counts[a] ? b : a))
+    : null;
+
+  return (
+    <div style={{
+      marginTop: 6,
+      border: '1px solid var(--fp-stroke, #2a333d)',
+      borderRadius: 10,
+      background: 'rgba(54,233,255,0.03)',
+      padding: '12px 14px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{
+          fontFamily: 'var(--fp-mono, monospace)', fontSize: 9, fontWeight: 800,
+          letterSpacing: '0.12em', color: '#36E9FF',
+          border: '1px solid rgba(54,233,255,0.4)', borderRadius: 4, padding: '2px 6px',
+        }}>{t(locale, 'ADMIN')}</span>
+        <span style={{
+          fontFamily: 'var(--fp-mono, monospace)', fontSize: 10, fontWeight: 700,
+          letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fp-text-muted, #7b8794)',
+        }}>{t(locale, 'Pick inclination')}</span>
+        <span style={{ flex: 1 }} />
+        <span style={{
+          fontFamily: 'var(--fp-mono, monospace)', fontSize: 11, fontWeight: 700,
+          color: 'var(--fp-text, #fff)',
+        }}>
+          {total} {total === 1 ? t(locale, 'pick') : t(locale, 'picks')}
+        </span>
+      </div>
+
+      {total === 0 ? (
+        <div className="muted" style={{ fontSize: 12, fontStyle: 'italic' }}>
+          {t(locale, 'No picks yet')}
+        </div>
+      ) : (
+        <>
+          {/* Segmented L/E/V bar */}
+          <div style={{
+            display: 'flex', height: 12, borderRadius: 999, overflow: 'hidden',
+            background: 'var(--fp-surface-alt, #1a2129)', marginBottom: 12,
+          }}>
+            {PICK_ORDER.map((k) => {
+              const pct = (stat.counts[k] / total) * 100;
+              if (pct === 0) return null;
+              return (
+                <div
+                  key={k}
+                  title={`${PICK_DIST[k].letter} · ${stat.counts[k]} (${Math.round(pct)}%)`}
+                  style={{
+                    width: `${pct}%`, height: '100%',
+                    background: PICK_DIST[k].color,
+                    opacity: leader === k ? 1 : 0.78,
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Three columns: L / E / V with %, team and avatar circles. For a
+              settled match the column matching the real result is emphasised
+              with a ✓; otherwise the current majority is highlighted. */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            {PICK_ORDER.map((k) => {
+              const meta = PICK_DIST[k];
+              const count = stat.counts[k];
+              const pct = Math.round((count / total) * 100);
+              const isResult = resultPick === k;
+              const isEmph = isResult || (!resultPick && leader === k && count > 0);
+              return (
+                <div key={k} style={{
+                  border: `1px solid ${isEmph ? meta.color : 'var(--fp-stroke, #2a333d)'}`,
+                  borderRadius: 8,
+                  background: isEmph ? `${meta.color}12` : 'transparent',
+                  padding: '8px 9px',
+                  display: 'flex', flexDirection: 'column', gap: 8,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{
+                      width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, fontWeight: 900, color: '#0B0F14',
+                      background: meta.color,
+                    }}>{meta.letter}</span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, color: 'var(--fp-text-muted, #7b8794)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>{teamLabel[k]}</span>
+                    {isResult && (
+                      <span title={t(locale, 'Final result')} style={{
+                        marginLeft: 'auto', color: meta.color, fontSize: 12, fontWeight: 900,
+                      }}>✓</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                    <span style={{
+                      fontFamily: 'var(--fp-mono, monospace)', fontSize: 20, fontWeight: 800,
+                      color: count > 0 ? meta.color : 'var(--fp-text-muted, #7b8794)', lineHeight: 1,
+                    }}>{pct}%</span>
+                    <span className="muted" style={{ fontSize: 11, fontWeight: 600 }}>
+                      ({count})
+                    </span>
+                  </div>
+                  {count > 0
+                    ? <AvatarStack voters={votersByPick[k]} color={meta.color} />
+                    : <div style={{ height: 24 }} />}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -446,7 +653,7 @@ const FIXTURE_GROUP_META = {
   finished: { icon: '🏁', label: 'Finished' },
 };
 
-function FixturesTab({ quiniela, liveByFixture, locale, navigate, myPicks }) {
+function FixturesTab({ quiniela, liveByFixture, locale, navigate, myPicks, pickStatsByFixture }) {
   // Order by status: live on top, then upcoming (soonest first), then
   // finished at the bottom — so an in-progress pool surfaces what matters.
   const groups = groupFixturesByStatus(quiniela.fixtures, liveByFixture);
@@ -472,6 +679,7 @@ function FixturesTab({ quiniela, liveByFixture, locale, navigate, myPicks }) {
                   locale={locale}
                   navigate={navigate}
                   myPick={myPicks?.[f.fixtureId]}
+                  pickStat={pickStatsByFixture?.[f.fixtureId]}
                 />
               ))}
             </div>
@@ -570,7 +778,7 @@ function LeaderboardTab({ leaderboard, currentUserId, locale }) {
 // stacks the user's entries summary (when participating) on top of the
 // full grouped-by-day fixture list, so a single tap surfaces everything
 // you'd expect on a pool's main view.
-function PartidosTab({ quiniela, liveByFixture, leaderboard, currentUserId, entryCount, myEntries, locale, navigate }) {
+function PartidosTab({ quiniela, liveByFixture, leaderboard, currentUserId, entryCount, myEntries, locale, navigate, pickStatsByFixture }) {
   // Click an entry row to expand and reveal that entry's per-fixture picks
   // inline. Default collapsed so multi-entry users don't get a wall of
   // picks at first paint. Mirrors mobile's "View predictions" sheet for
@@ -681,6 +889,7 @@ function PartidosTab({ quiniela, liveByFixture, leaderboard, currentUserId, entr
         locale={locale}
         navigate={navigate}
         myPicks={myPicks}
+        pickStatsByFixture={pickStatsByFixture}
       />
     </div>
   );
@@ -714,6 +923,27 @@ export function PoolDetailDesktop({
   const [showParticipants, setShowParticipants] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const canAdmin = isAdmin || isOwner;
+
+  // Admin-only: how participants leaned per fixture (L/E/V), rendered inline
+  // under each match in the Fixtures tab. The backend attaches `pickStats`
+  // to the participants payload only for platform admins (even pre-kickoff)
+  // — null for everyone else, so the panels simply don't render. Flattened
+  // to a fixtureId → stat map for O(1) lookup per row.
+  const [pickStatsByFixture, setPickStatsByFixture] = useState(null);
+  const qid = quiniela._id || quiniela.id;
+  useEffect(() => {
+    if (!isAdmin || !token || !qid) return undefined;
+    let on = true;
+    api.get(`/quinielas/${qid}/participants`, token)
+      .then((d) => {
+        if (!on) return;
+        const map = {};
+        for (const s of d?.pickStats || []) map[s.fixtureId] = s;
+        setPickStatsByFixture(map);
+      })
+      .catch(() => { if (on) setPickStatsByFixture(null); });
+    return () => { on = false; };
+  }, [isAdmin, token, qid]);
 
   // Wrap the page in the same sidebar+topbar shell that routed pages
   // (Home, Scores, Account) get. PoolDetail is a top-level route to
@@ -771,6 +1001,7 @@ export function PoolDetailDesktop({
                 myEntries={myEntries}
                 locale={locale}
                 navigate={navigate}
+                pickStatsByFixture={pickStatsByFixture}
               />
             )}
             {tab === 'leaderboard' && (

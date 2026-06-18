@@ -1020,10 +1020,46 @@ exports.getParticipants = async (req, res) => {
       row.entries.push(entryOut);
     }
 
+    // Admin-only pick-distribution per fixture. Surfaces how the field
+    // leaned (L = home '1', E = draw 'X', V = away '2') with a sample of
+    // voters for the avatar circles — so a platform admin can read each
+    // match's inclination at a glance, even pre-kickoff. Computed from the
+    // raw `entries` (which always carry picks server-side) and gated to
+    // true admins only: it is NOT sent to non-admin pool owners, who must
+    // still wait for kickoff (the `picksHidden` fairness rule above).
+    let pickStats = null;
+    if (isAdminUser(req.user)) {
+      const byFixture = new Map();
+      for (const e of entries) {
+        const voterName = e.user?.displayName || e.user?.username || 'Player';
+        for (const p of e.picks || []) {
+          if (!p.pick || !['1', 'X', '2'].includes(p.pick)) continue;
+          if (!byFixture.has(p.fixtureId)) {
+            byFixture.set(p.fixtureId, {
+              fixtureId: p.fixtureId,
+              counts: { 1: 0, X: 0, 2: 0 },
+              total: 0,
+              voters: [],
+            });
+          }
+          const fx = byFixture.get(p.fixtureId);
+          fx.counts[p.pick] += 1;
+          fx.total += 1;
+          fx.voters.push({
+            name: voterName,
+            pick: p.pick,
+            entryNumber: e.entryNumber || 1,
+          });
+        }
+      }
+      pickStats = [...byFixture.values()];
+    }
+
     res.json({
       status,
       picksHidden: !exposePicks,
       participants: [...byUser.values()],
+      pickStats,
     });
   } catch (err) {
     console.error('[Quiniela] getParticipants error:', err.message);
