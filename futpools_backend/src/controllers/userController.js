@@ -1,9 +1,21 @@
 const User = require('../models/User');
 const ProcessedIAPTransaction = require('../models/ProcessedIAPTransaction');
+const QuinielaEntry = require('../models/QuinielaEntry');
+const BalanceTransaction = require('../models/BalanceTransaction');
+const TicketTransaction = require('../models/TicketTransaction');
+const Prediction = require('../models/Prediction');
+const SweepstakesEntry = require('../models/SweepstakesEntry');
+const DailyPickPrediction = require('../models/DailyPickPrediction');
 const { decodeJWSPayload, getTransactionIds, getAmountForProductId } = require('../services/iapService');
 const { applyDelta } = require('../services/transactionService');
+const pushService = require('../services/pushService');
 const { ADMIN_EMAILS } = require('../middleware/auth');
 const { isSimpleMode } = require('../config/mode');
+
+// Cap device tokens per user; one per device they install on. On overflow
+// we evict the least-recently-seen so a user who reinstalls repeatedly
+// can't grow the array unbounded.
+const MAX_DEVICE_TOKENS = 5;
 
 exports.getMe = async (req, res) => {
   try {
@@ -82,6 +94,107 @@ exports.updateMe = async (req, res) => {
       tickets: req.user.tickets ?? 0,
     });
   } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * POST /users/me/devices — register (or refresh) an APNs device token for
+ * the authenticated user. Idempotent: re-posting the same token just bumps
+ * `lastSeenAt` and updates the metadata. Body:
+ *   { token, platform?, bundleId?, locale?, appVersion?, osVersion?, environment? }
+ */
+exports.registerDevice = async (req, res) => {
+  try {
+    const { token, platform, bundleId, locale, appVersion, osVersion, environment } = req.body || {};
+    if (!token || typeof token !== 'string' || token.length < 20) {
+      return res.status(400).json({ message: 'token is required' });
+    }
+    const env = environment === 'sandbox' ? 'sandbox' : 'production';
+    const now = new Date();
+    req.user.deviceTokens = req.user.deviceTokens || [];
+    const existing = req.user.deviceTokens.find((d) => d.token === token);
+    if (existing) {
+      existing.lastSeenAt = now;
+      if (bundleId) existing.bundleId = bundleId;
+      if (locale) existing.locale = locale;
+      if (appVersion) existing.appVersion = appVersion;
+      if (osVersion) existing.osVersion = osVersion;
+      existing.environment = env;
+    } else {
+      req.user.deviceTokens.push({
+        token,
+        platform: platform || 'ios',
+        bundleId: bundleId || '',
+        locale: locale || 'en',
+        appVersion: appVersion || '',
+        osVersion: osVersion || '',
+        environment: env,
+        lastSeenAt: now,
+        createdAt: now,
+      });
+    }
+    if (req.user.deviceTokens.length > MAX_DEVICE_TOKENS) {
+      req.user.deviceTokens.sort((a, b) => new Date(b.lastSeenAt) - new Date(a.lastSeenAt));
+      req.user.deviceTokens = req.user.deviceTokens.slice(0, MAX_DEVICE_TOKENS);
+    }
+    req.user.markModified('deviceTokens');
+    await req.user.save();
+    res.json({ ok: true, deviceCount: req.user.deviceTokens.length });
+  } catch (err) {
+    console.error('[Users] registerDevice error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * POST /users/me/devices/test — fire a test push at every device the
+ * authenticated user has registered. Verifies the whole APNs pipeline
+ * end-to-end from the device. Returns 503 if the server has no APNs key.
+ */
+exports.sendTestPush = async (req, res) => {
+  try {
+    if (!pushService.isConfigured()) {
+      return res.status(503).json({ message: 'APNs not configured on the server' });
+    }
+    const result = await pushService.sendToUser(req.user._id, {
+      title: 'FutPools',
+      body: '🔔 Notificaciones activas. ¡Listo!',
+      data: { type: 'test' },
+    });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[Users] sendTestPush error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * DELETE /users/me — hard-delete the authenticated account and every record
+ * that carries the user's id, so nothing personal survives. Required by
+ * App Store Guideline 5.1.1(v) (in-app account deletion) and privacy-law
+ * "right to erasure". Stripe charge history lives on Stripe's side; the
+ * local QuinielaEntry rows (with their payment metadata) are removed here.
+ * Best-effort per collection so one failure can't strand a half-deleted
+ * account.
+ */
+exports.deleteMe = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const byUser = { user: userId };
+    await Promise.allSettled([
+      QuinielaEntry.deleteMany(byUser),
+      BalanceTransaction.deleteMany(byUser),
+      TicketTransaction.deleteMany(byUser),
+      Prediction.deleteMany(byUser),
+      SweepstakesEntry.deleteMany(byUser),
+      DailyPickPrediction.deleteMany(byUser),
+      ProcessedIAPTransaction.deleteMany({ userId }),
+    ]);
+    await User.deleteOne({ _id: userId });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Users] deleteMe error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
