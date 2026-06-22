@@ -31,6 +31,7 @@ router.post('/spei-payments/:id/reject', adminSpeiController.rejectSpeiPayment);
 // MXN store-credit — grant pesos to a user (by email) so their next pool
 // entry is covered without a fresh transfer; revoke for corrections.
 router.get('/credits', adminCreditsController.getCredits);
+router.get('/credits/search', adminCreditsController.searchUsers);
 router.post('/credits/grant', adminCreditsController.grantCredit);
 router.post('/credits/revoke', adminCreditsController.revokeCredit);
 

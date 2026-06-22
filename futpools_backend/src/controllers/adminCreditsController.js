@@ -77,6 +77,42 @@ exports.getCredits = async (req, res) => {
   }
 };
 
+/**
+ * GET /admin/credits/search?q=...
+ * Typeahead for the grant form — the organizer rarely knows a player's exact
+ * email, so they search by name or email and pick from the results. Matches
+ * `q` (case-insensitive substring) against email / displayName / username and
+ * returns up to 10 users WITH their current balance so the UI can show it
+ * inline. A blank query returns [].
+ */
+exports.searchUsers = async (req, res) => {
+  try {
+    const q = (req.query.q || '').toString().trim();
+    if (q.length < 2) return res.json([]);
+    // Escape regex metacharacters so a stray '.' or '+' in an email isn't
+    // treated as a pattern.
+    const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = new RegExp(safe, 'i');
+    const users = await User.find({
+      $or: [{ email: rx }, { displayName: rx }, { username: rx }],
+    })
+      .select('email displayName username')
+      .limit(10)
+      .lean();
+
+    const out = await Promise.all(users.map(async (u) => ({
+      id: String(u._id),
+      email: u.email,
+      displayName: u.displayName || u.username || u.email,
+      balanceMXN: await creditService.getAvailableCredit(u._id),
+    })));
+    res.json(out);
+  } catch (err) {
+    console.error('[admin/credits] search error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.grantCredit = async (req, res) => {
   try {
     const user = await findUserByEmail(req.body?.email);
