@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/me', auth, userController.getMe);
 router.put('/me', auth, userController.updateMe);
 router.delete('/me', auth, userController.deleteMe);
+router.get('/me/credit', auth, userController.getMyCredit);
 router.put('/me/onboarding', auth, userController.updateOnboarding);
 router.post('/me/devices', auth, userController.registerDevice);
 router.post('/me/devices/test', auth, userController.sendTestPush);

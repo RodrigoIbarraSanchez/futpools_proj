@@ -27,6 +27,7 @@ const SpeiPayment = require('../models/SpeiPayment');
 const User = require('../models/User');
 const { sendTelegramMessage } = require('./telegramService');
 const brevoService = require('./brevoService');
+const creditService = require('./creditService');
 const { isAdminUser } = require('../middleware/auth');
 
 let stripeClient = null;
@@ -446,9 +447,11 @@ async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }
         `👤 ${user.displayName || user.username || ''} (${user.email || 'sin email'})`,
         kind === 'free'
           ? '💸 Entrada gratuita (pool $0): entrada creada al instante'
-          : kind === 'paypal'
-            ? `💰 $${paypalCfg.entryUSD} USD · pendiente de pago PayPal${reference ? ` · ref ${reference}` : ''}`
-            : `💰 $${amountMXN} MXN · pendiente de pago SPEI${reference ? ` · ref ${reference}` : ''}`,
+          : kind === 'credit'
+            ? `🎟️ Entrada cubierta con crédito ($${amountMXN} MXN): inscrito al instante`
+            : kind === 'paypal'
+              ? `💰 $${paypalCfg.entryUSD} USD · pendiente de pago PayPal${reference ? ` · ref ${reference}` : ''}`
+              : `💰 $${amountMXN} MXN · pendiente de pago SPEI${reference ? ` · ref ${reference}` : ''}`,
         `🕑 ${when} hora CDMX`,
       ];
       sendTelegramMessage(lines.join('\n')).catch(() => {});
@@ -477,6 +480,52 @@ async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }
     console.log(`[poolPayment] free entry ($0 pool) — pool=${poolId} user=${user._id} entry=${entry._id}`);
     notifyJoinIntent('free', 0, null);
     return { ok: true, freeEntry: true, entryId: String(entry._id) };
+  }
+
+  // MXN store-credit → if the user's balance covers the WHOLE entry fee, spend
+  // it and create the entry instantly (no SPEI). All-or-nothing: a balance
+  // short of the fee is left untouched and we fall through to SPEI. Typical
+  // case: organizer rolled a missed-pool payment forward as $50 credit.
+  const availableCredit = await creditService.getAvailableCredit(user._id);
+  if (availableCredit >= amountMXN) {
+    const entry = await createEntryFromPicks({ poolId, userId: user._id, picks });
+    const spend = await creditService.useCreditForEntry({
+      userId: user._id, poolId, entryId: entry._id, amountMXN,
+    });
+    if (!spend.applied && !spend.already) {
+      // Defensive: spend failed for a non-idempotency reason. Roll back the
+      // entry so we don't hand out a free entry without charging credit.
+      await QuinielaEntry.deleteOne({ _id: entry._id });
+      throw Object.assign(new Error('Could not apply credit'), { code: 'CREDIT_APPLY_FAILED', status: 500 });
+    }
+    // Race guard against double-spend: the balance is read-then-debited, so two
+    // near-simultaneous joins could both pass the `availableCredit >= amount`
+    // check above and overdraw the ledger. The UI disables the button while
+    // submitting, but that's not airtight across tabs/devices. If our post-spend
+    // balance went negative, this request lost the race — reverse it (the
+    // earlier request keeps its entry) and ask the user to retry.
+    if (spend.applied) {
+      const postBalance = await creditService.getAvailableCredit(user._id);
+      if (postBalance < 0) {
+        await creditService.refundCreditForEntry({ userId: user._id, poolId, entryId: entry._id, amountMXN });
+        await QuinielaEntry.deleteOne({ _id: entry._id });
+        throw Object.assign(new Error('Credit just changed — please try again'), { code: 'CREDIT_RACE', status: 409 });
+      }
+    }
+    await QuinielaEntry.updateOne(
+      { _id: entry._id },
+      { $set: { creditEntry: true, creditAmountMXN: amountMXN } },
+    );
+    console.log(`[poolPayment] credit entry — pool=${poolId} user=${user._id} entry=${entry._id} −$${amountMXN} MXN`);
+    notifyJoinIntent('credit', amountMXN, null);
+    return {
+      ok: true,
+      creditEntry: true,
+      freeEntry: true, // keeps the existing client redirect (res.freeEntry) working
+      entryId: String(entry._id),
+      creditAppliedMXN: amountMXN,
+      creditRemainingMXN: availableCredit - amountMXN,
+    };
   }
 
   const reference = await generateSpeiReference();

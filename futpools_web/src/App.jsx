@@ -14,6 +14,7 @@ import { Settings } from './pages/Settings';
 import { CreatePool, InviteResolver } from './pages/CreatePool';
 import { AdminPayouts } from './pages/admin/AdminPayouts';
 import { AdminSpeiPayments } from './pages/admin/AdminSpeiPayments';
+import { AdminCredits } from './pages/admin/AdminCredits';
 import { WebOnboarding } from './pages/onboarding/WebOnboarding';
 import { LiveMatch } from './pages/LiveMatch';
 import { LiveScores } from './pages/LiveScores';
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="/admin/pools/new" element={<AdminRoute><CreatePool /></AdminRoute>} />
             <Route path="/admin/payouts" element={<AdminRoute><AdminPayouts /></AdminRoute>} />
             <Route path="/admin/spei" element={<AdminRoute><AdminSpeiPayments /></AdminRoute>} />
+            <Route path="/admin/credits" element={<AdminRoute><AdminCredits /></AdminRoute>} />
 
             {/* Pool invite deep link — public so unauthenticated friends
                 can land on the join page. */}

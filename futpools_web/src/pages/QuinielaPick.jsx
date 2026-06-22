@@ -43,6 +43,10 @@ export function QuinielaPick() {
   // The PayPal option only renders when the backend reports it configured.
   const [payCfg, setPayCfg] = useState(null);
   const [payMethod, setPayMethod] = useState('spei');
+  // MXN store-credit balance (null until loaded). When it covers the whole
+  // entry fee the backend skips SPEI and creates the entry instantly, so we
+  // surface that here as a "your entry is covered" banner.
+  const [creditMXN, setCreditMXN] = useState(null);
 
   useEffect(() => {
     let on = true;
@@ -58,6 +62,17 @@ export function QuinielaPick() {
       .catch(() => {});
     return () => { on = false; };
   }, []);
+
+  // Load the user's MXN store-credit so we can tell them up-front their entry
+  // will be covered (no SPEI). Best-effort — failure just hides the banner.
+  useEffect(() => {
+    if (!token) { setCreditMXN(null); return undefined; }
+    let on = true;
+    api.get('/users/me/credit', token)
+      .then((d) => { if (on) setCreditMXN(Number(d?.availableMXN) || 0); })
+      .catch(() => { if (on) setCreditMXN(null); });
+    return () => { on = false; };
+  }, [token]);
 
   useEffect(() => {
     if (!id) return;
@@ -80,7 +95,12 @@ export function QuinielaPick() {
   const count = fixtures.filter(f => ['1','X','2'].includes(picks[f.fixtureId])).length;
   const total = fixtures.length;
   const complete = count === total && total > 0;
-  const feeMXN = (quiniela?.entryFeeMXN ?? 50).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+  const feeNum = Number(quiniela?.entryFeeMXN ?? 50);
+  const feeMXN = feeNum.toLocaleString('es-MX', { minimumFractionDigits: 0 });
+  // The entry is fully covered by store-credit → no SPEI, instant join.
+  // (Admins and free pools have their own no-payment paths.)
+  const creditCovers = !isAdmin && !freeToEnter(quiniela) && feeNum > 0
+    && creditMXN != null && creditMXN >= feeNum;
 
   const setPick = (fixtureId, value, nextIndex) => {
     setPicks(prev => ({ ...prev, [fixtureId]: value }));
@@ -169,6 +189,8 @@ export function QuinielaPick() {
         payCfg={payCfg}
         payMethod={payMethod}
         setPayMethod={setPayMethod}
+        creditCovers={creditCovers}
+        creditMXN={creditMXN}
       />
     );
   }
@@ -302,7 +324,21 @@ export function QuinielaPick() {
           );
         })}
 
-        {!isAdmin && !freeToEnter(quiniela) && (
+        {creditCovers ? (
+          <div style={{
+            marginTop: 14, padding: '12px 14px', clipPath: 'var(--fp-clip-sm)',
+            background: 'color-mix(in srgb, var(--fp-primary) 14%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fp-primary) 45%, transparent)',
+          }}>
+            <div style={{
+              fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800,
+              letterSpacing: 0.5, color: 'var(--fp-primary)', marginBottom: 4,
+            }}>🎟️ {t(locale, 'Your entry is covered by credit')}</div>
+            <div style={{ fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-text-dim)' }}>
+              {t(locale, 'Credit balance')}: ${creditMXN} MXN · {t(locale, 'No payment needed — you join instantly.')}
+            </div>
+          </div>
+        ) : (!isAdmin && !freeToEnter(quiniela) && (
           <PayMethodSelector
             payCfg={payCfg}
             payMethod={payMethod}
@@ -310,7 +346,7 @@ export function QuinielaPick() {
             feeMXN={feeMXN}
             locale={locale}
           />
-        )}
+        ))}
 
         {error && (
           <div style={{
@@ -341,6 +377,7 @@ export function QuinielaPick() {
             {submitting ? t(locale, 'PROCESSING…')
               : !complete ? `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`
               : freeToEnter(quiniela) ? `▶ ${t(locale, 'PLAY FREE')}`
+              : creditCovers ? `▶ ${t(locale, 'USE CREDIT — JOIN FREE')}`
               : payMethod === 'paypal' ? `▶ ${t(locale, 'PAY')} $${payCfg?.paypal?.amountUSD ?? 3} USD`
               : `▶ ${t(locale, 'PAY')} $${feeMXN} MXN`}
           </ArcadeButton>

@@ -220,7 +220,7 @@ function FixtureCard({ fixture, idx, picks, setPick, locale }) {
 function SummaryCard({
   count, total, complete, submitting, error,
   feeMXN, prizeStr, onSubmit, locale, isAdmin, isFree, entryFree,
-  payCfg, payMethod, setPayMethod,
+  payCfg, payMethod, setPayMethod, creditCovers = false, creditMXN = null,
 }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   const isPaypal = payMethod === 'paypal';
@@ -235,9 +235,11 @@ function SummaryCard({
           ? t(locale, 'Confirm (admin free entry)')
           : entryFree
             ? t(locale, 'PLAY FREE')
-            : isPaypal
-              ? `${t(locale, 'Confirm for')} $${usd} USD`
-              : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
+            : creditCovers
+              ? t(locale, 'USE CREDIT — JOIN FREE')
+              : isPaypal
+                ? `${t(locale, 'Confirm for')} $${usd} USD`
+                : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
       : `${t(locale, 'Missing')} ${total - count} ${total - count === 1 ? t(locale, 'pick') : t(locale, 'picks')}`;
   return (
     <div className="fp-card">
@@ -270,8 +272,12 @@ function SummaryCard({
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span className="muted">{t(locale, 'Entry')}</span>
-          <span className="num" style={{ fontWeight: 600, color: entryFree ? 'var(--fp-accent)' : undefined }}>
-            {entryFree ? t(locale, 'FREE') : isPaypal ? `$${usd} USD` : `$${feeMXN} MXN`}
+          <span className="num" style={{ fontWeight: 600, color: (entryFree || creditCovers) ? 'var(--fp-accent)' : undefined }}>
+            {entryFree
+              ? t(locale, 'FREE')
+              : creditCovers
+                ? t(locale, 'Covered by credit')
+                : isPaypal ? `$${usd} USD` : `$${feeMXN} MXN`}
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
@@ -282,7 +288,19 @@ function SummaryCard({
         </div>
       </div>
 
-      {!isAdmin && !entryFree && (
+      {!isAdmin && !entryFree && creditCovers && (
+        <div style={{
+          marginTop: 14, padding: '10px 12px', borderRadius: 8,
+          background: 'color-mix(in srgb, var(--fp-primary) 12%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fp-primary) 35%, transparent)',
+          fontSize: 12, lineHeight: 1.5,
+        }}>
+          <strong className="green">🎟️ {t(locale, 'Your entry is covered by credit')}</strong><br />
+          <span className="muted">{t(locale, 'Credit balance')}: ${creditMXN} MXN</span>
+        </div>
+      )}
+
+      {!isAdmin && !entryFree && !creditCovers && (
         <PayMethodSelector
           payCfg={payCfg}
           payMethod={payMethod}
@@ -307,7 +325,9 @@ function SummaryCard({
           ? t(locale, 'Admin entry — picks register immediately, no payment required.')
           : entryFree
             ? t(locale, 'Free pool — picks register immediately, no payment required.')
-            : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
+            : creditCovers
+              ? t(locale, 'Your credit covers this entry — you join immediately, no payment required.')
+              : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
       </p>
       {error && (
         <p style={{
@@ -365,6 +385,7 @@ export function QuinielaPickDesktop({
   count, total, complete, submitting, error,
   feeMXN, onSubmit, goBack, isAdmin = false,
   payCfg = null, payMethod = 'spei', setPayMethod = () => {},
+  creditCovers = false, creditMXN = null,
 }) {
   const { locale } = useLocale();
   const fixtures = quiniela?.fixtures || [];
@@ -497,6 +518,8 @@ export function QuinielaPickDesktop({
             payCfg={payCfg}
             payMethod={payMethod}
             setPayMethod={setPayMethod}
+            creditCovers={creditCovers}
+            creditMXN={creditMXN}
           />
           <DistributionCard fixtures={fixtures} picks={picks} locale={locale} />
         </aside>

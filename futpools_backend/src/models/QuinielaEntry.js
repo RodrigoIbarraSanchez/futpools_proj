@@ -39,6 +39,12 @@ const quinielaEntrySchema = new mongoose.Schema({
   // charged to test pools). adminPayoutsController.cancelPool checks
   // this flag and skips the refund call (no payment intent to refund).
   adminFreeEntry: { type: Boolean, default: false },
+  // Set when the entry was paid with MXN store-credit (creditService) instead
+  // of a fresh SPEI/PayPal/Stripe transfer. Like adminFreeEntry, there is no
+  // payment intent to refund — cancelPool must skip the Stripe refund and (if
+  // desired) return the credit to the user's ledger instead.
+  creditEntry: { type: Boolean, default: false },
+  creditAmountMXN: { type: Number, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

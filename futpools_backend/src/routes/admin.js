@@ -2,6 +2,7 @@ const express = require('express');
 const adminController = require('../controllers/adminController');
 const adminPayoutsController = require('../controllers/adminPayoutsController');
 const adminSpeiController = require('../controllers/adminSpeiController');
+const adminCreditsController = require('../controllers/adminCreditsController');
 const { auth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -26,5 +27,11 @@ router.post('/pools/:id/cancel', adminPayoutsController.cancelPool);
 router.get('/spei-payments', adminSpeiController.listSpeiPayments);
 router.post('/spei-payments/:id/confirm', adminSpeiController.confirmSpeiPayment);
 router.post('/spei-payments/:id/reject', adminSpeiController.rejectSpeiPayment);
+
+// MXN store-credit — grant pesos to a user (by email) so their next pool
+// entry is covered without a fresh transfer; revoke for corrections.
+router.get('/credits', adminCreditsController.getCredits);
+router.post('/credits/grant', adminCreditsController.grantCredit);
+router.post('/credits/revoke', adminCreditsController.revokeCredit);
 
 module.exports = router;

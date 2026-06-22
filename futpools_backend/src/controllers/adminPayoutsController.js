@@ -15,6 +15,7 @@ const Quiniela = require('../models/Quiniela');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const User = require('../models/User');
 const { refundEntry } = require('../services/poolPaymentService');
+const creditService = require('../services/creditService');
 const { prizeForCorrect } = require('../lib/prizeLadder');
 const brevoService = require('../services/brevoService');
 
@@ -170,13 +171,20 @@ exports.cancelPool = async (req, res) => {
     for (const e of entries) {
       try {
         if (!e.stripePaymentIntentId) {
-          // Entry from before Stripe (legacy or seed). Mark refunded
-          // anyway so settlement won't try to score it.
+          // No Stripe intent to refund — credit entry, admin free entry, or a
+          // legacy/seed entry. Return store-credit to the user if this entry
+          // was paid with credit (idempotent), then mark refunded so
+          // settlement won't try to score it.
+          if (e.creditEntry && e.creditAmountMXN) {
+            await creditService.refundCreditForEntry({
+              userId: e.user, poolId: pool._id, entryId: e._id, amountMXN: e.creditAmountMXN,
+            });
+          }
           await QuinielaEntry.updateOne(
             { _id: e._id },
-            { $set: { refundedAt: new Date(), refundId: 'NO_INTENT' } },
+            { $set: { refundedAt: new Date(), refundId: e.creditEntry ? 'CREDIT_RETURNED' : 'NO_INTENT' } },
           );
-          results.push({ entryId: String(e._id), ok: true, skipped: true });
+          results.push({ entryId: String(e._id), ok: true, skipped: true, creditReturned: !!e.creditEntry });
           continue;
         }
         const out = await refundEntry(e._id, 'requested_by_customer');

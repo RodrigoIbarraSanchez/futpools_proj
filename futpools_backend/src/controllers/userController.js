@@ -2,12 +2,14 @@ const User = require('../models/User');
 const ProcessedIAPTransaction = require('../models/ProcessedIAPTransaction');
 const QuinielaEntry = require('../models/QuinielaEntry');
 const BalanceTransaction = require('../models/BalanceTransaction');
+const CreditTransaction = require('../models/CreditTransaction');
 const TicketTransaction = require('../models/TicketTransaction');
 const Prediction = require('../models/Prediction');
 const SweepstakesEntry = require('../models/SweepstakesEntry');
 const DailyPickPrediction = require('../models/DailyPickPrediction');
 const { decodeJWSPayload, getTransactionIds, getAmountForProductId } = require('../services/iapService');
 const { applyDelta } = require('../services/transactionService');
+const creditService = require('../services/creditService');
 const pushService = require('../services/pushService');
 const { ADMIN_EMAILS } = require('../middleware/auth');
 const { isSimpleMode } = require('../config/mode');
@@ -185,6 +187,7 @@ exports.deleteMe = async (req, res) => {
     await Promise.allSettled([
       QuinielaEntry.deleteMany(byUser),
       BalanceTransaction.deleteMany(byUser),
+      CreditTransaction.deleteMany(byUser),
       TicketTransaction.deleteMany(byUser),
       Prediction.deleteMany(byUser),
       SweepstakesEntry.deleteMany(byUser),
@@ -195,6 +198,21 @@ exports.deleteMe = async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[Users] deleteMe error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * GET /users/me/credit
+ * Returns the user's available MXN store-credit so the client can show
+ * "your entry will be covered by credit" before they join a pool.
+ */
+exports.getMyCredit = async (req, res) => {
+  try {
+    const availableMXN = await creditService.getAvailableCredit(req.user._id);
+    res.json({ availableMXN });
+  } catch (err) {
+    console.error('[Users] getMyCredit error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
