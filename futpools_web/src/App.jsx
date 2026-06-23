@@ -11,6 +11,7 @@ import { PoolDetail } from './pages/PoolDetail';
 import { QuinielaPick } from './pages/QuinielaPick';
 import { Account } from './pages/Account';
 import { Settings } from './pages/Settings';
+import { EditProfile } from './pages/EditProfile';
 import { CreatePool, InviteResolver } from './pages/CreatePool';
 import { AdminPayouts } from './pages/admin/AdminPayouts';
 import { AdminSpeiPayments } from './pages/admin/AdminSpeiPayments';
@@ -153,6 +154,7 @@ export default function App() {
             <Route path="/fixture/:fixtureId" element={<PrivateRoute><LiveMatch /></PrivateRoute>} />
             <Route path="/leaderboard" element={<PrivateRoute><GlobalLeaderboard /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+            <Route path="/account/edit" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
 
             {/* Admin pool creation. Backend POST /quinielas also requires
                 admin in simple_version, so this is a UX gate; trying to hit

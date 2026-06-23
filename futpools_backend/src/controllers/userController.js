@@ -10,6 +10,7 @@ const DailyPickPrediction = require('../models/DailyPickPrediction');
 const { decodeJWSPayload, getTransactionIds, getAmountForProductId } = require('../services/iapService');
 const { applyDelta } = require('../services/transactionService');
 const creditService = require('../services/creditService');
+const brevoService = require('../services/brevoService');
 const pushService = require('../services/pushService');
 const { ADMIN_EMAILS } = require('../middleware/auth');
 const { isSimpleMode } = require('../config/mode');
@@ -80,22 +81,103 @@ exports.updateOnboarding = async (req, res) => {
   }
 };
 
+const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_RX = /^[a-z0-9_.]{3,20}$/;
+
+/**
+ * PUT /users/me — update profile fields.
+ *
+ * displayName can change freely. email and username are login identifiers and
+ * unique, so changing EITHER requires the account's current password (guards
+ * against a leaked/stolen token silently taking over the account). Fields not
+ * present in the body are left untouched. Returns the same shape as getMe
+ * (incl. isAdmin) so the client can refresh state — note isAdmin can flip when
+ * the email moves in/out of the ADMIN_EMAILS allowlist.
+ */
 exports.updateMe = async (req, res) => {
   try {
-    const { displayName } = req.body;
+    const { displayName, username, email, currentPassword } = req.body || {};
+    // Reload WITH password (auth middleware selected it out) so we can verify
+    // currentPassword for sensitive changes.
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
     if (displayName !== undefined) {
-      req.user.displayName = (displayName ?? '').toString().trim();
+      const dn = (displayName ?? '').toString().trim();
+      if (dn.length < 2) {
+        return res.status(400).json({ message: 'Name must be at least 2 characters', code: 'NAME_TOO_SHORT', field: 'displayName' });
+      }
+      user.displayName = dn;
     }
-    await req.user.save();
+
+    const newEmail = email !== undefined ? String(email).trim().toLowerCase() : null;
+    const newUsername = username !== undefined ? String(username).trim().toLowerCase() : null;
+    const wantsEmail = newEmail !== null && newEmail !== user.email;
+    const wantsUsername = newUsername !== null && newUsername !== user.username;
+
+    // Sensitive change → require the current password.
+    if (wantsEmail || wantsUsername) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Enter your current password to change your email or username', code: 'PASSWORD_REQUIRED', field: 'currentPassword' });
+      }
+      const ok = await user.comparePassword(currentPassword);
+      if (!ok) {
+        return res.status(400).json({ message: 'Current password is incorrect', code: 'INVALID_PASSWORD', field: 'currentPassword' });
+      }
+    }
+
+    if (wantsUsername) {
+      if (!USERNAME_RX.test(newUsername)) {
+        return res.status(400).json({ message: 'Username must be 3-20 chars (letters, numbers, _ or .)', code: 'INVALID_USERNAME', field: 'username' });
+      }
+      const taken = await User.findOne({ username: newUsername, _id: { $ne: user._id } }).select('_id').lean();
+      if (taken) {
+        return res.status(400).json({ message: 'That username is already taken', code: 'USERNAME_TAKEN', field: 'username' });
+      }
+      user.username = newUsername;
+    }
+
+    if (wantsEmail) {
+      if (!EMAIL_RX.test(newEmail)) {
+        return res.status(400).json({ message: 'Enter a valid email', code: 'INVALID_EMAIL', field: 'email' });
+      }
+      const taken = await User.findOne({ email: newEmail, _id: { $ne: user._id } }).select('_id').lean();
+      if (taken) {
+        return res.status(400).json({ message: 'An account with this email already exists', code: 'EMAIL_EXISTS', field: 'email' });
+      }
+      user.email = newEmail;
+    }
+
+    try {
+      await user.save();
+    } catch (err) {
+      // Unique-index race (two saves collided between our check and write).
+      if (err && err.code === 11000) {
+        const field = err.keyPattern && err.keyPattern.username ? 'username' : 'email';
+        const code = field === 'username' ? 'USERNAME_TAKEN' : 'EMAIL_EXISTS';
+        return res.status(400).json({ message: `That ${field} is already in use`, code, field });
+      }
+      throw err;
+    }
+
+    // Keep the Brevo contact in sync when the email changed (best-effort).
+    if (wantsEmail) {
+      brevoService.upsertContact({ email: user.email, displayName: user.displayName, locale: 'es' })
+        .catch((e) => console.warn('[Users] brevo contact sync failed:', e.message));
+    }
+
+    const isAdmin = ADMIN_EMAILS.has((user.email || '').toLowerCase());
     res.json({
-      id: req.user._id,
-      email: req.user.email,
-      username: req.user.username,
-      displayName: req.user.displayName,
-      balance: req.user.balance ?? 0,
-      tickets: req.user.tickets ?? 0,
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      displayName: user.displayName,
+      isAdmin,
+      balance: user.balance ?? 0,
+      tickets: user.tickets ?? 0,
     });
   } catch (err) {
+    console.error('[Users] updateMe error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };

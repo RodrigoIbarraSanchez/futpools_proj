@@ -152,6 +152,18 @@ export function AuthProvider({ children }) {
     }
   }, [getToken]);
 
+  /// Full profile update (name / username / email). Unlike updateDisplayName
+  /// this RE-THROWS on failure so the edit-profile form can surface
+  /// field-level errors (e.code / e.field). On success the user state is
+  /// refreshed from the server response.
+  const updateProfile = useCallback(async (fields) => {
+    const token = getToken();
+    if (!token) throw new Error('Not authenticated');
+    const u = await api.put('/users/me', fields, token);
+    setUser(u);
+    return u;
+  }, [getToken]);
+
   // Wrap setError so consumers can also clear errorCode + errorField
   // in one call. Backwards-compatible — `setError(null)` still works.
   const setErrorAll = useCallback((value) => {
@@ -176,6 +188,7 @@ export function AuthProvider({ children }) {
     logout,
     fetchUser,
     updateDisplayName,
+    updateProfile,
     ready,
   };
 

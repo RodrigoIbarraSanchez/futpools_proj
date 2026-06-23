@@ -135,6 +135,14 @@ export function Account() {
             color: 'var(--fp-text-dim)', marginTop: 6,
           }}>{user.email}</div>
         )}
+
+        <Link to="/account/edit" style={{ textDecoration: 'none', display: 'inline-block', marginTop: 10 }}>
+          <span style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 10, fontWeight: 700, letterSpacing: 1.5,
+            color: 'var(--fp-primary)', border: '1px solid color-mix(in srgb, var(--fp-primary) 40%, transparent)',
+            padding: '6px 12px', clipPath: 'var(--fp-clip-sm)',
+          }}>✎ {t(locale, 'EDIT PROFILE')}</span>
+        </Link>
       </div>
 
       {/* Rank hero */}
@@ -459,6 +467,9 @@ function AccountDesktopLayout({
               <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
                 @{username}{user?.email ? ` · ${user.email}` : ''}
               </div>
+              <Link to="/account/edit" className="fp-btn ghost sm" style={{ marginTop: 10, alignSelf: 'flex-start' }}>
+                ✎ {t(locale, 'Edit profile')}
+              </Link>
             </div>
           </div>
 
