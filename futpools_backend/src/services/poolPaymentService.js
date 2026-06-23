@@ -448,7 +448,7 @@ async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }
         kind === 'free'
           ? '💸 Entrada gratuita (pool $0): entrada creada al instante'
           : kind === 'credit'
-            ? `🎟️ Entrada cubierta con crédito ($${amountMXN} MXN): inscrito al instante`
+            ? `🎟️ Entrada cubierta con crédito ($${amountMXN} MXN): inscrito al instante.\n✅ No requiere confirmación (no aparece en Pagos SPEI).`
             : kind === 'paypal'
               ? `💰 $${paypalCfg.entryUSD} USD · pendiente de pago PayPal${reference ? ` · ref ${reference}` : ''}`
               : `💰 $${amountMXN} MXN · pendiente de pago SPEI${reference ? ` · ref ${reference}` : ''}`,

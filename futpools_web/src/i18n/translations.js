@@ -786,6 +786,9 @@ export const translations = {
     'BACK TO POOL': 'VOLVER A LA QUINIELA',
     'SPEI PAYMENTS': 'PAGOS SPEI',
     'SPEI payments': 'Pagos SPEI',
+    'Confirm payment': 'Confirmar pago',
+    'Confirming…': 'Confirmando…',
+    'Reject': 'Rechazar',
     // ── MXN store-credit (créditos) ──
     'CREDITS': 'CRÉDITOS',
     'Credits': 'Créditos',

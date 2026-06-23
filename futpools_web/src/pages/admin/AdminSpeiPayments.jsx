@@ -8,11 +8,15 @@ import { AppBackground } from '../../arena-ui/AppBackground';
 import {
   HudFrame, ArcadeButton, IconButton, SectionLabel,
 } from '../../arena-ui/primitives';
+import { useIsDesktop } from '../../desktop/useIsDesktop';
+import { DesktopShellChrome } from '../../desktop/DesktopShell';
 
 /// Admin-only dashboard for manual-SPEI cobros. Lists pending transfers
 /// (user submitted picks + got a reference). The admin checks their bank
-/// and Confirms (creates the entry) or Rejects.
+/// and Confirms (creates the entry) or Rejects. Renders a native desktop
+/// layout inside the desktop shell, and the arcade-HUD layout on mobile.
 export function AdminSpeiPayments() {
+  const isDesktop = useIsDesktop();
   const goBack = useSafeBack('/account');
   const { token } = useAuth();
   const { locale } = useLocale();
@@ -64,6 +68,143 @@ export function AdminSpeiPayments() {
     }
   };
 
+  const shared = {
+    locale, payments, error, busyId, confirm, reject,
+  };
+
+  if (isDesktop) return <SpeiDesktop {...shared} />;
+  return <SpeiMobile {...shared} goBack={goBack} />;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Desktop
+// ─────────────────────────────────────────────────────────────────────────
+function SpeiDesktop({ locale, payments, error, busyId, confirm, reject }) {
+  return (
+    <DesktopShellChrome crumbsOverride={[t(locale, 'Admin'), t(locale, 'SPEI payments')]}>
+      <div className="fp-desktop-wide">
+        <div className="fp-desktop-page-head">
+          <div>
+            <div className="muted" style={{
+              fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em',
+            }}>{t(locale, 'Admin')}</div>
+            <h1 className="fp-desktop-page-title" style={{ marginTop: 4 }}>{t(locale, 'SPEI payments')}</h1>
+            <p className="fp-desktop-page-sub">
+              {payments == null
+                ? t(locale, 'LOADING…')
+                : tFormat(locale, '{n} PAYMENTS PENDING CONFIRMATION', { n: payments.length })}
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div style={{
+            marginBottom: 16, padding: '10px 12px', borderRadius: 10,
+            background: 'color-mix(in srgb, var(--fp-danger) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fp-danger) 35%, transparent)',
+            color: 'var(--fp-danger)', fontSize: 13,
+          }}>{error}</div>
+        )}
+
+        {payments && payments.length === 0 && !error && (
+          <div className="fp-card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>✓</div>
+            <p className="muted" style={{ fontSize: 14 }}>
+              {t(locale, 'No SPEI transfers waiting for confirmation.')}
+            </p>
+          </div>
+        )}
+
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
+          gap: 'var(--app-space-5)', alignItems: 'flex-start',
+        }}>
+          {(payments || []).map((p) => {
+            const isPaypal = p.method === 'paypal';
+            return (
+              <div key={p.id} className="fp-card">
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                  <h3 style={{
+                    margin: 0, flex: 1, fontSize: 17, fontWeight: 700, color: 'var(--fp-text)',
+                  }}>{p.pool?.name || '—'}</h3>
+                  <span style={{
+                    fontSize: 10, fontWeight: 800, letterSpacing: 1, padding: '3px 8px', borderRadius: 6,
+                    background: isPaypal ? 'rgba(54,233,255,0.16)' : 'rgba(33,226,140,0.16)',
+                    color: isPaypal ? 'var(--fp-accent)' : 'var(--fp-primary)',
+                  }}>{isPaypal ? 'PAYPAL' : 'SPEI'}</span>
+                  <span className="gold num" style={{ fontSize: 20, fontWeight: 900 }}>
+                    {isPaypal
+                      ? `$${Number(p.amountUSD || 0).toLocaleString('en-US')} USD`
+                      : `$${Number(p.amountMXN || 0).toLocaleString('en-US')}`}
+                  </span>
+                </div>
+
+                {/* Reference — the key the admin matches against the bank */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  marginTop: 14, padding: '10px 12px', borderRadius: 10, background: 'var(--fp-surface-alt)',
+                }}>
+                  <span className="muted" style={{ fontSize: 11, letterSpacing: 1 }}>
+                    {t(locale, 'REFERENCE / CONCEPT')}
+                  </span>
+                  <span className="num" style={{
+                    fontSize: 20, fontWeight: 800, letterSpacing: 2, color: 'var(--fp-primary)', userSelect: 'all',
+                  }}>{p.reference}</span>
+                </div>
+
+                {p.userMarkedPaidAt && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+                    marginTop: 12, padding: '8px 10px', borderRadius: 10,
+                    background: 'rgba(33,226,140,0.12)', border: '1px solid rgba(33,226,140,0.35)',
+                  }}>
+                    <span className="green" style={{ fontSize: 12, fontWeight: 800 }}>
+                      ✓ {t(locale, 'PAYER MARKED AS PAID')}
+                    </span>
+                    <span className="muted" style={{ fontSize: 11 }}>{formatDate(p.userMarkedPaidAt)}</span>
+                  </div>
+                )}
+                {p.userNote && (
+                  <div className="muted" style={{ marginTop: 10, fontSize: 12 }}>
+                    {t(locale, 'Tracking key')}:{' '}
+                    <span style={{ color: 'var(--fp-text)', userSelect: 'all' }}>{p.userNote}</span>
+                  </div>
+                )}
+
+                <div className="muted" style={{ marginTop: 12, fontSize: 12, lineHeight: 1.6 }}>
+                  <div>{p.user?.displayName} · <span style={{ color: 'var(--fp-accent)', userSelect: 'all' }}>{p.user?.email}</span></div>
+                  <div>{tFormat(locale, '{n} picks', { n: p.picksCount })} · {formatDate(p.createdAt)}</div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                  <button
+                    type="button"
+                    className="fp-btn primary block"
+                    style={{ flex: 1 }}
+                    onClick={() => confirm(p)}
+                    disabled={busyId === p.id}
+                  >{busyId === p.id ? t(locale, 'Confirming…') : `✓ ${t(locale, 'Confirm payment')}`}</button>
+                  <button
+                    type="button"
+                    className="fp-btn ghost"
+                    onClick={() => reject(p)}
+                    disabled={busyId === p.id}
+                    style={{ color: 'var(--fp-danger)', borderColor: 'color-mix(in srgb, var(--fp-danger) 45%, transparent)' }}
+                  >{t(locale, 'Reject')}</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </DesktopShellChrome>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Mobile (arcade HUD)
+// ─────────────────────────────────────────────────────────────────────────
+function SpeiMobile({ locale, payments, error, busyId, confirm, reject, goBack }) {
   return (
     <>
       <AppBackground />
