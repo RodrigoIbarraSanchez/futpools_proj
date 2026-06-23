@@ -23,6 +23,7 @@ const buildPoolResult = require('../emails/poolResult');
 const buildNewPool = require('../emails/newPool');
 const buildPendingPayment = require('../emails/pendingPayment');
 const buildPaymentReceived = require('../emails/paymentReceived');
+const buildCreditGranted = require('../emails/creditGranted');
 const buildPrizePaid = require('../emails/prizePaid');
 const emailToken = require('../lib/emailToken');
 const User = require('../models/User');
@@ -150,6 +151,12 @@ async function sendPendingPaymentReminder({ email, displayName, poolName, poolId
 /** Payer tapped "I've transferred" → reassure we got it + are verifying. */
 async function sendPaymentReceivedAck({ email, displayName, poolName, poolId }) {
   const { subject, html } = buildPaymentReceived({ poolName, poolId });
+  return sendEmail({ to: email, name: displayName, subject, html });
+}
+
+/** Admin granted MXN store-credit → tell the user they have credit to spend. */
+async function sendCreditGranted({ email, displayName, amountMXN, balanceMXN, note }) {
+  const { subject, html } = buildCreditGranted({ amountMXN, balanceMXN, note });
   return sendEmail({ to: email, name: displayName, subject, html });
 }
 
@@ -311,6 +318,7 @@ module.exports = {
   sendPasswordResetCode,
   sendPendingPaymentReminder,
   sendPaymentReceivedAck,
+  sendCreditGranted,
   sendPrizePaidForPool,
   sendPoolResultsForSettlement,
   sendNewPoolAnnouncement,

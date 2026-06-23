@@ -801,6 +801,8 @@ export const translations = {
     'Searching…': 'Buscando…',
     'No users found.': 'No se encontraron usuarios.',
     'Recent movements': 'Movimientos recientes',
+    'CREDIT BALANCE': 'CRÉDITO DISPONIBLE',
+    'Covers your next pool entry — just make your picks.': 'Cubre tu próxima entrada — solo arma tus pronósticos.',
     'User email': 'Correo del usuario',
     'Amount (MXN)': 'Monto (MXN)',
     'Note (optional)': 'Nota (opcional)',

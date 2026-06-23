@@ -13,6 +13,8 @@
 const User = require('../models/User');
 const CreditTransaction = require('../models/CreditTransaction');
 const creditService = require('../services/creditService');
+const brevoService = require('../services/brevoService');
+const pushService = require('../services/pushService');
 
 /** Find a user by exact (case-insensitive) email. Throws a 404-shaped error. */
 async function findUserByEmail(email) {
@@ -123,6 +125,26 @@ exports.grantCredit = async (req, res) => {
       adminUser: req.user,
     });
     console.log(`[admin/credits] grant $${req.body?.amountMXN} MXN → ${user.email} by ${req.user.email} (bal $${balanceMXN})`);
+
+    // Notify the user — both channels best-effort so a transport failure never
+    // breaks the grant. Email tells them they have credit; push pings devices.
+    const amount = Math.round(Number(req.body?.amountMXN));
+    const note = (req.body?.note || '').toString().trim();
+    if (user.email) {
+      brevoService.sendCreditGranted({
+        email: user.email,
+        displayName: user.displayName || user.username,
+        amountMXN: amount,
+        balanceMXN,
+        note,
+      }).catch((e) => console.warn('[admin/credits] credit-granted email failed:', e.message));
+    }
+    pushService.sendToUser(user._id, {
+      title: '¡Tienes crédito! 🎟️',
+      body: `Te abonamos $${amount} MXN. Tu próxima entrada queda cubierta.`,
+      data: { type: 'credit_granted', amountMXN: amount, balanceMXN },
+    }).catch((e) => console.warn('[admin/credits] credit-granted push failed:', e.message));
+
     res.json({ ok: true, user: publicUser(user, balanceMXN) });
   } catch (err) {
     const status = err.status || 500;

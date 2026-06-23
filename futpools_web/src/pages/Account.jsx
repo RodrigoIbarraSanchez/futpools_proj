@@ -24,6 +24,9 @@ export function Account() {
   const [editName, setEditName] = useState(user?.displayName || '');
   const [myPools, setMyPools] = useState([]);
   const [rankSummary, setRankSummary] = useState(null);
+  // MXN store-credit balance — shown as a card when > 0 so the user knows an
+  // admin gave them credit that covers a pool entry.
+  const [creditMXN, setCreditMXN] = useState(0);
 
   const displayName = (user?.displayName || '').trim() || user?.email || 'Player';
   const username = user?.username || (user?.email?.split('@')[0] ?? 'player');
@@ -37,10 +40,12 @@ export function Account() {
     Promise.all([
       api.get('/quinielas/mine/created', token).catch(() => []),
       api.get('/leaderboard/me', token).catch(() => null),
-    ]).then(([pools, rank]) => {
+      api.get('/users/me/credit', token).catch(() => null),
+    ]).then(([pools, rank, credit]) => {
       if (cancel) return;
       setMyPools(pools || []);
       setRankSummary(rank);
+      setCreditMXN(Number(credit?.availableMXN) || 0);
     });
     return () => { cancel = true; };
   }, [token]);
@@ -65,6 +70,7 @@ export function Account() {
       myPools={myPools}
       rankSummary={rankSummary}
       unlockedCodes={unlockedCodes}
+      creditMXN={creditMXN}
       locale={locale}
       logout={logout}
       showEditName={showEditName}
@@ -140,6 +146,35 @@ export function Account() {
       <div style={{ padding: '0 16px 10px' }}>
         <StatsGrid summary={rankSummary} locale={locale} />
       </div>
+
+      {/* Store-credit — only when they have a balance. Covers a pool entry. */}
+      {creditMXN > 0 && (
+        <div style={{ padding: '0 16px 14px' }}>
+          <HudFrame bg="linear-gradient(90deg, color-mix(in srgb, var(--fp-primary) 16%, transparent), var(--fp-surface) 60%)">
+            <div style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 40, height: 40, flexShrink: 0,
+                background: 'color-mix(in srgb, var(--fp-primary) 22%, transparent)',
+                clipPath: 'var(--fp-clip-sm)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
+              }}>🎟️</div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
+                  color: 'var(--fp-text-muted)',
+                }}>{t(locale, 'CREDIT BALANCE')}</div>
+                <div style={{
+                  fontFamily: 'var(--fp-display)', fontSize: 22, fontWeight: 900,
+                  color: 'var(--fp-primary)', letterSpacing: 0.5,
+                }}>${creditMXN} MXN</div>
+                <div style={{
+                  fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-dim)', marginTop: 2,
+                }}>{t(locale, 'Covers your next pool entry — just make your picks.')}</div>
+              </div>
+            </div>
+          </HudFrame>
+        </div>
+      )}
 
       {/* Go to global leaderboard */}
       <div style={{ padding: '0 16px 14px' }}>
@@ -374,7 +409,7 @@ export function Account() {
 // below so visual fidelity stays identical to the mobile rank layer.
 function AccountDesktopLayout({
   displayName, username, user, isAdmin, myPools, rankSummary,
-  unlockedCodes, locale, logout, showEditName, setShowEditName,
+  unlockedCodes, creditMXN = 0, locale, logout, showEditName, setShowEditName,
   editName, setEditName, onSave,
 }) {
   return (
@@ -426,6 +461,31 @@ function AccountDesktopLayout({
               </div>
             </div>
           </div>
+
+          {creditMXN > 0 && (
+            <div className="fp-card" style={{
+              display: 'flex', alignItems: 'center', gap: 'var(--app-space-4)',
+              background: 'linear-gradient(180deg, rgba(33,226,140,0.10), transparent 70%), var(--fp-surface)',
+              border: '1px solid rgba(33,226,140,0.28)',
+            }}>
+              <div style={{
+                width: 48, height: 48, flexShrink: 0, borderRadius: 12,
+                background: 'rgba(33,226,140,0.18)',
+                display: 'grid', placeItems: 'center', fontSize: 24,
+              }}>🎟️</div>
+              <div style={{ flex: 1 }}>
+                <div className="muted" style={{ fontSize: 12, fontWeight: 600 }}>
+                  {t(locale, 'Credit balance')}
+                </div>
+                <div className="green" style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.1 }}>
+                  ${creditMXN} MXN
+                </div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                  {t(locale, 'Covers your next pool entry — just make your picks.')}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="fp-card" style={{ padding: 'var(--app-space-5)' }}>
             <RankHero summary={rankSummary} locale={locale} />
