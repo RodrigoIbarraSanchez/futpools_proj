@@ -152,28 +152,31 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
                 }}>{t(locale, 'No one reached a paying tier — nothing to transfer.')}</div>
               ) : ladderRows.map((row) => (
                 <div key={row.entryId} style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', marginBottom: 6,
+                  padding: '8px 10px', marginBottom: 6,
                   background: 'color-mix(in srgb, var(--fp-primary) 10%, transparent)',
                   border: '1px solid color-mix(in srgb, var(--fp-primary) 30%, transparent)',
                   clipPath: 'var(--fp-clip-sm)',
                 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800,
+                        color: 'var(--fp-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>{row.displayName}</div>
+                      <div style={{
+                        fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-primary)',
+                        userSelect: 'all', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>{row.email}</div>
+                    </div>
                     <div style={{
-                      fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800,
-                      color: 'var(--fp-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>{row.displayName}</div>
+                      fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-dim)', whiteSpace: 'nowrap',
+                    }}>{tFormat(locale, '{n} aciertos', { n: row.score })}</div>
                     <div style={{
-                      fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-primary)',
-                      userSelect: 'all', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>{row.email}</div>
+                      fontFamily: 'var(--fp-display)', fontSize: 15, fontWeight: 900,
+                      color: 'var(--fp-gold)', whiteSpace: 'nowrap',
+                    }}>${row.prizeMXN}</div>
                   </div>
-                  <div style={{
-                    fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-dim)', whiteSpace: 'nowrap',
-                  }}>{tFormat(locale, '{n} aciertos', { n: row.score })}</div>
-                  <div style={{
-                    fontFamily: 'var(--fp-display)', fontSize: 15, fontWeight: 900,
-                    color: 'var(--fp-gold)', whiteSpace: 'nowrap',
-                  }}>${row.prizeMXN}</div>
+                  <PayoutDetails payout={row.payout} locale={locale} />
                 </div>
               ))}
             </div>
@@ -203,6 +206,7 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
                   color: 'var(--fp-text-dim)', marginTop: 2,
                 }}>@{winner.username}</div>
               )}
+              <PayoutDetails payout={winner.payout} locale={locale} />
             </div>
           ) : (
             <div style={{
@@ -244,6 +248,62 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
           </ArcadeButton>
         </div>
       </HudFrame>
+    </div>
+  );
+}
+
+/// Renders a winner's banking / PayPal details so the admin knows exactly
+/// where to send the transfer. Values are user-select:all so a single click
+/// copies them into a banking app. Shows a clear warning when the winner
+/// hasn't filled in any payout info yet.
+function PayoutDetails({ payout, locale }) {
+  const p = payout || {};
+  const hasBank = p.clabe || p.accountNumber || p.accountHolder || p.bankName;
+  const hasPaypal = p.paypalEmail;
+
+  if (!hasBank && !hasPaypal) {
+    return (
+      <div style={{
+        marginTop: 8, padding: '8px 10px',
+        background: 'color-mix(in srgb, var(--fp-danger) 12%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--fp-danger) 35%, transparent)',
+        clipPath: 'var(--fp-clip-sm)',
+        fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-danger)',
+      }}>
+        {t(locale, 'No banking info on file — ask this winner to add it in Edit profile.')}
+      </div>
+    );
+  }
+
+  const country = (p.country || 'MX').toUpperCase();
+  return (
+    <div style={{
+      marginTop: 8, padding: '8px 10px',
+      background: 'var(--fp-bg2)', clipPath: 'var(--fp-clip-sm)',
+      display: 'flex', flexDirection: 'column', gap: 4,
+    }}>
+      <Row label={t(locale, 'COUNTRY')} value={country} />
+      {p.accountHolder ? <Row label={t(locale, 'HOLDER')} value={p.accountHolder} /> : null}
+      {p.bankName ? <Row label={t(locale, 'BANK')} value={p.bankName} /> : null}
+      {p.clabe ? <Row label={t(locale, 'CLABE')} value={p.clabe} mono /> : null}
+      {p.accountNumber ? <Row label={t(locale, 'ACCOUNT')} value={p.accountNumber} mono /> : null}
+      {p.paypalEmail ? <Row label={t(locale, 'PAYPAL')} value={p.paypalEmail} /> : null}
+    </div>
+  );
+}
+
+function Row({ label, value, mono = false }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+      <div style={{
+        fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1, minWidth: 56,
+        color: 'var(--fp-text-muted)',
+      }}>{label}</div>
+      <div style={{
+        flex: 1,
+        fontFamily: mono ? 'var(--fp-mono)' : 'var(--fp-body)', fontSize: 12,
+        color: 'var(--fp-text)', userSelect: 'all', wordBreak: 'break-all',
+      }}>{value}</div>
     </div>
   );
 }

@@ -44,6 +44,30 @@ const userSchema = new mongoose.Schema({
   dob: { type: Date, default: null },
   countryCode: { type: String, default: null, uppercase: true, trim: true, maxlength: 2 },
 
+  // ── Payout / banking info (simple_version) ───────────────────────────
+  // Where to send a user's prize. simple_version pays winners off-band via
+  // manual SPEI (Mexico) or PayPal (international); there is no Stripe
+  // Connect. The admin payouts dashboard reads these fields so they know
+  // exactly where to transfer — without this we have no way to reach a
+  // winner we don't personally know.
+  //
+  // Validation lives in userController.updateMe, keyed off `country`:
+  //   - MX  → bank account (accountHolder + bankName + CLABE) required,
+  //           PayPal optional.
+  //   - else → PayPal (paypalEmail) required (no SPEI rails abroad),
+  //           bank fields optional.
+  // All fields default to '' so legacy accounts keep working until the
+  // user fills them in. `country` defaults to MX to match the audience.
+  payout: {
+    country: { type: String, default: 'MX', uppercase: true, trim: true, maxlength: 2 },
+    accountHolder: { type: String, default: '', trim: true },   // titular de la cuenta
+    bankName: { type: String, default: '', trim: true },        // banco
+    clabe: { type: String, default: '', trim: true },           // CLABE interbancaria (MX, 18 dígitos)
+    accountNumber: { type: String, default: '', trim: true },   // IBAN / cuenta (no-MX, opcional)
+    paypalEmail: { type: String, default: '', trim: true },
+    updatedAt: { type: Date, default: null },
+  },
+
   // ── FutPools Rank (skill track record) ────────────────────────────────
   // Elo-lite rating: each scored pool adjusts by K × (actual - expected) / max.
   // Starts at 1000 (Amateur tier floor), capped to [500, 3000].

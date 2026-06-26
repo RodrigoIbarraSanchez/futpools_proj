@@ -10,6 +10,7 @@ import {
 } from '../arena-ui/primitives';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { DesktopShellChrome } from '../desktop/DesktopShell';
+import { CountryPicker, countryName, flagEmoji } from '../components/CountryPicker';
 
 /// Edit-profile screen — update display name, username and email. Email and
 /// username are login identifiers, so the backend requires the current
@@ -31,11 +32,35 @@ export function EditProfile() {
   const [errorField, setErrorField] = useState(null);
   const [okMsg, setOkMsg] = useState(null);
 
+  // ── Payout / banking info ──────────────────────────────────────────
+  // Prefilled from the user record (serializePayout returns a stable
+  // empty-MX skeleton for legacy accounts). country drives which fields
+  // are required: MX → bank (CLABE), elsewhere → PayPal.
+  const p0 = user?.payout || {};
+  const [payoutCountry, setPayoutCountry] = useState(p0.country || 'MX');
+  const [accountHolder, setAccountHolder] = useState(p0.accountHolder || '');
+  const [bankName, setBankName] = useState(p0.bankName || '');
+  const [clabe, setClabe] = useState(p0.clabe || '');
+  const [accountNumber, setAccountNumber] = useState(p0.accountNumber || '');
+  const [paypalEmail, setPaypalEmail] = useState(p0.paypalEmail || '');
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+
+  const isMx = payoutCountry === 'MX';
+
   const emailChanged = email.trim().toLowerCase() !== (user?.email || '').toLowerCase();
   const usernameChanged = username.trim().toLowerCase() !== (user?.username || '').toLowerCase();
   const nameChanged = displayName.trim() !== (user?.displayName || '').trim();
   const needsPassword = emailChanged || usernameChanged;
-  const dirty = emailChanged || usernameChanged || nameChanged;
+
+  const payoutChanged = (
+    payoutCountry !== (p0.country || 'MX')
+    || accountHolder.trim() !== (p0.accountHolder || '')
+    || bankName.trim() !== (p0.bankName || '')
+    || clabe.replace(/[\s-]/g, '') !== (p0.clabe || '')
+    || accountNumber.trim() !== (p0.accountNumber || '')
+    || paypalEmail.trim().toLowerCase() !== (p0.paypalEmail || '')
+  );
+  const dirty = emailChanged || usernameChanged || nameChanged || payoutChanged;
 
   const submit = async () => {
     if (busy || !dirty) return;
@@ -52,6 +77,43 @@ export function EditProfile() {
       setErrorField('currentPassword');
       return;
     }
+
+    // Validate banking info only when the user actually touched it, so a
+    // name-only edit isn't blocked. Mirrors the backend rules.
+    let payout;
+    if (payoutChanged) {
+      const cleanClabe = clabe.replace(/[\s-]/g, '');
+      if (isMx) {
+        if (accountHolder.trim().length < 2) {
+          setError(t(locale, 'Enter the account holder name'));
+          setErrorField('payout.accountHolder');
+          return;
+        }
+        if (!bankName.trim()) {
+          setError(t(locale, 'Enter your bank name'));
+          setErrorField('payout.bankName');
+          return;
+        }
+        if (!/^\d{18}$/.test(cleanClabe)) {
+          setError(t(locale, 'Enter a valid 18-digit CLABE'));
+          setErrorField('payout.clabe');
+          return;
+        }
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paypalEmail.trim())) {
+        setError(t(locale, 'Enter your PayPal email so we can send your prize'));
+        setErrorField('payout.paypalEmail');
+        return;
+      }
+      payout = {
+        country: payoutCountry,
+        accountHolder: accountHolder.trim(),
+        bankName: bankName.trim(),
+        clabe: cleanClabe,
+        accountNumber: accountNumber.trim(),
+        paypalEmail: paypalEmail.trim().toLowerCase(),
+      };
+    }
+
     setBusy(true);
     try {
       await updateProfile({
@@ -59,6 +121,7 @@ export function EditProfile() {
         username: username.trim().toLowerCase(),
         email: email.trim().toLowerCase(),
         currentPassword: needsPassword ? currentPassword : undefined,
+        payout,
       });
       setOkMsg(t(locale, 'Profile updated.'));
       setCurrentPassword('');
@@ -77,6 +140,11 @@ export function EditProfile() {
   const fields = {
     displayName, setDisplayName, username, setUsername, email, setEmail,
     currentPassword, setCurrentPassword, needsPassword, errorField, locale,
+    // payout
+    payoutCountry, isMx, openCountryPicker: () => setShowCountryPicker(true),
+    accountHolder, setAccountHolder, bankName, setBankName,
+    clabe, setClabe, accountNumber, setAccountNumber,
+    paypalEmail, setPaypalEmail,
   };
 
   if (isDesktop) {
@@ -107,6 +175,13 @@ export function EditProfile() {
             </div>
           </div>
         </div>
+        {showCountryPicker && (
+          <CountryPicker
+            value={payoutCountry} locale={locale} t={t}
+            onChange={setPayoutCountry}
+            onClose={() => setShowCountryPicker(false)}
+          />
+        )}
       </DesktopShellChrome>
     );
   }
@@ -139,6 +214,13 @@ export function EditProfile() {
           </div>
         </HudFrame>
       </div>
+      {showCountryPicker && (
+        <CountryPicker
+          value={payoutCountry} locale={locale} t={t}
+          onChange={setPayoutCountry}
+          onClose={() => setShowCountryPicker(false)}
+        />
+      )}
     </>
   );
 }
@@ -146,6 +228,11 @@ export function EditProfile() {
 function FormFields({
   displayName, setDisplayName, username, setUsername, email, setEmail,
   currentPassword, setCurrentPassword, needsPassword, errorField, locale, desktop = false,
+  // payout
+  payoutCountry, isMx, openCountryPicker,
+  accountHolder, setAccountHolder, bankName, setBankName,
+  clabe, setClabe, accountNumber, setAccountNumber,
+  paypalEmail, setPaypalEmail,
 }) {
   const inputStyle = desktop ? deskInput : hudInput;
   const errStyle = (field) => (errorField === field
@@ -194,6 +281,131 @@ function FormFields({
           }}>{t(locale, 'For security, confirm your password to change your email or username.')}</div>
         </div>
       )}
+
+      <PayoutSection
+        desktop={desktop} locale={locale} inputStyle={inputStyle}
+        errStyle={errStyle} Label={Label}
+        payoutCountry={payoutCountry} isMx={isMx} openCountryPicker={openCountryPicker}
+        accountHolder={accountHolder} setAccountHolder={setAccountHolder}
+        bankName={bankName} setBankName={setBankName}
+        clabe={clabe} setClabe={setClabe}
+        accountNumber={accountNumber} setAccountNumber={setAccountNumber}
+        paypalEmail={paypalEmail} setPaypalEmail={setPaypalEmail}
+      />
+    </>
+  );
+}
+
+/// Banking / payout block. Where the user's prize gets sent. For Mexico we
+/// collect a bank account (CLABE) and treat PayPal as optional; for any
+/// other country bank rails don't reach them, so PayPal becomes the
+/// required payout channel (a note explains this once they pick a country).
+function PayoutSection({
+  desktop, locale, inputStyle, errStyle, Label,
+  payoutCountry, isMx, openCountryPicker,
+  accountHolder, setAccountHolder, bankName, setBankName,
+  clabe, setClabe, accountNumber, setAccountNumber,
+  paypalEmail, setPaypalEmail,
+}) {
+  const noteStyle = {
+    marginTop: 4, fontSize: desktop ? 12 : 10,
+    color: 'var(--fp-text-dim)', fontFamily: desktop ? 'inherit' : 'var(--fp-mono)',
+    lineHeight: 1.5,
+  };
+  const flag = flagEmoji(payoutCountry);
+  return (
+    <>
+      <div style={{
+        marginTop: 6, paddingTop: 14,
+        borderTop: '1px solid var(--fp-stroke)',
+      }}>
+        <div style={{
+          fontFamily: desktop ? 'inherit' : 'var(--fp-mono)',
+          fontSize: desktop ? 13 : 11, fontWeight: 800, letterSpacing: desktop ? 0 : 1,
+          color: 'var(--fp-primary)', marginBottom: 4,
+          textTransform: desktop ? 'none' : 'uppercase',
+        }}>{t(locale, 'Payout details')}</div>
+        <div style={noteStyle}>
+          {t(locale, 'Tell us where to send your prize if you win. Required so we can pay you.')}
+        </div>
+      </div>
+
+      {/* Country selector — opens the searchable picker. Changing away from
+          Mexico flips the form to the PayPal-required layout. */}
+      <div>
+        <Label>{t(locale, 'Country')}</Label>
+        <button
+          type="button"
+          onClick={openCountryPicker}
+          style={{
+            ...inputStyle, display: 'flex', alignItems: 'center', gap: 8,
+            cursor: 'pointer', textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: 18 }}>{flag}</span>
+          <span style={{ flex: 1 }}>{countryName(payoutCountry, locale) || t(locale, 'Select country')}</span>
+          <span style={{ color: 'var(--fp-text-dim)' }}>▾</span>
+        </button>
+        <div style={noteStyle}>
+          {isMx
+            ? t(locale, "Not in Mexico? Pick your country and we'll enable PayPal so you can just leave your PayPal email.")
+            : t(locale, "Outside Mexico we pay via PayPal — add your PayPal email below and you're set. Bank account is optional.")}
+        </div>
+      </div>
+
+      {/* Bank account — required for Mexico, optional otherwise. */}
+      <div>
+        <Label>{isMx ? t(locale, 'Account holder') : t(locale, 'Account holder (optional)')}</Label>
+        <input
+          type="text" value={accountHolder}
+          onChange={(e) => setAccountHolder(e.target.value)}
+          placeholder={t(locale, 'Full name as it appears on the account')}
+          style={{ ...inputStyle, ...errStyle('payout.accountHolder') }}
+        />
+      </div>
+      <div>
+        <Label>{isMx ? t(locale, 'Bank') : t(locale, 'Bank (optional)')}</Label>
+        <input
+          type="text" value={bankName}
+          onChange={(e) => setBankName(e.target.value)}
+          placeholder={t(locale, 'e.g. BBVA, Santander, Banorte')}
+          style={{ ...inputStyle, ...errStyle('payout.bankName') }}
+        />
+      </div>
+      {isMx ? (
+        <div>
+          <Label>{t(locale, 'CLABE (18 digits)')}</Label>
+          <input
+            type="text" inputMode="numeric" value={clabe}
+            onChange={(e) => setClabe(e.target.value)}
+            placeholder={t(locale, '18-digit interbank CLABE')}
+            maxLength={22}
+            style={{ ...inputStyle, ...errStyle('payout.clabe') }}
+          />
+        </div>
+      ) : (
+        <div>
+          <Label>{t(locale, 'Account / IBAN (optional)')}</Label>
+          <input
+            type="text" value={accountNumber}
+            onChange={(e) => setAccountNumber(e.target.value)}
+            placeholder={t(locale, 'Bank account number or IBAN')}
+            style={{ ...inputStyle, ...errStyle('payout.accountNumber') }}
+          />
+        </div>
+      )}
+
+      {/* PayPal — required outside Mexico, optional inside. */}
+      <div>
+        <Label>{isMx ? t(locale, 'PayPal email (optional)') : t(locale, 'PayPal email')}</Label>
+        <input
+          type="email" value={paypalEmail}
+          onChange={(e) => setPaypalEmail(e.target.value)}
+          autoCapitalize="none" autoCorrect="off"
+          placeholder={t(locale, 'your@email.com')}
+          style={{ ...inputStyle, ...errStyle('payout.paypalEmail') }}
+        />
+      </div>
     </>
   );
 }

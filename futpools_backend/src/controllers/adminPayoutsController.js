@@ -20,6 +20,23 @@ const { prizeForCorrect } = require('../lib/prizeLadder');
 const brevoService = require('../services/brevoService');
 
 /**
+ * Normalize a winner's payout/banking info for the admin dashboard. Legacy
+ * winners predate the field — return an empty MX skeleton so the UI can
+ * render "no banking info on file" instead of crashing on null.
+ */
+function payoutFor(u) {
+  const p = (u && u.payout) || {};
+  return {
+    country: p.country || 'MX',
+    accountHolder: p.accountHolder || '',
+    bankName: p.bankName || '',
+    clabe: p.clabe || '',
+    accountNumber: p.accountNumber || '',
+    paypalEmail: p.paypalEmail || '',
+  };
+}
+
+/**
  * GET /admin/payouts — pools whose settlementStatus = 'settled' AND
  * winnerPaidAt = null. Includes winner contact info (email, displayName)
  * + computed prize amount so the admin sees everything they need on
@@ -45,7 +62,7 @@ exports.getPendingPayouts = async (req, res) => {
     // bank transfer.
     const winnerIds = [...new Set(pools.flatMap((p) => p.winnerUserIds || []).map(String))];
     const users = winnerIds.length > 0
-      ? await User.find({ _id: { $in: winnerIds } }).select('_id email displayName username').lean()
+      ? await User.find({ _id: { $in: winnerIds } }).select('_id email displayName username payout').lean()
       : [];
     const usersById = new Map(users.map((u) => [String(u._id), u]));
 
@@ -66,7 +83,7 @@ exports.getPendingPayouts = async (req, res) => {
       const ladderEntries = await QuinielaEntry.find({
         quiniela: { $in: ladderPoolIds },
         refundedAt: null,
-      }).populate('user', '_id email displayName username').lean();
+      }).populate('user', '_id email displayName username payout').lean();
       for (const e of ladderEntries) {
         const key = String(e.quiniela);
         if (!ladderByPool.has(key)) ladderByPool.set(key, []);
@@ -106,6 +123,7 @@ exports.getPendingPayouts = async (req, res) => {
               username: u.username || null,
               score: e.score ?? 0,
               prizeMXN: prize,
+              payout: payoutFor(u),
             };
           })
           .filter((r) => r.prizeMXN > 0)
@@ -129,6 +147,7 @@ exports.getPendingPayouts = async (req, res) => {
           email: u.email,
           displayName: u.displayName || u.username || u.email,
           username: u.username || null,
+          payout: payoutFor(u),
         }));
       return { ...base, prizeMXN: prize, winners };
     });
