@@ -7,6 +7,7 @@ const { sendTelegramMessage } = require('../services/telegramService');
 const { welcomeNewUser, sendPasswordResetCode } = require('../services/brevoService');
 
 const { ADMIN_EMAILS } = require('../middleware/auth');
+const { serializePayout } = require('../lib/payout');
 const RESET_CODE_EXPIRY_MINUTES = 15;
 // v3: every new account gets seeded coins so the first Sponsored pool they
 // create doesn't require an IAP. Defaulting to 100 (enough for a 50-coin
@@ -186,6 +187,7 @@ exports.register = async (req, res) => {
         displayName: user.displayName,
         isAdmin,
         balance: user.balance ?? 0,
+        payout: serializePayout(user.payout),
       },
     });
   } catch (err) {
@@ -251,6 +253,7 @@ exports.login = async (req, res) => {
         displayName: user.displayName,
         isAdmin,
         balance: user.balance ?? 0,
+        payout: serializePayout(user.payout),
       },
     });
   } catch (err) {
@@ -338,6 +341,7 @@ exports.resetPassword = async (req, res) => {
         displayName: user.displayName,
         isAdmin,
         balance: user.balance ?? 0,
+        payout: serializePayout(user.payout),
       },
     });
   } catch (err) {

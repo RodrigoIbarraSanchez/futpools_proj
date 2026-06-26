@@ -171,7 +171,7 @@ function statusBadgeLabel(status, locale) {
 // Header — back button + status pill + meta + title.
 // ─────────────────────────────────────────────────────────────────────
 
-function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid }) {
+function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid, justEdited }) {
   return (
     <>
       <button
@@ -223,6 +223,20 @@ function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid }) {
           ✓ {t(locale, 'Payment confirmed — your entry is in.')}
         </div>
       )}
+      {justEdited && (
+        <div style={{
+          marginBottom: 'var(--app-space-6)',
+          padding: '12px 16px',
+          background: 'rgba(33,226,140,0.10)',
+          border: '1px solid rgba(33,226,140,0.4)',
+          borderRadius: 12,
+          color: 'var(--fp-primary)',
+          fontWeight: 700,
+          fontSize: 14,
+        }}>
+          ✓ {t(locale, 'Your picks were updated.')}
+        </div>
+      )}
     </>
   );
 }
@@ -231,7 +245,10 @@ function PoolHeader({ quiniela, status, locale, navigate, goBack, justPaid }) {
 // JOIN card (sticky aside) — Stripe checkout entry point.
 // ─────────────────────────────────────────────────────────────────────
 
-function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMXN, onJoin, status, isAdmin }) {
+function PlayCard({
+  quiniela, locale, canJoin, alreadyEntered, entryCount, feeMXN, onJoin, status, isAdmin,
+  canEditPicks = false, editDeadlineLabel = '', editBusy = false, editMsg = null, onEditPicks,
+}) {
   // International players can pay in USD via PayPal — surface it BEFORE
   // they bounce off the MXN price. Only shown when the backend has the
   // channel configured.
@@ -316,6 +333,31 @@ function PlayCard({ quiniela, locale, canJoin, alreadyEntered, entryCount, feeMX
       >
         {ctaLabel}
       </button>
+
+      {/* Edit picks of an existing entry — only while the window is open
+          (>10 min before kickoff). Tapping re-checks server-side first. */}
+      {canEditPicks && (
+        <div style={{ marginTop: 10 }}>
+          <p className="muted" style={{ fontSize: 11, lineHeight: 1.5, margin: '0 0 6px', textAlign: 'center', color: 'var(--fp-accent)' }}>
+            ✎ {editDeadlineLabel
+              ? tFormat(locale, 'Edit your picks until {time} (10 min before kickoff).', { time: editDeadlineLabel })
+              : t(locale, 'Edit your picks until 10 min before kickoff.')}
+          </p>
+          <button
+            type="button"
+            className="fp-btn ghost block"
+            disabled={editBusy}
+            onClick={onEditPicks}
+          >
+            {editBusy ? t(locale, 'CHECKING…') : `✎ ${t(locale, 'EDIT PICKS')}`}
+          </button>
+        </div>
+      )}
+      {editMsg && (
+        <p style={{ fontSize: 11, lineHeight: 1.5, margin: '8px 0 0', textAlign: 'center', color: 'var(--fp-danger)' }}>
+          {editMsg}
+        </p>
+      )}
       <p className="muted" style={{ fontSize: 11, lineHeight: 1.5, margin: '12px 0 0', textAlign: 'center' }}>
         {isAdmin
           ? t(locale, 'Admin entry — picks register immediately, no payment required.')
@@ -902,8 +944,9 @@ function PartidosTab({ quiniela, liveByFixture, leaderboard, currentUserId, entr
 export function PoolDetailDesktop({
   quiniela, liveByFixture, leaderboard, currentUserId,
   entryCount, alreadyEntered, canJoin, feeMXN,
-  handleJoin, navigate, goBack, justPaid,
+  handleJoin, navigate, goBack, justPaid, justEdited,
   isAdmin = false, isOwner = false, token, myEntries = [], onMutated,
+  canEditPicks = false, editDeadlineLabel = '', editBusy = false, editMsg = null, onEditPicks,
 }) {
   const { locale } = useLocale();
   const status = resolvePoolStatus(quiniela, liveByFixture);
@@ -956,7 +999,7 @@ export function PoolDetailDesktop({
       <div className="fp-desktop-wide">
         <PoolHeader
           quiniela={quiniela} status={status} locale={locale}
-          navigate={navigate} goBack={goBack} justPaid={justPaid}
+          navigate={navigate} goBack={goBack} justPaid={justPaid} justEdited={justEdited}
         />
 
       <div style={{
@@ -1038,6 +1081,11 @@ export function PoolDetailDesktop({
             onJoin={handleJoin}
             status={status}
             isAdmin={isAdmin}
+            canEditPicks={canEditPicks}
+            editDeadlineLabel={editDeadlineLabel}
+            editBusy={editBusy}
+            editMsg={editMsg}
+            onEditPicks={onEditPicks}
           />
           {/* Invite code box — visible on private pools so the creator
               can copy/share without leaving the screen. */}

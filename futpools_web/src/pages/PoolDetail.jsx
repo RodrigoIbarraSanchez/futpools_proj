@@ -224,10 +224,16 @@ export function PoolDetail() {
   const [leaderboard, setLeaderboard] = useState(null);
   const [showRules, setShowRules] = useState(false);
   const [showManage, setShowManage] = useState(false);
+  // Edit-picks affordance: busy flag while we re-validate the window on tap,
+  // and a transient message when the window turns out to be closed.
+  const [editBusy, setEditBusy] = useState(false);
+  const [editMsg, setEditMsg] = useState(null);
   // simple_version: if Stripe redirected the user back here with ?paid=1,
   // show a one-shot success banner. We strip the query param after first
   // render so back-button/refresh don't replay the toast.
   const justPaid = searchParams.get('paid') === '1';
+  // Returned from the pick editor after a successful picks update.
+  const justEdited = searchParams.get('edited') === '1';
   // Map fixtureId → "1"|"X"|"2" so we can pass the user's pick into LiveMatch
   // when they tap a fixture. Mirrors iOS loadMyPicks.
   const [myPicks, setMyPicks] = useState({});
@@ -252,10 +258,11 @@ export function PoolDetail() {
   // screen via state (justPaid captured above) but the URL no longer
   // carries the flag, so reload/back-button don't double-fire.
   useEffect(() => {
-    if (justPaid) {
+    if (justPaid || justEdited) {
       const next = new URLSearchParams(searchParams);
       next.delete('paid');
       next.delete('session_id');
+      next.delete('edited');
       setSearchParams(next, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -276,6 +283,19 @@ export function PoolDetail() {
   // creator still sees the participant list either way; only the action
   // surface (delete vs. read-only picks) differs by phase.
   const canViewPicks = isOwner && !isScheduled && (quiniela?.entriesCount ?? 0) > 0;
+
+  // Edit-picks window. The pool object carries editWindow.editDeadline
+  // (firstKickoff − 10 min); we mirror the gate live off the local clock so
+  // the button disappears the instant the cutoff passes, then the server
+  // re-checks authoritatively when the user actually taps it.
+  const editDeadlineIso = quiniela?.editWindow?.editDeadline || null;
+  const editDeadlineMs = editDeadlineIso ? new Date(editDeadlineIso).getTime() : null;
+  const editWindowOpen = editDeadlineMs != null && now < editDeadlineMs;
+  const canEditPicks = alreadyEntered && myEntries.length > 0 && editWindowOpen;
+  const editDeadlineLabel = editDeadlineIso
+    ? new Date(editDeadlineIso).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US',
+        { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
 
   // Delegates to the shared helper so PoolDetail, Home, and HomeDesktop
   // never disagree on whether a pool is joinable. Bug 2026-05-14: pools
@@ -414,6 +434,29 @@ export function PoolDetail() {
     navigate(`/pool/${id}/pick`);
   };
 
+  // Tap "Edit picks" → re-check the window with the server FIRST (the
+  // requirement: every press is validated, because the cutoff moves with the
+  // clock). Only navigate into the editor if the server still says yes;
+  // otherwise tell the user it just closed and refresh so the button hides.
+  const handleEditPicks = async () => {
+    if (!token || editBusy) return;
+    setEditBusy(true);
+    setEditMsg(null);
+    try {
+      const win = await api.get(`/quinielas/${id}/entries/me/edit-window`, token);
+      if (win?.editable && win?.hasEntry && win?.entryId) {
+        navigate(`/pool/${id}/pick?edit=${win.entryId}`);
+      } else {
+        setEditMsg(t(locale, 'Editing just closed — picks lock 10 minutes before the first match.'));
+        load();
+      }
+    } catch (e) {
+      setEditMsg(e?.message || t(locale, 'Could not open the editor. Try again.'));
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
   if (loading || !quiniela) {
     return (
       <div className="fp-pool-deep">
@@ -458,11 +501,17 @@ export function PoolDetail() {
           navigate={navigate}
           goBack={goBack}
           justPaid={justPaid}
+          justEdited={justEdited}
           isAdmin={!!user?.isAdmin}
           isOwner={isOwner}
           token={token}
           myEntries={myEntries}
           onMutated={load}
+          canEditPicks={canEditPicks}
+          editDeadlineLabel={editDeadlineLabel}
+          editBusy={editBusy}
+          editMsg={editMsg}
+          onEditPicks={handleEditPicks}
         />
       </>
     );
@@ -798,6 +847,35 @@ export function PoolDetail() {
         pointerEvents: 'none',
       }}>
         <div style={{ pointerEvents: 'auto' }}>
+          {/* Edit-picks affordance — only while the window is open (>10 min
+              before the first kickoff). Tapping re-validates server-side
+              before entering the editor. Self-hides once the cutoff passes. */}
+          {canEditPicks && (
+            <>
+              <div style={{
+                fontFamily: 'var(--fp-mono)', fontSize: 10, lineHeight: 1.4,
+                color: 'var(--fp-accent)', textAlign: 'center', marginBottom: 6,
+              }}>
+                ✎ {editDeadlineLabel
+                  ? tFormat(locale, 'Edit your picks until {time} (10 min before kickoff).', { time: editDeadlineLabel })
+                  : t(locale, 'Edit your picks until 10 min before kickoff.')}
+              </div>
+              <ArcadeButton
+                size="md" fullWidth variant="ghost"
+                disabled={editBusy}
+                onClick={handleEditPicks}
+              >
+                {editBusy ? t(locale, 'CHECKING…') : `✎ ${t(locale, 'EDIT PICKS')}`}
+              </ArcadeButton>
+              <div style={{ height: 8 }} />
+            </>
+          )}
+          {editMsg && (
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 10, lineHeight: 1.4,
+              color: 'var(--fp-danger)', textAlign: 'center', marginBottom: 6,
+            }}>{editMsg}</div>
+          )}
           {/* Already-entered hint surfaces the user's status without
               taking the CTA out of action. Multiple entries are allowed
               — the button stays tappable. */}
@@ -848,6 +926,25 @@ export function PoolDetail() {
           boxShadow: '0 8px 24px rgba(33,226,140,0.35)',
         }}>
           ✓ {t(locale, 'PAYMENT CONFIRMED — YOU ARE IN!')}
+        </div>
+      )}
+
+      {justEdited && (
+        <div style={{
+          position: 'fixed',
+          top: 12, left: 12, right: 12,
+          maxWidth: 430 - 24, margin: '0 auto',
+          zIndex: 100,
+          padding: '12px 16px',
+          background: 'color-mix(in srgb, var(--fp-primary) 18%, var(--fp-bg))',
+          border: '1px solid var(--fp-primary)',
+          clipPath: 'var(--fp-clip-sm)',
+          color: 'var(--fp-primary)',
+          fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800,
+          letterSpacing: 1.5, textAlign: 'center',
+          boxShadow: '0 8px 24px rgba(33,226,140,0.35)',
+        }}>
+          ✓ {t(locale, 'PICKS UPDATED')}
         </div>
       )}
 

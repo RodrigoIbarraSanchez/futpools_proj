@@ -818,6 +818,8 @@ export const translations = {
     'Name must be at least 2 characters': 'El nombre debe tener al menos 2 caracteres',
     'Profile updated.': 'Perfil actualizado.',
     // ── Payout / banking info (edit profile) ──
+    'Add your bank details so we can pay out your prizes.': 'Agrega tus datos bancarios para poder recibir tus premios.',
+    'Add details': 'Agregar datos',
     'Payout details': 'Datos para tu premio',
     'Tell us where to send your prize if you win. Required so we can pay you.': 'Dinos a dónde enviarte tu premio si ganas. Es obligatorio para poder pagarte.',
     'Select country': 'Selecciona tu país',
@@ -1551,6 +1553,26 @@ export const translations = {
     'CLABE': 'CLABE',
     'ACCOUNT': 'CUENTA',
     'PAYPAL': 'PAYPAL',
+    // ── Edit picks (existing entry) ──
+    'EDIT YOUR PICKS': 'EDITAR PRONÓSTICOS',
+    'EDIT PICKS': 'EDITAR PRONÓSTICOS',
+    'Edit entry': 'Editar entrada',
+    'CHECKING…': 'VERIFICANDO…',
+    'You can edit your picks until {time} (10 min before the first match).': 'Puedes editar tus pronósticos hasta {time} (10 min antes del primer partido).',
+    'You can edit your picks until 10 minutes before the first match.': 'Puedes editar tus pronósticos hasta 10 minutos antes del primer partido.',
+    'Edit your picks until {time} (10 min before kickoff).': 'Edita tus pronósticos hasta {time} (10 min antes del inicio).',
+    'Edit your picks until 10 min before kickoff.': 'Edita tus pronósticos hasta 10 min antes del inicio.',
+    'Your changes are saved instantly — no new payment.': 'Tus cambios se guardan al instante — sin pago adicional.',
+    'Editing is closed': 'La edición está cerrada',
+    'Picks lock 10 minutes before the first match, so they can no longer be edited.': 'Los pronósticos se bloquean 10 minutos antes del primer partido, así que ya no se pueden editar.',
+    'Editing just closed — picks lock 10 minutes before the first match.': 'La edición acaba de cerrar — los pronósticos se bloquean 10 minutos antes del primer partido.',
+    'Could not open the editor. Try again.': 'No se pudo abrir el editor. Inténtalo de nuevo.',
+    'PICKS UPDATED': 'PRONÓSTICOS ACTUALIZADOS',
+    'Your picks were updated.': 'Tus pronósticos se actualizaron.',
+    // backend messages (used as i18n keys when surfaced)
+    'The edit window has closed — picks lock 10 minutes before the first match.': 'La ventana de edición ya cerró — los pronósticos se bloquean 10 minutos antes del primer partido.',
+    'Pick every match before saving': 'Marca todos los partidos antes de guardar',
+    'This entry was cancelled': 'Esta entrada fue cancelada',
   },
 };
 

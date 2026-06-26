@@ -31,6 +31,12 @@ if (!isSimpleMode()) {
   router.delete('/:id/entries/:entryId', auth, quinielaController.deleteEntry);
 }
 router.get('/:id/entries/me', auth, quinielaController.getMyEntriesForQuiniela);
+// Edit-picks window pre-flight + the edit itself. Available in BOTH modes:
+// editing an already-paid entry never bypasses payment, and the handler
+// enforces the 10-minutes-before-kickoff lock against the server clock.
+// (More specific than /:id/entries/me above, so route order is fine.)
+router.get('/:id/entries/me/edit-window', auth, quinielaController.checkEntryEditWindow);
+router.put('/:id/entries/:entryId/picks', auth, quinielaController.updateEntryPicks);
 // Participant list — creator/admin only.
 router.get(
   '/:id/participants',

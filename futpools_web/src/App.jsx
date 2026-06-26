@@ -17,6 +17,7 @@ import { AdminPayouts } from './pages/admin/AdminPayouts';
 import { AdminSpeiPayments } from './pages/admin/AdminSpeiPayments';
 import { AdminCredits } from './pages/admin/AdminCredits';
 import { WebOnboarding } from './pages/onboarding/WebOnboarding';
+import { BankingReminderToast } from './components/BankingReminderToast';
 import { LiveMatch } from './pages/LiveMatch';
 import { LiveScores } from './pages/LiveScores';
 import { GlobalLeaderboard } from './pages/GlobalLeaderboard';
@@ -178,6 +179,10 @@ export default function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          {/* Non-dismissable nudge for players who haven't added banking
+              details yet — without them we can't pay their prizes. Self-hides
+              once the details are saved. */}
+          <BankingReminderToast />
         </BrowserRouter>
       </AuthProvider>
     </LocaleProvider>

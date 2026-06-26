@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { trackEvent } from '../lib/analytics';
 import { PayMethodSelector, isLikelyMexico } from '../components/PayMethodSelector';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
-import { t } from '../i18n/translations';
+import { t, tFormat } from '../i18n/translations';
 import { AppBackground } from '../arena-ui/AppBackground';
 import {
   HudFrame, HudChip, XpBar, TeamCrest, ArcadeButton, IconButton,
@@ -18,6 +18,7 @@ import { QuinielaPickDesktop } from './desktop/QuinielaPickDesktop';
 export function QuinielaPick() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   // Picks are scoped to a pool — when there's no history the natural
   // home for the back arrow is that pool's detail page.
   const goBack = useSafeBack(`/pool/${id}`);
@@ -25,6 +26,18 @@ export function QuinielaPick() {
   const isAdmin = !!user?.isAdmin;
   const { locale } = useLocale();
   const isDesktop = useIsDesktop();
+
+  // Edit mode — reached via /pool/:id/pick?edit=<entryId> from PoolDetail when
+  // the user wants to change the picks of an entry they already submitted.
+  // No payment happens here; we PUT the new picks, gated server-side to >10
+  // min before the first kickoff.
+  const editEntryId = searchParams.get('edit') || null;
+  const editMode = !!editEntryId;
+  // null = still checking; object once /edit-window answers. `closed` flips
+  // true when the window has passed (or the server rejects an edit), which
+  // swaps the whole screen for a "too late" notice.
+  const [editWindow, setEditWindow] = useState(null);
+  const [editClosed, setEditClosed] = useState(false);
 
   // simple_version: picks happen exactly once, at checkout. The legacy
   // edit-an-existing-entry path is gone (PUT /quinielas/:id/entries/:entryId
@@ -91,6 +104,33 @@ export function QuinielaPick() {
     return () => { cancelled = true; };
   }, [id]);
 
+  // Edit mode bootstrap: re-validate the window with the server (the "check
+  // on every press" requirement) and prefill the existing picks so the user
+  // edits from where they were, not a blank slate.
+  useEffect(() => {
+    if (!editMode || !id || !token) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const win = await api.get(`/quinielas/${id}/entries/me/edit-window`, token);
+        if (cancelled) return;
+        setEditWindow(win);
+        if (!win.editable || !win.hasEntry) { setEditClosed(true); return; }
+        // Prefill from the entry we're editing.
+        const entries = await api.get(`/quinielas/${id}/entries/me`, token);
+        if (cancelled) return;
+        const entry = (entries || []).find((e) => String(e._id) === String(editEntryId))
+          || (entries || [])[0];
+        const map = {};
+        for (const p of entry?.picks || []) map[p.fixtureId] = p.pick;
+        setPicks(map);
+      } catch (e) {
+        if (!cancelled) setError(e?.message || 'Error');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editMode, id, token, editEntryId]);
+
   const fixtures = quiniela?.fixtures || [];
   const count = fixtures.filter(f => ['1','X','2'].includes(picks[f.fixtureId])).length;
   const total = fixtures.length;
@@ -101,6 +141,15 @@ export function QuinielaPick() {
   // (Admins and free pools have their own no-payment paths.)
   const creditCovers = !isAdmin && !freeToEnter(quiniela) && feeNum > 0
     && creditMXN != null && creditMXN >= feeNum;
+
+  // Human-friendly cutoff ("hasta el sáb 14:50") for the edit warning. Falls
+  // back to the pool object's editWindow when the /edit-window call hasn't
+  // resolved yet, so the banner shows immediately.
+  const editDeadlineIso = editWindow?.editDeadline || quiniela?.editWindow?.editDeadline || null;
+  const editDeadlineLabel = editDeadlineIso
+    ? new Date(editDeadlineIso).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US',
+        { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
 
   const setPick = (fixtureId, value, nextIndex) => {
     setPicks(prev => ({ ...prev, [fixtureId]: value }));
@@ -116,7 +165,34 @@ export function QuinielaPick() {
    *
    * Admins get { freeEntry: true } and skip straight to the success screen.
    */
+  // Save edited picks for an existing entry. Re-checks the window first (so a
+  // press after the cutoff fails fast and flips the screen to "too late"),
+  // then PUTs; the backend also enforces the gate authoritatively.
+  const handleSaveEdit = async () => {
+    if (!token) { setError(t(locale, 'Please sign in to submit picks.')); return; }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const win = await api.get(`/quinielas/${id}/entries/me/edit-window`, token);
+      setEditWindow(win);
+      if (!win.editable) { setEditClosed(true); return; }
+      const payload = {
+        picks: fixtures
+          .filter(f => ['1','X','2'].includes(picks[f.fixtureId]))
+          .map(f => ({ fixtureId: f.fixtureId, pick: picks[f.fixtureId] })),
+      };
+      await api.put(`/quinielas/${id}/entries/${editEntryId}/picks`, payload, token);
+      navigate(`/pool/${id}?edited=1`);
+    } catch (e) {
+      if (e?.code === 'EDIT_WINDOW_CLOSED') setEditClosed(true);
+      else setError(t(locale, e?.message || 'Error'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
+    if (editMode) return handleSaveEdit();
     if (!token) { setError(t(locale, 'Please sign in to submit picks.')); return; }
     setError(null);
     setSubmitting(true);
@@ -168,6 +244,30 @@ export function QuinielaPick() {
     );
   }
 
+  // Edit window already closed (on entry or after a failed save). The picks
+  // are frozen — show a clear notice instead of a now-useless editor.
+  if (editMode && editClosed) {
+    return (
+      <div className={isDesktop ? 'fp-desktop-scope fp-pool-deep' : 'fp-pool-deep'}>
+        {!isDesktop && <AppBackground />}
+        <div style={{ padding: '40px 20px', maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+          <div style={{
+            fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 800,
+            letterSpacing: 1, marginBottom: 10, color: 'var(--fp-text)',
+          }}>{t(locale, 'Editing is closed')}</div>
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 12, lineHeight: 1.6,
+            color: 'var(--fp-text-dim)', marginBottom: 24,
+          }}>{t(locale, 'Picks lock 10 minutes before the first match, so they can no longer be edited.')}</div>
+          <ArcadeButton size="lg" fullWidth onClick={() => navigate(`/pool/${id}`)}>
+            {t(locale, 'BACK TO POOL')}
+          </ArcadeButton>
+        </div>
+      </div>
+    );
+  }
+
   // Desktop renders the design's two-column pick screen. Same data + state
   // owned here, just a different presentation. Mobile path stays untouched.
   if (isDesktop) {
@@ -191,6 +291,8 @@ export function QuinielaPick() {
         setPayMethod={setPayMethod}
         creditCovers={creditCovers}
         creditMXN={creditMXN}
+        editMode={editMode}
+        editDeadlineLabel={editDeadlineLabel}
       />
     );
   }
@@ -209,7 +311,7 @@ export function QuinielaPick() {
             fontFamily: 'var(--fp-display)', fontSize: 12, letterSpacing: 3,
             fontWeight: 700,
           }}>
-            {t(locale, 'MAKE YOUR PICKS')}
+            {t(locale, editMode ? 'EDIT YOUR PICKS' : 'MAKE YOUR PICKS')}
           </div>
           <div style={{ width: 32 }} />
         </div>
@@ -238,6 +340,19 @@ export function QuinielaPick() {
 
       {/* Pick rows */}
       <div style={{ padding: '14px 16px 140px' }}>
+        {editMode && (
+          <div style={{
+            marginBottom: 14, padding: '11px 13px', clipPath: 'var(--fp-clip-sm)',
+            background: 'color-mix(in srgb, var(--fp-accent) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fp-accent) 40%, transparent)',
+            fontFamily: 'var(--fp-mono)', fontSize: 11, lineHeight: 1.5,
+            color: 'var(--fp-accent)',
+          }}>
+            ⏱ {editDeadlineLabel
+              ? tFormat(locale, 'You can edit your picks until {time} (10 min before the first match).', { time: editDeadlineLabel })
+              : t(locale, 'You can edit your picks until 10 minutes before the first match.')}
+          </div>
+        )}
         {fixtures.map((f, i) => {
           const isFocused = focused === f.fixtureId;
           return (
@@ -324,7 +439,7 @@ export function QuinielaPick() {
           );
         })}
 
-        {creditCovers ? (
+        {editMode ? null : creditCovers ? (
           <div style={{
             marginTop: 14, padding: '12px 14px', clipPath: 'var(--fp-clip-sm)',
             background: 'color-mix(in srgb, var(--fp-primary) 14%, transparent)',
@@ -376,6 +491,7 @@ export function QuinielaPick() {
           >
             {submitting ? t(locale, 'PROCESSING…')
               : !complete ? `${t(locale, 'COMPLETE ALL')} (${total - count} ${t(locale, 'LEFT')})`
+              : editMode ? `✓ ${t(locale, 'SAVE CHANGES')}`
               : freeToEnter(quiniela) ? `▶ ${t(locale, 'PLAY FREE')}`
               : creditCovers ? `▶ ${t(locale, 'USE CREDIT — JOIN FREE')}`
               : payMethod === 'paypal' ? `▶ ${t(locale, 'PAY')} $${payCfg?.paypal?.amountUSD ?? 3} USD`

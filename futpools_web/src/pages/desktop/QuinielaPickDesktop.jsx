@@ -15,7 +15,7 @@
 //     of 'editable until kickoff')
 import { useEffect, useState } from 'react';
 import { useLocale } from '../../context/LocaleContext';
-import { t } from '../../i18n/translations';
+import { t, tFormat } from '../../i18n/translations';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
 import { isFreePool, freeToEnter } from '../../lib/poolStatus';
 import { PayMethodSelector } from '../../components/PayMethodSelector';
@@ -221,6 +221,7 @@ function SummaryCard({
   count, total, complete, submitting, error,
   feeMXN, prizeStr, onSubmit, locale, isAdmin, isFree, entryFree,
   payCfg, payMethod, setPayMethod, creditCovers = false, creditMXN = null,
+  editMode = false,
 }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   const isPaypal = payMethod === 'paypal';
@@ -230,17 +231,19 @@ function SummaryCard({
   // entryFree but still have prizes.
   const ctaLabel = submitting
     ? t(locale, 'Sending…')
-    : complete
-      ? (isAdmin
-          ? t(locale, 'Confirm (admin free entry)')
-          : entryFree
-            ? t(locale, 'PLAY FREE')
-            : creditCovers
-              ? t(locale, 'USE CREDIT — JOIN FREE')
-              : isPaypal
-                ? `${t(locale, 'Confirm for')} $${usd} USD`
-                : `${t(locale, 'Confirm for')} $${feeMXN} MXN`)
-      : `${t(locale, 'Missing')} ${total - count} ${total - count === 1 ? t(locale, 'pick') : t(locale, 'picks')}`;
+    : !complete
+      ? `${t(locale, 'Missing')} ${total - count} ${total - count === 1 ? t(locale, 'pick') : t(locale, 'picks')}`
+      : editMode
+        ? t(locale, 'Save changes')
+        : (isAdmin
+            ? t(locale, 'Confirm (admin free entry)')
+            : entryFree
+              ? t(locale, 'PLAY FREE')
+              : creditCovers
+                ? t(locale, 'USE CREDIT — JOIN FREE')
+                : isPaypal
+                  ? `${t(locale, 'Confirm for')} $${usd} USD`
+                  : `${t(locale, 'Confirm for')} $${feeMXN} MXN`);
   return (
     <div className="fp-card">
       <h4 className="fp-section-title">{t(locale, 'Summary')}</h4>
@@ -270,16 +273,18 @@ function SummaryCard({
         borderTop: '1px solid rgba(255,255,255,0.06)',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-          <span className="muted">{t(locale, 'Entry')}</span>
-          <span className="num" style={{ fontWeight: 600, color: (entryFree || creditCovers) ? 'var(--fp-accent)' : undefined }}>
-            {entryFree
-              ? t(locale, 'FREE')
-              : creditCovers
-                ? t(locale, 'Covered by credit')
-                : isPaypal ? `$${usd} USD` : `$${feeMXN} MXN`}
-          </span>
-        </div>
+        {!editMode && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+            <span className="muted">{t(locale, 'Entry')}</span>
+            <span className="num" style={{ fontWeight: 600, color: (entryFree || creditCovers) ? 'var(--fp-accent)' : undefined }}>
+              {entryFree
+                ? t(locale, 'FREE')
+                : creditCovers
+                  ? t(locale, 'Covered by credit')
+                  : isPaypal ? `$${usd} USD` : `$${feeMXN} MXN`}
+            </span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
           <span className="muted">{t(locale, 'Prize')}</span>
           <span className="gold num" style={{ fontWeight: 700 }}>
@@ -288,7 +293,7 @@ function SummaryCard({
         </div>
       </div>
 
-      {!isAdmin && !entryFree && creditCovers && (
+      {!editMode && !isAdmin && !entryFree && creditCovers && (
         <div style={{
           marginTop: 14, padding: '10px 12px', borderRadius: 8,
           background: 'color-mix(in srgb, var(--fp-primary) 12%, transparent)',
@@ -300,7 +305,7 @@ function SummaryCard({
         </div>
       )}
 
-      {!isAdmin && !entryFree && !creditCovers && (
+      {!editMode && !isAdmin && !entryFree && !creditCovers && (
         <PayMethodSelector
           payCfg={payCfg}
           payMethod={payMethod}
@@ -321,13 +326,15 @@ function SummaryCard({
       <p className="muted" style={{
         fontSize: 11, lineHeight: 1.5, margin: '12px 0 0', textAlign: 'center',
       }}>
-        {isAdmin
-          ? t(locale, 'Admin entry — picks register immediately, no payment required.')
-          : entryFree
-            ? t(locale, 'Free pool — picks register immediately, no payment required.')
-            : creditCovers
-              ? t(locale, 'Your credit covers this entry — you join immediately, no payment required.')
-              : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
+        {editMode
+          ? t(locale, 'Your changes are saved instantly — no new payment.')
+          : isAdmin
+            ? t(locale, 'Admin entry — picks register immediately, no payment required.')
+            : entryFree
+              ? t(locale, 'Free pool — picks register immediately, no payment required.')
+              : creditCovers
+                ? t(locale, 'Your credit covers this entry — you join immediately, no payment required.')
+                : t(locale, 'Picks are submitted on the next screen and confirmed via SPEI.')}
       </p>
       {error && (
         <p style={{
@@ -386,6 +393,7 @@ export function QuinielaPickDesktop({
   feeMXN, onSubmit, goBack, isAdmin = false,
   payCfg = null, payMethod = 'spei', setPayMethod = () => {},
   creditCovers = false, creditMXN = null,
+  editMode = false, editDeadlineLabel = '',
 }) {
   const { locale } = useLocale();
   const fixtures = quiniela?.fixtures || [];
@@ -438,7 +446,7 @@ export function QuinielaPickDesktop({
           <div className="muted" style={{
             fontSize: 12, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.06em',
-          }}>{t(locale, 'Create entry')}</div>
+          }}>{t(locale, editMode ? 'Edit entry' : 'Create entry')}</div>
           <h1 className="fp-desktop-page-title" style={{ marginTop: 4 }}>
             {quiniela?.name}
           </h1>
@@ -448,6 +456,19 @@ export function QuinielaPickDesktop({
         </div>
         <CountdownPill iso={quiniela?.startDate} locale={locale} />
       </div>
+
+      {editMode && (
+        <div className="fp-card" style={{
+          marginBottom: 'var(--app-space-5)', padding: '12px 16px',
+          background: 'color-mix(in srgb, var(--fp-accent) 10%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fp-accent) 35%, transparent)',
+          fontSize: 13, lineHeight: 1.5,
+        }}>
+          ⏱ {editDeadlineLabel
+            ? tFormat(locale, 'You can edit your picks until {time} (10 min before the first match).', { time: editDeadlineLabel })
+            : t(locale, 'You can edit your picks until 10 minutes before the first match.')}
+        </div>
+      )}
 
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 360px',
@@ -520,6 +541,7 @@ export function QuinielaPickDesktop({
             setPayMethod={setPayMethod}
             creditCovers={creditCovers}
             creditMXN={creditMXN}
+            editMode={editMode}
           />
           <DistributionCard fixtures={fixtures} picks={picks} locale={locale} />
         </aside>

@@ -89,6 +89,43 @@ function computePoolStatus(fixtures, liveStatusMap) {
 // "registration open" definition has a single source of truth.
 exports.computePoolStatus = computePoolStatus;
 
+// Participants may edit the picks of an entry they already submitted, but
+// only until EDIT_LOCK_MINUTES before the first fixture kicks off. After
+// that the entry is frozen so nobody can react to early team news / lineups.
+const EDIT_LOCK_MINUTES = 10;
+
+/**
+ * Compute the edit window for a pool's already-submitted entries. The
+ * deadline is `firstKickoff - EDIT_LOCK_MINUTES`. Returns ISO strings so the
+ * client can render the cutoff and a live countdown, plus an authoritative
+ * `editable` flag evaluated against the server clock (the client must never
+ * be trusted for the gate — it only mirrors this for UX).
+ */
+function getEditWindow(quiniela) {
+  const fixtures = quiniela?.fixtures || [];
+  const kickoffs = fixtures
+    .map((f) => new Date(f.kickoff).getTime())
+    .filter((n) => Number.isFinite(n));
+  let firstKickoffMs = kickoffs.length ? Math.min(...kickoffs) : null;
+  // Fall back to startDate (set to the earliest kickoff at create time) if a
+  // legacy pool somehow has fixtures without parseable kickoffs.
+  if (firstKickoffMs == null && quiniela?.startDate) {
+    const sd = new Date(quiniela.startDate).getTime();
+    if (Number.isFinite(sd)) firstKickoffMs = sd;
+  }
+  if (firstKickoffMs == null) {
+    return { firstKickoff: null, editDeadline: null, editable: false, editLockMinutes: EDIT_LOCK_MINUTES };
+  }
+  const editDeadlineMs = firstKickoffMs - EDIT_LOCK_MINUTES * 60 * 1000;
+  return {
+    firstKickoff: new Date(firstKickoffMs).toISOString(),
+    editDeadline: new Date(editDeadlineMs).toISOString(),
+    editable: Date.now() < editDeadlineMs,
+    editLockMinutes: EDIT_LOCK_MINUTES,
+  };
+}
+exports.getEditWindow = getEditWindow;
+
 function addPoolStatus(quiniela, liveStatusMap) {
   return { ...quiniela, status: computePoolStatus(quiniela.fixtures || [], liveStatusMap) };
 }
@@ -514,6 +551,10 @@ exports.getQuinielaById = async (req, res) => {
       createdByUsername: doc.createdBy?.username || null,
       createdByDisplayName: doc.createdBy?.displayName || null,
       createdBy: doc.createdBy?._id || null,
+      // Edit-picks window (firstKickoff − 10 min) so the client can show the
+      // cutoff and hide the edit affordance once it passes. The PUT endpoint
+      // re-checks authoritatively, this is just for UX.
+      editWindow: getEditWindow(doc),
     }, liveStatusMap));
   } catch (err) {
     console.error('[Quiniela] byId error:', err.message);
@@ -660,6 +701,109 @@ exports.getMyEntriesForQuiniela = async (req, res) => {
     res.json(payload);
   } catch (err) {
     console.error('[Quiniela] getMyEntriesForQuiniela error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * GET /quinielas/:id/entries/me/edit-window
+ *
+ * Lightweight pre-flight the client calls the moment the user taps "Edit
+ * picks" — the authoritative "is editing still allowed?" check. Re-evaluated
+ * against the server clock every call (the requirement: each press re-checks
+ * validity, since time keeps moving), so a button that looked open 30s ago
+ * can correctly come back closed. Returns the window plus whether the user
+ * actually has an editable entry and which one (latest non-refunded).
+ */
+exports.checkEntryEditWindow = async (req, res) => {
+  try {
+    const quinielaId = req.params.id;
+    const quiniela = await Quiniela.findById(quinielaId).lean();
+    if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
+
+    const win = getEditWindow(quiniela);
+    const entry = await QuinielaEntry.findOne({
+      quiniela: quinielaId,
+      user: req.user._id,
+      refundedAt: null,
+    }).sort({ entryNumber: -1 }).select('_id').lean();
+
+    res.json({
+      ...win,
+      hasEntry: !!entry,
+      entryId: entry ? String(entry._id) : null,
+      serverNow: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('[Quiniela] checkEntryEditWindow error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * PUT /quinielas/:id/entries/:entryId/picks
+ *
+ * Edit the picks of an entry the user ALREADY submitted (no payment — the
+ * entry is already paid). Allowed only until EDIT_LOCK_MINUTES before the
+ * first kickoff; the gate is enforced here against the server clock so a
+ * stale client can't sneak a late edit through. Picks must be complete
+ * (one valid 1/X/2 per fixture).
+ */
+exports.updateEntryPicks = async (req, res) => {
+  try {
+    const { id: quinielaId, entryId } = req.params;
+    const { picks } = req.body || {};
+    if (!Array.isArray(picks) || picks.length === 0) {
+      return res.status(400).json({ message: 'Picks are required' });
+    }
+
+    const entry = await QuinielaEntry.findOne({ _id: entryId, quiniela: quinielaId });
+    if (!entry) return res.status(404).json({ message: 'Entry not found' });
+    if (String(entry.user) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Not allowed' });
+    }
+    // A refunded/cancelled entry is out of the game — nothing to edit.
+    if (entry.refundedAt) {
+      return res.status(400).json({ message: 'This entry was cancelled', code: 'ENTRY_CANCELLED' });
+    }
+
+    const quiniela = await Quiniela.findById(quinielaId);
+    if (!quiniela) return res.status(404).json({ message: 'Quiniela not found' });
+
+    // The 10-minutes-before-first-kickoff gate — authoritative.
+    const win = getEditWindow(quiniela);
+    if (!win.editable) {
+      return res.status(400).json({
+        message: 'The edit window has closed — picks lock 10 minutes before the first match.',
+        code: 'EDIT_WINDOW_CLOSED',
+        editDeadline: win.editDeadline,
+      });
+    }
+
+    // Validate: every pick references a fixture in this pool with a 1/X/2
+    // value, AND every fixture is covered (a complete, valid entry).
+    const validFixtureIds = new Set((quiniela.fixtures || []).map((f) => Number(f.fixtureId)));
+    const validPicks = new Set(['1', 'X', '2']);
+    const seen = new Set();
+    for (const p of picks) {
+      const fid = Number(p?.fixtureId);
+      if (!validFixtureIds.has(fid) || !validPicks.has(String(p?.pick))) {
+        return res.status(400).json({ message: 'Invalid pick', invalid: p });
+      }
+      seen.add(fid);
+    }
+    if (seen.size !== validFixtureIds.size) {
+      return res.status(400).json({ message: 'Pick every match before saving', code: 'PICKS_INCOMPLETE' });
+    }
+
+    entry.picks = picks.map((p) => ({ fixtureId: Number(p.fixtureId), pick: String(p.pick) }));
+    entry.updatedAt = new Date();
+    await entry.save();
+    await entry.populate('quiniela');
+    console.log(`[Quiniela] entry picks edited — quiniela=${quinielaId} entry=${entryId} user=${req.user._id}`);
+    res.json(entry);
+  } catch (err) {
+    console.error('[Quiniela] updateEntryPicks error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
