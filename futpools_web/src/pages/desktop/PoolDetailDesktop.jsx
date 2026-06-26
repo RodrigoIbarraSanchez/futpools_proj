@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
-import { resolvePoolStatus, isFreePool, freeToEnter, groupFixturesByStatus } from '../../lib/poolStatus';
+import { resolvePoolStatus, isFreePool, freeToEnter, groupFixturesByStatus, poolLockAtISO } from '../../lib/poolStatus';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
 import { ThermometerLadder } from '../../arena-ui/ThermometerLadder';
 import { LadderParticipants } from '../../arena-ui/LadderParticipants';
@@ -273,6 +273,12 @@ function PlayCard({
       ? t(locale, 'NO PRIZE')
       : (prizePot > 0 ? fmtMxn(prizePot) : `$0 MXN`);
   const entryStr = freeEntry ? t(locale, 'FREE') : `$${feeMXN} MXN`;
+  // Registration close time (10 min before first kickoff) for the join info.
+  const lockIso = poolLockAtISO(quiniela);
+  const lockLabel = lockIso
+    ? new Date(lockIso).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US',
+        { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
   // Admins enter free (backend skips payment); $0 pools join free too.
   const ctaLabel = closed
     ? (status === 'completed' ? t(locale, 'Pool closed') : t(locale, 'POOL LOCKED'))
@@ -333,6 +339,11 @@ function PlayCard({
       >
         {ctaLabel}
       </button>
+      {!closed && lockLabel && (
+        <p className="muted" style={{ fontSize: 11, lineHeight: 1.5, margin: '8px 0 0', textAlign: 'center' }}>
+          ⏱ {tFormat(locale, 'Registration closes {time} (10 min before the first match).', { time: lockLabel })}
+        </p>
+      )}
 
       {/* Edit picks of an existing entry — only while the window is open
           (>10 min before kickoff). Tapping re-checks server-side first. */}

@@ -112,6 +112,24 @@ function firstKickoff(pool) {
   return new Date(Math.min(...ks.map((d) => d.getTime())));
 }
 
+// Registration closes this many minutes BEFORE the first kickoff (not at
+// kickoff). Same lock used for editing picks, so "join" and "edit" freeze at
+// the exact same moment. Keep in sync with quinielaController.EDIT_LOCK_MINUTES
+// and the web lib/poolStatus POOL_LOCK_MINUTES.
+const JOIN_LOCK_MINUTES = 10;
+
+/**
+ * The moment registration closes: firstKickoff − JOIN_LOCK_MINUTES. Returns
+ * null when the pool has no parseable kickoffs (caller then treats it as
+ * "no cutoff"). This is the authoritative join gate for both the SPEI and
+ * Stripe entry paths.
+ */
+function joinCutoff(pool) {
+  const fk = firstKickoff(pool);
+  if (!fk) return null;
+  return new Date(fk.getTime() - JOIN_LOCK_MINUTES * 60 * 1000);
+}
+
 /**
  * Create a Stripe Checkout Session for a pool entry.
  *
@@ -125,12 +143,15 @@ async function createCheckoutSessionForEntry({ user, poolId, picks }) {
   const pool = await Quiniela.findById(poolId);
   if (!pool) throw Object.assign(new Error('Pool not found'), { code: 'POOL_NOT_FOUND', status: 404 });
 
-  // Cutoff: any fixture already kicked off blocks new entries. We don't
-  // rely on the pool's settlementStatus because that flips much later
-  // (post-FT) and we want the gate at first kickoff.
-  const cutoff = firstKickoff(pool);
+  // Cutoff: registration closes 10 min before the first kickoff (joinCutoff).
+  // We don't rely on the pool's settlementStatus because that flips much later
+  // (post-FT) and we want the gate before kickoff.
+  const cutoff = joinCutoff(pool);
   if (cutoff && cutoff.getTime() <= Date.now()) {
-    throw Object.assign(new Error('Pool already started'), { code: 'POOL_STARTED', status: 400 });
+    throw Object.assign(
+      new Error('Registration closed — pools lock 10 minutes before the first match.'),
+      { code: 'POOL_STARTED', status: 400 },
+    );
   }
 
   // simple_version allows multiple entries per user — each new
@@ -426,9 +447,12 @@ async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }
     throw Object.assign(new Error('PayPal payments are not configured'), { code: 'PAYPAL_NOT_CONFIGURED', status: 400 });
   }
 
-  const cutoff = firstKickoff(pool);
+  const cutoff = joinCutoff(pool);
   if (cutoff && cutoff.getTime() <= Date.now()) {
-    throw Object.assign(new Error('Pool already started'), { code: 'POOL_STARTED', status: 400 });
+    throw Object.assign(
+      new Error('Registration closed — pools lock 10 minutes before the first match.'),
+      { code: 'POOL_STARTED', status: 400 },
+    );
   }
 
   validatePicks(pool, picks);

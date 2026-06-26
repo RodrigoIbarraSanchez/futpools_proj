@@ -1573,6 +1573,9 @@ export const translations = {
     'The edit window has closed — picks lock 10 minutes before the first match.': 'La ventana de edición ya cerró — los pronósticos se bloquean 10 minutos antes del primer partido.',
     'Pick every match before saving': 'Marca todos los partidos antes de guardar',
     'This entry was cancelled': 'Esta entrada fue cancelada',
+    // ── Registration close (10 min before first kickoff) ──
+    'Registration closes {time} (10 min before the first match).': 'Las inscripciones cierran {time} (10 min antes del primer partido).',
+    'Registration closed — pools lock 10 minutes before the first match.': 'Inscripciones cerradas — las quinielas se bloquean 10 minutos antes del primer partido.',
   },
 };
 

@@ -33,6 +33,36 @@ const norm = (s) => String(s || '').toUpperCase();
 const isLiveCode = (s) => LIVE_STATUS_CODES.has(norm(s));
 const isFinishedCode = (s) => FINISHED_STATUS_CODES.has(norm(s));
 
+// Registration (and pick-editing) close this many minutes BEFORE the first
+// kickoff — NOT at kickoff. Keep in sync with the backend
+// (poolPaymentService.JOIN_LOCK_MINUTES / quinielaController.EDIT_LOCK_MINUTES).
+export const POOL_LOCK_MINUTES = 10;
+const POOL_LOCK_MS = POOL_LOCK_MINUTES * 60 * 1000;
+
+/** Earliest fixture kickoff in ms (falls back to startDate). null if unknown. */
+function earliestKickoffMs(quiniela) {
+  const ks = (quiniela?.fixtures || [])
+    .map((f) => (f.kickoff ? new Date(f.kickoff).getTime() : NaN))
+    .filter((n) => Number.isFinite(n));
+  if (ks.length) return Math.min(...ks);
+  const sd = quiniela?.startDate ? new Date(quiniela.startDate).getTime() : NaN;
+  return Number.isFinite(sd) ? sd : null;
+}
+
+/**
+ * The moment a pool locks: 10 min before the first kickoff. After this,
+ * joining and editing picks are both closed. Returned in ms / ISO so callers
+ * can drive a "Closes in" countdown or a deadline label off a single source.
+ */
+export function poolLockAtMs(quiniela) {
+  const k = earliestKickoffMs(quiniela);
+  return k == null ? null : k - POOL_LOCK_MS;
+}
+export function poolLockAtISO(quiniela) {
+  const ms = poolLockAtMs(quiniela);
+  return ms == null ? null : new Date(ms).toISOString();
+}
+
 const byKickoff = (a, b) => new Date(a.kickoff || 0) - new Date(b.kickoff || 0);
 
 /** Which display bucket a fixture belongs to, given its live snapshot. */
@@ -106,6 +136,11 @@ export function canJoinPool(quiniela, liveFixtures = {}) {
   if (quiniela.endDate && new Date(quiniela.endDate).getTime() < now) {
     return false;
   }
+  // Registration closes 10 min before the first kickoff — not at kickoff.
+  // This is the primary gate; the per-fixture checks below stay as defensive
+  // backstops for live/finished statuses or missing kickoff data.
+  const lockMs = poolLockAtMs(quiniela);
+  if (lockMs != null && now >= lockMs) return false;
   for (const f of quiniela.fixtures) {
     // Pool's own snapshot of fixture status (set when the pool was
     // refreshed from the football provider). Authoritative for "is this

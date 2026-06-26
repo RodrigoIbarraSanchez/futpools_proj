@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
-import { isFreePool, freeToEnter } from '../../lib/poolStatus';
+import { isFreePool, freeToEnter, poolLockAtISO } from '../../lib/poolStatus';
 import { PayMethodSelector } from '../../components/PayMethodSelector';
 
 const WINNER_SHARE = 0.65;
@@ -454,7 +454,7 @@ export function QuinielaPickDesktop({
             {t(locale, 'Tap the team you think will win. If you think it will be a draw, tap')} <strong className="green">{t(locale, 'Draw')}</strong>.
           </p>
         </div>
-        <CountdownPill iso={quiniela?.startDate} locale={locale} />
+        <CountdownPill iso={poolLockAtISO(quiniela)} locale={locale} />
       </div>
 
       {editMode && (

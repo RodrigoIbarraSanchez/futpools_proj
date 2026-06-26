@@ -179,6 +179,11 @@ const quinielaSchema = new mongoose.Schema({
   cancelledAt: { type: Date, default: null },
   cancelledReason: { type: String, default: null },
 
+  // Set when the "pool locks in 10 min — review pending payments" Telegram
+  // alert has been sent (see poolLockAlertService). One-shot per pool so the
+  // 1-minute scheduler doesn't re-alert every tick during the lock window.
+  lockAlertSentAt: { type: Date, default: null },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

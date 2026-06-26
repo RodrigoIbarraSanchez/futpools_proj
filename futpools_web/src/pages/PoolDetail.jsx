@@ -13,7 +13,7 @@ import { ThermometerLadder } from '../arena-ui/ThermometerLadder';
 import { LadderParticipants } from '../arena-ui/LadderParticipants';
 import { useLiveAcertoNotifier } from '../lib/ladderNotify';
 import { useSafeBack } from '../lib/safeBack';
-import { canJoinPool, isFreePool, freeToEnter, orderFixturesByStatus } from '../lib/poolStatus';
+import { canJoinPool, isFreePool, freeToEnter, orderFixturesByStatus, poolLockAtISO } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { PoolDetailDesktop } from './desktop/PoolDetailDesktop';
 
@@ -294,6 +294,14 @@ export function PoolDetail() {
   const canEditPicks = alreadyEntered && myEntries.length > 0 && editWindowOpen;
   const editDeadlineLabel = editDeadlineIso
     ? new Date(editDeadlineIso).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US',
+        { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  // Registration close time (10 min before first kickoff) for the join info.
+  // Derived from fixtures/startDate so it works even before editWindow loads.
+  const lockAtIso = poolLockAtISO(quiniela);
+  const lockLabel = lockAtIso
+    ? new Date(lockAtIso).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US',
         { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
     : '';
 
@@ -888,6 +896,14 @@ export function PoolDetail() {
               ✓ {entryCount === 1
                 ? t(locale, 'You have 1 entry — pay again to add another')
                 : tFormat(locale, 'You have {n} entries — pay again to add another', { n: entryCount })}
+            </div>
+          )}
+          {canJoin() && lockLabel && (
+            <div style={{
+              fontFamily: 'var(--fp-mono)', fontSize: 10, lineHeight: 1.4,
+              color: 'var(--fp-text-dim)', textAlign: 'center', marginBottom: 6,
+            }}>
+              ⏱ {tFormat(locale, 'Registration closes {time} (10 min before the first match).', { time: lockLabel })}
             </div>
           )}
           <ArcadeButton

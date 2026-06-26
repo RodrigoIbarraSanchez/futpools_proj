@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
 import { maxPrize, topTiers, formatMXN } from '../../lib/prizeLadder';
-import { resolvePoolStatus, canJoinPool, isFreePool, freeToEnter } from '../../lib/poolStatus';
+import { resolvePoolStatus, canJoinPool, isFreePool, freeToEnter, poolLockAtISO } from '../../lib/poolStatus';
 
 const WINNER_SHARE = 0.65;
 
@@ -197,7 +197,7 @@ function Hero({ pool, kind, isLive, canJoin, locale, navigate }) {
           </div>
           <div className="cell">
             <div className="label">{t(locale, 'Closes in')}</div>
-            <div className="value"><Countdown iso={pool.startDate} locale={locale} /></div>
+            <div className="value"><Countdown iso={poolLockAtISO(pool)} locale={locale} /></div>
           </div>
         </div>
         <div className="fp-hero-cta">
@@ -307,7 +307,7 @@ function PoolCard({ q, liveFixtures, locale, navigate }) {
             <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>
               {isClosed
                 ? new Date(q.endDate || q.startDate).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
-                : <Countdown iso={q.startDate} locale={locale} />}
+                : <Countdown iso={poolLockAtISO(q)} locale={locale} />}
             </div>
           </div>
         </div>

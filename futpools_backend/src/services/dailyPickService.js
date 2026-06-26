@@ -285,6 +285,13 @@ async function dailyPickTick() {
     const { remindStalePendingPayments } = require('./pendingPaymentReminderService');
     await remindStalePendingPayments();
   } catch (err) { console.warn('[PendingPayment] tick error:', err.message); }
+  // Alert the admin (Telegram) when a paid pool is ~10 min from kickoff — the
+  // moment registration locks — so they can review pending payments. One-shot
+  // per pool (lockAlertSentAt), so calling every minute is safe.
+  try {
+    const { alertPoolsLockingSoon } = require('./poolLockAlertService');
+    await alertPoolsLockingSoon();
+  } catch (err) { console.warn('[poolLockAlert] tick error:', err.message); }
   // Lifecycle/marketing sweeps (closing-soon, activation, win-back, weekly
   // digest). Self-throttled to ~15 min internally, so calling every tick is fine.
   try {
