@@ -528,27 +528,51 @@ async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }
     };
   }
 
-  const reference = await generateSpeiReference();
-  const payment = await SpeiPayment.create({
+  // Dedup pending intents per (user, pool). Without this, every re-submit
+  // (back button → submit again, refresh, retry) minted a fresh SpeiPayment
+  // row AND fired another "Nueva inscripción" Telegram alert — the cause of
+  // the "1 jugador, 3 pagos generados, 3 notificaciones" bug. Reuse the most
+  // recent pending intent instead: refresh its picks/method/amount, keep its
+  // reference stable (so a transfer already started still matches), and do
+  // NOT notify again.
+  let payment = await SpeiPayment.findOne({
     quiniela: poolId,
     user: user._id,
-    picks,
-    amountMXN,
-    method: payMethod,
-    amountUSD: payMethod === 'paypal' ? paypalCfg.entryUSD : null,
-    reference,
     status: 'pending',
-  });
+  }).sort({ createdAt: -1 });
 
-  console.log(`[poolPayment] ${payMethod} intent created — pool=${poolId} user=${user._id} ref=${reference}`);
-  notifyJoinIntent(payMethod, amountMXN, reference);
+  if (payment) {
+    payment.picks = picks;
+    payment.method = payMethod;
+    payment.amountMXN = amountMXN;
+    payment.amountUSD = payMethod === 'paypal' ? paypalCfg.entryUSD : null;
+    payment.updatedAt = new Date();
+    await payment.save();
+    console.log(`[poolPayment] reusing pending ${payMethod} intent — pool=${poolId} user=${user._id} ref=${payment.reference}`);
+    // No notifyJoinIntent on reuse — the admin was already pinged when the
+    // first intent was created; re-submits must not spam.
+  } else {
+    const reference = await generateSpeiReference();
+    payment = await SpeiPayment.create({
+      quiniela: poolId,
+      user: user._id,
+      picks,
+      amountMXN,
+      method: payMethod,
+      amountUSD: payMethod === 'paypal' ? paypalCfg.entryUSD : null,
+      reference,
+      status: 'pending',
+    });
+    console.log(`[poolPayment] ${payMethod} intent created — pool=${poolId} user=${user._id} ref=${reference}`);
+    notifyJoinIntent(payMethod, amountMXN, reference);
+  }
 
   if (payMethod === 'paypal') {
     return {
       ok: true,
       method: 'paypal',
       paymentId: String(payment._id),
-      reference,
+      reference: payment.reference,
       amountMXN,
       amountUSD: paypalCfg.entryUSD,
       // PayPal.me links get the amount appended; Payment Links go verbatim.
@@ -562,7 +586,7 @@ async function createSpeiIntentForEntry({ user, poolId, picks, method = 'spei' }
     ok: true,
     method: 'spei',
     paymentId: String(payment._id),
-    reference,
+    reference: payment.reference,
     amountMXN,
     poolName: pool.name,
     ...cfg,
