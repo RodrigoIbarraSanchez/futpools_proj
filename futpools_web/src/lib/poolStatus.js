@@ -63,6 +63,16 @@ export function poolLockAtISO(quiniela) {
   return ms == null ? null : new Date(ms).toISOString();
 }
 
+/**
+ * True when a pool contains World Cup / Mundial fixtures. Used to surface the
+ * "results count at 90' + stoppage" tip, because knockout matches can go to
+ * extra time / penalties (which don't change the 1X2 result). Detection is by
+ * league name — no extra backend field needed.
+ */
+export function isWorldCupPool(quiniela) {
+  return (quiniela?.fixtures || []).some((f) => /world cup|mundial/i.test(f?.leagueName || ''));
+}
+
 const byKickoff = (a, b) => new Date(a.kickoff || 0) - new Date(b.kickoff || 0);
 
 /** Which display bucket a fixture belongs to, given its live snapshot. */

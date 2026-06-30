@@ -74,9 +74,9 @@ exports.getPendingPayouts = async (req, res) => {
     ]);
     const countsByPool = new Map(counts.map((c) => [String(c._id), c.count]));
 
-    // prize_ladder pools pay each entry individually — pull every paid entry
-    // with its persisted prizeMXN (+ user) so the admin sees the full payout
-    // table, not a single "winner takes the pot" line.
+    // prize_ladder pools pay each entry individually. Pull every non-refunded
+    // entry (with its persisted prizeMXN + winnerPaidAt) so we can group the
+    // payouts BY USER — a player with several winning entries is paid once.
     const ladderPoolIds = pools.filter((p) => p.poolType === 'prize_ladder').map((p) => p._id);
     const ladderByPool = new Map();
     if (ladderPoolIds.length > 0) {
@@ -88,6 +88,23 @@ exports.getPendingPayouts = async (req, res) => {
         const key = String(e.quiniela);
         if (!ladderByPool.has(key)) ladderByPool.set(key, []);
         ladderByPool.get(key).push(e);
+      }
+    }
+
+    // Standard pools: pull the winners' entries so we know which winners are
+    // already paid (per-entry winnerPaidAt). Keyed `${poolId}:${userId}`.
+    const standardPoolIds = pools.filter((p) => p.poolType !== 'prize_ladder').map((p) => p._id);
+    const standardPaidByKey = new Map();
+    if (standardPoolIds.length > 0 && winnerIds.length > 0) {
+      const stdEntries = await QuinielaEntry.find({
+        quiniela: { $in: standardPoolIds },
+        refundedAt: null,
+        user: { $in: winnerIds },
+      }).select('quiniela user winnerPaidAt').lean();
+      for (const e of stdEntries) {
+        const key = `${String(e.quiniela)}:${String(e.user)}`;
+        // A user is "paid" if any of their entries is stamped.
+        if (e.winnerPaidAt && !standardPaidByKey.get(key)) standardPaidByKey.set(key, e.winnerPaidAt);
       }
     }
 
@@ -107,47 +124,53 @@ exports.getPendingPayouts = async (req, res) => {
       };
 
       if (pool.poolType === 'prize_ladder') {
-        // Per-entry payout rows, highest prize first. Only entries that
-        // actually won money need a transfer.
-        const rows = (ladderByPool.get(id) || [])
-          .map((e) => {
-            const u = e.user || {};
-            const prize = e.prizeMXN != null
-              ? e.prizeMXN
-              : prizeForCorrect(pool.prizeLadder, e.score || 0);
-            return {
-              entryId: String(e._id),
-              userId: u._id ? String(u._id) : null,
-              email: u.email || null,
-              displayName: u.displayName || u.username || u.email || 'Participant',
-              username: u.username || null,
-              score: e.score ?? 0,
-              prizeMXN: prize,
-              payout: payoutFor(u),
-            };
-          })
-          .filter((r) => r.prizeMXN > 0)
+        // Group winning entries BY USER → one payout row per winner (summed
+        // prize, best score, entry count, all-paid status).
+        const byUser = new Map();
+        for (const e of ladderByPool.get(id) || []) {
+          const prize = e.prizeMXN != null ? e.prizeMXN : prizeForCorrect(pool.prizeLadder, e.score || 0);
+          if (!(prize > 0)) continue;
+          const u = e.user || {};
+          const uid = u._id ? String(u._id) : `anon:${e._id}`;
+          const g = byUser.get(uid) || {
+            userId: u._id ? String(u._id) : null,
+            email: u.email || null,
+            displayName: u.displayName || u.username || u.email || 'Participant',
+            username: u.username || null,
+            payout: payoutFor(u),
+            prizeMXN: 0, score: 0, entriesCount: 0, allPaid: true, paidAt: null,
+          };
+          g.prizeMXN += prize;
+          g.score = Math.max(g.score, e.score || 0);
+          g.entriesCount += 1;
+          if (e.winnerPaidAt) g.paidAt = e.winnerPaidAt;
+          else g.allPaid = false;
+          byUser.set(uid, g);
+        }
+        const winners = [...byUser.values()]
+          .map((g) => ({
+            userId: g.userId, email: g.email, displayName: g.displayName, username: g.username,
+            payout: g.payout, prizeMXN: g.prizeMXN, score: g.score, entriesCount: g.entriesCount,
+            paidAt: g.allPaid ? g.paidAt : null,
+          }))
           .sort((a, b) => b.prizeMXN - a.prizeMXN || b.score - a.score);
-        const totalPrizeMXN = rows.reduce((s, r) => s + r.prizeMXN, 0);
-        return {
-          ...base,
-          // Total MXN the platform owes for this pool (sum of all rungs hit).
-          prizeMXN: totalPrizeMXN,
-          ladderPayouts: rows,
-        };
+        const totalPrizeMXN = winners.reduce((s, w) => s + w.prizeMXN, 0);
+        return { ...base, prizeMXN: totalPrizeMXN, winners };
       }
 
-      // standard: single winner takes 65% of the pot.
+      // standard: single winner takes 65% of the pot (each tied winner shown).
       const prize = Math.floor(entries * fee * WINNER_SHARE);
       const winners = (pool.winnerUserIds || [])
         .map((wid) => usersById.get(String(wid)))
         .filter(Boolean)
         .map((u) => ({
-          id: String(u._id),
+          userId: String(u._id),
           email: u.email,
           displayName: u.displayName || u.username || u.email,
           username: u.username || null,
           payout: payoutFor(u),
+          prizeMXN: prize,
+          paidAt: standardPaidByKey.get(`${id}:${String(u._id)}`) || null,
         }));
       return { ...base, prizeMXN: prize, winners };
     });
@@ -228,6 +251,92 @@ exports.cancelPool = async (req, res) => {
     });
   } catch (err) {
     console.error('[admin/cancel] error:', err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * Whether every winner of a pool has been paid (per-entry winnerPaidAt set).
+ *   - prize_ladder: every non-refunded entry that won money (prizeMXN > 0).
+ *   - standard: every winnerUserId has at least one paid entry.
+ * Returns true for a pool with no one to pay (e.g. ladder where nobody hit a
+ * rung) so it can be cleared off the dashboard.
+ */
+async function areAllWinnersPaid(pool) {
+  if (pool.poolType === 'prize_ladder') {
+    const owed = await QuinielaEntry.find({
+      quiniela: pool._id, refundedAt: null, prizeMXN: { $gt: 0 },
+    }).select('winnerPaidAt').lean();
+    return owed.every((e) => e.winnerPaidAt);
+  }
+  const winnerIds = (pool.winnerUserIds || []).map(String);
+  if (winnerIds.length === 0) return true;
+  const paid = await QuinielaEntry.find({
+    quiniela: pool._id, refundedAt: null,
+    user: { $in: pool.winnerUserIds }, winnerPaidAt: { $ne: null },
+  }).select('user').lean();
+  const paidUsers = new Set(paid.map((e) => String(e.user)));
+  return winnerIds.every((id) => paidUsers.has(id));
+}
+
+/**
+ * POST /admin/pools/:id/winners/:userId/mark-paid
+ * Body: { note?: string }
+ *
+ * Mark a SINGLE winner (grouped by user) as paid — the per-winner replacement
+ * for the all-or-nothing pool-level button. Stamps that user's winning
+ * entry/entries, emails just them, and (only once EVERY winner is paid) flips
+ * the pool's winnerPaidAt so it drops off the dashboard. Idempotent.
+ */
+exports.markWinnerPaid = async (req, res) => {
+  try {
+    const { id: poolId, userId } = req.params;
+    const pool = await Quiniela.findById(poolId);
+    if (!pool) return res.status(404).json({ message: 'Pool not found' });
+    if (pool.settlementStatus !== 'settled') {
+      return res.status(400).json({ message: 'Pool is not settled yet — cannot mark as paid', code: 'NOT_SETTLED' });
+    }
+    const note = (req.body?.note || '').toString().trim().slice(0, 500);
+
+    // The user's entries owed money in this pool.
+    const filter = { quiniela: poolId, user: userId, refundedAt: null };
+    if (pool.poolType === 'prize_ladder') {
+      filter.prizeMXN = { $gt: 0 };
+    } else if (!(pool.winnerUserIds || []).map(String).includes(String(userId))) {
+      return res.status(400).json({ message: 'That user is not a winner of this pool', code: 'NOT_A_WINNER' });
+    }
+    const entries = await QuinielaEntry.find(filter).select('_id prizeMXN winnerPaidAt').lean();
+    if (entries.length === 0) {
+      return res.status(404).json({ message: 'No winning entries for this user', code: 'NO_WINNING_ENTRIES' });
+    }
+
+    const alreadyPaid = entries.every((e) => e.winnerPaidAt);
+    if (!alreadyPaid) {
+      const now = new Date();
+      await QuinielaEntry.updateMany(
+        { _id: { $in: entries.map((e) => e._id) }, winnerPaidAt: null },
+        { $set: { winnerPaidAt: now, winnerPaidNote: note } },
+      );
+      console.log(`[admin/payouts] winner paid — pool=${poolId} user=${userId} by ${req.user.email}`);
+      // Email just this winner their receipt. Best-effort.
+      const prizeMXN = pool.poolType === 'prize_ladder'
+        ? entries.reduce((s, e) => s + (e.prizeMXN || 0), 0)
+        : 0;
+      brevoService.sendPrizePaidToUser({ pool, userId, prizeMXN, note })
+        .catch((e) => console.warn('[admin/payouts] brevo prize-paid (single) failed:', e.message));
+    }
+
+    // Once everyone is paid, stamp the pool so it leaves the dashboard.
+    const allPaid = await areAllWinnersPaid(pool);
+    if (allPaid && !pool.winnerPaidAt) {
+      pool.winnerPaidAt = new Date();
+      if (note) pool.winnerPaidNote = note;
+      await pool.save();
+    }
+
+    res.json({ ok: true, userId, alreadyPaid, allWinnersPaid: allPaid });
+  } catch (err) {
+    console.error('[admin/payouts] markWinnerPaid error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };

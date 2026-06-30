@@ -112,7 +112,7 @@ async function applyScoringToQuiniela(quinielaId) {
   for (const f of liveFixtures) {
     const short = (f?.status?.short || '').toUpperCase();
     if (!FINISHED_STATUSES.has(short)) continue;
-    const result = resultFromScore(f?.score?.home, f?.score?.away);
+    const result = resultFromScore(f?.score?.regulation?.home ?? f?.score?.home, f?.score?.regulation?.away ?? f?.score?.away);
     if (result != null) resultsByFixtureId.set(f.fixtureId, result);
   }
 

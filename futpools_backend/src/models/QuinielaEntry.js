@@ -21,6 +21,13 @@ const quinielaEntrySchema = new mongoose.Schema({
   // from `score` via the pool's prizeLadder at settlement. null for
   // standard (single-winner) pools and for unsettled entries.
   prizeMXN: { type: Number, default: null },
+  // Per-winner payout tracking. The admin payouts dashboard marks each WINNER
+  // (grouped by user) as paid individually instead of the whole pool at once;
+  // this stamps the winning entry/entries when their transfer is sent. The
+  // pool-level Quiniela.winnerPaidAt flips only once every winner is paid.
+  // winnerPaidNote carries the optional SPEI/PayPal reference.
+  winnerPaidAt: { type: Date, default: null },
+  winnerPaidNote: { type: String, default: '' },
   // ── simple_version (Phase 2) — Stripe per-entry checkout ─────────────
   // Sparse unique on stripeSessionId is the idempotency guard for the
   // webhook: if Stripe re-delivers `checkout.session.completed`, the

@@ -13,7 +13,7 @@ import { ThermometerLadder } from '../arena-ui/ThermometerLadder';
 import { LadderParticipants } from '../arena-ui/LadderParticipants';
 import { useLiveAcertoNotifier } from '../lib/ladderNotify';
 import { useSafeBack } from '../lib/safeBack';
-import { canJoinPool, isFreePool, freeToEnter, orderFixturesByStatus, poolLockAtISO } from '../lib/poolStatus';
+import { canJoinPool, isFreePool, freeToEnter, orderFixturesByStatus, poolLockAtISO, isWorldCupPool } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { PoolDetailDesktop } from './desktop/PoolDetailDesktop';
 
@@ -1311,13 +1311,19 @@ function rulesForPool(q, locale) {
     prizeRule = t(locale, 'Winner takes the whole prize — no splits.');
   }
 
-  return [
+  const rules = [
     ['01', t(locale, 'Pick 1 (home), X (draw) or 2 (away) for each match in the pool.')],
     ['02', t(locale, '+1 point for every correct pick. All matches count the same.')],
-    ['03', t(locale, 'Picks lock the moment the first match kicks off. No edits after that.')],
+    ['03', t(locale, 'Registration and pick edits close 10 minutes before the first match.')],
     ['04', prizeRule],
     ['05', t(locale, 'Every pool you finish earns rating for your global rank and can unlock achievements.')],
   ];
+  // Knockout (World Cup) pools: clarify the 1X2 result is taken at regulation
+  // time, since these matches can go to extra time / penalties.
+  if (isWorldCupPool(q)) {
+    rules.splice(2, 0, ['02b', t(locale, "Results count at 90 min + stoppage time (regulation). Extra time and penalties don't change your pick — a tie at 90' is X (draw), even if a team advances.")]);
+  }
+  return rules;
 }
 
 function RulesModal({ locale, quiniela, onClose }) {

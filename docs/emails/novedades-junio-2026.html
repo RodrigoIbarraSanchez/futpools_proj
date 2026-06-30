@@ -1,0 +1,168 @@
+<!doctype html>
+<!--
+  FutPools · Email de novedades (junio 2026)
+  ------------------------------------------------------------------
+  Self-contained, table-based + inline styles (dialecto de email: nada de
+  flexbox/clip-path/variables CSS — Gmail/Outlook/Apple Mail los ignoran).
+  Paleta tomada de src/emails/layout.js para que combine con la app.
+
+  Cómo usarlo en Brevo:
+    1. Crea una campaña → "Pegar tu código HTML" y pega TODO este archivo.
+    2. El saludo usa la etiqueta de personalización de Brevo
+       {{ contact.FIRSTNAME }} con respaldo "crack" si no hay nombre.
+    3. El enlace de baja usa {{ unsubscribe }} (Brevo lo reemplaza solo).
+    4. Cambia los https://futpools.com/... si tu dominio difiere.
+  Vista previa: abre este archivo en el navegador.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <title>Novedades en FutPools</title>
+</head>
+<body style="margin:0;padding:0;background:#06100F;">
+
+  <!-- Preheader: línea de vista previa en la bandeja (oculta en el cuerpo) -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+    Ya puedes editar tus pronósticos y registrar tus datos para cobrar premios. Checa lo nuevo.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#06100F;padding:24px 12px;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+               style="width:600px;max-width:100%;background:#0C1A18;border:1px solid #1E3A37;border-radius:16px;overflow:hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#0F2322;padding:22px 28px;border-bottom:1px solid #1E3A37;" align="left">
+              <img src="https://futpools.com/icon-192.png" width="34" height="34" alt="FutPools"
+                   style="vertical-align:middle;border-radius:8px;">
+              <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:18px;font-weight:900;letter-spacing:1px;color:#EAF2F0;vertical-align:middle;margin-left:10px;">
+                FUT<span style="color:#21E28C;">POOLS</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#EAF2F0;">
+
+              <!-- Etiqueta -->
+              <div style="display:inline-block;background:rgba(33,226,140,0.12);color:#21E28C;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:6px 12px;border-radius:999px;">
+                Novedades
+              </div>
+
+              <h1 style="margin:16px 0 8px;font-size:24px;line-height:1.25;font-weight:800;color:#EAF2F0;">
+                Nuevas mejoras para que juegues (y cobres) mejor ⚡
+              </h1>
+
+              <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#9FB0AD;">
+                ¡Hola, {{ contact.FIRSTNAME | default : "crack" }}! Estuvimos puliendo FutPools y hay tres
+                cosas nuevas que te conviene checar antes de tu próxima quiniela.
+              </p>
+
+              <!-- Novedad 1: Editar pronósticos -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="background:#0F2322;border:1px solid #1E3A37;border-radius:12px;margin-bottom:14px;">
+                <tr>
+                  <td style="padding:18px 18px 18px 20px;" valign="top">
+                    <div style="font-size:22px;line-height:1;margin-bottom:8px;">✏️</div>
+                    <div style="font-size:16px;font-weight:800;color:#EAF2F0;margin-bottom:6px;">
+                      Ahora puedes editar tus pronósticos
+                    </div>
+                    <div style="font-size:14px;line-height:1.6;color:#9FB0AD;">
+                      ¿Te arrepentiste de un marcador? Ya puedes cambiar tus pronósticos de una quiniela
+                      en la que ya entraste. Puedes editarlos <strong style="color:#EAF2F0;">hasta 10 minutos
+                      antes</strong> de que arranque el primer partido.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Novedad 2: Datos bancarios (la más importante) -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="background:rgba(255,209,102,0.08);border:1px solid rgba(255,209,102,0.45);border-radius:12px;margin-bottom:14px;">
+                <tr>
+                  <td style="padding:18px 18px 18px 20px;" valign="top">
+                    <div style="font-size:22px;line-height:1;margin-bottom:8px;">🏦</div>
+                    <div style="font-size:16px;font-weight:800;color:#FFD166;margin-bottom:6px;">
+                      Registra tus datos para recibir tu premio
+                    </div>
+                    <div style="font-size:14px;line-height:1.6;color:#EAF2F0;">
+                      Para poder enviarte tu premio si ganas, ahora puedes guardar tu cuenta bancaria
+                      <strong>(CLABE)</strong> desde tu perfil. ¿Estás fuera de México? Selecciona tu país
+                      y se activa la opción de <strong>PayPal</strong> para que dejes tu correo.
+                      <br><br>
+                      <span style="color:#9FB0AD;">Sin estos datos no podemos depositarte. Tómate 1 minuto y déjalos listos. 👇</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Novedad 3: Cierre de inscripciones -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="background:#0F2322;border:1px solid #1E3A37;border-radius:12px;margin-bottom:8px;">
+                <tr>
+                  <td style="padding:18px 18px 18px 20px;" valign="top">
+                    <div style="font-size:22px;line-height:1;margin-bottom:8px;">⏱️</div>
+                    <div style="font-size:16px;font-weight:800;color:#EAF2F0;margin-bottom:6px;">
+                      Las inscripciones cierran 10 min antes
+                    </div>
+                    <div style="font-size:14px;line-height:1.6;color:#9FB0AD;">
+                      Para que todos jueguen parejo, el registro y la edición de pronósticos se cierran
+                      <strong style="color:#EAF2F0;">10 minutos antes</strong> del primer partido. Verás la
+                      hora límite directo en cada quiniela, así no te agarra la prisa.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA principal -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px auto 6px;">
+                <tr>
+                  <td align="center" bgcolor="#21E28C" style="border-radius:10px;">
+                    <a href="https://futpools.com/account/edit" target="_blank"
+                       style="display:inline-block;padding:14px 30px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;font-weight:800;color:#06251A;text-decoration:none;border-radius:10px;letter-spacing:.2px;">
+                      Agregar mis datos bancarios
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA secundario -->
+              <p style="margin:14px 0 0;text-align:center;font-size:14px;line-height:1.6;color:#9FB0AD;">
+                ¿Listo para la siguiente?
+                <a href="https://futpools.com" target="_blank" style="color:#21E28C;text-decoration:underline;font-weight:700;">Ver quinielas abiertas</a>
+              </p>
+
+              <p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#9FB0AD;">
+                Nos vemos en la cancha,<br>
+                <strong style="color:#EAF2F0;">Rodrigo de FutPools</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#0F2322;padding:20px 28px;border-top:1px solid #1E3A37;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#9FB0AD;" align="center">
+              <div>FutPools · <a href="https://futpools.com" style="color:#9FB0AD;text-decoration:underline;">futpools.com</a></div>
+              <div style="margin-top:4px;">Quinielas de fútbol entre amigos. Mayores de 18 años.</div>
+              <div style="margin-top:10px;">
+                <a href="{{ unsubscribe }}" style="color:#9FB0AD;text-decoration:underline;">Darme de baja de novedades</a>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

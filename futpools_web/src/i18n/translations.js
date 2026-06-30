@@ -1545,6 +1545,10 @@ export const translations = {
     'MARKING…': 'MARCANDO…',
     'MARK AS PAID': 'MARCAR COMO PAGADO',
     'JUGADORES': 'JUGADORES',
+    // per-winner payout marking
+    'Paid {date}': 'Pagado {date}',
+    'Transfer reference (optional)': 'Referencia de la transferencia (opcional)',
+    '{n} entradas': '{n} entradas',
     // payout / banking details on the admin dashboard
     'No banking info on file — ask this winner to add it in Edit profile.': 'Sin datos bancarios — pídele a este ganador que los agregue en Editar perfil.',
     'COUNTRY': 'PAÍS',
@@ -1573,6 +1577,9 @@ export const translations = {
     'The edit window has closed — picks lock 10 minutes before the first match.': 'La ventana de edición ya cerró — los pronósticos se bloquean 10 minutos antes del primer partido.',
     'Pick every match before saving': 'Marca todos los partidos antes de guardar',
     'This entry was cancelled': 'Esta entrada fue cancelada',
+    'Registration and pick edits close 10 minutes before the first match.': 'Las inscripciones y la edición de pronósticos cierran 10 minutos antes del primer partido.',
+    // ── Knockout result rule (90' + stoppage) ──
+    "Results count at 90 min + stoppage time (regulation). Extra time and penalties don't change your pick — a tie at 90' is X (draw), even if a team advances.": 'El resultado cuenta al minuto 90 + tiempo agregado (tiempo reglamentario). El tiempo extra y los penales no cambian tu pronóstico: si hay empate al 90\', es X (empate), aunque un equipo avance.',
     // ── Registration close (10 min before first kickoff) ──
     'Registration closes {time} (10 min before the first match).': 'Las inscripciones cierran {time} (10 min antes del primer partido).',
     'Registration closed — pools lock 10 minutes before the first match.': 'Inscripciones cerradas — las quinielas se bloquean 10 minutos antes del primer partido.',

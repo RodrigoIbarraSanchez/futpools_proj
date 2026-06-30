@@ -203,6 +203,28 @@ async function sendPrizePaidForPool({ pool }) {
 }
 
 /**
+ * Prize-paid receipt for a SINGLE winner — used by the per-winner "marcar
+ * como pagado" flow (admin pays winners one by one). Mirrors
+ * sendPrizePaidForPool but targets just `userId` with their own prize total.
+ */
+async function sendPrizePaidToUser({ pool, userId, prizeMXN = 0, note = '' }) {
+  if (!isConfigured()) return { ok: false, reason: 'NOT_CONFIGURED' };
+  if (!pool || !pool._id || !userId) return { ok: false, reason: 'BAD_ARGS' };
+  const u = await User.findById(userId).select('email displayName username').lean();
+  if (!u || !u.email) return { ok: false, reason: 'NO_EMAIL' };
+  const { subject, html } = buildPrizePaid({
+    poolName: pool.name,
+    poolId: String(pool._id),
+    prizeMXN: prizeMXN || 0,
+    prizeLabel: pool.prizeLabel || '',
+    note: note || '',
+  });
+  const res = await sendEmail({ to: u.email, name: u.displayName || u.username, subject, html });
+  console.log(`[brevo] prize paid (single) pool=${pool._id} user=${userId} ok=${res.ok}`);
+  return { ok: res.ok, sent: res.ok ? 1 : 0 };
+}
+
+/**
  * Pool settled → email every participant their result (winner vs participant).
  * Aggregates by user (a user with several entries gets ONE email, using their
  * best score + summed ladder prize). Called fire-and-forget from
@@ -320,6 +342,7 @@ module.exports = {
   sendPaymentReceivedAck,
   sendCreditGranted,
   sendPrizePaidForPool,
+  sendPrizePaidToUser,
   sendPoolResultsForSettlement,
   sendNewPoolAnnouncement,
 };

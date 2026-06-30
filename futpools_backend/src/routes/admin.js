@@ -19,6 +19,8 @@ router.get('/ledger', adminController.getLedger);
 // mark them paid after a manual bank transfer.
 router.get('/payouts', adminPayoutsController.getPendingPayouts);
 router.post('/pools/:id/mark-paid', adminPayoutsController.markPoolPaid);
+// Per-winner payout: mark one winner (grouped by user) as paid individually.
+router.post('/pools/:id/winners/:userId/mark-paid', adminPayoutsController.markWinnerPaid);
 // Destructive — cancels the pool and refunds every entry via Stripe.
 router.post('/pools/:id/cancel', adminPayoutsController.cancelPool);
 

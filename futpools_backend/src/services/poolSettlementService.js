@@ -54,7 +54,10 @@ async function settlePool(pool) {
   const finalResults = new Map();
   for (const f of liveFixtures) {
     const short = (f?.status?.short || '').toUpperCase();
-    const result = resultFromScore(f?.score?.home, f?.score?.away);
+    // Knockout matches: score the 1X2 from the REGULATION result (90' +
+    // stoppage), not the after-extra-time/penalties score. Fall back to the
+    // current/final score when regulation is absent (e.g. AWD/WO).
+    const result = resultFromScore(f?.score?.regulation?.home ?? f?.score?.home, f?.score?.regulation?.away ?? f?.score?.away);
     if (FINISHED_STATUSES.has(short) && result != null) {
       finalResults.set(f.fixtureId, result);
     }

@@ -11,7 +11,7 @@ import {
   HudFrame, HudChip, XpBar, TeamCrest, ArcadeButton, IconButton,
 } from '../arena-ui/primitives';
 import { useSafeBack } from '../lib/safeBack';
-import { freeToEnter } from '../lib/poolStatus';
+import { freeToEnter, isWorldCupPool } from '../lib/poolStatus';
 import { useIsDesktop } from '../desktop/useIsDesktop';
 import { QuinielaPickDesktop } from './desktop/QuinielaPickDesktop';
 
@@ -351,6 +351,17 @@ export function QuinielaPick() {
             ⏱ {editDeadlineLabel
               ? tFormat(locale, 'You can edit your picks until {time} (10 min before the first match).', { time: editDeadlineLabel })
               : t(locale, 'You can edit your picks until 10 minutes before the first match.')}
+          </div>
+        )}
+        {isWorldCupPool(quiniela) && (
+          <div style={{
+            marginBottom: 14, padding: '11px 13px', clipPath: 'var(--fp-clip-sm)',
+            background: 'color-mix(in srgb, var(--fp-accent) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fp-accent) 40%, transparent)',
+            fontFamily: 'var(--fp-mono)', fontSize: 11, lineHeight: 1.5,
+            color: 'var(--fp-accent)',
+          }}>
+            ⚽ {t(locale, "Results count at 90 min + stoppage time (regulation). Extra time and penalties don't change your pick — a tie at 90' is X (draw), even if a team advances.")}
           </div>
         )}
         {fixtures.map((f, i) => {

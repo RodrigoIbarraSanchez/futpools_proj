@@ -516,7 +516,11 @@ const fetchFixturesByIds = async (fixtureIds = []) => {
   const mapped = fixtures.map((f) => {
     const status = f?.fixture?.status || {};
     const goals = f?.goals || {};
-    const fullTime = goals.fullTime || {};
+    // API-Football v3: `goals` is the current/FINAL score (includes extra-time
+    // goals; a penalty shootout does NOT add to goals). `score.fulltime` is the
+    // result at the end of REGULATION (90' + referee stoppage), before extra
+    // time — that's the authoritative 1X2 outcome for quiniela scoring.
+    const fullTime = f?.score?.fulltime || {};
     const home = goals.home ?? fullTime.home ?? null;
     const away = goals.away ?? fullTime.away ?? null;
     return {
@@ -529,8 +533,13 @@ const fetchFixturesByIds = async (fixtureIds = []) => {
         isLive: status.short ? isLiveStatus(status.short) : false,
       },
       score: {
+        // Current/final score — for display (live scores, final score UI).
         home,
         away,
+        // Regulation-time result (90' + stoppage, excl. extra time/penalties).
+        // Drives the 1/X/2 outcome used to score picks: a knockout match tied
+        // at the end of regulation counts as a DRAW even if decided later.
+        regulation: { home: fullTime.home ?? null, away: fullTime.away ?? null },
       },
       logos: {
         home: f?.teams?.home?.logo || null,

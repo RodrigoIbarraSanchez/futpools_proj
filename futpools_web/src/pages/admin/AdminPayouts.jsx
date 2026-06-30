@@ -89,28 +89,8 @@ export function AdminPayouts() {
 }
 
 function PayoutCard({ pool, token, locale, onMarkedPaid }) {
-  const [note, setNote] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(null);
   const isLadder = pool.poolType === 'prize_ladder';
-  const ladderRows = pool.ladderPayouts || [];
-  const winner = pool.winners?.[0];
-  // Standard pools need a recorded winner before they can be paid; ladder
-  // pools can always be marked paid (even if nobody hit a paying rung).
-  const canMark = isLadder ? true : !!winner;
-
-  const onMark = async () => {
-    if (busy) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      await api.post(`/admin/pools/${pool.id}/mark-paid`, { note: note.trim() }, token);
-      onMarkedPaid();
-    } catch (e) {
-      setErr(e?.message || 'Failed to mark paid');
-      setBusy(false);
-    }
-  };
+  const winners = pool.winners || [];
 
   return (
     <div style={{ marginBottom: 12 }}>
@@ -138,116 +118,167 @@ function PayoutCard({ pool, token, locale, onMarkedPaid }) {
             <Stat label={t(locale, 'SETTLED')} value={formatDate(pool.settledAt)} />
           </div>
 
-          {/* prize_ladder pools pay each winner individually — render the
-              full per-entry breakdown so the admin can transfer each one. */}
-          {isLadder ? (
-            <div style={{ marginBottom: 14 }}>
-              <div style={{
-                fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
-                color: 'var(--fp-text-muted)', marginBottom: 6,
-              }}>{tFormat(locale, '{n} WINNERS TO PAY', { n: ladderRows.length })}</div>
-              {ladderRows.length === 0 ? (
-                <div style={{
-                  fontFamily: 'var(--fp-mono)', fontSize: 12, color: 'var(--fp-text-dim)', padding: '8px 0',
-                }}>{t(locale, 'No one reached a paying tier — nothing to transfer.')}</div>
-              ) : ladderRows.map((row) => (
-                <div key={row.entryId} style={{
-                  padding: '8px 10px', marginBottom: 6,
-                  background: 'color-mix(in srgb, var(--fp-primary) 10%, transparent)',
-                  border: '1px solid color-mix(in srgb, var(--fp-primary) 30%, transparent)',
-                  clipPath: 'var(--fp-clip-sm)',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontFamily: 'var(--fp-display)', fontSize: 13, fontWeight: 800,
-                        color: 'var(--fp-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>{row.displayName}</div>
-                      <div style={{
-                        fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-primary)',
-                        userSelect: 'all', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>{row.email}</div>
-                    </div>
-                    <div style={{
-                      fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-dim)', whiteSpace: 'nowrap',
-                    }}>{tFormat(locale, '{n} aciertos', { n: row.score })}</div>
-                    <div style={{
-                      fontFamily: 'var(--fp-display)', fontSize: 15, fontWeight: 900,
-                      color: 'var(--fp-gold)', whiteSpace: 'nowrap',
-                    }}>${row.prizeMXN}</div>
-                  </div>
-                  <PayoutDetails payout={row.payout} locale={locale} />
-                </div>
-              ))}
-            </div>
-          ) : winner ? (
-            <div style={{
-              padding: 12, marginBottom: 14,
-              background: 'color-mix(in srgb, var(--fp-primary) 12%, transparent)',
-              border: '1px solid color-mix(in srgb, var(--fp-primary) 35%, transparent)',
-              clipPath: 'var(--fp-clip-sm)',
-            }}>
-              <div style={{
-                fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
-                color: 'var(--fp-text-muted)', marginBottom: 4,
-              }}>{t(locale, 'WINNER')}</div>
-              <div style={{
-                fontFamily: 'var(--fp-display)', fontSize: 16, fontWeight: 800,
-                color: 'var(--fp-text)', marginBottom: 2,
-              }}>{winner.displayName}</div>
-              <div style={{
-                fontFamily: 'var(--fp-mono)', fontSize: 11,
-                color: 'var(--fp-primary)',
-                userSelect: 'all',  // single-click copies the email
-              }}>{winner.email}</div>
-              {winner.username && (
-                <div style={{
-                  fontFamily: 'var(--fp-mono)', fontSize: 10,
-                  color: 'var(--fp-text-dim)', marginTop: 2,
-                }}>@{winner.username}</div>
-              )}
-              <PayoutDetails payout={winner.payout} locale={locale} />
-            </div>
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
+            color: 'var(--fp-text-muted)', marginBottom: 8,
+          }}>{tFormat(locale, '{n} WINNERS TO PAY', { n: winners.length })}</div>
+
+          {/* Each winner is paid individually. Multiple winning entries from
+              the SAME user are already grouped into one row by the backend. */}
+          {winners.length === 0 ? (
+            <PoolLevelMark pool={pool} token={token} locale={locale} onMarkedPaid={onMarkedPaid} isLadder={isLadder} />
           ) : (
-            <div style={{
-              padding: 12, marginBottom: 14, fontFamily: 'var(--fp-mono)',
-              color: 'var(--fp-text-dim)', fontSize: 12,
-            }}>{t(locale, 'No winner recorded — check the pool manually.')}</div>
+            winners.map((w) => (
+              <WinnerRow
+                key={w.userId || w.email}
+                pool={pool} winner={w} token={token} locale={locale}
+                isLadder={isLadder} onMarkedPaid={onMarkedPaid}
+              />
+            ))
           )}
+        </div>
+      </HudFrame>
+    </div>
+  );
+}
 
-          <div style={{ marginBottom: 8 }}>
+/// A single winner (grouped by user) with its own reference field + mark-paid
+/// button — or a "paid" badge once done. This is the per-winner unit the admin
+/// transfers and clears one at a time.
+function WinnerRow({ pool, winner, token, locale, isLadder, onMarkedPaid }) {
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const paid = !!winner.paidAt;
+
+  const onMark = async () => {
+    if (busy || !winner.userId) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await api.post(`/admin/pools/${pool.id}/winners/${winner.userId}/mark-paid`, { note: note.trim() }, token);
+      onMarkedPaid();
+    } catch (e) {
+      setErr(e?.message || 'Failed to mark paid');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{
+      padding: 12, marginBottom: 10,
+      background: paid
+        ? 'color-mix(in srgb, var(--fp-text-muted) 8%, transparent)'
+        : 'color-mix(in srgb, var(--fp-primary) 10%, transparent)',
+      border: `1px solid ${paid
+        ? 'color-mix(in srgb, var(--fp-text-muted) 30%, transparent)'
+        : 'color-mix(in srgb, var(--fp-primary) 30%, transparent)'}`,
+      clipPath: 'var(--fp-clip-sm)',
+      opacity: paid ? 0.75 : 1,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: 'var(--fp-display)', fontSize: 15, fontWeight: 800,
+            color: 'var(--fp-text)',
+          }}>{winner.displayName}</div>
+          <div style={{
+            fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-primary)',
+            userSelect: 'all', wordBreak: 'break-all',
+          }}>{winner.email}</div>
+          {isLadder && (
             <div style={{
-              fontFamily: 'var(--fp-mono)', fontSize: 9, letterSpacing: 1.5,
-              color: 'var(--fp-text-muted)', marginBottom: 4,
-            }}>{t(locale, 'TRANSFER REFERENCE (OPTIONAL)')}</div>
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={t(locale, 'e.g. SPEI ref ABC123')}
-              maxLength={500}
-              style={arenaInputStyle}
-              disabled={busy || !canMark}
-            />
-          </div>
+              fontFamily: 'var(--fp-mono)', fontSize: 10, color: 'var(--fp-text-dim)', marginTop: 2,
+            }}>
+              {tFormat(locale, '{n} aciertos', { n: winner.score })}
+              {winner.entriesCount > 1 && ` · ${tFormat(locale, '{n} entradas', { n: winner.entriesCount })}`}
+            </div>
+          )}
+        </div>
+        <div style={{
+          fontFamily: 'var(--fp-display)', fontSize: 18, fontWeight: 900,
+          color: 'var(--fp-gold)', whiteSpace: 'nowrap',
+        }}>${winner.prizeMXN} MXN</div>
+      </div>
 
+      <PayoutDetails payout={winner.payout} locale={locale} />
+
+      {paid ? (
+        <div style={{
+          marginTop: 10, padding: '8px 10px', clipPath: 'var(--fp-clip-sm)',
+          background: 'color-mix(in srgb, var(--fp-primary) 12%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fp-primary) 35%, transparent)',
+          fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-primary)',
+        }}>
+          ✓ {tFormat(locale, 'Paid {date}', { date: formatDate(winner.paidAt) })}
+        </div>
+      ) : (
+        <div style={{ marginTop: 10 }}>
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t(locale, 'Transfer reference (optional)')}
+            maxLength={500}
+            style={arenaInputStyle}
+            disabled={busy}
+          />
           {err && (
             <div style={{
               fontFamily: 'var(--fp-mono)', fontSize: 11,
-              color: 'var(--fp-danger)', marginBottom: 8,
+              color: 'var(--fp-danger)', margin: '6px 0',
             }}>{err}</div>
           )}
-
+          <div style={{ height: 8 }} />
           <ArcadeButton
             size="md"
             fullWidth
             onClick={onMark}
-            disabled={busy || !canMark}
+            disabled={busy || !winner.userId}
           >
             {busy ? t(locale, 'MARKING…') : `✓ ${t(locale, 'MARK AS PAID')}`}
           </ArcadeButton>
         </div>
-      </HudFrame>
+      )}
+    </div>
+  );
+}
+
+/// Fallback for pools with no individual winners to pay (e.g. a ladder where
+/// nobody reached a paying tier). Keeps a single pool-level "mark paid" so the
+/// pool can still be cleared off the dashboard.
+function PoolLevelMark({ pool, token, locale, onMarkedPaid, isLadder }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const onMark = async () => {
+    if (busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await api.post(`/admin/pools/${pool.id}/mark-paid`, {}, token);
+      onMarkedPaid();
+    } catch (e) {
+      setErr(e?.message || 'Failed to mark paid');
+      setBusy(false);
+    }
+  };
+  return (
+    <div>
+      <div style={{
+        fontFamily: 'var(--fp-mono)', fontSize: 12, color: 'var(--fp-text-dim)', padding: '4px 0 10px',
+      }}>
+        {isLadder
+          ? t(locale, 'No one reached a paying tier — nothing to transfer.')
+          : t(locale, 'No winner recorded — check the pool manually.')}
+      </div>
+      {err && (
+        <div style={{
+          fontFamily: 'var(--fp-mono)', fontSize: 11, color: 'var(--fp-danger)', marginBottom: 8,
+        }}>{err}</div>
+      )}
+      <ArcadeButton size="md" fullWidth onClick={onMark} disabled={busy}>
+        {busy ? t(locale, 'MARKING…') : `✓ ${t(locale, 'MARK AS PAID')}`}
+      </ArcadeButton>
     </div>
   );
 }

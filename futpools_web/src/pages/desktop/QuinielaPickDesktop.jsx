@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { useLocale } from '../../context/LocaleContext';
 import { t, tFormat } from '../../i18n/translations';
 import { DesktopShellChrome } from '../../desktop/DesktopShell';
-import { isFreePool, freeToEnter, poolLockAtISO } from '../../lib/poolStatus';
+import { isFreePool, freeToEnter, poolLockAtISO, isWorldCupPool } from '../../lib/poolStatus';
 import { PayMethodSelector } from '../../components/PayMethodSelector';
 
 const WINNER_SHARE = 0.65;
@@ -467,6 +467,17 @@ export function QuinielaPickDesktop({
           ⏱ {editDeadlineLabel
             ? tFormat(locale, 'You can edit your picks until {time} (10 min before the first match).', { time: editDeadlineLabel })
             : t(locale, 'You can edit your picks until 10 minutes before the first match.')}
+        </div>
+      )}
+
+      {isWorldCupPool(quiniela) && (
+        <div className="fp-card" style={{
+          marginBottom: 'var(--app-space-5)', padding: '12px 16px',
+          background: 'color-mix(in srgb, var(--fp-accent) 10%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fp-accent) 35%, transparent)',
+          fontSize: 13, lineHeight: 1.5,
+        }}>
+          ⚽ {t(locale, "Results count at 90 min + stoppage time (regulation). Extra time and penalties don't change your pick — a tie at 90' is X (draw), even if a team advances.")}
         </div>
       )}
 
